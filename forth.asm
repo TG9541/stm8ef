@@ -45,8 +45,8 @@
 ;	 function forth
 ;	-----------------------------------------
 
-
-	REGBASE =	0x5000	   ;register base
+	;******  STM8SF003 Registers  ******
+	REGBASE =	0x5000	;register base
 	UARTSR   =	0x5230	;UART status reg
 	UARTDR   =	0x5231	;UART data reg
 	UARTBD1  =	0x5232	;baud rate control 1
@@ -58,8 +58,22 @@
 	PD_CR1  =	0x5012	; PD5 control 1
 	PD_CR2  =	0x5013	; PD5 control 2
 
+        ; *** TIM4 for baudrate generation ***
+        TIM4_CR1 =      0x5340  ; 1 (ENABLE)
+        TIM4_IER =      0x5343  ; 1 (ENABLE)     
+        TIM4_SR =       0x5344  ; 0 (clear)
+        TIM4_EGR =      0x5345
+        TIM4_CNTR =     0x5346
+        TIM4_PSCR =     0x5347  ; 3 (1/8)
+        TIM4_ARR =      0x5348  ; 0xCF (Reload 0.104 ms)
 
-	RAMBASE =	0x0000	   ;ram base
+	;******  Terminal Configuration ******
+        GADGET_W1209 =  0       ; RS232 Half Duplex Mode trough Port_D6 (RxD)
+        HALF_DUPLEX =   0       ; RS232 Half Duplex Mode
+        TERM_LINUX  =   1       ; LF terminates line 
+
+	;******  Memory ******
+	RAMBASE =	0x0000	 ;ram base
 	STACK   =	0x3FF	;system (return) stack 
 	DATSTK  =	0x380	;data stack 
 	
@@ -67,7 +81,7 @@
 	XTEMP	=	26	;address called by CREATE
 	YTEMP	=	28	;address called by CREATE
 	PROD1 = 26	;space for UM*
-	PROD2 = 28
+        PROD2 = 28
 	PROD3 = 30
 	CARRY = 32
 	SP0	=	34	 ;initial data stack pointer
@@ -85,13 +99,18 @@
 	MASKK   =     0x1F7F  ;lexicon bit mask
 
 	CELLL   =     2       ;size of a cell
-	BASEE   =     10      ;default radix
+	BASEE   =     16      ;default radix
 	BKSPP   =     8       ;back space
 	LF      =     10      ;line feed
 	CRR     =     13      ;carriage return
+        .ifne TERM_LINUX 
+        NEWLN   =     LF
+        .else
+        NEWLN   =     CR
+        .endif 
 	ERR     =     27      ;error escape
 	TIC     =     39      ;tick
-	CALLL   =     0xCD     ;CALL opcodes
+	CALLL   =     0xCD    ;CALL opcodes
 
 	;; Memory allocation
 	UPP     =     RAMBASE + 6
@@ -125,18 +144,28 @@ ORIG:
 	LDW	RP0,X
 	LDW	X,#DATSTK ;initialize data stack
 	LDW	SP0,X
-	MOV	PD_DDR,#0x01	; LED, SWIM
-	MOV	PD_CR1,#0x03	; pullups
-	MOV	PD_CR2,#0x01	; speed
+        
+;	MOV	PD_DDR,#0x01	; LED, SWIM
+;	MOV	PD_CR1,#0x03	; pullups
+;	MOV	PD_CR2,#0x01	; speed
 ;	BSET CLK_SWCR,#1 ; enable external clcok
 ;	MOV CLK_SWR,#0x0B4 ; external cyrstal clock
-;WAIT0:	BTJF CLK_SWCR,#3,WAIT0 ; wait SWIF
+;       WAIT0:	BTJF CLK_SWCR,#3,WAIT0 ; wait SWIF
 ;	BRES CLK_SWCR,#3 ; clear SWIF
 ;	MOV	UARTBD2,#0x003	;9600 baud
-;	MOV	UARTBD1,#0x068	;9600 baud
+;	MOV	UARTBD1,#0x068	; 0068 9600 baud
 ;	MOV	UARTCR1,#0x006	;8 data bits, no parity
 ;	MOV	UARTCR3,#0x000	;1 stop bit
+
+        .ifne   GADGET_W1209
+	MOV	UARTCR2,#0x004	;enable rx
+        MOV     TIM4_PSCR,#0x03 ; prescaler 1/8
+        MOV     TIM4_ARR,#0xCF  ; reload 0.104 ms (9600 baud)
+        MOV     TIM4_CR1,#0x01  ; enable TIM4
+        .else
 	MOV	UARTCR2,#0x00C	;enable tx & rx
+        .endif
+
 	JP	COLD	;default=MN1
 
 ; COLD start initiates these variables.
@@ -178,19 +207,64 @@ INCH: CLRW Y
 	LDW	(X),Y
 	RET
 
+
 ;	TX!	( c -- )
 ;	Send character c to	output device.
+
 	.dw	LINK100
 LINK101:
 	.db	4
 	.ascii	"EMIT"
 EMIT:
+        .ifne   HALF_DUPLEX
+	BRES	UARTCR2,#2	;disable rx
+
+        .ifne   GADGET_W1209
+        BSET    0x5011,#6
+
+        LD      A,#1
+        CALL    SERBIT
+        CALL    SERBIT
+
+ 	LD      A,(1,X)
+        ADDW    X,#2       
+        LDW     Y,#8
+1$:     CALL    SERBIT
+        DECW    Y
+        JRNE    1$
+        SCF
+
+        LD      A,#1
+        CALL    SERBIT
+        BRES    0x5011,#6
+        .else                          ; not GADGET_W1209
 	LD	A,(1,X)
 	ADDW	X,#2
-OUTPUT: 
-	BTJF	UARTSR,#7,OUTPUT ;loop until tdre
+1$:	BTJF	UARTSR,#7,1$    ;loop until tdre
 	LD	UARTDR,A	;send A
+2$:	BTJF	UARTSR,#6,2$    ;loop until tc
+        .endif  
+
+	BSET	UARTCR2,#2	;enable rx
+
+        .else                          ; not HALF_DUPLEX
+	LD	A,(1,X)
+	ADDW	X,#2
+1$:	BTJF	UARTSR,#7,1$ ;loop until tdre
+	LD	UARTDR,A	;send A
+        .endif
+
 	RET
+
+        .ifne   GADGET_W1209
+; ser helper routine
+SERBIT:                              
+        BTJF    TIM4_SR,#0,SERBIT
+        BRES    TIM4_SR,#0              ; clear TIM4 UIF 
+        RRC     A
+        BCCM    0x500F,#6 
+        RET
+        .endif
 
 ;; The kernel
 
@@ -511,7 +585,7 @@ ZLESS:
 	LDW Y,(Y)
 	JRMI	ZL1
 	CLR A	;false
-ZL1: LD (X),A
+ZL1:    LD (X),A
 	LD (1,X),A
 	RET	
 
@@ -2009,6 +2083,11 @@ LINK203:
 	.db	4
 	.ascii	"NUF?"
 NUFQ:
+        .ifne   HALF_DUPLEX
+        CLRW    Y            ; delay to slow EMIT down 
+1$:     DECW    Y             
+        JRNE    1$
+        .endif
 	CALL	QKEY
 	CALL	DUPP
 	CALL	QBRAN
@@ -2016,7 +2095,7 @@ NUFQ:
 	CALL	DDROP
 	CALL	KEY
 	CALL	DOLIT
-	.dw	CRR
+	.dw	NEWLN
 	JP	EQUAL
 NUFQ1:	RET
 
@@ -2080,9 +2159,11 @@ LINK207:
 	.db	2
 	.ascii	"CR"
 CR:
+        .ifeq TERM_LINUX
 	CALL	DOLIT
 	.dw	CRR
 	CALL	EMIT
+        .endif
 	CALL	DOLIT
 	.dw	LF
 	JP	EMIT
@@ -2580,15 +2661,17 @@ LINK229:
 KTAP:
 	CALL	DUPP
 	CALL	DOLIT
-	.dw	CRR
+	.dw	NEWLN
 	CALL	XORR
 	CALL	QBRAN
 	.dw	KTAP2
+
 	CALL	DOLIT
 	.dw	BKSPP
 	CALL	XORR
 	CALL	QBRAN
 	.dw	KTAP1
+
 	CALL	BLANK
 	JP	TAP
 KTAP1:	JP	BKSP
@@ -3797,7 +3880,7 @@ COLD1:	CALL	DOLIT
 
 ;; tg9541 additions
 
-;	I	( -- n )
+;	I	( -- w )
 ;	Get inner FOR - NEXT index
 
 	.dw	LINK285
@@ -3805,18 +3888,96 @@ LINK286:
 	.db	(1)
 	.ascii	"I"
 IGET:
-	SUBW X,#2        
-	LDW Y,(3,SP)
-        LDW (X),Y
+	SUBW    X,#2        
+	LDW     Y,(3,SP)
+        LDW     (X),Y
         RET
 
-;	
+
+;	BSR ( t a b -- )
+;	Set/RESET bit# b (0..7) at address a to bool t
+;       Creates/executes BSER/BRES + RET on data stack  
+
+	.dw	LINK286
+LINK287:
+	.db	(3)
+	.ascii	"BSR"
+BRSS:
+        LD      A,#0x72         ; Opcode BSET/BRES 
+        LD      (X),A
+        LD      A,(1,X)         ; 2nd byte of BSET/BRES  
+        SLA     A               ; n *= 2 -> A  
+        OR      A,#0x10
+        LDW     Y,X
+        LDW     Y,(4,Y)         ; bool b (0..15) -> Z
+        JRNE    $1              ; b!=0: BSET
+        INC     A               ; b==0: BRES
+$1:     LD      (1,X),A
+        LD      A,#0x81         ; Opcode RET
+        LD      (4,X),A
+        LDW     Y,X
+        ADDW    X,#6
+        JP      (Y)
+
+
+;	0=	( w -- t )
+;	Return true if w is equal to 0
+
+	.dw	LINK287
+LINK288:
+	.db	(2)
+	.ascii	"0="
+ZEQS:
+	LDW     Y,X
+        LDW     Y,(Y)
+        JREQ    1$
+        CLRW    Y
+        JRT     2$        
+1$:     CPLW    Y
+2$:     LDW     (X),Y
+        RET
+
+
+;       2C!  ( w b -- )
+;       Store word to consecutive MSB-LSB byte registers 
+	.dw	LINK288
+LINK289:
+	.db	(3)
+	.ascii	"2C!"
+DCSTOR:        
+        CALL    DDUP
+        LD      A,(2,X)
+        LD      (3,X),A
+        CALL    CSTOR
+        CALL    ONEP
+        CALL    CSTOR
+        RET
+
+
+;       2C@  ( a -- w )
+;       Fetch word from consecutive MSB / LSB registers 
+	.dw	LINK289
+LINK290:
+	.db	(3)
+	.ascii	"2C@"
+DCAT:        
+        CALL    DUPP
+        CALL    CAT
+        CALL    SWAPP
+        CALL    ONEP
+        CALL    CAT
+        LD      A,(3,X)
+        LD      (2,X),A
+        LD      A,(1,X)
+        LD      (3,X),A
+        CALL    DROP
+        RET
+       
 ;===============================================================
 
-	LASTN	=	LINK286	;last name defined
+	LASTN	=	LINK290	;last name defined
 
-	.area CODE
+ 	.area CODE
 	.area INITIALIZER
 	.area CABS (ABS)
-
 

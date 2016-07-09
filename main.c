@@ -49,7 +49,6 @@ uint8_t tib;          // $390 Terminal input buffer TIB
                         // $3FF Return stack, growing downward
 
 
-
 void main(void)
 {
 	CLK_DIVR = 0x00; // Set the frequency to 16 MHz
@@ -59,9 +58,9 @@ void main(void)
 	UART1_CR3 &= ~(UART_CR3_STOP1 | UART_CR3_STOP2); // 1 stop bit
 	UART1_BRR2 = 0x03; UART1_BRR1 = 0x68; // 9600 baud
 
-	PB_DDR = 0x20;
-	PB_CR1 = 0x20;
-	PB_ODR = 0x20;
+	PB_DDR = 0x30;
+	PB_CR1 = 0x30;
+	PB_ODR = 0x30;
 
   for (;;)
     forth(); 

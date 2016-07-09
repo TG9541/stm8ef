@@ -12,5 +12,5 @@ sdcc -mstm8 main.c forth.rel
 mv *map *sym *lst *rel *rst main.lk main.cdb main.asm main.ihx build
 
 # Flash device through STM8S SWIM 
-# sudo ./stm8flash -c stlinkv2 -p stm8s103f3 -w build/main.ihx
+sudo ./stm8flash -c stlinkv2 -p stm8s103f3 -w build/main.ihx
 
