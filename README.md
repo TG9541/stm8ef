@@ -28,7 +28,7 @@ Instructions for using eForth on a W1209:
 
 * remove the capacitor next to header
 * on the terminal side, use wired-or *RXD || TxD*  /w open drain (e.g. USB CH340 with 1N4148 in series with TxD) 
-* Set options `HALF_DUPLEX = 1`, and `GADGET_W1209 = 1` in `forth.asm
+* Set options `HALF_DUPLEX = 1`, and `GADGET_W1209 = 1` in `forth.asm`
 
 ## STM8S Discovery
 
