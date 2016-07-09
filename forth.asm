@@ -68,8 +68,8 @@
         TIM4_ARR =      0x5348  ; 0xCF (Reload 0.104 ms)
 
 	;******  Terminal Configuration ******
-        GADGET_W1209 =  0       ; RS232 Half Duplex Mode trough Port_D6 (RxD)
-        HALF_DUPLEX =   0       ; RS232 Half Duplex Mode
+        GADGET_W1209 =  1       ; RS232 Half Duplex Mode trough Port_D6 (RxD)
+        HALF_DUPLEX =   1       ; RS232 Half Duplex Mode
         TERM_LINUX  =   1       ; LF terminates line 
 
 	;******  Memory ******
@@ -189,7 +189,7 @@ ULAST:	.dw	0
 ;	?RX	( -- c T | F )
 ;	Return input byte and true, or false.
 	.dw	0
-LINK100:
+	LINK =	.
 	.db	4
 	.ascii	"?KEY"
 QKEY:
@@ -211,8 +211,8 @@ INCH: CLRW Y
 ;	TX!	( c -- )
 ;	Send character c to	output device.
 
-	.dw	LINK100
-LINK101:
+	.dw	LINK
+	LINK =	.
 	.db	4
 	.ascii	"EMIT"
 EMIT:
@@ -267,12 +267,11 @@ SERBIT:
         .endif
 
 ;; The kernel
-
 ;	doLIT	( -- w )
 ;	Push an inline literal.
 
-	.dw	LINK101
-LINK102:
+	.dw	LINK
+	LINK =	.
 	.db	(COMPO+5)
 	.ascii	"doLit"
 DOLIT:
@@ -287,8 +286,8 @@ DOLIT:
 ;	next	( -- )
 ;	Code for	single index loop.
 
-	.dw	LINK102
-LINK103:
+	.dw	LINK
+	LINK =	.
 	.db	(COMPO+4)
 	.ascii	"next"
 DONXT:
@@ -307,8 +306,8 @@ NEX1: LDW (3,SP),Y
 ;	?branch ( f -- )
 ;	Branch if flag is zero.
 
-	.dw	LINK103
-LINK104:
+	.dw	LINK
+	LINK =	.
 	.db	(COMPO+7)
 	.ascii	"?branch"
 QBRAN:
@@ -322,8 +321,8 @@ QBRAN:
 ;	branch	( -- )
 ;	Branch to an inline address.
 
-	.dw	LINK104
-LINK105:
+	.dw	LINK
+	LINK =	.
 	.db	(COMPO+6)
 	.ascii	"branch"
 BRAN:
@@ -334,8 +333,8 @@ BRAN:
 ;	EXECUTE ( ca -- )
 ;	Execute	word at ca.
 
-	.dw	LINK105
-LINK106:
+	.dw	LINK
+	LINK =	.
 	.db	7
 	.ascii	"EXECUTE"
 EXECU:
@@ -347,8 +346,8 @@ EXECU:
 ;	EXIT	( -- )
 ;	Terminate a colon definition.
 
-	.dw	LINK106
-LINK107:
+	.dw	LINK
+	LINK =	.
 	.db	4
 	.ascii	"EXIT"
 EXIT:
@@ -358,8 +357,8 @@ EXIT:
 ;	!	( w a -- )
 ;	Pop	data stack to memory.
 
-	.dw	LINK107
-LINK108:
+	.dw	LINK
+	LINK =	.
 	.db	1
 	.ascii	"!"
 STORE:
@@ -375,8 +374,8 @@ STORE:
 ;	@	( a -- w )
 ;	Push memory location to stack.
 
-	.dw	LINK108
-LINK109:
+	.dw	LINK
+	LINK =	.
 	.db	1
 	.ascii	"@"
 AT:
@@ -389,8 +388,8 @@ AT:
 ;	C!	( c b -- )
 ;	Pop	data stack to byte memory.
 
-	.dw	LINK109
-LINK110:
+	.dw	LINK
+	LINK =	.
 	.db	2
 	.ascii	"C!"
 CSTOR:
@@ -404,8 +403,8 @@ CSTOR:
 ;	C@	( b -- c )
 ;	Push byte in memory to	stack.
 
-	.dw	LINK110
-LINK111:
+	.dw	LINK
+	LINK =	.
 	.db	2
 	.ascii	"C@"
 CAT:
@@ -419,8 +418,8 @@ CAT:
 ;	RP@	( -- a )
 ;	Push current RP to data stack.
 
-	.dw	LINK111
-LINK112:
+	.dw	LINK
+	LINK =	.
 	.db	3
 	.ascii	"rp@"
 RPAT:
@@ -432,8 +431,8 @@ RPAT:
 ;	RP!	( a -- )
 ;	Set	return stack pointer.
 
-	.dw	LINK112
-LINK113:
+	.dw	LINK
+	LINK =	.
 	.db	(COMPO+3)
 	.ascii	"rp!"
 RPSTO:
@@ -447,8 +446,8 @@ RPSTO:
 ;	R>	( -- w )
 ;	Pop return stack to data stack.
 
-	.dw	LINK113
-LINK114:
+	.dw	LINK
+	LINK =	.
 	.db	(COMPO+2)
 	.ascii	"R>"
 RFROM:
@@ -462,8 +461,8 @@ RFROM:
 ;	R@	( -- w )
 ;	Copy top of return stack to stack.
 
-	.dw	LINK114
-LINK115:
+	.dw	LINK
+	LINK =	.
 	.db	2
 	.ascii	"R@"
 RAT:
@@ -478,8 +477,8 @@ RAT:
 ;	>R	( w -- )
 ;	Push data stack to return stack.
 
-	.dw	LINK115
-LINK116:
+	.dw	LINK
+	LINK =	.
 	.db	(COMPO+2)
 	.ascii	">R"
 TOR:
@@ -494,8 +493,8 @@ TOR:
 ;	SP@	( -- a )
 ;	Push current stack pointer.
 
-	.dw	LINK116
-LINK117:
+	.dw	LINK
+	LINK =	.
 	.db	3
 	.ascii	"sp@"
 SPAT:
@@ -507,8 +506,8 @@ SPAT:
 ;	SP!	( a -- )
 ;	Set	data stack pointer.
 
-	.dw	LINK117
-LINK118:
+	.dw	LINK
+	LINK =	.
 	.db	3
 	.ascii	"sp!"
 SPSTO:
@@ -518,8 +517,8 @@ SPSTO:
 ;	DROP	( w -- )
 ;	Discard top stack item.
 
-	.dw	LINK118
-LINK119:
+	.dw	LINK
+	LINK =	.
 	.db	4
 	.ascii	"DROP"
 DROP:
@@ -529,8 +528,8 @@ DROP:
 ;	DUP	( w -- w w )
 ;	Duplicate	top stack item.
 
-	.dw	LINK119
-LINK120:
+	.dw	LINK
+	LINK =	.
 	.db	3
 	.ascii	"DUP"
 DUPP:
@@ -543,8 +542,8 @@ DUPP:
 ;	SWAP	( w1 w2 -- w2 w1 )
 ;	Exchange top two stack items.
 
-	.dw	LINK120
-LINK121:
+	.dw	LINK
+	LINK =	.
 	.db	4
 	.ascii	"SWAP"
 SWAPP:
@@ -561,8 +560,8 @@ SWAPP:
 ;	OVER	( w1 w2 -- w1 w2 w1 )
 ;	Copy second stack item to top.
 
-	.dw	LINK121
-LINK122:
+	.dw	LINK
+	LINK =	.
 	.db	4
 	.ascii	"OVER"
 OVER:
@@ -575,8 +574,8 @@ OVER:
 ;	0<	( n -- t )
 ;	Return true if n is negative.
 
-	.dw	LINK122
-LINK123:
+	.dw	LINK
+	LINK =	.
 	.db	2
 	.ascii	"0<"
 ZLESS:
@@ -592,8 +591,8 @@ ZL1:    LD (X),A
 ;	AND	( w w -- w )
 ;	Bitwise AND.
 
-	.dw	LINK123
-LINK124:
+	.dw	LINK
+	LINK =	.
 	.db	3
 	.ascii	"AND"
 ANDD:
@@ -609,9 +608,9 @@ ANDD:
 ;	OR	( w w -- w )
 ;	Bitwise inclusive OR.
 
-	.dw	LINK124
+	.dw	LINK
 	
-LINK125:
+	LINK =	.
 	.db	2
 	.ascii	"OR"
 ORR:
@@ -627,8 +626,8 @@ ORR:
 ;	XOR	( w w -- w )
 ;	Bitwise exclusive OR.
 
-	.dw	LINK125
-LINK126:
+	.dw	LINK
+	LINK =	.
 	.db	3
 	.ascii	"XOR"
 XORR:
@@ -645,8 +644,8 @@ XORR:
 ;	Add two unsigned single
 ;	and return a double sum.
 
-	.dw	LINK126
-LINK127:
+	.dw	LINK
+	LINK =	.
 	.db	3
 	.ascii	"UM+"
 UPLUS:
@@ -669,8 +668,8 @@ UPL1: LD (1,X),A
 ;	doVAR	( -- a )
 ;	Code for VARIABLE and CREATE.
 
-	.dw	LINK127
-LINK128:
+	.dw	LINK
+	LINK =	.
 	.db	(COMPO+5)
 	.ascii	"doVar"
 DOVAR:
@@ -682,8 +681,8 @@ DOVAR:
 ;	BASE	( -- a )
 ;	Radix base for numeric I/O.
 
-	.dw	LINK128	
-LINK129:
+	.dw	LINK
+	LINK =	.
 	.db	4
 	.ascii	"BASE"
 BASE:
@@ -695,9 +694,9 @@ BASE:
 ;	tmp	( -- a )
 ;	A temporary storage.
 
-	.dw	LINK129
+	.dw	LINK
 	
-LINK130:
+	LINK =	.
 	.db	3
 	.ascii	"tmp"
 TEMP:
@@ -709,9 +708,9 @@ TEMP:
 ;	>IN	( -- a )
 ;	Hold parsing pointer.
 
-	.dw	LINK130
+	.dw	LINK
 	
-LINK131:
+	LINK =	.
 	.db	3
 	.ascii	">IN"
 INN:
@@ -723,9 +722,9 @@ INN:
 ;	#TIB	( -- a )
 ;	Count in terminal input buffer.
 
-	.dw	LINK131
+	.dw	LINK
 	
-LINK132:
+	LINK =	.
 	.db	4
 	.ascii	"#TIB"
 NTIB:
@@ -737,9 +736,9 @@ NTIB:
 ;	"EVAL	( -- a )
 ;	Execution vector of EVAL.
 
-	.dw	LINK132
+	.dw	LINK
 	
-LINK133:
+	LINK =	.
 	.db	5
 	.ascii	"'eval"
 TEVAL:
@@ -752,9 +751,9 @@ TEVAL:
 ;	HLD	( -- a )
 ;	Hold a pointer of output string.
 
-	.dw	LINK133
+	.dw	LINK
 	
-LINK134:
+	LINK =	.
 	.db	3
 	.ascii	"hld"
 HLD:
@@ -766,9 +765,9 @@ HLD:
 ;	CONTEXT ( -- a )
 ;	Start vocabulary search.
 
-	.dw	LINK134
+	.dw	LINK
 	
-LINK135:
+	LINK =	.
 	.db	7
 	.ascii	"CONTEXT"
 CNTXT:
@@ -780,9 +779,9 @@ CNTXT:
 ;	CP	( -- a )
 ;	Point to top of dictionary.
 
-	.dw	LINK135
+	.dw	LINK
 	
-LINK136:
+	LINK =	.
 	.db	2
 	.ascii	"cp"
 CPP:
@@ -794,9 +793,9 @@ CPP:
 ;	LAST	( -- a )
 ;	Point to last name in dictionary.
 
-	.dw	LINK136
+	.dw	LINK
 	
-LINK137:
+	LINK =	.
 	.db	4
 	.ascii	"last"
 LAST:
@@ -810,9 +809,9 @@ LAST:
 ;	?DUP	( w -- w w | 0 )
 ;	Dup tos if its is not zero.
 
-	.dw	LINK137
+	.dw	LINK
 	
-LINK138:
+	LINK =	.
 	.db	4
 	.ascii	"?DUP"
 QDUP:
@@ -826,9 +825,9 @@ QDUP1:	RET
 ;	ROT	( w1 w2 w3 -- w2 w3 w1 )
 ;	Rot 3rd item to top.
 
-	.dw	LINK138
+	.dw	LINK
 	
-LINK139:
+	LINK =	.
 	.db	3
 	.ascii	"ROT"
 ROT:
@@ -850,9 +849,9 @@ ROT:
 ;	2DROP	( w w -- )
 ;	Discard two items on stack.
 
-	.dw	LINK139
+	.dw	LINK
 	
-LINK140:
+	LINK =	.
 	.db	5
 	.ascii	"2DROP"
 DDROP:
@@ -862,9 +861,9 @@ DDROP:
 ;	2DUP	( w1 w2 -- w1 w2 w1 w2 )
 ;	Duplicate top two items.
 
-	.dw	LINK140
+	.dw	LINK
 	
-LINK141:
+	LINK =	.
 	.db	4
 	.ascii	"2DUP"
 DDUP:
@@ -880,9 +879,9 @@ DDUP:
 ;	+	( w w -- sum )
 ;	Add top two items.
 
-	.dw	LINK141
+	.dw	LINK
 	
-LINK142:
+	LINK =	.
 	.db	1
 	.ascii	"+"
 PLUS:
@@ -899,9 +898,9 @@ PLUS:
 ;	NOT	( w -- w )
 ;	One's complement of tos.
 
-	.dw	LINK142
+	.dw	LINK
 	
-LINK143:
+	LINK =	.
 	.db	3
 	.ascii	"NOT"
 INVER:
@@ -914,9 +913,9 @@ INVER:
 ;	NEGATE	( n -- -n )
 ;	Two's complement of tos.
 
-	.dw	LINK143
+	.dw	LINK
 	
-LINK144:
+	LINK =	.
 	.db	6
 	.ascii	"NEGATE"
 NEGAT:
@@ -929,9 +928,9 @@ NEGAT:
 ;	DNEGATE ( d -- -d )
 ;	Two's complement of top double.
 
-	.dw	LINK144
+	.dw	LINK
 	
-LINK145:
+	LINK =	.
 	.db	7
 	.ascii	"DNEGATE"
 DNEGA:
@@ -953,9 +952,9 @@ DN1: LDW (X),Y
 ;	-	( n1 n2 -- n1-n2 )
 ;	Subtraction.
 
-	.dw	LINK145
+	.dw	LINK
 	
-LINK146:
+	LINK =	.
 	.db	1
 	.ascii	"-"
 SUBB:
@@ -972,9 +971,9 @@ SUBB:
 ;	ABS	( n -- n )
 ;	Return	absolute value of n.
 
-	.dw	LINK146
+	.dw	LINK
 	
-LINK147:
+	LINK =	.
 	.db	3
 	.ascii	"ABS"
 ABSS:
@@ -988,9 +987,9 @@ AB1: RET
 ;	=	( w w -- t )
 ;	Return true if top two are equal.
 
-	.dw	LINK147
+	.dw	LINK
 	
-LINK148:
+	LINK =	.
 	.db	1
 	.ascii	"="
 EQUAL:
@@ -1011,9 +1010,9 @@ EQ1: LD (X),A
 ;	U<	( u u -- t )
 ;	Unsigned compare of top two items.
 
-	.dw	LINK148
+	.dw	LINK
 	
-LINK149:
+	LINK =	.
 	.db	2
 	.ascii	"U<"
 ULESS:
@@ -1034,9 +1033,9 @@ ULES1: LD (X),A
 ;	<	( n1 n2 -- t )
 ;	Signed compare of top two items.
 
-	.dw	LINK149
+	.dw	LINK
 	
-LINK150:
+	LINK =	.
 	.db	1
 	.ascii	"<"
 LESS:
@@ -1057,9 +1056,9 @@ LT1: LD (X),A
 ;	MAX	( n n -- n )
 ;	Return greater of two top items.
 
-	.dw	LINK150
+	.dw	LINK
 	
-LINK151:
+	LINK =	.
 	.db	3
 	.ascii	"MAX"
 MAX:
@@ -1077,9 +1076,9 @@ MAX1: ADDW X,#2
 ;	MIN	( n n -- n )
 ;	Return smaller of top two items.
 
-	.dw	LINK151
+	.dw	LINK
 	
-LINK152:
+	LINK =	.
 	.db	3
 	.ascii	"MIN"
 MIN:
@@ -1098,9 +1097,9 @@ MIN1: ADDW X,#2
 ;	Return true if u is within
 ;	range of ul and uh. ( ul <= u < uh )
 
-	.dw	LINK152
+	.dw	LINK
 	
-LINK153:
+	LINK =	.
 	.db	6
 	.ascii	"WITHIN"
 WITHI:
@@ -1117,9 +1116,9 @@ WITHI:
 ;	Unsigned divide of a double by a
 ;	single. Return mod and quotient.
 
-	.dw	LINK153
+	.dw	LINK
 	
-LINK154:
+	LINK =	.
 	.db	6
 	.ascii	"UM/MOD"
 UMMOD:
@@ -1164,9 +1163,9 @@ MMSM4:
 ;	Signed floored divide of double by
 ;	single. Return mod and quotient.
 
-	.dw	LINK154
+	.dw	LINK
 	
-LINK155:
+	LINK =	.
 	.db	5
 	.ascii	"M/MOD"
 MSMOD:
@@ -1200,9 +1199,9 @@ MMOD3:	RET
 ;	/MOD	( n n -- r q )
 ;	Signed divide. Return mod and quotient.
 
-	.dw	LINK155
+	.dw	LINK
 	
-LINK156:
+	LINK =	.
 	.db	4
 	.ascii	"/MOD"
 SLMOD:
@@ -1214,9 +1213,9 @@ SLMOD:
 ;	MOD	( n n -- r )
 ;	Signed divide. Return mod only.
 
-	.dw	LINK156
+	.dw	LINK
 	
-LINK157:
+	LINK =	.
 	.db	3
 	.ascii	"MOD"
 MODD:
@@ -1226,9 +1225,9 @@ MODD:
 ;	/	( n n -- q )
 ;	Signed divide. Return quotient only.
 
-	.dw	LINK157
+	.dw	LINK
 	
-LINK158:
+	LINK =	.
 	.db	1
 	.ascii	"/"
 SLASH:
@@ -1241,9 +1240,9 @@ SLASH:
 ;	UM*	( u u -- ud )
 ;	Unsigned multiply. Return double product.
 
-	.dw	LINK158
+	.dw	LINK
 	
-LINK159:
+	LINK =	.
 	.db	3
 	.ascii	"UM*"
 UMSTA:	; stack have 4 bytes u1=a,b u2=c,d
@@ -1291,9 +1290,9 @@ UMSTA:	; stack have 4 bytes u1=a,b u2=c,d
 ;	*	( n n -- n )
 ;	Signed multiply. Return single product.
 
-	.dw	LINK159
+	.dw	LINK
 	
-LINK160:
+	LINK =	.
 	.db	1
 	.ascii	"*"
 STAR:
@@ -1303,9 +1302,9 @@ STAR:
 ;	M*	( n n -- d )
 ;	Signed multiply. Return double product.
 
-	.dw	LINK160
+	.dw	LINK
 	
-LINK161:
+	LINK =	.
 	.db	2
 	.ascii	"M*"
 MSTAR:
@@ -1327,9 +1326,9 @@ MSTA1:	RET
 ;	Multiply n1 and n2, then divide
 ;	by n3. Return mod and quotient.
 
-	.dw	LINK161
+	.dw	LINK
 	
-LINK162:
+	LINK =	.
 	.db	5
 	.ascii	"*/MOD"
 SSMOD:
@@ -1342,9 +1341,9 @@ SSMOD:
 ;	Multiply n1 by n2, then divide
 ;	by n3. Return quotient only.
 
-	.dw	LINK162
+	.dw	LINK
 	
-LINK163:
+	LINK =	.
 	.db	2
 	.ascii	"*/"
 STASL:
@@ -1357,9 +1356,9 @@ STASL:
 ;	CELL+	( a -- a )
 ;	Add cell size in byte to address.
 
-	.dw	LINK163
+	.dw	LINK
 	
-LINK164:
+	LINK =	.
 	.db	2
 	.ascii	"2+"
 CELLP:
@@ -1372,9 +1371,9 @@ CELLP:
 ;	CELL-	( a -- a )
 ;	Subtract 2 from address.
 
-	.dw	LINK164
+	.dw	LINK
 	
-LINK165:
+	LINK =	.
 	.db	2
 	.ascii	"2-"
 CELLM:
@@ -1387,9 +1386,9 @@ CELLM:
 ;	CELLS	( n -- n )
 ;	Multiply tos by 2.
 
-	.dw	LINK165
+	.dw	LINK
 	
-LINK166:
+	LINK =	.
 	.db	2
 	.ascii	"2*"
 CELLS:
@@ -1402,9 +1401,9 @@ CELLS:
 ;	1+	( a -- a )
 ;	Add cell size in byte to address.
 
-	.dw	LINK166
+	.dw	LINK
 	
-LINK167:
+	LINK =	.
 	.db	2
 	.ascii	"1+"
 ONEP:
@@ -1417,9 +1416,9 @@ ONEP:
 ;	1-	( a -- a )
 ;	Subtract 2 from address.
 
-	.dw	LINK167
+	.dw	LINK
 	
-LINK168:
+	LINK =	.
 	.db	2
 	.ascii	"1-"
 ONEM:
@@ -1432,9 +1431,9 @@ ONEM:
 ;	2/	( n -- n )
 ;	Multiply tos by 2.
 
-	.dw	LINK168
+	.dw	LINK
 	
-LINK169:
+	LINK =	.
 	.db	2
 	.ascii	"2/"
 TWOSL:
@@ -1447,9 +1446,9 @@ TWOSL:
 ;	BL	( -- 32 )
 ;	Return 32,	blank character.
 
-	.dw	LINK169
+	.dw	LINK
 	
-LINK170:
+	LINK =	.
 	.db	2
 	.ascii	"BL"
 BLANK:
@@ -1461,9 +1460,9 @@ BLANK:
 ;	0	( -- 0)
 ;	Return 0.
 
-	.dw	LINK170
+	.dw	LINK
 	
-LINK171:
+	LINK =	.
 	.db	1
 	.ascii	"0"
 ZERO:
@@ -1475,9 +1474,9 @@ ZERO:
 ;	1	( -- 1)
 ;	Return 1.
 
-	.dw	LINK171
+	.dw	LINK
 	
-LINK172:
+	LINK =	.
 	.db	1
 	.ascii	"1"
 ONE:
@@ -1489,9 +1488,9 @@ ONE:
 ;	-1	( -- -1)
 ;	Return 32,	blank character.
 
-	.dw	LINK172
+	.dw	LINK
 	
-LINK173:
+	LINK =	.
 	.db	2
 	.ascii	"-1"
 MONE:
@@ -1503,9 +1502,9 @@ MONE:
 ;	>CHAR	( c -- c )
 ;	Filter non-printing characters.
 
-	.dw	LINK173
+	.dw	LINK
 	
-LINK174:
+	LINK =	.
 	.db	5
 	.ascii	">CHAR"
 TCHAR:
@@ -1527,9 +1526,9 @@ TCHA1:	RET
 ;	DEPTH	( -- n )
 ;	Return	depth of	data stack.
 
-	.dw	LINK174
+	.dw	LINK
 	
-LINK175:
+	LINK =	.
 	.db	5
 	.ascii	"DEPTH"
 DEPTH:
@@ -1545,9 +1544,9 @@ DEPTH:
 ;	PICK	( ... +n -- ... w )
 ;	Copy	nth stack item to tos.
 
-	.dw	LINK175
+	.dw	LINK
 	
-LINK176:
+	LINK =	.
 	.db	4
 	.ascii	"PICK"
 PICK:
@@ -1565,9 +1564,9 @@ PICK:
 ;	+!	( n a -- )
 ;	Add n to	contents at address a.
 
-	.dw	LINK176
+	.dw	LINK
 	
-LINK177:
+	LINK =	.
 	.db	2
 	.ascii	"+!"
 PSTOR:
@@ -1581,9 +1580,9 @@ PSTOR:
 ;	2!	( d a -- )
 ;	Store	double integer to address a.
 
-	.dw	LINK177
+	.dw	LINK
 	
-LINK178:
+	LINK =	.
 	.db	2
 	.ascii	"2!"
 DSTOR:
@@ -1596,9 +1595,9 @@ DSTOR:
 ;	2@	( a -- d )
 ;	Fetch double integer from address a.
 
-	.dw	LINK178
+	.dw	LINK
 	
-LINK179:
+	LINK =	.
 	.db	2
 	.ascii	"2@"
 DAT:
@@ -1612,9 +1611,9 @@ DAT:
 ;	Return count byte of a string
 ;	and add 1 to byte address.
 
-	.dw	LINK179
+	.dw	LINK
 	
-LINK180:
+	LINK =	.
 	.db	5
 	.ascii	"COUNT"
 COUNT:
@@ -1626,9 +1625,9 @@ COUNT:
 ;	HERE	( -- a )
 ;	Return	top of	code dictionary.
 
-	.dw	LINK180
+	.dw	LINK
 	
-LINK181:
+	LINK =	.
 	.db	4
 	.ascii	"HERE"
 HERE:
@@ -1639,9 +1638,9 @@ HERE:
 ;	Return address of text buffer
 ;	above	code dictionary.
 
-	.dw	LINK181
+	.dw	LINK
 	
-LINK182:
+	LINK =	.
 	.db	3
 	.ascii	"PAD"
 PAD:
@@ -1653,9 +1652,9 @@ PAD:
 ;	TIB	( -- a )
 ;	Return address of terminal input buffer.
 
-	.dw	LINK182
+	.dw	LINK
 	
-LINK183:
+	LINK =	.
 	.db	3
 	.ascii	"TIB"
 TIB:
@@ -1666,9 +1665,9 @@ TIB:
 ;	@EXECUTE	( a -- )
 ;	Execute vector stored in address a.
 
-	.dw	LINK183
+	.dw	LINK
 	
-LINK184:
+	LINK =	.
 	.db	8
 	.ascii	"@EXECUTE"
 ATEXE:
@@ -1682,9 +1681,9 @@ EXE1:	RET	;do nothing if zero
 ;	CMOVE	( b1 b2 u -- )
 ;	Copy u bytes from b1 to b2.
 
-	.dw	LINK184
+	.dw	LINK
 	
-LINK185:
+	LINK =	.
 	.db	5
 	.ascii	"CMOVE"
 CMOVE:
@@ -1707,9 +1706,9 @@ CMOV2:	CALL	DONXT
 ;	Fill u bytes of character c
 ;	to area beginning at b.
 
-	.dw	LINK185
+	.dw	LINK
 	
-LINK186:
+	LINK =	.
 	.db	4
 	.ascii	"FILL"
 FILL:
@@ -1728,9 +1727,9 @@ FILL2:	CALL	DONXT
 ;	ERASE	( b u -- )
 ;	Erase u bytes beginning at b.
 
-	.dw	LINK186
+	.dw	LINK
 	
-LINK187:
+	LINK =	.
 	.db	5
 	.ascii	"ERASE"
 ERASE:
@@ -1741,9 +1740,9 @@ ERASE:
 ;	Build a counted string with
 ;	u characters from b. Null fill.
 
-	.dw	LINK187
+	.dw	LINK
 	
-LINK188:
+	LINK =	.
 	.db	5
 	.ascii	"PACK$"
 PACKS:
@@ -1762,9 +1761,9 @@ PACKS:
 ;	DIGIT	( u -- c )
 ;	Convert digit u to a character.
 
-	.dw	LINK188
+	.dw	LINK
 	
-LINK189:
+	LINK =	.
 	.db	5
 	.ascii	"DIGIT"
 DIGIT:
@@ -1783,9 +1782,9 @@ DIGIT:
 ;	EXTRACT ( n base -- n c )
 ;	Extract least significant digit from n.
 
-	.dw	LINK189
+	.dw	LINK
 	
-LINK190:
+	LINK =	.
 	.db	7
 	.ascii	"EXTRACT"
 EXTRC:
@@ -1798,9 +1797,9 @@ EXTRC:
 ;	<#	( -- )
 ;	Initiate	numeric output process.
 
-	.dw	LINK190
+	.dw	LINK
 	
-LINK191:
+	LINK =	.
 	.db	2
 	.ascii	"<#"
 BDIGS:
@@ -1811,9 +1810,9 @@ BDIGS:
 ;	HOLD	( c -- )
 ;	Insert a character into output string.
 
-	.dw	LINK191
+	.dw	LINK
 	
-LINK192:
+	LINK =	.
 	.db	4
 	.ascii	"HOLD"
 HOLD:
@@ -1829,9 +1828,9 @@ HOLD:
 ;	Extract one digit from u and
 ;	append digit to output string.
 
-	.dw	LINK192
+	.dw	LINK
 	
-LINK193:
+	LINK =	.
 	.db	1
 	.ascii	"#"
 DIG:
@@ -1844,9 +1843,9 @@ DIG:
 ;	Convert u until all digits
 ;	are added to output string.
 
-	.dw	LINK193
+	.dw	LINK
 	
-LINK194:
+	LINK =	.
 	.db	2
 	.ascii	"#S"
 DIGS:
@@ -1861,9 +1860,9 @@ DIGS2:	RET
 ;	Add a minus sign to
 ;	numeric output string.
 
-	.dw	LINK194
+	.dw	LINK
 	
-LINK195:
+	LINK =	.
 	.db	4
 	.ascii	"SIGN"
 SIGN:
@@ -1878,9 +1877,9 @@ SIGN1:	RET
 ;	#>	( w -- b u )
 ;	Prepare output string.
 
-	.dw	LINK195
+	.dw	LINK
 	
-LINK196:
+	LINK =	.
 	.db	2
 	.ascii	"#>"
 EDIGS:
@@ -1895,9 +1894,9 @@ EDIGS:
 ;	Convert a signed integer
 ;	to a numeric string.
 
-	.dw	LINK196
+	.dw	LINK
 	
-LINK197:
+	LINK =	.
 	.db	3
 	.ascii	"str"
 STR:
@@ -1914,9 +1913,9 @@ STR:
 ;	Use radix 16 as base for
 ;	numeric conversions.
 
-	.dw	LINK197
+	.dw	LINK
 	
-LINK198:
+	LINK =	.
 	.db	3
 	.ascii	"HEX"
 HEX:
@@ -1929,9 +1928,9 @@ HEX:
 ;	Use radix 10 as base
 ;	for numeric conversions.
 
-	.dw	LINK198
+	.dw	LINK
 	
-LINK199:
+	LINK =	.
 	.db	7
 	.ascii	"DECIMAL"
 DECIM:
@@ -1946,9 +1945,9 @@ DECIM:
 ;	Convert a character to its numeric
 ;	value. A flag indicates success.
 
-	.dw	LINK199
+	.dw	LINK
 	
-LINK200:
+	LINK =	.
 	.db	6
 	.ascii	"DIGIT?"
 DIGTQ:
@@ -1978,9 +1977,9 @@ DGTQ1:	CALL	DUPP
 ;	Convert a number string to
 ;	integer. Push a flag on tos.
 
-	.dw	LINK200
+	.dw	LINK
 	
-LINK201:
+	LINK =	.
 	.db	7
 	.ascii	"NUMBER?"
 NUMBQ:
@@ -2062,9 +2061,9 @@ NUMQ6:	CALL	RFROM
 ;	Wait for and return an
 ;	input character.
 
-	.dw	LINK201
+	.dw	LINK
 	
-LINK202:
+	LINK =	.
 	.db	3
 	.ascii	"KEY"
 KEY:
@@ -2077,9 +2076,9 @@ KEY1:	CALL	QKEY
 ;	Return false if no input,
 ;	else pause and if CR return true.
 
-	.dw	LINK202
+	.dw	LINK
 	
-LINK203:
+	LINK =	.
 	.db	4
 	.ascii	"NUF?"
 NUFQ:
@@ -2103,9 +2102,9 @@ NUFQ1:	RET
 ;	Send	blank character to
 ;	output device.
 
-	.dw	LINK203
+	.dw	LINK
 	
-LINK204:
+	LINK =	.
 	.db	5
 	.ascii	"SPACE"
 SPACE:
@@ -2115,9 +2114,9 @@ SPACE:
 ;	SPACES	( +n -- )
 ;	Send n spaces to output device.
 
-	.dw	LINK204
+	.dw	LINK
 	
-LINK205:
+	LINK =	.
 	.db	6
 	.ascii	"SPACES"
 SPACS:
@@ -2133,9 +2132,9 @@ CHAR2:	CALL	DONXT
 ;	TYPE	( b u -- )
 ;	Output u characters from b.
 
-	.dw	LINK205
+	.dw	LINK
 	
-LINK206:
+	LINK =	.
 	.db	4
 	.ascii	"TYPE"
 TYPES:
@@ -2153,9 +2152,9 @@ TYPE2:	CALL	DONXT
 ;	Output a carriage return
 ;	and a line feed.
 
-	.dw	LINK206
+	.dw	LINK
 	
-LINK207:
+	LINK =	.
 	.db	2
 	.ascii	"CR"
 CR:
@@ -2172,9 +2171,9 @@ CR:
 ;	Return	address of a compiled
 ;	string.
 
-	.dw	LINK207
+	.dw	LINK
 	
-LINK208:
+	LINK =	.
 	.db	(COMPO+3)
 	.ascii	"do$"
 DOSTR:
@@ -2192,9 +2191,9 @@ DOSTR:
 ;	Run time routine compiled by $".
 ;	Return address of a compiled string.
 
-	.dw	LINK208
+	.dw	LINK
 	
-LINK209:
+	LINK =	.
 	.db	(COMPO+3)
 	.ascii	'$"|'
 STRQP:
@@ -2205,9 +2204,9 @@ STRQP:
 ;	Run time routine of ." .
 ;	Output a compiled string.
 
-	.dw	LINK209
+	.dw	LINK
 	
-LINK210:
+	LINK =	.
 	.db	(COMPO+3)
 	.ascii	'."|'
 DOTQP:
@@ -2219,9 +2218,9 @@ DOTQP:
 ;	Display an integer in a field
 ;	of n columns, right justified.
 
-	.dw	LINK210
+	.dw	LINK
 	
-LINK211:
+	LINK =	.
 	.db	2
 	.ascii	".R"
 DOTR:
@@ -2237,9 +2236,9 @@ DOTR:
 ;	Display an unsigned integer
 ;	in n column, right justified.
 
-	.dw	LINK211
+	.dw	LINK
 	
-LINK212:
+	LINK =	.
 	.db	3
 	.ascii	"U.R"
 UDOTR:
@@ -2257,9 +2256,9 @@ UDOTR:
 ;	Display an unsigned integer
 ;	in free format.
 
-	.dw	LINK212
+	.dw	LINK
 	
-LINK213:
+	LINK =	.
 	.db	2
 	.ascii	"U."
 UDOT:
@@ -2273,9 +2272,9 @@ UDOT:
 ;	Display an integer in free
 ;	format, preceeded by a space.
 
-	.dw	LINK213
+	.dw	LINK
 	
-LINK214:
+	LINK =	.
 	.db	1
 	.ascii	"."
 DOT:
@@ -2294,9 +2293,9 @@ DOT1:	CALL	STR
 ;	?	( a -- )
 ;	Display contents in memory cell.
 
-	.dw	LINK214
+	.dw	LINK
 	
-LINK215:
+	LINK =	.
 	.db	1
 	.ascii	"?"
 QUEST:
@@ -2309,9 +2308,9 @@ QUEST:
 ;	Scan string delimited by c.
 ;	Return found string and its offset.
 
-	.dw	LINK215
+	.dw	LINK
 	
-LINK216:
+	LINK =	.
 	.db	5
 	.ascii	"parse"
 PARS:
@@ -2387,9 +2386,9 @@ PARS8:	CALL	OVER
 ;	Scan input stream and return
 ;	counted string delimited by c.
 
-	.dw	LINK216
+	.dw	LINK
 	
-LINK217:
+	LINK =	.
 	.db	5
 	.ascii	"PARSE"
 PARSE:
@@ -2411,9 +2410,9 @@ PARSE:
 ;	.(	( -- )
 ;	Output following string up to next ) .
 
-	.dw	LINK217
+	.dw	LINK
 	
-LINK218:
+	LINK =	.
 	.db	(IMEDD+2)
 	.ascii	".("
 DOTPR:
@@ -2426,9 +2425,9 @@ DOTPR:
 ;	Ignore following string up to next ).
 ;	A comment.
 
-	.dw	LINK218
+	.dw	LINK
 	
-LINK219:
+	LINK =	.
 	.db	(IMEDD+1)
 	.ascii	"("
 PAREN:
@@ -2441,9 +2440,9 @@ PAREN:
 ;	Ignore following text till
 ;	end of line.
 
-	.dw	LINK219
+	.dw	LINK
 	
-LINK220:
+	LINK =	.
 	.db	(IMEDD+1)
 	.ascii	"\\"
 BKSLA:
@@ -2456,9 +2455,9 @@ BKSLA:
 ;	Parse a word from input stream
 ;	and copy it to code dictionary.
 
-	.dw	LINK220
+	.dw	LINK
 	
-LINK221:
+	LINK =	.
 	.db	4
 	.ascii	"WORD"
 WORDD:
@@ -2471,9 +2470,9 @@ WORDD:
 ;	Parse a word from input stream
 ;	and copy it to name dictionary.
 
-	.dw	LINK221
+	.dw	LINK
 	
-LINK222:
+	LINK =	.
 	.db	5
 	.ascii	"TOKEN"
 TOKEN:
@@ -2486,9 +2485,9 @@ TOKEN:
 ;	Return a code address given
 ;	a name address.
 
-	.dw	LINK222
+	.dw	LINK
 	
-LINK223:
+	LINK =	.
 	.db	5
 	.ascii	"NAME>"
 NAMET:
@@ -2502,9 +2501,9 @@ NAMET:
 ;	Compare u cells in two
 ;	strings. Return 0 if identical.
 
-	.dw	LINK223
+	.dw	LINK
 	
-LINK224:
+	LINK =	.
 	.db	5
 	.ascii	"SAME?"
 SAMEQ:
@@ -2533,9 +2532,9 @@ SAME2:	CALL	DONXT
 ;	Search vocabulary for string.
 ;	Return ca and na if succeeded.
 
-	.dw	LINK224
+	.dw	LINK
 	
-LINK225:
+	LINK =	.
 	.db	4
 	.ascii	"find"
 FIND:
@@ -2594,9 +2593,9 @@ FIND5:	CALL	RFROM
 ;	NAME?	( a -- ca na | a F )
 ;	Search vocabularies for a string.
 
-	.dw	LINK225
+	.dw	LINK
 	
-LINK226:
+	LINK =	.
 	.db	5
 	.ascii	"NAME?"
 NAMEQ:
@@ -2608,9 +2607,9 @@ NAMEQ:
 ;	^H	( bot eot cur -- bot eot cur )
 ;	Backup cursor by one character.
 
-	.dw	LINK226
+	.dw	LINK
 	
-LINK227:
+	LINK =	.
 	.db	2
 	.ascii	"^h"
 BKSP:
@@ -2637,9 +2636,9 @@ BACK1:	RET
 ;	Accept and echo key stroke
 ;	and bump cursor.
 
-	.dw	LINK227
+	.dw	LINK
 	
-LINK228:
+	LINK =	.
 	.db	3
 	.ascii	"TAP"
 TAP:
@@ -2653,9 +2652,9 @@ TAP:
 ;	Process a key stroke,
 ;	CR or backspace.
 
-	.dw	LINK228
+	.dw	LINK
 	
-LINK229:
+	LINK =	.
 	.db	4
 	.ascii	"kTAP"
 KTAP:
@@ -2684,9 +2683,9 @@ KTAP2:	CALL	DROP
 ;	Accept characters to input
 ;	buffer. Return with actual count.
 
-	.dw	LINK229
+	.dw	LINK
 	
-LINK230:
+	LINK =	.
 	.db	6
 	.ascii	"ACCEPT"
 ACCEP:
@@ -2717,9 +2716,9 @@ ACCP4:	CALL	DROP
 ;	Accept input stream to
 ;	terminal input buffer.
 
-	.dw	LINK230
+	.dw	LINK
 	
-LINK231:
+	LINK =	.
 	.db	5
 	.ascii	"QUERY"
 QUERY:
@@ -2738,9 +2737,9 @@ QUERY:
 ;	Reset data stack and
 ;	jump to QUIT.
 
-	.dw	LINK231
+	.dw	LINK
 	
-LINK232:
+	LINK =	.
 	.db	5
 	.ascii	"ABORT"
 ABORT:
@@ -2751,9 +2750,9 @@ ABORT:
 ;	Run time routine of ABORT".
 ;	Abort with a message.
 
-	.dw	LINK232
+	.dw	LINK
 	
-LINK233:
+	LINK =	.
 	.db	(COMPO+6)
 	.ascii	"abort"
 	.db 	'"
@@ -2778,9 +2777,9 @@ ABOR2:	CALL	DOSTR
 ;	Interpret a word. If failed,
 ;	try to convert it to an integer.
 
-	.dw	LINK233
+	.dw	LINK
 	
-LINK234:
+	LINK =	.
 	.db	10
 	.ascii	"$INTERPRET"
 INTER:
@@ -2804,9 +2803,9 @@ INTE1:	CALL	NUMBQ	;convert a number
 ;	[	( -- )
 ;	Start	text interpreter.
 
-	.dw	LINK234
+	.dw	LINK
 	
-LINK235:
+	LINK =	.
 	.db	(IMEDD+1)
 	.ascii	"["
 LBRAC:
@@ -2818,9 +2817,9 @@ LBRAC:
 ;	.OK	( -- )
 ;	Display 'ok' while interpreting.
 
-	.dw	LINK235
+	.dw	LINK
 	
-LINK236:
+	LINK =	.
 	.db	3
 	.ascii	".OK"
 DOTOK:
@@ -2839,9 +2838,9 @@ DOTO1:	JP	CR
 ;	?STACK	( -- )
 ;	Abort if stack underflows.
 
-	.dw	LINK236
+	.dw	LINK
 	
-LINK237:
+	LINK =	.
 	.db	6
 	.ascii	"?STACK"
 QSTAC:
@@ -2855,9 +2854,9 @@ QSTAC:
 ;	EVAL	( -- )
 ;	Interpret	input stream.
 
-	.dw	LINK237
+	.dw	LINK
 	
-LINK238:
+	LINK =	.
 	.db	4
 	.ascii	"EVAL"
 EVAL:
@@ -2878,9 +2877,9 @@ EVAL2:	CALL	DROP
 ;	Reset data stack pointer and
 ;	terminal input buffer.
 
-	.dw	LINK238
+	.dw	LINK
 	
-LINK239:
+	LINK =	.
 	.db	6
 	.ascii	"PRESET"
 PRESE:
@@ -2897,9 +2896,9 @@ PRESE:
 ;	Reset return stack pointer
 ;	and start text interpreter.
 
-	.dw	LINK239
+	.dw	LINK
 	
-LINK240:
+	LINK =	.
 	.db	4
 	.ascii	"QUIT"
 QUIT:
@@ -2917,9 +2916,9 @@ QUIT2:	CALL	QUERY	;get input
 ;	Search vocabularies for
 ;	next word in input stream.
 
-	.dw	LINK240
+	.dw	LINK
 	
-LINK241:
+	LINK =	.
 	.db	1
 	.ascii	"'"
 TICK:
@@ -2932,9 +2931,9 @@ TICK:
 ;	ALLOT	( n -- )
 ;	Allocate n bytes to	code dictionary.
 
-	.dw	LINK241
+	.dw	LINK
 	
-LINK242:
+	LINK =	.
 	.db	5
 	.ascii	"ALLOT"
 ALLOT:
@@ -2945,9 +2944,9 @@ ALLOT:
 ;	Compile an integer into
 ;	code dictionary.
 
-	.dw	LINK242
+	.dw	LINK
 	
-LINK243:
+	LINK =	.
 	.db	1
 	.ascii	","
 COMMA:
@@ -2962,9 +2961,9 @@ COMMA:
 ;	Compile a byte into
 ;	code dictionary.
 
-	.dw	LINK243
+	.dw	LINK
 	
-LINK244:
+	LINK =	.
 	.db	2
 	.ascii	"C,"
 CCOMMA:
@@ -2979,9 +2978,9 @@ CCOMMA:
 ;	Compile next immediate
 ;	word into code dictionary.
 
-	.dw	LINK244
+	.dw	LINK
 	
-LINK245:
+	LINK =	.
 	.db	(IMEDD+9)
 	.ascii	"[COMPILE]"
 BCOMP:
@@ -2992,9 +2991,9 @@ BCOMP:
 ;	Compile next jsr in
 ;	colon list to code dictionary.
 
-	.dw	LINK245
+	.dw	LINK
 	
-LINK246:
+	LINK =	.
 	.db	(COMPO+7)
 	.ascii	"COMPILE"
 COMPI:
@@ -3010,9 +3009,9 @@ COMPI:
 ;	Compile tos to dictionary
 ;	as an integer literal.
 
-	.dw	LINK246
+	.dw	LINK
 	
-LINK247:
+	LINK =	.
 	.db	(IMEDD+7)
 	.ascii	"LITERAL"
 LITER:
@@ -3024,9 +3023,9 @@ LITER:
 ;	Compile a literal string
 ;	up to next " .
 
-	.dw	LINK247
+	.dw	LINK
 	
-LINK248:
+	LINK =	.
 	.db	3
 	.ascii	'$,"'
 STRCQ:
@@ -3046,9 +3045,9 @@ STRCQ:
 ;	Start a FOR-NEXT loop
 ;	structure in a colon definition.
 
-	.dw	LINK248
+	.dw	LINK
 	
-LINK249:
+	LINK =	.
 	.db	(IMEDD+3)
 	.ascii	"FOR"
 FOR:
@@ -3059,9 +3058,9 @@ FOR:
 ;	NEXT	( a -- )
 ;	Terminate a FOR-NEXT loop.
 
-	.dw	LINK249
+	.dw	LINK
 	
-LINK250:
+	LINK =	.
 	.db	(IMEDD+4)
 	.ascii	"NEXT"
 NEXT:
@@ -3073,9 +3072,9 @@ NEXT:
 ;	Start an infinite or
 ;	indefinite loop structure.
 
-	.dw	LINK250
+	.dw	LINK
 	
-LINK251:
+	LINK =	.
 	.db	(IMEDD+5)
 	.ascii	"BEGIN"
 BEGIN:
@@ -3085,9 +3084,9 @@ BEGIN:
 ;	Terminate a BEGIN-UNTIL
 ;	indefinite loop structure.
 
-	.dw	LINK251
+	.dw	LINK
 	
-LINK252:
+	LINK =	.
 	.db	(IMEDD+5)
 	.ascii	"UNTIL"
 UNTIL:
@@ -3099,9 +3098,9 @@ UNTIL:
 ;	Terminate a BEGIN-AGAIN
 ;	infinite loop structure.
 
-	.dw	LINK252
+	.dw	LINK
 	
-LINK253:
+	LINK =	.
 	.db	(IMEDD+5)
 	.ascii	"AGAIN"
 AGAIN:
@@ -3112,9 +3111,9 @@ AGAIN:
 ;	IF	( -- A )
 ;	Begin a conditional branch.
 
-	.dw	LINK253
+	.dw	LINK
 	
-LINK254:
+	LINK =	.
 	.db	(IMEDD+2)
 	.ascii	"IF"
 IFF:
@@ -3127,9 +3126,9 @@ IFF:
 ;	THEN	( A -- )
 ;	Terminate a conditional branch structure.
 
-	.dw	LINK254
+	.dw	LINK
 	
-LINK255:
+	LINK =	.
 	.db	(IMEDD+4)
 	.ascii	"THEN"
 THENN:
@@ -3140,9 +3139,9 @@ THENN:
 ;	ELSE	( A -- A )
 ;	Start the false clause in an IF-ELSE-THEN structure.
 
-	.dw	LINK255
+	.dw	LINK
 	
-LINK256:
+	LINK =	.
 	.db	(IMEDD+4)
 	.ascii	"ELSE"
 ELSEE:
@@ -3159,9 +3158,9 @@ ELSEE:
 ;	AHEAD	( -- A )
 ;	Compile a forward branch instruction.
 
-	.dw	LINK256
+	.dw	LINK
 	
-LINK257:
+	LINK =	.
 	.db	(IMEDD+5)
 	.ascii	"AHEAD"
 AHEAD:
@@ -3174,9 +3173,9 @@ AHEAD:
 ;	WHILE	( a -- A a )
 ;	Conditional branch out of a BEGIN-WHILE-REPEAT loop.
 
-	.dw	LINK257
+	.dw	LINK
 	
-LINK258:
+	LINK =	.
 	.db	(IMEDD+5)
 	.ascii	"WHILE"
 WHILE:
@@ -3190,9 +3189,9 @@ WHILE:
 ;	REPEAT	( A a -- )
 ;	Terminate a BEGIN-WHILE-REPEAT indefinite loop.
 
-	.dw	LINK258
+	.dw	LINK
 	
-LINK259:
+	LINK =	.
 	.db	(IMEDD+6)
 	.ascii	"REPEAT"
 REPEA:
@@ -3206,9 +3205,9 @@ REPEA:
 ;	AFT	( a -- a A )
 ;	Jump to THEN in a FOR-AFT-THEN-NEXT loop the first time through.
 
-	.dw	LINK259
+	.dw	LINK
 	
-LINK260:
+	LINK =	.
 	.db	(IMEDD+3)
 	.ascii	"AFT"
 AFT:
@@ -3220,9 +3219,9 @@ AFT:
 ;	ABORT"	( -- ; <string> )
 ;	Conditional abort with an error message.
 
-	.dw	LINK260
+	.dw	LINK
 	
-LINK261:
+	LINK =	.
 	.db	(IMEDD+6)
 	.ascii	"ABORT"
 	.db	'"
@@ -3234,9 +3233,9 @@ ABRTQ:
 ;	$"	( -- ; <string> )
 ;	Compile an inline string literal.
 
-	.dw	LINK261
+	.dw	LINK
 	
-LINK262:
+	LINK =	.
 	.db	(IMEDD+2)
 	.ascii	'$"'
 STRQ:
@@ -3247,9 +3246,9 @@ STRQ:
 ;	."	( -- ; <string> )
 ;	Compile an inline string literal to be typed out at run time.
 
-	.dw	LINK262
+	.dw	LINK
 	
-LINK263:
+	LINK =	.
 	.db	(IMEDD+2)
 	.ascii	'."'
 DOTQ:
@@ -3263,9 +3262,9 @@ DOTQ:
 ;	Display a warning message
 ;	if word already exists.
 
-	.dw	LINK263
+	.dw	LINK
 	
-LINK264:
+	LINK =	.
 	.db	7
 	.ascii	"?UNIQUE"
 UNIQU:
@@ -3285,9 +3284,9 @@ UNIQ1:	JP	DROP
 ;	Build a new dictionary name
 ;	using string at na.
 
-	.dw	LINK264
+	.dw	LINK
 	
-LINK265:
+	LINK =	.
 	.db	3
 	.ascii	"$,n"
 SNAME:
@@ -3321,9 +3320,9 @@ PNAM1:	CALL	STRQP
 ;	Compile next word to
 ;	dictionary as a token or literal.
 
-	.dw	LINK265
+	.dw	LINK
 	
-LINK266:
+	LINK =	.
 	.db	8
 	.ascii	"$COMPILE"
 SCOMP:
@@ -3347,9 +3346,9 @@ SCOM2:	CALL	NUMBQ	;try to convert to number
 ;	OVERT	( -- )
 ;	Link a new word into vocabulary.
 
-	.dw	LINK266
+	.dw	LINK
 	
-LINK267:
+	LINK =	.
 	.db	5
 	.ascii	"OVERT"
 OVERT:
@@ -3361,9 +3360,9 @@ OVERT:
 ;	;	( -- )
 ;	Terminate a colon definition.
 
-	.dw	LINK267
+	.dw	LINK
 	
-LINK268:
+	LINK =	.
 	.db	(IMEDD+COMPO+1)
 	.ascii	";"
 SEMIS:
@@ -3376,9 +3375,9 @@ SEMIS:
 ;	Start compiling words in
 ;	input stream.
 
-	.dw	LINK268
+	.dw	LINK
 	
-LINK269:
+	LINK =	.
 	.db	1
 	.ascii	"]"
 RBRAC:
@@ -3390,9 +3389,9 @@ RBRAC:
 ;	CALL,	( ca -- )
 ;	Compile a subroutine call.
 
-	.dw	LINK269
+	.dw	LINK
 	
-LINK270:
+	LINK =	.
 	.db	4
 	.ascii	"CALL,"
 JSRC:
@@ -3405,9 +3404,9 @@ JSRC:
 ;	Start a new colon definition
 ;	using next word as its name.
 
-	.dw	LINK270
+	.dw	LINK
 	
-LINK271:
+	LINK =	.
 	.db	1
 	.ascii	":"
 COLON:
@@ -3419,9 +3418,9 @@ COLON:
 ;	Make last compiled word
 ;	an immediate word.
 
-	.dw	LINK271
+	.dw	LINK
 	
-LINK272:
+	LINK =	.
 	.db	9
 	.ascii	"IMMEDIATE"
 IMMED:
@@ -3441,9 +3440,9 @@ IMMED:
 ;	Compile a new array
 ;	without allocating space.
 
-	.dw	LINK272
+	.dw	LINK
 	
-LINK273:
+	LINK =	.
 	.db	6
 	.ascii	"CREATE"
 CREAT:
@@ -3458,9 +3457,9 @@ CREAT:
 ;	Compile a new variable
 ;	initialized to 0.
 
-	.dw	LINK273
+	.dw	LINK
 	
-LINK274:
+	LINK =	.
 	.db	8
 	.ascii	"VARIABLE"
 VARIA:
@@ -3474,9 +3473,9 @@ VARIA:
 ;	Display a string. Filter
 ;	non-printing characters.
 
-	.dw	LINK274
+	.dw	LINK
 	
-LINK275:
+	LINK =	.
 	.db	5
 	.ascii	"_TYPE"
 UTYPE:
@@ -3495,9 +3494,9 @@ UTYP2:	CALL	DONXT
 ;	Dump u bytes from ,
 ;	leaving a+u on	stack.
 
-	.dw	LINK275
+	.dw	LINK
 	
-LINK276:
+	LINK =	.
 	.db	3
 	.ascii	"dm+"
 DUMPP:
@@ -3522,9 +3521,9 @@ PDUM2:	CALL	DONXT
 ;	Dump u bytes from a,
 ;	in a formatted manner.
 
-	.dw	LINK276
+	.dw	LINK
 	
-LINK277:
+	LINK =	.
 	.db	4
 	.ascii	"DUMP"
 DUMP:
@@ -3556,9 +3555,9 @@ DUMP3:	CALL	DROP
 ;	.S	( ... -- ... )
 ;	Display	contents of stack.
 
-	.dw	LINK277
+	.dw	LINK
 	
-LINK278:
+	LINK =	.
 	.db	2
 	.ascii	".S"
 DOTS:
@@ -3581,9 +3580,9 @@ DOTS2:	CALL	DONXT
 ;	Convert code address
 ;	to a name address.
 
-	.dw	LINK278
+	.dw	LINK
 	
-LINK279:
+	LINK =	.
 	.db	5
 	.ascii	">NAME"
 TNAME:
@@ -3607,9 +3606,9 @@ TNAM4:	CALL	DDROP
 ;	.ID	( na -- )
 ;	Display	name at address.
 
-	.dw	LINK279
+	.dw	LINK
 	
-LINK280:
+	LINK =	.
 	.db	3
 	.ascii	".ID"
 DOTID:
@@ -3630,9 +3629,9 @@ DOTI1:	CALL	DOTQP
 ;	A simple decompiler.
 ;	Updated for byte machines.
 
-	.dw	LINK280
+	.dw	LINK
 	
-LINK281:
+	LINK =	.
 	.db	3
 	.ascii	"SEE"
 SEE:
@@ -3665,9 +3664,9 @@ SEE4:	CALL	NUFQ	;user control
 ;	WORDS	( -- )
 ;	Display names in vocabulary.
 
-	.dw	LINK281
+	.dw	LINK
 	
-LINK282:
+	LINK =	.
 	.db	5
 	.ascii	"WORDS"
 WORDS:
@@ -3692,9 +3691,9 @@ WORS2:	RET
 ;	hi	( -- )
 ;	Display sign-on message.
 
-	.dw	LINK282
+	.dw	LINK
 	
-LINK283:
+	LINK =	.
 	.db	2
 	.ascii	"hi"
 HI:
@@ -3711,7 +3710,7 @@ HI:
 ;	DEBUG	( -- )
 ;	Display sign-on message.
 
-;	.dw	LINK283
+	.dw	LINK
 	
 ;LINK CEQU *
 ;	.db	5
@@ -3843,9 +3842,9 @@ HI:
 ;	'BOOT	( -- a )
 ;	The application startup vector.
 
-	.dw	LINK283
+	.dw	LINK
 	
-LINK284:
+	LINK =	.
 	.db	5
 	.ascii	"'BOOT"
 TBOOT:
@@ -3855,9 +3854,9 @@ TBOOT:
 ;	COLD	( -- )
 ;	The hilevel cold start sequence.
 
-	.dw	LINK284
+	.dw	LINK
 	
-LINK285:
+	LINK =	.
 	.db	4
 	.ascii	"COLD"
 COLD:
@@ -3883,8 +3882,8 @@ COLD1:	CALL	DOLIT
 ;	I	( -- w )
 ;	Get inner FOR - NEXT index
 
-	.dw	LINK285
-LINK286:
+	.dw	LINK
+	LINK =	.
 	.db	(1)
 	.ascii	"I"
 IGET:
@@ -3898,8 +3897,8 @@ IGET:
 ;	Set/RESET bit# b (0..7) at address a to bool t
 ;       Creates/executes BSER/BRES + RET on data stack  
 
-	.dw	LINK286
-LINK287:
+	.dw	LINK
+	LINK =	.
 	.db	(3)
 	.ascii	"BSR"
 BRSS:
@@ -3923,8 +3922,8 @@ $1:     LD      (1,X),A
 ;	0=	( w -- t )
 ;	Return true if w is equal to 0
 
-	.dw	LINK287
-LINK288:
+	.dw	LINK
+	LINK =	.
 	.db	(2)
 	.ascii	"0="
 ZEQS:
@@ -3940,8 +3939,8 @@ ZEQS:
 
 ;       2C!  ( w b -- )
 ;       Store word to consecutive MSB-LSB byte registers 
-	.dw	LINK288
-LINK289:
+	.dw	LINK
+	LINK =	.
 	.db	(3)
 	.ascii	"2C!"
 DCSTOR:        
@@ -3956,8 +3955,8 @@ DCSTOR:
 
 ;       2C@  ( a -- w )
 ;       Fetch word from consecutive MSB / LSB registers 
-	.dw	LINK289
-LINK290:
+	.dw	LINK
+        LINK =  .
 	.db	(3)
 	.ascii	"2C@"
 DCAT:        
@@ -3975,7 +3974,7 @@ DCAT:
        
 ;===============================================================
 
-	LASTN	=	LINK290	;last name defined
+	LASTN	=	LINK	;last name defined
 
  	.area CODE
 	.area INITIALIZER
