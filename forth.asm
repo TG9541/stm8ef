@@ -4008,38 +4008,37 @@ DCAT:
 
         .ifne   MODULE_W1209
 ;-----------------------------------------------
-;       7S  ( c -- )
-;       Put c to W1209 7-seg LED display row
+
+;       7S  ( w -- )
+;       Put w to W1209 7-seg LED display (hex) 
 	.dw	LINK
         
         LINK =  .
 	.db	(2)
 	.ascii	"7S"
 SSEG:   
-        ; bit 76453210
-        ;  PA .....FB.
-        ;  PC CG...... 
-        ;  PD ..A.DPE.
-        LD      A,(1,X)
-        ADDW    X,#2
-SSEGOUT:
-        RRC     A
-        BCCM    PD_ODR,#5       ; A
-        RRC     A
-        BCCM    PA_ODR,#2       ; B
-        RRC     A
-        BCCM    PC_ODR,#7       ; C
-        RRC     A
-        BCCM    PD_ODR,#3       ; D
-        RRC     A
-        BCCM    PD_ODR,#1       ; E
-        RRC     A
-        BCCM    PA_ODR,#1       ; F
-        RRC     A
-        BCCM    PC_ODR,#6       ; G
-        RRC     A
-        BCCM    PD_ODR,#2       ; P
-        RET      
+ ; doLit 2 >R DUP doLit F AND 7SH + C@ I 2+ C! doLit 10 / next 8C DROP
+        CALL    DOLIT
+        .dw     2
+        CALL    TOR
+1$:
+        CALL    DUPP
+        CALL    DOLIT
+        .dw     0x0F
+        CALL    ANDD
+        CALL    SSHEX
+        CALL    PLUS
+        CALL    CAT
+        CALL    IGET
+        CALL    CELLP
+        CALL    CSTOR
+        CALL    DOLIT
+        .dw     0x10
+        CALL    SLASH
+        CALL    DONXT
+        .dw     1$
+        CALL    DROP
+        RET
 
 ;       7SH  ( c -- )
 ;       Table for 7-seg hex number patterns
@@ -4062,7 +4061,6 @@ SSHEX:
 ; and clearing ITICK Bit4
   
 _TIM4_IRQHandler:
-        BSET    PA_ODR,#3
         PDTX =  6
         BRES    TIM4_SR,#0              ; clear TIM4 UIF 
         
@@ -4134,14 +4132,61 @@ TIM4_BIT:
 
 TIM4_LED:   
         ; do LED
+        BSET    PD_ODR,#4
+        BSET    PB_ODR,#5
+        BSET    PB_ODR,#4
+        ;.db     0x3F, 0x06, 0x5B, 0x4F
+
+        AND     A,#3
+        JRNE    1$
+        LD      A,2
+        CALL    SSEGOUT
+        BRES    PD_ODR,#4
+        JRA     TIM4_END
+
+1$:     CP      A,#1
+        JREQ    2$
+        LD      A,3
+        CALL    SSEGOUT
+        BRES    PB_ODR,#5
+        JRA     TIM4_END
+
+2$:     CP      A,#2
+        JREQ    TIM4_END  
+        LD      A,4
+        CALL    SSEGOUT
+        BRES    PB_ODR,#4
 
 TIM4_END:             
         DEC     ITICK
         JRPL    1$
         MOV     ITICK,#0x1F
 1$:     
-        BRES    PA_ODR,#3
         IRET        
+
+
+        ; bit 76453210
+        ;  PA .....FB.
+        ;  PC CG...... 
+        ;  PD ..A.DPE.
+SSEGOUT:
+        RRC     A
+        BCCM    PD_ODR,#5       ; A
+        RRC     A
+        BCCM    PA_ODR,#2       ; B
+        RRC     A
+        BCCM    PC_ODR,#7       ; C
+        RRC     A
+        BCCM    PD_ODR,#3       ; D
+        RRC     A
+        BCCM    PD_ODR,#1       ; E
+        RRC     A
+        BCCM    PA_ODR,#1       ; F
+        RRC     A
+        BCCM    PC_ODR,#6       ; G
+        RRC     A
+        BCCM    PD_ODR,#2       ; P
+        RET      
 
 ;-----------------------------------------------
         .else
