@@ -10,6 +10,7 @@
 ;--------------------------------------------------------
 ; Public variables in this module
 ;--------------------------------------------------------
+	.globl _TIM4_IRQHandler
 	.globl _forth
 
 ;--------------------------------------------------------
@@ -44,7 +45,16 @@
 ;	-----------------------------------------
 ;	 function forth
 ;	-----------------------------------------
+	;******  Global Configuration ******
+        MODULE_W1209 =  1       ; RS232 Half Duplex Mode trough Port_D6 (RxD)
 
+        HALF_DUPLEX =   1       ; RS232 Half Duplex Mode
+        TERM_LINUX  =   1       ; LF terminates line 
+        NEVER       =   0
+
+        ITICK       =   0
+        TXREG       =   1
+        
 	;******  STM8SF003 Registers  ******
 	REGBASE =	0x5000	;register base
 	UARTSR   =	0x5230	;UART status reg
@@ -54,11 +64,39 @@
 	UARTCR1  =	0x5234	;UART control reg 2
 	UARTCR2  =	0x5235	;UART control reg 2
 	UARTCR3  =	0x5236	;UART control reg 2
-	PD_DDR  =	0x5011	; PD5 direction
-	PD_CR1  =	0x5012	; PD5 control 1
-	PD_CR2  =	0x5013	; PD5 control 2
 
-        ; *** TIM4 for baudrate generation ***
+	PA_ODR	=	0x5000	; Port A data output latch register
+	PA_IDR	=	0x5001	; Port A input pin value register
+	PA_DDR	=	0x5002	; Port A data direction register
+	PA_CR1	=	0x5003	; Port A control register 1
+	PA_CR2	=	0x5004	; Port A control register 2
+	PB_ODR	=	0x5005	; Port B data output latch register
+	PB_IDR	=	0x5006	; Port B input pin value register
+	PB_DDR	=	0x5007	; Port B data direction register
+	PB_CR1	=	0x5008	; Port B control register
+	PB_CR2	=	0x5009	; Port B control register
+	PC_ODR	=	0x500A	; Port C data output latch register
+	PC_IDR	=	0x500B	; Port C input pin value register
+	PC_DDR	=	0x500C	; Port C data direction register
+	PC_CR1	=	0x500D	; Port C control register 1
+	PC_CR2	=	0x500E	; Port C control register 2
+	PD_ODR	=	0x500F	; Port D data output latch register
+	PD_IDR	=	0x5010	; Port D input pin value register
+	PD_DDR	=	0x5011	; Port D data direction register
+	PD_CR1	=	0x5012	; Port D control register 1
+	PD_CR2	=	0x5013	; Port D control register 2
+	PE_ODR	=	0x5014	; Port E data output latch register
+	PE_IDR	=	0x5015	; Port E input pin value register
+	PE_DDR	=	0x5016	; Port E data direction register
+	PE_CR1	=	0x5017	; Port E control register 1
+	PE_CR2	=	0x5018	; Port E control register 2
+	PF_ODR	=	0x5019	; Port F data output latch register
+	PF_IDR	=	0x501A	; Port F input pin value register
+	PF_DDR	=	0x501B	; Port F data direction register
+	PF_CR1	=	0x501C	; Port F control register 1
+	PF_CR2	=	0x501D	; Port F control register 2
+
+        ; *** TIM4 (e.g. for RS232 TxD simulation) ***
         TIM4_CR1 =      0x5340  ; 1 (ENABLE)
         TIM4_IER =      0x5343  ; 1 (ENABLE)     
         TIM4_SR =       0x5344  ; 0 (clear)
@@ -67,50 +105,46 @@
         TIM4_PSCR =     0x5347  ; 3 (1/8)
         TIM4_ARR =      0x5348  ; 0xCF (Reload 0.104 ms)
 
-	;******  Terminal Configuration ******
-        GADGET_W1209 =  1       ; RS232 Half Duplex Mode trough Port_D6 (RxD)
-        HALF_DUPLEX =   1       ; RS232 Half Duplex Mode
-        TERM_LINUX  =   1       ; LF terminates line 
-
 	;******  Memory ******
-	RAMBASE =	0x0000	 ;ram base
-	STACK   =	0x3FF	;system (return) stack 
-	DATSTK  =	0x380	;data stack 
+	RAMBASE =	0x0000	; ram base
+	STACK   =	0x3FF	; system (return) stack 
+	DATSTK  =	0x380	; data stack 
 	
 	;******  System Variables  ******
-	XTEMP	=	26	;address called by CREATE
-	YTEMP	=	28	;address called by CREATE
-	PROD1 = 26	;space for UM*
+	XTEMP	=	26	; address called by CREATE
+	YTEMP	=	28	; address called by CREATE
+	PROD1 = 26	        ; space for UM*
         PROD2 = 28
 	PROD3 = 30
 	CARRY = 32
-	SP0	=	34	 ;initial data stack pointer
-	RP0	=	36	;initial return stack pointer
+	SP0	=	34	; initial data stack pointer
+	RP0	=	36	; initial return stack pointer
 	
 	;***********************************************
 	;; Version control
-	VER     =     2         ;major release version
-	EXT     =     1         ;minor extension
+	VER     =     2         ; major release version
+	EXT     =     1         ; minor extension
 
 	;; Constants
-	TRUEE   =     0xFFFF      ;true flag
-	COMPO   =     0x40     ;lexicon compile only bit
-	IMEDD   =     0x80     ;lexicon immediate bit
-	MASKK   =     0x1F7F  ;lexicon bit mask
+	TRUEE   =     0xFFFF   ; true flag
+	COMPO   =     0x40     ; lexicon compile only bit
+	IMEDD   =     0x80     ; lexicon immediate bit
+	MASKK   =     0x1F7F   ; lexicon bit mask
 
-	CELLL   =     2       ;size of a cell
-	BASEE   =     16      ;default radix
-	BKSPP   =     8       ;back space
-	LF      =     10      ;line feed
-	CRR     =     13      ;carriage return
+        PADOFFS =     80       ; offset text buffer above dictionary 
+	CELLL   =     2        ; size of a cell
+	BASEE   =     16       ; default radix
+	BKSPP   =     8        ; back space
+	LF      =     10       ; line feed
+	CRR     =     13       ; carriage return
         .ifne TERM_LINUX 
         NEWLN   =     LF
         .else
         NEWLN   =     CR
         .endif 
-	ERR     =     27      ;error escape
-	TIC     =     39      ;tick
-	CALLL   =     0xCD    ;CALL opcodes
+	ERR     =     27       ; error escape
+	TIC     =     39       ; tick
+	CALLL   =     0xCD     ; CALL opcodes
 
 	;; Memory allocation
 	UPP     =     RAMBASE + 6
@@ -118,6 +152,7 @@
 	RPP     =     RAMBASE + STACK
 	TIBB    =     RAMBASE + 0x390
 	CTOP    =     RAMBASE + 0x80	
+
 
 
 _forth:
@@ -142,28 +177,42 @@ ORIG:
 	LDW	X,#STACK	;initialize return stack
 	LDW	SP,X
 	LDW	RP0,X
-	LDW	X,#DATSTK ;initialize data stack
+	LDW	X,#DATSTK       ; initialize data stack
 	LDW	SP0,X
         
 ;	MOV	PD_DDR,#0x01	; LED, SWIM
 ;	MOV	PD_CR1,#0x03	; pullups
 ;	MOV	PD_CR2,#0x01	; speed
-;	BSET CLK_SWCR,#1 ; enable external clcok
-;	MOV CLK_SWR,#0x0B4 ; external cyrstal clock
-;       WAIT0:	BTJF CLK_SWCR,#3,WAIT0 ; wait SWIF
-;	BRES CLK_SWCR,#3 ; clear SWIF
-;	MOV	UARTBD2,#0x003	;9600 baud
+;	BSET    CLK_SWCR,#1     ; enable external clcok
+;	MOV     CLK_SWR,#0x0B4  ; external cyrstal clock
+;WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
+;	BRES    CLK_SWCR,#3     ; clear SWIF
+;	MOV	UARTBD2,#0x003	; 9600 baud
 ;	MOV	UARTBD1,#0x068	; 0068 9600 baud
-;	MOV	UARTCR1,#0x006	;8 data bits, no parity
-;	MOV	UARTCR3,#0x000	;1 stop bit
+;	MOV	UARTCR1,#0x006	; 8 data bits, no parity
+;	MOV	UARTCR3,#0x000	; 1 stop bit
 
-        .ifne   GADGET_W1209
-	MOV	UARTCR2,#0x004	;enable rx
+        .ifne   MODULE_W1209
+
+        MOV     PA_DDR,#0b00001110 ; relay,B,F        
+        MOV     PA_CR1,#0b00001110         
+        MOV     PB_DDR,#0b00110000 ; d2,d3
+        MOV     PB_CR1,#0b00110000 
+        MOV     PC_DDR,#0b11000000 ; G,C        
+        MOV     PC_CR1,#0b11000000         
+        MOV     PD_DDR,#0b00111110 ; A,DP,D,d1,A
+        MOV     PD_CR1,#0b00111110 
+
         MOV     TIM4_PSCR,#0x03 ; prescaler 1/8
         MOV     TIM4_ARR,#0xCF  ; reload 0.104 ms (9600 baud)
         MOV     TIM4_CR1,#0x01  ; enable TIM4
-        .else
-	MOV	UARTCR2,#0x00C	;enable tx & rx
+        ;==========
+        MOV     TIM4_IER,#0x01        ; enble TIM4 interrupt
+        RIM
+        ;==========
+	MOV	UARTCR2,#0x004	; enable rx 
+        .else                         ; HALF_DUPLEX
+	MOV	UARTCR2,#0x00C	; enable tx & rx
         .endif
 
 	JP	COLD	;default=MN1
@@ -193,7 +242,7 @@ ULAST:	.dw	0
 	.db	4
 	.ascii	"?KEY"
 QKEY:
-	BTJF UARTSR,#5,INCH	;check status
+	BTJF    UARTSR,#5,INCH	;check status
 	LD	A,UARTDR	;get char in A
 	SUBW	X,#2
 	LD	(1,X),A
@@ -202,7 +251,7 @@ QKEY:
 	LDW	Y,#0x0FFFF
 	LDW	(X),Y
 	RET
-INCH: CLRW Y
+INCH:   CLRW Y
 	SUBW	X,#2
 	LDW	(X),Y
 	RET
@@ -219,52 +268,32 @@ EMIT:
         .ifne   HALF_DUPLEX
 	BRES	UARTCR2,#2	;disable rx
 
-        .ifne   GADGET_W1209
-        BSET    0x5011,#6
+          .ifne   MODULE_W1209
 
-        LD      A,#1
-        CALL    SERBIT
-        CALL    SERBIT
-
+1$:     BTJF    ITICK,#4,1$
  	LD      A,(1,X)
         ADDW    X,#2       
-        LDW     Y,#8
-1$:     CALL    SERBIT
-        DECW    Y
-        JRNE    1$
-        SCF
+        LD      TXREG,A
+        BRES    ITICK,#4
+2$:     BTJT    ITICK,#3,2$
 
-        LD      A,#1
-        CALL    SERBIT
-        BRES    0x5011,#6
-        .else                          ; not GADGET_W1209
+          .else                          ; HALF_DUPLEX, not MODULE_W1209
 	LD	A,(1,X)
 	ADDW	X,#2
 1$:	BTJF	UARTSR,#7,1$    ;loop until tdre
 	LD	UARTDR,A	;send A
 2$:	BTJF	UARTSR,#6,2$    ;loop until tc
-        .endif  
-
 	BSET	UARTCR2,#2	;enable rx
+          .endif  
 
         .else                          ; not HALF_DUPLEX
 	LD	A,(1,X)
 	ADDW	X,#2
-1$:	BTJF	UARTSR,#7,1$ ;loop until tdre
+11$:	BTJF	UARTSR,#7,11$ ;loop until tdre
 	LD	UARTDR,A	;send A
         .endif
 
 	RET
-
-        .ifne   GADGET_W1209
-; ser helper routine
-SERBIT:                              
-        BTJF    TIM4_SR,#0,SERBIT
-        BRES    TIM4_SR,#0              ; clear TIM4 UIF 
-        RRC     A
-        BCCM    0x500F,#6 
-        RET
-        .endif
 
 ;; The kernel
 ;	doLIT	( -- w )
@@ -1646,7 +1675,7 @@ HERE:
 PAD:
 	CALL	HERE
 	CALL	DOLIT
-	.dw	80
+	.dw	PADOFFS
 	JP	PLUS
 
 ;	TIB	( -- a )
@@ -3883,6 +3912,7 @@ COLD1:	CALL	DOLIT
 ;	Get inner FOR - NEXT index
 
 	.dw	LINK
+
 	LINK =	.
 	.db	(1)
 	.ascii	"I"
@@ -3898,7 +3928,8 @@ IGET:
 ;       Creates/executes BSER/BRES + RET on data stack  
 
 	.dw	LINK
-	LINK =	.
+	
+        LINK =	.
 	.db	(3)
 	.ascii	"BSR"
 BRSS:
@@ -3923,7 +3954,8 @@ $1:     LD      (1,X),A
 ;	Return true if w is equal to 0
 
 	.dw	LINK
-	LINK =	.
+	
+        LINK =	.
 	.db	(2)
 	.ascii	"0="
 ZEQS:
@@ -3938,9 +3970,10 @@ ZEQS:
 
 
 ;       2C!  ( w b -- )
-;       Store word to consecutive MSB-LSB byte registers 
+;       Store word C-wise to consecutive byte registers 
 	.dw	LINK
-	LINK =	.
+	
+        LINK =	.
 	.db	(3)
 	.ascii	"2C!"
 DCSTOR:        
@@ -3954,8 +3987,9 @@ DCSTOR:
 
 
 ;       2C@  ( a -- w )
-;       Fetch word from consecutive MSB / LSB registers 
+;       Fetch word C-wise from consecutive byte registers 
 	.dw	LINK
+        
         LINK =  .
 	.db	(3)
 	.ascii	"2C@"
@@ -3971,7 +4005,153 @@ DCAT:
         LD      (3,X),A
         CALL    DROP
         RET
-       
+
+        .ifne   MODULE_W1209
+;-----------------------------------------------
+;       7S  ( c -- )
+;       Put c to W1209 7-seg LED display row
+	.dw	LINK
+        
+        LINK =  .
+	.db	(2)
+	.ascii	"7S"
+SSEG:   
+        ; bit 76453210
+        ;  PA .....FB.
+        ;  PC CG...... 
+        ;  PD ..A.DPE.
+        LD      A,(1,X)
+        ADDW    X,#2
+SSEGOUT:
+        RRC     A
+        BCCM    PD_ODR,#5       ; A
+        RRC     A
+        BCCM    PA_ODR,#2       ; B
+        RRC     A
+        BCCM    PC_ODR,#7       ; C
+        RRC     A
+        BCCM    PD_ODR,#3       ; D
+        RRC     A
+        BCCM    PD_ODR,#1       ; E
+        RRC     A
+        BCCM    PA_ODR,#1       ; F
+        RRC     A
+        BCCM    PC_ODR,#6       ; G
+        RRC     A
+        BCCM    PD_ODR,#2       ; P
+        RET      
+
+;       7SH  ( c -- )
+;       Table for 7-seg hex number patterns
+	.dw	LINK
+        
+        LINK =  .
+	.db	(3)
+	.ascii	"7SH"
+SSHEX:   
+        CALL    DOVAR
+        .db     0x3F, 0x06, 0x5B, 0x4F
+        .db     0x66, 0x6D, 0x7D, 0x07
+        .db     0x7F, 0x6F, 0x77, 0x7C
+        .db     0x39, 0x5E, 0x79, 0x71
+
+; The W1209 only has RxD (PD_6) on a header. Unfortunately, STM8S HW-support for
+; half-duplex would require TxD (PD_5). As a work-around, a TIM4 triggered counter/
+; state machine serves both as SW-TxD through PD_6, and as MPX for the LED-Display 
+; by evaluating Bits 1:0. RS232 transmit is used by writing a char to uint8_t TXREG, 
+; and clearing ITICK Bit4
+  
+_TIM4_IRQHandler:
+        BSET    PA_ODR,#3
+        PDTX =  6
+        BRES    TIM4_SR,#0              ; clear TIM4 UIF 
+        
+        LD      A,ITICK
+        JREQ    TIM4_ENDTX
+
+        ; ITICK == 0x1F:0x1D ?
+        CP     A,#0x1D         
+        JRPL    TIM4_LED               ; State is "Wait"
+
+        ; ITICK < 0x10 ?
+        CP      A,#0x10                ; Active state?   
+        JRMI    TIM4_ACTIVE_SYNC
+
+        ; 0x1C <= ITICK >= 0x10
+        MOV     ITICK,#0x20            ; Renew state "Wait", set ITICK to (0x20-1)
+        JRA     TIM4_LED
+
+TIM4_ACTIVE_SYNC:      
+        CP      A,#0x0C                ; After clearing ITICK.4 we'll get here after some ticks
+        JRMI    TIM4_TEST      
+        JRA     TIM4_LED               ; State is "Sync"
+
+TIM4_TEST:
+        CP      A,#0x0B
+        JRNE    TIM4_START
+        
+        BRES	UARTCR2,#2	       ; disable RX
+        ; ITICK == B
+        ; if RX isn't free, 
+        ;    return to (0x1F - 1)
+        ; MOV     ITICK,#0x1F
+        ; JPA     TIM4_LED
+        ;  else 
+        
+        JRA     TIM4_LED
+
+TIM4_START:  
+        CP      A,#0x0A
+        JRNE    TIM4_STOP
+        ; ITICK == A 
+        ; set PD_6 LOW
+        BSET    PD_DDR,#PDTX       ; set PD_6 to output
+        RCF
+        JRA     TIM4_BIT         
+
+TIM4_STOP:  
+        CP      A,#0x01
+        JRNE    TIM4_SER
+        ; ITICK == 1 
+        ; set PD_6 high
+        SCF
+        JRA     TIM4_BIT         
+
+TIM4_ENDTX: 
+        ; ITICK == 0
+        BRES    PD_DDR,#PDTX    ; set PD_6 to input
+        BSET	UARTCR2,#2	; enable RX
+        ; fall through
+                
+TIM4_SER:
+        ; ITICK == 9:2
+        SRL     TXREG    
+        ; fall through
+
+TIM4_BIT:
+        ; Set port to CF value
+        BCCM    PD_ODR,#PDTX
+
+TIM4_LED:   
+        ; do LED
+
+TIM4_END:             
+        DEC     ITICK
+        JRPL    1$
+        MOV     ITICK,#0x1F
+1$:     
+        BRES    PA_ODR,#3
+        IRET        
+
+;-----------------------------------------------
+        .else
+; Minimal IRQ handler for TIM4
+_TIM4_IRQHandler:
+        BRES    TIM4_SR,#0              ; clear TIM4 UIF 
+        IRET 
+        .endif
+
+
 ;===============================================================
 
 	LASTN	=	LINK	;last name defined

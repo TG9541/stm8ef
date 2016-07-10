@@ -16,9 +16,9 @@
 #define UART_CR3_STOP1 (1 << 4)
 #define UART_SR_TXE (1 << 7)
 
-#define PB_ODR	(*(volatile uint8_t *)0x5005)
-#define PB_DDR	(*(volatile uint8_t *)0x5007)
-#define PB_CR1	(*(volatile uint8_t *)0x5008)
+// #define PB_ODR	(*(volatile uint8_t *)0x5005)
+// #define PB_DDR	(*(volatile uint8_t *)0x5007)
+// #define PB_CR1	(*(volatile uint8_t *)0x5008)
 
 static struct h {
   uint8_t  sysLinker;   // (0)0x00  (1 defined by linker)
@@ -48,20 +48,21 @@ uint8_t dstack[0x90]; // $380 Data stack, growing downward
 uint8_t tib;          // $390 Terminal input buffer TIB
                         // $3FF Return stack, growing downward
 
+void TIM4_IRQHandler() __interrupt (23);
 
 void main(void)
 {
 	CLK_DIVR = 0x00; // Set the frequency to 16 MHz
-	CLK_PCKENR1 = 0xFF; // Enable peripherals
+	// CLK_PCKENR1 = 0xFF; // Enable peripherals
 
 	UART1_CR2 = UART_CR2_TEN; // Allow TX and RX
 	UART1_CR3 &= ~(UART_CR3_STOP1 | UART_CR3_STOP2); // 1 stop bit
 	UART1_BRR2 = 0x03; UART1_BRR1 = 0x68; // 9600 baud
 
-	PB_DDR = 0x30;
-	PB_CR1 = 0x30;
-	PB_ODR = 0x30;
+	// PB_DDR = 0x30;
+	// PB_CR1 = 0x30;
+	// PB_ODR = 0x30;
 
-  for (;;)
+  // for (;;)
     forth(); 
 }
