@@ -46,24 +46,28 @@
 ;	 function forth
 ;	-----------------------------------------
 	;******  Global Configuration ******
-        MODULE_W1209 =  1       ; RS232 Half Duplex Mode trough Port_D6 (RxD)
+        STM8S_DISCOVERY = 0      
+        MODULE_W1209 =    1     ; RS232 Half Duplex PD_6 (RxD), 3-dig-7S
+        MODULE_MINIMAL =  0
 
-        HALF_DUPLEX =   1       ; RS232 Half Duplex Mode
-        TERM_LINUX  =   1       ; LF terminates line 
-        NEVER       =   0
+        STM8S103F3   =    0 
+        STM8S003F3   =    0 
+        HALF_DUPLEX  =    0     ; RS232 Half Duplex Mode
+        TERM_LINUX   =    1     ; LF terminates line 
 
-        ITICK       =   0
-        TXREG       =   1
+        .ifne   MODULE_W1209
+        STM8S003F3   =    1 
+        HALF_DUPLEX  =    1     ; RS232 Half Duplex Mode
+        .endif
+        .ifne   MODULE_MINIMAL
+        STM8S103F3   =    1 
+        .endif
+          
+        ITICK        =    0
+        TXREG        =    1
         
 	;******  STM8SF003 Registers  ******
 	REGBASE =	0x5000	;register base
-	UARTSR   =	0x5230	;UART status reg
-	UARTDR   =	0x5231	;UART data reg
-	UARTBD1  =	0x5232	;baud rate control 1
-	UARTBD2  =	0x5233	;baud rate control 2
-	UARTCR1  =	0x5234	;UART control reg 2
-	UARTCR2  =	0x5235	;UART control reg 2
-	UARTCR3  =	0x5236	;UART control reg 2
 
 	PA_ODR	=	0x5000	; Port A data output latch register
 	PA_IDR	=	0x5001	; Port A input pin value register
@@ -85,16 +89,18 @@
 	PD_DDR	=	0x5011	; Port D data direction register
 	PD_CR1	=	0x5012	; Port D control register 1
 	PD_CR2	=	0x5013	; Port D control register 2
-	PE_ODR	=	0x5014	; Port E data output latch register
-	PE_IDR	=	0x5015	; Port E input pin value register
-	PE_DDR	=	0x5016	; Port E data direction register
-	PE_CR1	=	0x5017	; Port E control register 1
-	PE_CR2	=	0x5018	; Port E control register 2
-	PF_ODR	=	0x5019	; Port F data output latch register
-	PF_IDR	=	0x501A	; Port F input pin value register
-	PF_DDR	=	0x501B	; Port F data direction register
-	PF_CR1	=	0x501C	; Port F control register 1
-	PF_CR2	=	0x501D	; Port F control register 2
+
+        ; *** 
+        CLK_CKDIVR =    0x50C6  ; Clock divider register
+
+	; *** UART1 
+        UART1_SR   =	0x5230	;UART status reg
+	UART1_DR   =	0x5231	;UART data reg
+	UART1_BRR1  =	0x5232	;baud rate control 1
+	UART1_BRR2  =	0x5233	;baud rate control 2
+	UART1_CR1  =	0x5234	;UART control reg 2
+	UART1_CR2  =	0x5235	;UART control reg 2
+	UART1_CR3  =	0x5236	;UART control reg 2
 
         ; *** TIM4 (e.g. for RS232 TxD simulation) ***
         TIM4_CR1 =      0x5340  ; 1 (ENABLE)
@@ -105,6 +111,7 @@
         TIM4_PSCR =     0x5347  ; 3 (1/8)
         TIM4_ARR =      0x5348  ; 0xCF (Reload 0.104 ms)
 
+
 	;******  Memory ******
 	RAMBASE =	0x0000	; ram base
 	STACK   =	0x3FF	; system (return) stack 
@@ -113,10 +120,10 @@
 	;******  System Variables  ******
 	XTEMP	=	26	; address called by CREATE
 	YTEMP	=	28	; address called by CREATE
-	PROD1 = 26	        ; space for UM*
-        PROD2 = 28
-	PROD3 = 30
-	CARRY = 32
+	PROD1   =       26	; space for UM*
+        PROD2   =       28
+	PROD3   =       30
+	CARRY   =       32
 	SP0	=	34	; initial data stack pointer
 	RP0	=	36	; initial return stack pointer
 	
@@ -153,8 +160,6 @@
 	TIBB    =     RAMBASE + 0x390
 	CTOP    =     RAMBASE + 0x80	
 
-
-
 _forth:
 	; clear stacks
 	ldw X,#0x300
@@ -171,8 +176,6 @@ clear_ram0:
 
 ;; Main entry points and COLD start data
 	
-;; Main entry points and COLD start data
-	
 ORIG:	
 	LDW	X,#STACK	;initialize return stack
 	LDW	SP,X
@@ -180,20 +183,34 @@ ORIG:
 	LDW	X,#DATSTK       ; initialize data stack
 	LDW	SP0,X
         
-;	MOV	PD_DDR,#0x01	; LED, SWIM
-;	MOV	PD_CR1,#0x03	; pullups
-;	MOV	PD_CR2,#0x01	; speed
-;	BSET    CLK_SWCR,#1     ; enable external clcok
-;	MOV     CLK_SWR,#0x0B4  ; external cyrstal clock
-;WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
-;	BRES    CLK_SWCR,#3     ; clear SWIF
-;	MOV	UARTBD2,#0x003	; 9600 baud
-;	MOV	UARTBD1,#0x068	; 0068 9600 baud
-;	MOV	UARTCR1,#0x006	; 8 data bits, no parity
-;	MOV	UARTCR3,#0x000	; 1 stop bit
+        .ifne   STM8S_DISCOVERY
+	MOV	PD_DDR,#0x01	; LED, SWIM
+	MOV	PD_CR1,#0x03	; pullups
+	MOV	PD_CR2,#0x01	; speed
+	BSET    CLK_SWCR,#1     ; enable external clcok
+	MOV     CLK_SWR,#0x0B4  ; external cyrstal clock
+WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
+	BRES    CLK_SWCR,#3     ; clear SWIF
+	MOV	UART2_BD2,#0x003	; 9600 baud
+	MOV	UART2_BD1,#0x068	; 0068 9600 baud
+	MOV	UART2_CR1,#0x006	; 8 data bits, no parity
+	MOV	UART2_CR3,#0x000	; 1 stop bit
+        .endif
+        
+        .ifne  (STM8S003F3 + STM8S103F3)
+        MOV     CLK_CKDIVR,#0           ; Clock divider register
+	MOV	UART1_BRR2,#0x003	; 9600 baud
+	MOV	UART1_BRR1,#0x068	; 0068 9600 baud
+	;MOV	UART1_CR1,#0x006	; 8 data bits, no parity
+        .ifne HALF_DUPLEX
+	MOV	UART1_CR2,#0x004	; enable rx 
+        .else              
+	MOV	UART1_CR2,#0x00C	; enable tx & rx
+        .endif
+
+ .endif 
 
         .ifne   MODULE_W1209
-
         MOV     PA_DDR,#0b00001110 ; relay,B,F        
         MOV     PA_CR1,#0b00001110         
         MOV     PB_DDR,#0b00110000 ; d2,d3
@@ -202,17 +219,11 @@ ORIG:
         MOV     PC_CR1,#0b11000000         
         MOV     PD_DDR,#0b00111110 ; A,DP,D,d1,A
         MOV     PD_CR1,#0b00111110 
-
         MOV     TIM4_PSCR,#0x03 ; prescaler 1/8
         MOV     TIM4_ARR,#0xCF  ; reload 0.104 ms (9600 baud)
         MOV     TIM4_CR1,#0x01  ; enable TIM4
-        ;==========
-        MOV     TIM4_IER,#0x01        ; enble TIM4 interrupt
+        MOV     TIM4_IER,#0x01  ; enble TIM4 interrupt
         RIM
-        ;==========
-	MOV	UARTCR2,#0x004	; enable rx 
-        .else                         ; HALF_DUPLEX
-	MOV	UARTCR2,#0x00C	; enable tx & rx
         .endif
 
 	JP	COLD	;default=MN1
@@ -242,8 +253,8 @@ ULAST:	.dw	0
 	.db	4
 	.ascii	"?KEY"
 QKEY:
-	BTJF    UARTSR,#5,INCH	;check status
-	LD	A,UARTDR	;get char in A
+	BTJF    UART1_SR,#5,INCH	;check status
+	LD	A,UART1_DR	;get char in A
 	SUBW	X,#2
 	LD	(1,X),A
 	CLR	(X)
@@ -266,7 +277,7 @@ INCH:   CLRW Y
 	.ascii	"EMIT"
 EMIT:
         .ifne   HALF_DUPLEX
-	BRES	UARTCR2,#2	;disable rx
+	BRES	UART1_CR2,#2	;disable rx
 
           .ifne   MODULE_W1209
 
@@ -280,17 +291,17 @@ EMIT:
           .else                          ; HALF_DUPLEX, not MODULE_W1209
 	LD	A,(1,X)
 	ADDW	X,#2
-1$:	BTJF	UARTSR,#7,1$    ;loop until tdre
-	LD	UARTDR,A	;send A
-2$:	BTJF	UARTSR,#6,2$    ;loop until tc
-	BSET	UARTCR2,#2	;enable rx
+1$:	BTJF	UART1_SR,#7,1$    ;loop until tdre
+	LD	UART1_DR,A	;send A
+2$:	BTJF	UART1_SR,#6,2$    ;loop until tc
+	BSET	UART1_CR2,#2	;enable rx
           .endif  
 
         .else                          ; not HALF_DUPLEX
 	LD	A,(1,X)
 	ADDW	X,#2
-11$:	BTJF	UARTSR,#7,11$ ;loop until tdre
-	LD	UARTDR,A	;send A
+11$:	BTJF	UART1_SR,#7,11$ ;loop until tdre
+	LD	UART1_DR,A	;send A
         .endif
 
 	RET
@@ -3736,138 +3747,6 @@ HI:
 	JP	CR
 
 
-;	DEBUG	( -- )
-;	Display sign-on message.
-
-	.dw	LINK
-	
-;LINK CEQU *
-;	.db	5
-;	.ascii	"DEBUG"
-;DEBUG:
-;	CALL DOLIT
-;	.dw 0x065
-;	CALL EMIT
-;	CALL DOLIT
-;	.dw 0
-;	CALL ZLESS 
-;	CALL DOLIT
-;	.dw 0x0FFFE
-;	CALL ZLESS 
-;	CALL UPLUS 
-;	CALL DROP 
-;	CALL DOLIT
-;	.dw 3
-;	CALL UPLUS 
-;	CALL UPLUS 
-;	CALL DROP
-;	CALL DOLIT
-;	.dw 0x043
-;	CALL UPLUS 
-;	CALL DROP
-;	CALL EMIT
-;	CALL DOLIT
-;	.dw 0x04F
-;	CALL DOLIT
-;	.dw 0x06F
-;	CALL XORR
-;	CALL DOLIT
-;	.dw 0x0F0
-;	CALL ANDD
-;	CALL DOLIT
-;	.dw 0x04F
-;	CALL ORR
-;	CALL EMIT
-;	CALL DOLIT
-;	.dw 8
-;	CALL DOLIT
-;	.dw 6
-;	CALL SWAPP
-;	CALL OVER
-;	CALL XORR
-;	CALL DOLIT
-;	.dw 3
-;	CALL ANDD 
-;	CALL ANDD
-;	CALL DOLIT
-;	.dw 0x070
-;	CALL UPLUS 
-;	CALL DROP
-;	CALL EMIT
-;	CALL DOLIT
-;	.dw 0
-;	CALL QBRAN
-;	.dw DEBUG1
-;	CALL DOLIT
-;	.dw 0x03F
-;DEBUG1:
-;	CALL DOLIT
-;	.dw 0x0FFFF
-;	CALL QBRAN
-;	.dw DEBUG2
-;	CALL DOLIT
-;	.dw 0x074
-;	CALL BRAN
-;	.dw DEBUG3
-;DEBUG2:
-;	CALL DOLIT
-;	.dw 0x021
-;DEBUG3:
-;	CALL EMIT
-;	CALL DOLIT
-;	.dw 0x068
-;	CALL DOLIT
-;	.dw 0x080
-;	CALL STORE
-;	CALL DOLIT
-;	.dw 0x080
-;	CALL AT
-;	CALL EMIT
-;	CALL DOLIT
-;	.dw 0x04D
-;	CALL TOR
-;	CALL RAT
-;	CALL RFROM
-;	CALL ANDD
-;	CALL EMIT
-;	CALL DOLIT
-;	.dw 0x061
-;	CALL DOLIT
-;	.dw 0x0A
-;	CALL TOR
-;DEBUG4:
-;	CALL DOLIT
-;	.dw 1
-;	CALL UPLUS 
-;	CALL DROP
-;	CALL DONXT
-;	.dw DEBUG4
-;	CALL EMIT
-;	CALL DOLIT
-;	.dw 0x0656D
-;	CALL DOLIT
-;	.dw 0x0100
-;	CALL UMSTA
-;	CALL SWAPP
-;	CALL DOLIT
-;	.dw 0x0100
-;	CALL UMSTA
-;	CALL SWAPP 
-;	CALL DROP
-;	CALL EMIT
-;	CALL EMIT
-;	CALL DOLIT
-;	.dw 0x02043
-;	CALL DOLIT
-;	.dw 0
-;	CALL DOLIT
-;	.dw 0x0100
-;	CALL UMMOD
-;	CALL EMIT
-;	CALL EMIT
-	;JP ORIG
-;	RET
-
 ;	'BOOT	( -- a )
 ;	The application startup vector.
 
@@ -3889,7 +3768,6 @@ TBOOT:
 	.db	4
 	.ascii	"COLD"
 COLD:
-;	CALL DEBUG
 COLD1:	CALL	DOLIT
 	.dw	UZERO
 	CALL	DOLIT
@@ -4088,7 +3966,7 @@ TIM4_TEST:
         CP      A,#0x0B
         JRNE    TIM4_START
         
-        BRES	UARTCR2,#2	       ; disable RX
+        BRES	UART1_CR2,#2	       ; disable RX
         ; ITICK == B
         ; if RX isn't free, 
         ;    return to (0x1F - 1)
@@ -4118,7 +3996,7 @@ TIM4_STOP:
 TIM4_ENDTX: 
         ; ITICK == 0
         BRES    PD_DDR,#PDTX    ; set PD_6 to input
-        BSET	UARTCR2,#2	; enable RX
+        BSET	UART1_CR2,#2	; enable RX
         ; fall through
                 
 TIM4_SER:
