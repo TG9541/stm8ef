@@ -20,7 +20,7 @@ static struct h {
   uint16_t sysYTEMP;    // 28 also PROD2 ; ??? address called by CREATE
   uint16_t sysPROD3;    // 30 PROD1 .. PROD3 space for UM*
   uint16_t sysCARRY;    // 32 space for UM*
-  uint16_t sysSP0;	// 34 initial data stack pointer
+  uint16_t sysSP0;	    // 34 initial data stack pointer
   uint16_t sysRP0;      // 36 initial return stack pointer 
 } rambase;
 

@@ -202,13 +202,12 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
 	MOV	UART1_BRR2,#0x003	; 9600 baud
 	MOV	UART1_BRR1,#0x068	; 0068 9600 baud
 	;MOV	UART1_CR1,#0x006	; 8 data bits, no parity
-        .ifne HALF_DUPLEX
+          .ifne HALF_DUPLEX
 	MOV	UART1_CR2,#0x004	; enable rx 
-        .else              
+          .else              
 	MOV	UART1_CR2,#0x00C	; enable tx & rx
-        .endif
-
- .endif 
+          .endif
+        .endif 
 
         .ifne   MODULE_W1209
         MOV     PA_DDR,#0b00001110 ; relay,B,F        
@@ -244,7 +243,6 @@ UZERO:
 ULAST:	.dw	0
 
 ;; Device dependent I/O
-;	All channeled to DOS 21H services
 
 ;	?RX	( -- c T | F )
 ;	Return input byte and true, or false.
@@ -262,7 +260,7 @@ QKEY:
 	LDW	Y,#0x0FFFF
 	LDW	(X),Y
 	RET
-INCH:   CLRW Y
+INCH:   CLRW    Y
 	SUBW	X,#2
 	LDW	(X),Y
 	RET
@@ -315,13 +313,13 @@ EMIT:
 	.db	(COMPO+5)
 	.ascii	"doLit"
 DOLIT:
-	SUBW X,#2
-	POPW Y
-	LDW YTEMP,Y
-	LDW Y,(Y)
-	LDW (X),Y
-	LDW Y,YTEMP
-	JP (2,Y)
+	SUBW    X,#2
+	POPW    Y
+	LDW     YTEMP,Y
+	LDW     Y,(Y)
+	LDW     (X),Y
+	LDW     Y,YTEMP
+	JP      (2,Y)
 
 ;	next	( -- )
 ;	Code for	single index loop.
@@ -331,17 +329,17 @@ DOLIT:
 	.db	(COMPO+4)
 	.ascii	"next"
 DONXT:
-	LDW Y,(3,SP)
-	DECW Y
-	JRPL NEX1
-	POPW Y
-	POP A
-	POP A
-	JP (2,Y)
-NEX1: LDW (3,SP),Y
-	POPW Y
-	LDW Y,(Y)
-	JP (Y)
+	LDW     Y,(3,SP)
+	DECW    Y
+	JRPL    NEX1
+	POPW    Y
+	POP     A
+	POP     A
+	JP      (2,Y)
+NEX1:   LDW     (3,SP),Y
+	POPW    Y
+	LDW     Y,(Y)
+	JP      (Y)
 
 ;	?branch ( f -- )
 ;	Branch if flag is zero.
@@ -351,12 +349,12 @@ NEX1: LDW (3,SP),Y
 	.db	(COMPO+7)
 	.ascii	"?branch"
 QBRAN:
-	LDW Y,X
-	ADDW X,#2
-	LDW Y,(Y)
+	LDW     Y,X
+	ADDW    X,#2
+	LDW     Y,(Y)
 	JREQ	BRAN
-	POPW Y
-	JP (2,Y)
+	POPW    Y
+	JP      (2,Y)
 	
 ;	branch	( -- )
 ;	Branch to an inline address.
@@ -366,8 +364,8 @@ QBRAN:
 	.db	(COMPO+6)
 	.ascii	"branch"
 BRAN:
-	POPW Y
-	LDW Y,(Y)
+	POPW    Y
+	LDW     Y,(Y)
 	JP	(Y)
 
 ;	EXECUTE ( ca -- )
@@ -378,8 +376,8 @@ BRAN:
 	.db	7
 	.ascii	"EXECUTE"
 EXECU:
-	LDW Y,X
-	ADDW X,#2
+	LDW     Y,X
+	ADDW    X,#2
 	LDW	Y,(Y)
 	JP	(Y)
 
@@ -391,7 +389,7 @@ EXECU:
 	.db	4
 	.ascii	"EXIT"
 EXIT:
-	POPW Y
+	POPW    Y
 	RET
 
 ;	!	( w a -- )
@@ -402,13 +400,13 @@ EXIT:
 	.db	1
 	.ascii	"!"
 STORE:
-	LDW Y,X
-	LDW Y,(Y)	;Y=a
-	LDW YTEMP,Y
-	LDW Y,X
-	LDW Y,(2,Y)
-	LDW [YTEMP],Y
-	ADDW X,#4 ;store w at a
+	LDW     Y,X
+	LDW     Y,(Y)	;Y=a
+	LDW     YTEMP,Y
+	LDW     Y,X
+	LDW     Y,(2,Y)
+	LDW     [YTEMP],Y
+	ADDW    X,#4 ;store w at a
 	RET	
 
 ;	@	( a -- w )
@@ -1438,8 +1436,8 @@ CELLS:
 	LDW (X),Y
 	RET
 
-;	1+	( a -- a )
-;	Add cell size in byte to address.
+;	1+	( n -- n )
+;	Add 1 to tos.
 
 	.dw	LINK
 	
@@ -1453,8 +1451,8 @@ ONEP:
 	LDW (X),Y
 	RET
 
-;	1-	( a -- a )
-;	Subtract 2 from address.
+;	1-	( n -- n )
+;	Subtract 1 from tos.
 
 	.dw	LINK
 	
@@ -3786,7 +3784,7 @@ COLD1:	CALL	DOLIT
 
 ;; tg9541 additions
 
-;	I	( -- w )
+;	I	( -- n )
 ;	Get inner FOR - NEXT index
 
 	.dw	LINK
@@ -3828,8 +3826,8 @@ $1:     LD      (1,X),A
         JP      (Y)
 
 
-;	0=	( w -- t )
-;	Return true if w is equal to 0
+;	0=	( n -- t )
+;	Return true if n is equal to 0
 
 	.dw	LINK
 	
@@ -3847,7 +3845,7 @@ ZEQS:
         RET
 
 
-;       2C!  ( w b -- )
+;       2C!  ( n b -- )
 ;       Store word C-wise to consecutive byte registers 
 	.dw	LINK
 	
@@ -3864,7 +3862,7 @@ DCSTOR:
         RET
 
 
-;       2C@  ( a -- w )
+;       2C@  ( a -- n )
 ;       Fetch word C-wise from consecutive byte registers 
 	.dw	LINK
         
@@ -3887,8 +3885,8 @@ DCAT:
         .ifne   MODULE_W1209
 ;-----------------------------------------------
 
-;       7S  ( w -- )
-;       Put w to W1209 7-seg LED display (hex) 
+;       7S  ( n -- )
+;       Put n to W1209 7-seg LED display (hex) 
 	.dw	LINK
         
         LINK =  .
@@ -3932,6 +3930,29 @@ SSHEX:
         .db     0x7F, 0x6F, 0x77, 0x7C
         .db     0x39, 0x5E, 0x79, 0x71
 
+
+;       KEY?  ( -- n )
+;       Read W1209 keys "set" (1), "+" (2), and "-" (4) as bitfield
+	.dw	LINK
+        
+        LINK =  .
+	.db	(4)
+	.ascii	"KEY?"
+KEYQ:   
+        CALL    DOLIT
+        .dw     PC_IDR
+        CALL    CAT
+        CALL    INVER
+        CALL    DOLIT
+        .dw     8
+        CALL    SLASH
+        CALL    DOLIT
+        .dw     7
+        CALL    ANDD
+        RET
+
+
+;---- W1209 TIM4 interrupt handler TxD simmulation, and display ----
 ; The W1209 only has RxD (PD_6) on a header. Unfortunately, STM8S HW-support for
 ; half-duplex would require TxD (PD_5). As a work-around, a TIM4 triggered counter/
 ; state machine serves both as SW-TxD through PD_6, and as MPX for the LED-Display 
@@ -4042,8 +4063,8 @@ TIM4_END:
 1$:     
         IRET        
 
-
-        ; bit 76453210
+; W1209 7S LED display row
+        ; bit 76453210 input (parameter A)
         ;  PA .....FB.
         ;  PC CG...... 
         ;  PD ..A.DPE.
