@@ -47,8 +47,8 @@
 ;	-----------------------------------------
 	;******  Global Configuration ******
         STM8S_DISCOVERY = 0      
-        MODULE_W1209 =    1     ; RS232 Half Duplex PD_6 (RxD), 3-dig-7S
-        MODULE_MINIMAL =  0
+        MODULE_W1209 =    0     ; RS232 Half Duplex PD_6 (RxD), 3-dig-7S
+        MODULE_MINIMAL =  1
 
         STM8S103F3   =    0 
         STM8S003F3   =    0 
@@ -114,8 +114,12 @@
 
 	;******  Memory ******
 	RAMBASE =	0x0000	; ram base
-	STACK   =	0x3FF	; system (return) stack 
+        UPPOFFS =       0x06    ; offset user area
+        CTOPOFFS =      0x80    ; dictionary start 
 	DATSTK  =	0x380	; data stack 
+        TIBOFFS =       0x388    ; Terminal Input Buffer start
+	STACK   =	0x3FF	; system (return) stack 
+
 	
 	;******  System Variables  ******
 	XTEMP	=	26	; address called by CREATE
@@ -154,23 +158,23 @@
 	CALLL   =     0xCD     ; CALL opcodes
 
 	;; Memory allocation
-	UPP     =     RAMBASE + 6
+	UPP     =     RAMBASE + UPPOFFS
+	CTOP    =     RAMBASE + CTOPOFFS	
 	SPP     =     RAMBASE + DATSTK
+	TIBB    =     RAMBASE + TIBOFFS
 	RPP     =     RAMBASE + STACK
-	TIBB    =     RAMBASE + 0x390
-	CTOP    =     RAMBASE + 0x80	
 
 _forth:
 	; clear stacks
 	ldw X,#0x300
 clear_ram0:
-	clr (X)
+	clr (X)                        ; STM8S105 : FixMe
 	incw X
-	cpw X,#0x3FF	
+	cpw X,#STACK                   ; STM8S105 : FixMe	
 	jrule clear_ram0
 
 ; initialize SP
-	ldw X,#0x3FE
+	ldw X,#(STACK-1)               ; STM8S105 : FixMe 
 	ldw SP,X
 	jp ORIG
 
@@ -182,49 +186,7 @@ ORIG:
 	LDW	RP0,X
 	LDW	X,#DATSTK       ; initialize data stack
 	LDW	SP0,X
-        
-        .ifne   STM8S_DISCOVERY
-	MOV	PD_DDR,#0x01	; LED, SWIM
-	MOV	PD_CR1,#0x03	; pullups
-	MOV	PD_CR2,#0x01	; speed
-	BSET    CLK_SWCR,#1     ; enable external clcok
-	MOV     CLK_SWR,#0x0B4  ; external cyrstal clock
-WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
-	BRES    CLK_SWCR,#3     ; clear SWIF
-	MOV	UART2_BD2,#0x003	; 9600 baud
-	MOV	UART2_BD1,#0x068	; 0068 9600 baud
-	MOV	UART2_CR1,#0x006	; 8 data bits, no parity
-	MOV	UART2_CR3,#0x000	; 1 stop bit
-        .endif
-        
-        .ifne  (STM8S003F3 + STM8S103F3)
-        MOV     CLK_CKDIVR,#0           ; Clock divider register
-	MOV	UART1_BRR2,#0x003	; 9600 baud
-	MOV	UART1_BRR1,#0x068	; 0068 9600 baud
-	;MOV	UART1_CR1,#0x006	; 8 data bits, no parity
-          .ifne HALF_DUPLEX
-	MOV	UART1_CR2,#0x004	; enable rx 
-          .else              
-	MOV	UART1_CR2,#0x00C	; enable tx & rx
-          .endif
-        .endif 
-
-        .ifne   MODULE_W1209
-        MOV     PA_DDR,#0b00001110 ; relay,B,F        
-        MOV     PA_CR1,#0b00001110         
-        MOV     PB_DDR,#0b00110000 ; d2,d3
-        MOV     PB_CR1,#0b00110000 
-        MOV     PC_DDR,#0b11000000 ; G,C        
-        MOV     PC_CR1,#0b11000000         
-        MOV     PD_DDR,#0b00111110 ; A,DP,D,d1,A
-        MOV     PD_CR1,#0b00111110 
-        MOV     TIM4_PSCR,#0x03 ; prescaler 1/8
-        MOV     TIM4_ARR,#0xCF  ; reload 0.104 ms (9600 baud)
-        MOV     TIM4_CR1,#0x01  ; enable TIM4
-        MOV     TIM4_IER,#0x01  ; enble TIM4 interrupt
-        RIM
-        .endif
-
+       
 	JP	COLD	;default=MN1
 
 ; COLD start initiates these variables.
@@ -242,11 +204,85 @@ UZERO:
 	.dw	LASTN	;LAST
 ULAST:	.dw	0
 
+;	COLD	( -- )
+;	The hilevel cold start sequence.
+
+	.dw	0
+	
+	LINK =	.
+	.db	4
+	.ascii	"COLD"
+COLD:
+	CALL	DOLIT
+	.dw	UZERO
+	CALL	DOLIT
+	.dw	UPP
+	CALL	DOLIT
+	.dw	(ULAST-UZERO)
+	CALL	CMOVE	        ;initialize user area
+	CALL	PRESE	        ;initialize data stack and TIB
+        CALL    PORTINIT        ;initialize board specific ports
+	CALL	TBOOT
+	CALL	ATEXE	        ;application boot
+	CALL	OVERT
+	JP	QUIT	;start interpretation
+
 ;; Device dependent I/O
+
+PORTINIT:
+        .ifne   STM8S_DISCOVERY
+	MOV	PD_DDR,#0x01	; LED, SWIM
+	MOV	PD_CR1,#0x03	; pullups
+	MOV	PD_CR2,#0x01	; speed
+	BSET    CLK_SWCR,#1     ; enable external clcok
+	MOV     CLK_SWR,#0x0B4  ; external cyrstal clock
+WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
+	BRES    CLK_SWCR,#3     ; clear SWIF
+	MOV	UART2_BD2,#0x003	; 9600 baud
+	MOV	UART2_BD1,#0x068	; 0068 9600 baud
+	MOV	UART2_CR1,#0x006	; 8 data bits, no parity
+	MOV	UART2_CR3,#0x000	; 1 stop bit
+        .endif
+
+        .ifne  (STM8S003F3 + STM8S103F3)
+        MOV     CLK_CKDIVR,#0           ; Clock divider register
+	MOV	UART1_BRR2,#0x003	; 9600 baud
+	MOV	UART1_BRR1,#0x068	; 0068 9600 baud
+	;MOV	UART1_CR1,#0x006	; 8 data bits, no parity
+          .ifne HALF_DUPLEX
+	MOV	UART1_CR2,#0x004	; enable rx 
+          .else              
+	MOV	UART1_CR2,#0x00C	; enable tx & rx
+          .endif
+        .endif 
+
+ .ifne   MODULE_W1209
+        MOV     PA_DDR,#0b00001110 ; relay,B,F        
+        MOV     PA_CR1,#0b00001110         
+        MOV     PB_DDR,#0b00110000 ; d2,d3
+        MOV     PB_CR1,#0b00110000 
+        MOV     PC_DDR,#0b11000000 ; G,C        
+        MOV     PC_CR1,#0b11000000         
+        MOV     PD_DDR,#0b00111110 ; A,DP,D,d1,A
+        MOV     PD_CR1,#0b00111110 
+        MOV     TIM4_PSCR,#0x03 ; prescaler 1/8
+        MOV     TIM4_ARR,#0xCF  ; reload 0.104 ms (9600 baud)
+        MOV     TIM4_CR1,#0x01  ; enable TIM4
+        MOV     TIM4_IER,#0x01  ; enble TIM4 interrupt
+        RIM
+        .endif
+        
+        .ifne   MODULE_MINIMAL
+        BSET     PB_DDR,#5  
+        BSET     PB_CR1,#5 
+        BSET     PB_ODR,#5 ; LED off
+        .endif
+        
+        RET
 
 ;	?RX	( -- c T | F )
 ;	Return input byte and true, or false.
-	.dw	0
+	.dw	LINK
 	LINK =	.
 	.db	4
 	.ascii	"?KEY"
@@ -3756,28 +3792,6 @@ HI:
 TBOOT:
 	CALL	DOVAR
 	.dw	HI	;application to boot
-
-;	COLD	( -- )
-;	The hilevel cold start sequence.
-
-	.dw	LINK
-	
-	LINK =	.
-	.db	4
-	.ascii	"COLD"
-COLD:
-COLD1:	CALL	DOLIT
-	.dw	UZERO
-	CALL	DOLIT
-	.dw	UPP
-	CALL	DOLIT
-	.dw	(ULAST-UZERO)
-	CALL	CMOVE	;initialize user area
-	CALL	PRESE	;initialize data stack and TIB
-	CALL	TBOOT
-	CALL	ATEXE	;application boot
-	CALL	OVERT
-	JP	QUIT	;start interpretation
 
 ;	
 ;===============================================================
