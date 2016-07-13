@@ -166,17 +166,17 @@
 
 _forth:
 	; clear stacks
-	ldw X,#0x300
+	ldw     X,#0x300
 clear_ram0:
-	clr (X)                        ; STM8S105 : FixMe
-	incw X
-	cpw X,#STACK                   ; STM8S105 : FixMe	
-	jrule clear_ram0
+	clr     (X)                    ; STM8S105 : FixMe
+	incw    X
+	cpw     X,#STACK               ; STM8S105 : FixMe	
+	jrule   clear_ram0
 
 ; initialize SP
-	ldw X,#(STACK-1)               ; STM8S105 : FixMe 
-	ldw SP,X
-	jp ORIG
+	ldw     X,#(STACK-1)           ; STM8S105 : FixMe 
+	ldw     SP,X
+	jp      ORIG
 
 ;; Main entry points and COLD start data
 	
@@ -231,6 +231,7 @@ COLD:
 
 PORTINIT:
         .ifne   STM8S_DISCOVERY
+        ; STM8S Discovery init GPIO & UART
 	MOV	PD_DDR,#0x01	; LED, SWIM
 	MOV	PD_CR1,#0x03	; pullups
 	MOV	PD_CR2,#0x01	; speed
@@ -245,6 +246,7 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
         .endif
 
         .ifne  (STM8S003F3 + STM8S103F3)
+        ; STM8S[01]003F3 init UART
         MOV     CLK_CKDIVR,#0           ; Clock divider register
 	MOV	UART1_BRR2,#0x003	; 9600 baud
 	MOV	UART1_BRR1,#0x068	; 0068 9600 baud
@@ -257,6 +259,7 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
         .endif 
 
  .ifne   MODULE_W1209
+        ; W1209 STM8S003F3 init GPIO & UART
         MOV     PA_DDR,#0b00001110 ; relay,B,F        
         MOV     PA_CR1,#0b00001110         
         MOV     PB_DDR,#0b00110000 ; d2,d3
@@ -269,10 +272,11 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
         MOV     TIM4_ARR,#0xCF  ; reload 0.104 ms (9600 baud)
         MOV     TIM4_CR1,#0x01  ; enable TIM4
         MOV     TIM4_IER,#0x01  ; enble TIM4 interrupt
-        RIM
+        RIM                     ; enable interrupts 
         .endif
         
         .ifne   MODULE_MINIMAL
+        ; STM8S103F3 minimal breakout board init GPIO
         BSET     PB_DDR,#5  
         BSET     PB_CR1,#5 
         BSET     PB_ODR,#5 ; LED off
@@ -313,23 +317,21 @@ EMIT:
         .ifne   HALF_DUPLEX
 	BRES	UART1_CR2,#2	;disable rx
 
-          .ifne   MODULE_W1209
-
+        .ifne   MODULE_W1209
 1$:     BTJF    ITICK,#4,1$
  	LD      A,(1,X)
         ADDW    X,#2       
         LD      TXREG,A
         BRES    ITICK,#4
 2$:     BTJT    ITICK,#3,2$
-
-          .else                          ; HALF_DUPLEX, not MODULE_W1209
+        .else                          ; HALF_DUPLEX, not MODULE_W1209
 	LD	A,(1,X)
 	ADDW	X,#2
 1$:	BTJF	UART1_SR,#7,1$    ;loop until tdre
 	LD	UART1_DR,A	;send A
 2$:	BTJF	UART1_SR,#6,2$    ;loop until tc
 	BSET	UART1_CR2,#2	;enable rx
-          .endif  
+        .endif  
 
         .else                          ; not HALF_DUPLEX
 	LD	A,(1,X)
@@ -337,8 +339,8 @@ EMIT:
 11$:	BTJF	UART1_SR,#7,11$ ;loop until tdre
 	LD	UART1_DR,A	;send A
         .endif
-
 	RET
+
 
 ;; The kernel
 ;	doLIT	( -- w )
@@ -453,10 +455,10 @@ STORE:
 	.db	1
 	.ascii	"@"
 AT:
-	LDW Y,X	;Y = a
-	LDW Y,(Y)                             ; tg9541 why twice?
-	LDW Y,(Y)
-	LDW (X),Y ;w = @Y
+	LDW     Y,X	;Y = a
+	LDW     Y,(Y)                  ; tg9541 why twice?
+	LDW     Y,(Y)
+	LDW     (X),Y ;w = @Y
 	RET	
 
 ;	C!	( c b -- )
@@ -467,11 +469,11 @@ AT:
 	.db	2
 	.ascii	"C!"
 CSTOR:
-	LDW Y,X
-	LDW Y,(Y)	;Y=b
-	LD A,(3,X)	;D = c
+	LDW     Y,X
+	LDW     Y,(Y)	;Y=b
+	LD      A,(3,X)	;D = c
 	LD	(Y),A	;store c at b
-	ADDW X,#4
+	ADDW    X,#4
 	RET	
 
 ;	C@	( b -- c )
@@ -482,11 +484,11 @@ CSTOR:
 	.db	2
 	.ascii	"C@"
 CAT:
-	LDW Y,X	;Y=b
-	LDW Y,(Y)
-	LD A,(Y)
-	LD (1,X),A
-	CLR (X)
+	LDW     Y,X	                   ;Y=b
+	LDW     Y,(Y)
+	LD      A,(Y)
+	LD      (1,X),A
+	CLR     (X)
 	RET	
 
 ;	RP@	( -- a )
@@ -497,9 +499,9 @@ CAT:
 	.db	3
 	.ascii	"rp@"
 RPAT:
-	LDW Y,SP	;save return addr
-	SUBW X,#2
-	LDW (X),Y
+	LDW     Y,SP	                  ;save return addr
+	SUBW    X,#2
+	LDW     (X),Y
 	RET	
 
 ;	RP!	( a -- )
@@ -510,12 +512,12 @@ RPAT:
 	.db	(COMPO+3)
 	.ascii	"rp!"
 RPSTO:
-	POPW Y
-	LDW YTEMP,Y
-	LDW Y,X
-	LDW Y,(Y)
-	LDW SP,Y
-	JP [YTEMP]
+	POPW    Y
+	LDW     YTEMP,Y
+	LDW     Y,X
+	LDW     Y,(Y)
+	LDW     SP,Y
+	JP      [YTEMP]
 
 ;	R>	( -- w )
 ;	Pop return stack to data stack.
@@ -525,12 +527,12 @@ RPSTO:
 	.db	(COMPO+2)
 	.ascii	"R>"
 RFROM:
-	POPW Y	;save return addr
-	LDW YTEMP,Y
-	POPW Y
-	SUBW X,#2
-	LDW (X),Y
-	JP [YTEMP]
+	POPW    Y	                     ;save return addr
+	LDW     YTEMP,Y
+	POPW    Y
+	SUBW    X,#2
+	LDW     (X),Y
+	JP      [YTEMP]
 
 ;	R@	( -- w )
 ;	Copy top of return stack to stack.
