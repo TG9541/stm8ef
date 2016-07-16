@@ -3,18 +3,18 @@
 
 
 static struct h {
-  uint8_t  sysLinker;   // (0)0x00  (1 defined by linker)
-  uint16_t sysDummy1;   //  2 0x01 (unknown)
-  uint16_t sysDummy2;   //  4 0x02 (unknown)
-  uint16_t sysBASE;     //  6 0x03 BASE (BASEE)
-  uint16_t SysTmp;      //  8 0x04 tmp 	(0)
-  uint16_t sysGtIN;     // 10 0x05 >IN	(0)
-  uint16_t sysHsTIB;    // 12 0x06 #TIB	(0)
-  uint16_t sysTIB;      // 14 0x07 TIB	(TIBB)
-  uint16_t sysEVAL;     // 16 0x08 'EVAL(INTER)
-  uint16_t sysHLD;      // 18 0x09 HLD	(0)
-  uint16_t sysCONTEXT;  // 20 0x0A CONTEXT pointer (LASTN)
-  uint16_t sysULAST;    // 22 0x0B ULAST (0)
+  uint8_t  sysDummy0;   //  0 (1 defined by linker)
+  uint16_t sysDummy1;   //  2 (unknown)
+  uint16_t sysDummy2;   //  4 (unknown)
+  uint16_t sysBASE;     //  6 BASE (BASEE)
+  uint16_t SysTmp;      //  8 tmp 	(0)
+  uint16_t sysGtIN;     // 10 >IN	(0)
+  uint16_t sysHsTIB;    // 12 #TIB	(0)
+  uint16_t sysTIB;      // 14 TIB	(TIBB)
+  uint16_t sysEVAL;     // 16 'EVAL(INTER)
+  uint16_t sysHLD;      // 18 HLD	(0)
+  uint16_t sysCONTEXT;  // 20 CONTEXT pointer (LASTN)
+  uint16_t sysULAST;    // 22 ULAST (0)
   uint16_t sysDummy24;  // 24 (unknown)
   uint16_t sysXTEMP;    // 26 also PROD1 ; ??? address called by CREATE
   uint16_t sysYTEMP;    // 28 also PROD2 ; ??? address called by CREATE
@@ -22,6 +22,7 @@ static struct h {
   uint16_t sysCARRY;    // 32 space for UM*
   uint16_t sysSP0;	    // 34 initial data stack pointer
   uint16_t sysRP0;      // 36 initial return stack pointer 
+
 } rambase;
 
 uint8_t userram[90];  // $0-$7F User RAM memory, system variables

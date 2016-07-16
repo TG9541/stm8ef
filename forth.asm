@@ -47,8 +47,8 @@
 ;	-----------------------------------------
 	;******  Global Configuration ******
         STM8S_DISCOVERY = 0      
-        MODULE_W1209 =    0     ; RS232 Half Duplex PD_6 (RxD), 3-dig-7S
-        MODULE_MINIMAL =  1
+        MODULE_W1209 =    1     ; RS232 Half Duplex PD_6 (RxD), 3-dig-7S
+        MODULE_MINIMAL =  0
 
         STM8S103F3   =    0 
         STM8S003F3   =    0 
@@ -116,16 +116,25 @@
 	RAMBASE =	0x0000	; ram base
         UPPOFFS =       0x06    ; offset user area
         CTOPOFFS =      0x80    ; dictionary start 
-	DATSTK  =	0x380	; data stack 
-        TIBOFFS =       0x388    ; Terminal Input Buffer start
-	STACK   =	0x3FF	; system (return) stack 
-
+	DATSOFFS =	0x380	; data stack 
+        TIBOFFS = DATSOFFS+CELLL; Terminal Input Buffer start
+        STACK   =	0x3FF	; system (return) stack
 	
 	;******  System Variables  ******
+        USRBASE =        6      ; radix base for numeric I/O
+        USRTEMP =        8      ; temporary storage   
+        USR_IN  =       10      ; hold parsing pointer
+        USRNTIB =       12      ; count in terminal input buffer 
+        USRTIB  =       14      ; TODO: this is coded as (USRNTIB+CELL) - not nice!
+        USREVAL =       16      ; execution vector of EVAL 
+        USRHLD  =       18      ; hold a pointer of output string
+        USRCONTEXT =    20      ; start vocabulary search
+        USRCP   =       22      ; point to top of dictionary
+        USRLAST =       24      ; point to last name in dictionary
 	XTEMP	=	26	; address called by CREATE
-	YTEMP	=	28	; address called by CREATE
 	PROD1   =       26	; space for UM*
-        PROD2   =       28
+	YTEMP	=	28	; address called by CREATE
+        PROD2   =       28      ; 
 	PROD3   =       30
 	CARRY   =       32
 	SP0	=	34	; initial data stack pointer
@@ -142,17 +151,13 @@
 	IMEDD   =     0x80     ; lexicon immediate bit
 	MASKK   =     0x1F7F   ; lexicon bit mask
 
+        TIBLENGTH =   80       ; size of TIB (starting at TIBOFFS)
         PADOFFS =     80       ; offset text buffer above dictionary 
-	CELLL   =     2        ; size of a cell
-	BASEE   =     16       ; default radix
-	BKSPP   =     8        ; back space
+	CELLL   =      2       ; size of a cell
+	BASEE   =     10       ; default radix
+        BKSPP   =      8       ; backspace
 	LF      =     10       ; line feed
 	CRR     =     13       ; carriage return
-        .ifne TERM_LINUX 
-        NEWLN   =     LF
-        .else
-        NEWLN   =     CR
-        .endif 
 	ERR     =     27       ; error escape
 	TIC     =     39       ; tick
 	CALLL   =     0xCD     ; CALL opcodes
@@ -160,7 +165,7 @@
 	;; Memory allocation
 	UPP     =     RAMBASE + UPPOFFS
 	CTOP    =     RAMBASE + CTOPOFFS	
-	SPP     =     RAMBASE + DATSTK
+	SPP     =     RAMBASE + DATSOFFS
 	TIBB    =     RAMBASE + TIBOFFS
 	RPP     =     RAMBASE + STACK
 
@@ -184,7 +189,7 @@ ORIG:
 	LDW	X,#STACK	;initialize return stack
 	LDW	SP,X
 	LDW	RP0,X
-	LDW	X,#DATSTK       ; initialize data stack
+	LDW	X,#SPP          ; initialize data stack
 	LDW	SP0,X
        
 	JP	COLD	;default=MN1
@@ -196,7 +201,7 @@ UZERO:
 	.dw	0	;tmp
 	.dw	0	;>IN
 	.dw	0	;#TIB
-	.dw	TIBB	;TIB
+	.dw	0 ; TIBB	;TIB
 	.dw	INTER	;'EVAL
 	.dw	0	;HLD
 	.dw	LASTN	;CONTEXT pointer
@@ -615,7 +620,7 @@ DUPP:
 	LDW (X),Y
 	RET	
 
-;	SWAP	( w1 w2 -- w2 w1 )
+;	SWAP  	( w1 w2 -- w2 w1 )
 ;	Exchange top two stack items.
 
 	.dw	LINK
@@ -762,7 +767,7 @@ DOVAR:
 	.db	4
 	.ascii	"BASE"
 BASE:
-	LDW Y,#(RAMBASE+6)
+	LDW Y,#(RAMBASE+USRBASE)
 	SUBW X,#2
 	LDW (X),Y
 	RET
@@ -776,7 +781,7 @@ BASE:
 	.db	3
 	.ascii	"tmp"
 TEMP:
-	LDW Y,#(RAMBASE+8)
+	LDW Y,#(RAMBASE+USRTEMP)
 	SUBW X,#2
 	LDW (X),Y
 	RET
@@ -790,7 +795,7 @@ TEMP:
 	.db	3
 	.ascii	">IN"
 INN:
-	LDW Y,#(RAMBASE+10)
+	LDW Y,#(RAMBASE+USR_IN)
 	SUBW X,#2
 	LDW (X),Y
 	RET
@@ -804,7 +809,7 @@ INN:
 	.db	4
 	.ascii	"#TIB"
 NTIB:
-	LDW Y,#(RAMBASE+12)
+	LDW Y,#(RAMBASE+USRNTIB)
 	SUBW X,#2
 	LDW (X),Y
 	RET
@@ -818,7 +823,7 @@ NTIB:
 	.db	5
 	.ascii	"'eval"
 TEVAL:
-	LDW Y,#(RAMBASE+16)
+	LDW Y,#(RAMBASE+USREVAL)
 	SUBW X,#2
 	LDW (X),Y
 	RET
@@ -833,7 +838,7 @@ TEVAL:
 	.db	3
 	.ascii	"hld"
 HLD:
-	LDW Y,#(RAMBASE+18)
+	LDW Y,#(RAMBASE+USRHLD)
 	SUBW X,#2
 	LDW (X),Y
 	RET
@@ -847,7 +852,7 @@ HLD:
 	.db	7
 	.ascii	"CONTEXT"
 CNTXT:
-	LDW Y,#(RAMBASE+20)
+	LDW Y,#(RAMBASE+USRCONTEXT)
 	SUBW X,#2
 	LDW (X),Y
 	RET
@@ -861,7 +866,7 @@ CNTXT:
 	.db	2
 	.ascii	"cp"
 CPP:
-	LDW Y,#(RAMBASE+22)
+	LDW Y,#(RAMBASE+USRCP)
 	SUBW X,#2
 	LDW (X),Y
 	RET
@@ -875,7 +880,7 @@ CPP:
 	.db	4
 	.ascii	"last"
 LAST:
-	LDW Y,#(RAMBASE+24)
+	LDW Y,#(RAMBASE+USRLAST)
 	SUBW X,#2
 	LDW (X),Y
 	RET
@@ -2170,7 +2175,7 @@ NUFQ:
 	CALL	DDROP
 	CALL	KEY
 	CALL	DOLIT
-	.dw	NEWLN
+	.dw	CRR
 	JP	EQUAL
 NUFQ1:	RET
 
@@ -2697,9 +2702,11 @@ BKSP:
 	CALL	XORR
 	CALL	QBRAN
 	.dw	BACK1
+        .ifeq   HALF_DUPLEX
 	CALL	DOLIT
 	.dw	BKSPP
 	CALL	EMIT
+        .endif
 	CALL	ONEM
 	CALL	BLANK
 	CALL	EMIT
@@ -2718,8 +2725,10 @@ BACK1:	RET
 	.db	3
 	.ascii	"TAP"
 TAP:
+        .ifeq   HALF_DUPLEX
 	CALL	DUPP
 	CALL	EMIT
+        .endif
 	CALL	OVER
 	CALL	CSTOR
 	JP	ONEP
@@ -2736,7 +2745,7 @@ TAP:
 KTAP:
 	CALL	DUPP
 	CALL	DOLIT
-	.dw	NEWLN
+	.dw	CRR
 	CALL	XORR
 	CALL	QBRAN
 	.dw	KTAP2
@@ -2800,8 +2809,8 @@ ACCP4:	CALL	DROP
 QUERY:
 	CALL	TIB
 	CALL	DOLIT
-	.dw	80
-	CALL	ACCEP
+	.dw	TIBLENGTH                      
+	CALL	ACCEP                         
 	CALL	NTIB
 	CALL	STORE
 	CALL	DROP
@@ -2966,7 +2975,7 @@ PRESE:
 	.dw	TIBB
 	CALL	NTIB
 	CALL	CELLP
-	JP	STORE
+	JP	STORE    ; TIB
 
 ;	QUIT	( -- )
 ;	Reset return stack pointer
@@ -4102,6 +4111,15 @@ SSEGOUT:
         RRC     A
         BCCM    PD_ODR,#2       ; P
         RET      
+
+;       E7S  ( -- n )
+;       Emit 7-seg pattern to W1209 LED display buffer
+	.dw	LINK
+        
+        LINK =  .
+	.db	(3)
+	.ascii	"E7S"
+E7S:       
 
 ;-----------------------------------------------
         .else
