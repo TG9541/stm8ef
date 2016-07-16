@@ -47,8 +47,8 @@
 ;	-----------------------------------------
 	;******  Global Configuration ******
         STM8S_DISCOVERY = 0      
-        MODULE_W1209 =    1     ; RS232 Half Duplex PD_6 (RxD), 3-dig-7S
-        MODULE_MINIMAL =  0
+        MODULE_W1209 =    0     ; RS232 Half Duplex PD_6 (RxD), 3-dig-7S
+        MODULE_MINIMAL =  1
 
         STM8S103F3   =    0 
         STM8S003F3   =    0 
@@ -122,15 +122,15 @@
 	
 	;******  System Variables  ******
         USRBASE =        6      ; radix base for numeric I/O
-        USRTEMP =        8      ; temporary storage   
-        USR_IN  =       10      ; hold parsing pointer
-        USRNTIB =       12      ; count in terminal input buffer 
-        USRTIB  =       14      ; TODO: this is coded as (USRNTIB+CELL) - not nice!
-        USREVAL =       16      ; execution vector of EVAL 
-        USRHLD  =       18      ; hold a pointer of output string
-        USRCONTEXT =    20      ; start vocabulary search
-        USRCP   =       22      ; point to top of dictionary
-        USRLAST =       24      ; point to last name in dictionary
+        USREVAL =        8      ; execution vector of EVAL 
+        USRCONTEXT =    10      ; start vocabulary search
+        USRCP   =       12      ; point to top of dictionary
+        USRLAST =       14      ; point to last name in dictionary
+        USRTIB  =       16      ; address of terminal input buffer
+        USRNTIB =       18      ; count in terminal input buffer 
+        USR_IN  =       20      ; hold parsing pointer
+        USRHLD  =       22      ; hold a pointer of output string
+        USRTEMP =       24      ; temporary storage   
 	XTEMP	=	26	; address called by CREATE
 	PROD1   =       26	; space for UM*
 	YTEMP	=	28	; address called by CREATE
@@ -169,19 +169,22 @@
 	TIBB    =     RAMBASE + TIBOFFS
 	RPP     =     RAMBASE + STACK
 
+;; Hardware reset
+
 _forth:
 	; clear stacks
-	ldw     X,#0x300
-clear_ram0:
+	; ldw     X,#0x300
+        CLRW    X
+1$:
 	clr     (X)                    ; STM8S105 : FixMe
 	incw    X
-	cpw     X,#STACK               ; STM8S105 : FixMe	
-	jrule   clear_ram0
+	cpw     X,#(STACK+1)               
+	jrule   1$
 
 ; initialize SP
-	ldw     X,#(STACK-1)           ; STM8S105 : FixMe 
-	ldw     SP,X
-	jp      ORIG
+;	ldw     X,#(STACK-1)           
+;	ldw     SP,X
+;	jp      ORIG
 
 ;; Main entry points and COLD start data
 	
@@ -197,17 +200,12 @@ ORIG:
 ; COLD start initiates these variables.
 
 UZERO:
-	.dw	BASEE	;BASE
-	.dw	0	;tmp
-	.dw	0	;>IN
-	.dw	0	;#TIB
-	.dw	TIBB	;TIB
-	.dw	INTER	;'EVAL
-	.dw	0	;HLD
-	.dw	LASTN	;CONTEXT pointer
-	.dw	CTOP	;CP in RAM
-	.dw	LASTN	;LAST
-ULAST:	.dw	0
+	.dw	BASEE	; BASE
+	.dw	INTER	; 'EVAL
+	.dw	LASTN	; CONTEXT pointer
+	.dw	CTOP	; CP in RAM
+	.dw	LASTN	; LAST
+ULAST:                  ; end of UZERO block
 
 ;	COLD	( -- )
 ;	The hilevel cold start sequence.
@@ -227,13 +225,8 @@ COLD:
 	CALL	CMOVE	        ;initialize user area
 	CALL	PRESE	        ;initialize data stack and TIB
         CALL    PORTINIT        ;initialize board specific ports
-	CALL	TBOOT
-	CALL	ATEXE	        ;application boot
-	CALL	OVERT
-	JP	QUIT	;start interpretation
 
-;; Device dependent I/O
-
+        ;; Device dependent HW initialization
 PORTINIT:
         .ifne   STM8S_DISCOVERY
         ; STM8S Discovery init GPIO & UART
@@ -287,7 +280,45 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
         BSET     PB_ODR,#5 ; LED off
         .endif
         
-        RET
+	CALL	TBOOT
+	CALL	ATEXE	        ;application boot
+	CALL	OVERT
+	JP	QUIT	;start interpretation
+
+
+;	hi	( -- )
+;	Display sign-on message.
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	2
+	.ascii	"hi"
+HI:
+	CALL	CR
+	CALL	DOTQP	;initialize I/O
+	.db	15
+	.ascii	"stm8eForth v"
+	.db	(VER+'0')
+	.ascii	"."
+	.db	(EXT+'0') ;version
+	JP	CR
+
+
+;	'BOOT	( -- a )
+;	The application startup vector.
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	5
+	.ascii	"'BOOT"
+TBOOT:
+	CALL	DOVAR
+	.dw	HI	;application to boot
+
+
+;; Device dependent I/O
 
 ;	?RX	( -- c T | F )
 ;	Return input byte and true, or false.
@@ -357,7 +388,7 @@ EMIT:
 	.ascii	"doLit"
 DOLIT:
 	SUBW    X,#2
-	POPW    Y
+	POPW	Y
 	LDW     YTEMP,Y
 	LDW     Y,(Y)
 	LDW     (X),Y
@@ -375,12 +406,12 @@ DONXT:
 	LDW     Y,(3,SP)
 	DECW    Y
 	JRPL    NEX1
-	POPW    Y
+	POPW	Y
 	POP     A
 	POP     A
 	JP      (2,Y)
 NEX1:   LDW     (3,SP),Y
-	POPW    Y
+	POPW	Y
 	LDW     Y,(Y)
 	JP      (Y)
 
@@ -396,7 +427,7 @@ QBRAN:
 	ADDW    X,#2
 	LDW     Y,(Y)
 	JREQ	BRAN
-	POPW    Y
+	POPW	Y
 	JP      (2,Y)
 	
 ;	branch	( -- )
@@ -407,7 +438,7 @@ QBRAN:
 	.db	(COMPO+6)
 	.ascii	"branch"
 BRAN:
-	POPW    Y
+	POPW	Y
 	LDW     Y,(Y)
 	JP	(Y)
 
@@ -432,7 +463,7 @@ EXECU:
 	.db	4
 	.ascii	"EXIT"
 EXIT:
-	POPW    Y
+	POPW	Y
 	RET
 
 ;	!	( w a -- )
@@ -517,7 +548,7 @@ RPAT:
 	.db	(COMPO+3)
 	.ascii	"rp!"
 RPSTO:
-	POPW    Y
+	POPW	Y
 	LDW     YTEMP,Y
 	LDW     Y,X
 	LDW     Y,(Y)
@@ -532,9 +563,9 @@ RPSTO:
 	.db	(COMPO+2)
 	.ascii	"R>"
 RFROM:
-	POPW    Y	                     ;save return addr
+	POPW	Y	                     ;save return addr
 	LDW     YTEMP,Y
-	POPW    Y
+	POPW	Y
 	SUBW    X,#2
 	LDW     (X),Y
 	JP      [YTEMP]
@@ -547,9 +578,9 @@ RFROM:
 	.db	2
 	.ascii	"R@"
 RAT:
-	POPW Y
+	POPW	Y
 	LDW YTEMP,Y
-	POPW Y
+	POPW	Y
 	PUSHW Y
 	SUBW X,#2
 	LDW (X),Y
@@ -563,7 +594,7 @@ RAT:
 	.db	(COMPO+2)
 	.ascii	">R"
 TOR:
-	POPW Y	;save return addr
+	POPW	Y	;save return addr
 	LDW YTEMP,Y
 	LDW Y,X
 	LDW Y,(Y)
@@ -571,29 +602,6 @@ TOR:
 	ADDW X,#2
 	JP [YTEMP]
 
-;	SP@	( -- a )
-;	Push current stack pointer.
-
-	.dw	LINK
-	LINK =	.
-	.db	3
-	.ascii	"sp@"
-SPAT:
-	LDW Y,X
-	SUBW X,#2
-	LDW (X),Y
-	RET	
-
-;	SP!	( a -- )
-;	Set	data stack pointer.
-
-	.dw	LINK
-	LINK =	.
-	.db	3
-	.ascii	"sp!"
-SPSTO:
-	LDW	X,(X)	;X = a
-	RET	
 
 ;	DROP	( w -- )
 ;	Discard top stack item.
@@ -682,6 +690,7 @@ ANDD:
 	LD (2,X),A
 	LD A,(1,X)
 	AND A,(3,X)
+LDADROP:
 	LD (3,X),A
 	ADDW X,#2
 	RET
@@ -700,9 +709,11 @@ ORR:
 	LD (2,X),A
 	LD A,(1,X)
 	OR A,(3,X)
-	LD (3,X),A
-	ADDW X,#2
-	RET
+;	LD (3,X),A
+;	ADDW X,#2
+;	RET
+        JRA     LDADROP
+
 
 ;	XOR	( w w -- w )
 ;	Bitwise exclusive OR.
@@ -717,9 +728,10 @@ XORR:
 	LD (2,X),A
 	LD A,(1,X)
 	XOR A,(3,X)
-	LD (3,X),A
-	ADDW X,#2
-	RET
+;	LD (3,X),A
+;	ADDW X,#2
+;	RET
+        JRA     LDADROP
 
 ;	UM+	( u u -- udsum )
 ;	Add two unsigned single
@@ -740,9 +752,34 @@ UPLUS:
 	LDW (2,X),Y
 	JRC	UPL1
 	CLR A
-UPL1: LD (1,X),A
+UPL1:   LD (1,X),A
 	CLR (X)
 	RET
+
+;	SP!	( a -- )
+;	Set	data stack pointer.
+
+	.dw	LINK
+	LINK =	.
+	.db	3
+	.ascii	"sp!"
+SPSTO:
+	LDW	X,(X)	;X = a
+	RET	
+
+;	SP@	( -- a )
+;	Push current stack pointer.
+
+	.dw	LINK
+	LINK =	.
+	.db	3
+	.ascii	"sp@"
+SPAT:
+	LDW Y,X
+;	SUBW X,#2
+;	LDW (X),Y
+;	RET	
+        JRA     YSTOR
 
 ;; System and user variables
 
@@ -754,10 +791,11 @@ UPL1: LD (1,X),A
 	.db	(COMPO+5)
 	.ascii	"doVar"
 DOVAR:
-	SUBW X,#2
-	POPW Y	;get return addr (pfa)
-	LDW (X),Y	;push on stack
-	RET	;go to RET of EXEC
+	POPW	Y	;get return addr (pfa)
+;	SUBW X,#2
+;	LDW (X),Y	;push on stack
+;	RET	;go to RET of EXEC
+        JRA     YSTOR
 
 ;	BASE	( -- a )
 ;	Radix base for numeric I/O.
@@ -768,9 +806,10 @@ DOVAR:
 	.ascii	"BASE"
 BASE:
 	LDW Y,#(RAMBASE+USRBASE)
-	SUBW X,#2
-	LDW (X),Y
-	RET
+;	SUBW X,#2
+;	LDW (X),Y
+;	RET
+        JRA     YSTOR
 
 ;	tmp	( -- a )
 ;	A temporary storage.
@@ -782,9 +821,10 @@ BASE:
 	.ascii	"tmp"
 TEMP:
 	LDW Y,#(RAMBASE+USRTEMP)
-	SUBW X,#2
-	LDW (X),Y
-	RET
+;	SUBW X,#2
+;	LDW (X),Y
+;	RET
+        JRA     YSTOR
 
 ;	>IN	( -- a )
 ;	Hold parsing pointer.
@@ -796,9 +836,10 @@ TEMP:
 	.ascii	">IN"
 INN:
 	LDW Y,#(RAMBASE+USR_IN)
-	SUBW X,#2
-	LDW (X),Y
-	RET
+;	SUBW X,#2
+;	LDW (X),Y
+;	RET
+        JRA     YSTOR
 
 ;	#TIB	( -- a )
 ;	Count in terminal input buffer.
@@ -810,9 +851,10 @@ INN:
 	.ascii	"#TIB"
 NTIB:
 	LDW Y,#(RAMBASE+USRNTIB)
-	SUBW X,#2
-	LDW (X),Y
-	RET
+;	SUBW X,#2
+;	LDW (X),Y
+;	RET
+        JRA     YSTOR
 
 ;	"EVAL	( -- a )
 ;	Execution vector of EVAL.
@@ -824,9 +866,10 @@ NTIB:
 	.ascii	"'eval"
 TEVAL:
 	LDW Y,#(RAMBASE+USREVAL)
-	SUBW X,#2
-	LDW (X),Y
-	RET
+;	SUBW X,#2
+;	LDW (X),Y
+;	RET
+        JRA     YSTOR
 
 
 ;	HLD	( -- a )
@@ -839,9 +882,10 @@ TEVAL:
 	.ascii	"hld"
 HLD:
 	LDW Y,#(RAMBASE+USRHLD)
-	SUBW X,#2
-	LDW (X),Y
-	RET
+;	SUBW X,#2
+;	LDW (X),Y
+;	RET
+        JRA     YSTOR
 
 ;	CONTEXT ( -- a )
 ;	Start vocabulary search.
@@ -853,9 +897,10 @@ HLD:
 	.ascii	"CONTEXT"
 CNTXT:
 	LDW Y,#(RAMBASE+USRCONTEXT)
-	SUBW X,#2
-	LDW (X),Y
-	RET
+;	SUBW X,#2
+;	LDW (X),Y
+;	RET
+        JRA     YSTOR
 
 ;	CP	( -- a )
 ;	Point to top of dictionary.
@@ -867,9 +912,11 @@ CNTXT:
 	.ascii	"cp"
 CPP:
 	LDW Y,#(RAMBASE+USRCP)
-	SUBW X,#2
-	LDW (X),Y
-	RET
+;	SUBW X,#2
+;	LDW (X),Y
+;	RET
+        JRA     YSTOR
+
 
 ;	LAST	( -- a )
 ;	Point to last name in dictionary.
@@ -881,9 +928,91 @@ CPP:
 	.ascii	"last"
 LAST:
 	LDW Y,#(RAMBASE+USRLAST)
+; "!" for Y for variable addresses, and constants
+YSTOR:        
 	SUBW X,#2
 	LDW (X),Y
 	RET
+
+;	TIB	( -- a )
+;	Return address of terminal input buffer.
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	3
+	.ascii	"TIB"
+TIB:
+	LDW Y,#(RAMBASE+USRTIB)
+;	SUBW X,#2
+;	LDW (X),Y
+;	RET
+        JRA     YSTOR
+
+
+;; Constants
+
+;	BL	( -- 32 )
+;	Return 32,	blank character.
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	2
+	.ascii	"BL"
+BLANK:
+	LDW Y,#32
+;	SUBW X,#2
+;	LDW (X),Y
+;	RET
+        JRA     YSTOR
+
+;	0	( -- 0)
+;	Return 0.
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	1
+	.ascii	"0"
+ZERO:
+	CLRW Y
+;	SUBW X,#2
+;	LDW (X),Y
+;	RET
+        JRA     YSTOR
+
+;	1	( -- 1)
+;	Return 1.
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	1
+	.ascii	"1"
+ONE:
+	LDW Y,#1
+;	SUBW X,#2
+;	LDW (X),Y
+;	RET
+        JRA     YSTOR
+
+;	-1	( -- -1)
+;	Return 32,	blank character.
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	2
+	.ascii	"-1"
+MONE:
+	LDW Y,#0x0FFFF
+;	SUBW X,#2
+;	LDW (X),Y
+;	RET
+        JRA     YSTOR
+
+
 
 ;; Common functions
 
@@ -1027,7 +1156,7 @@ DNEGA:
 	LDW Y,YTEMP
 	JRNC DN1 
 	INCW Y
-DN1: LDW (X),Y
+DN1:    LDW (X),Y
 	RET
 
 ;	-	( n1 n2 -- n1-n2 )
@@ -1063,7 +1192,7 @@ ABSS:
 	JRPL	AB1	;negate:
 	NEGW	Y	;else negate hi byte
 	LDW (X),Y
-AB1: RET
+AB1:    RET
 
 ;	=	( w w -- t )
 ;	Return true if top two are equal.
@@ -1084,7 +1213,7 @@ EQUAL:
 	CPW Y,YTEMP	;if n2 <> n1
 	JREQ	EQ1
 	CLR A
-EQ1: LD (X),A
+EQ1:    LD (X),A
 	LD (1,X),A
 	RET	
 
@@ -1107,7 +1236,7 @@ ULESS:
 	CPW Y,YTEMP	;if n2 <> n1
 	JRULT	ULES1
 	CLR A
-ULES1: LD (X),A
+ULES1:  LD (X),A
 	LD (1,X),A
 	RET	
 
@@ -1130,7 +1259,7 @@ LESS:
 	CPW Y,YTEMP	;if n2 <> n1
 	JRSLT	LT1
 	CLR A
-LT1: LD (X),A
+LT1:    LD (X),A
 	LD (1,X),A
 	RET	
 
@@ -1151,7 +1280,7 @@ MAX:
 	CPW Y,YTEMP	;if n2 <> n1
 	JRSLT	MAX1
 	LDW (2,X),Y
-MAX1: ADDW X,#2
+MAX1:   ADDW X,#2
 	RET	
 
 ;	MIN	( n n -- n )
@@ -1171,7 +1300,7 @@ MIN:
 	CPW Y,YTEMP	;if n2 <> n1
 	JRSGT	MIN1
 	LDW (2,X),Y
-MIN1: ADDW X,#2
+MIN1:   ADDW X,#2
 	RET	
 
 ;	WITHIN	( u ul uh -- t )
@@ -1524,62 +1653,6 @@ TWOSL:
 	LDW (X),Y
 	RET
 
-;	BL	( -- 32 )
-;	Return 32,	blank character.
-
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"BL"
-BLANK:
-	SUBW X,#2
-	LDW Y,#32
-	LDW (X),Y
-	RET
-
-;	0	( -- 0)
-;	Return 0.
-
-	.dw	LINK
-	
-	LINK =	.
-	.db	1
-	.ascii	"0"
-ZERO:
-	SUBW X,#2
-	CLRW Y
-	LDW (X),Y
-	RET
-
-;	1	( -- 1)
-;	Return 1.
-
-	.dw	LINK
-	
-	LINK =	.
-	.db	1
-	.ascii	"1"
-ONE:
-	SUBW X,#2
-	LDW Y,#1
-	LDW (X),Y
-	RET
-
-;	-1	( -- -1)
-;	Return 32,	blank character.
-
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"-1"
-MONE:
-	SUBW X,#2
-	LDW Y,#0x0FFFF
-	LDW (X),Y
-	RET
-
 ;	>CHAR	( c -- c )
 ;	Filter non-printing characters.
 
@@ -1729,20 +1802,6 @@ PAD:
 	CALL	DOLIT
 	.dw	PADOFFS
 	JP	PLUS
-
-;	TIB	( -- a )
-;	Return address of terminal input buffer.
-
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"TIB"
-TIB:
-	LDW Y,#(RAMBASE+USRTIB)
-	SUBW X,#2
-	LDW (X),Y
-	RET
 
 ;	@EXECUTE	( a -- )
 ;	Execute vector stored in address a.
@@ -3773,41 +3832,9 @@ WORS1:	CALL	AT
 WORS2:	RET
 
 	
-;; Hardware reset
-
-;	hi	( -- )
-;	Display sign-on message.
-
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"hi"
-HI:
-	CALL	CR
-	CALL	DOTQP	;initialize I/O
-	.db	15
-	.ascii	"stm8eForth v"
-	.db	(VER+'0')
-	.ascii	"."
-	.db	(EXT+'0') ;version
-	JP	CR
-
-
-;	'BOOT	( -- a )
-;	The application startup vector.
-
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"'BOOT"
-TBOOT:
-	CALL	DOVAR
-	.dw	HI	;application to boot
-
 ;	
 ;===============================================================
+        .ifne   MODULE_W1209
 
 ;; tg9541 additions
 
@@ -3909,7 +3936,7 @@ DCAT:
         CALL    DROP
         RET
 
-        .ifne   MODULE_W1209
+;        .ifne   MODULE_W1209
 ;-----------------------------------------------
 
 ;       7S  ( n -- )
@@ -4089,6 +4116,7 @@ TIM4_END:
         MOV     ITICK,#0x1F
 1$:     
         IRET        
+
 
 ; W1209 7S LED display row
         ; bit 76453210 input (parameter A)
