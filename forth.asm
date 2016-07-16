@@ -201,7 +201,7 @@ UZERO:
 	.dw	0	;tmp
 	.dw	0	;>IN
 	.dw	0	;#TIB
-	.dw	0 ; TIBB	;TIB
+	.dw	TIBB	;TIB
 	.dw	INTER	;'EVAL
 	.dw	0	;HLD
 	.dw	LASTN	;CONTEXT pointer
@@ -1739,9 +1739,10 @@ PAD:
 	.db	3
 	.ascii	"TIB"
 TIB:
-	CALL	NTIB
-	CALL	CELLP
-	JP	AT
+	LDW Y,#(RAMBASE+USRTIB)
+	SUBW X,#2
+	LDW (X),Y
+	RET
 
 ;	@EXECUTE	( a -- )
 ;	Execute vector stored in address a.
@@ -2475,6 +2476,7 @@ PARS8:	CALL	OVER
 PARSE:
 	CALL	TOR
 	CALL	TIB
+	CALL	AT
 	CALL	INN
 	CALL	AT
 	CALL	PLUS	;current input buffer pointer
@@ -2808,6 +2810,7 @@ ACCP4:	CALL	DROP
 	.ascii	"QUERY"
 QUERY:
 	CALL	TIB
+	CALL	AT
 	CALL	DOLIT
 	.dw	TIBLENGTH                      
 	CALL	ACCEP                         
@@ -2973,8 +2976,7 @@ PRESE:
 	CALL	SPSTO
 	CALL	DOLIT
 	.dw	TIBB
-	CALL	NTIB
-	CALL	CELLP
+	CALL	TIB
 	JP	STORE    ; TIB
 
 ;	QUIT	( -- )
