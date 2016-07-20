@@ -1,9 +1,37 @@
-; tg9541: the docs for the SDCC integated assembler are
-;         very thin. I used SDCC to create a template... 
+;===============================================================
+; STM8EF for STM8S003F3 (Value Line) devives
+;
+; Based on http://www.forth.org/svfig/kk/07-2010.html
+;--------------------------------------------------------
+;       STM8EF, Version 2.1, 13jul10cht
+;       Copyright (c) 2000
+;       Dr. C. H. Ting
+;       156 14th Avenue
+;       San Mateo, CA 94402
+;       (650) 571-7639
+;
+;       FORTH Virtual Machine:
+;       Subroutine threaded model
+;       SP Return stack pointer
+;       X Data stack pointer
+;       A,Y Scratch pad registers
+;--------------------------------------------------------
+;
+; Changes and code refactoring due to the following:
+; * SDCC tool chain "ASxxxx V2.0" syntax
+; * conditional code for different target devices
+; * STM8S105C6 (Access Line) dependencies, e.g. UART2
+; * compactness (size over speed, 1K RAM layout)
+; * new features, e.g. W1209 7-seg LED  
+;
+;  The docs for the SDCC integated assembler are very 
+;  thin. SDCC was used to create a template:
+;
 ;--------------------------------------------------------
 ; File Created by SDCC : free open source ANSI-C Compiler
 ; Version 3.6.0 #9615 (Linux)
 ;--------------------------------------------------------
+
 	.module forth
 	.optsdcc -mstm8
 	
@@ -46,27 +74,31 @@
 ;	 function forth
 ;	-----------------------------------------
 	;******  Global Configuration ******
-        STM8S_DISCOVERY = 0      
-        MODULE_W1209 =    0     ; RS232 Half Duplex PD_6 (RxD), 3-dig-7S
-        MODULE_MINIMAL =  1
+        STM8S_DISCOVERY = 0     ; (currently broken)
+        MODULE_W1209 =    1     ; W1209 thermostat 
+        MODULE_MINIMAL =  0     ; generic STM8S103F3 breakout board 
 
-        STM8S103F3   =    0 
-        STM8S003F3   =    0 
-        HALF_DUPLEX  =    0     ; RS232 Half Duplex Mode
+        ;****** Defaults ******
+        STM8S103F3   =    0     ; 8K flash, 1K RAM, 640 bytes EEPROM
+        STM8S003F3   =    0     ; like STM8S103F3, 128 bytes EEPROM 
+        HALF_DUPLEX  =    0     ; RS232 shared Rx/Tx line, bus style
         TERM_LINUX   =    1     ; LF terminates line 
 
         .ifne   MODULE_W1209
+        ; UART half-duplex PD_6 (RxD) SW simylation, bus style
+        ; Multiplexed 3 digit 7 seg LED display
+        ; Clock: HSI (no crystal)
         STM8S003F3   =    1 
         HALF_DUPLEX  =    1     ; RS232 Half Duplex Mode
         .endif
+
         .ifne   MODULE_MINIMAL
+        ; Clock: HSI (no crystal)
         STM8S103F3   =    1 
         .endif
           
-        ITICK        =    0
-        TXREG        =    1
-        
-	;******  STM8SF003 Registers  ******
+        .ifne   (STM8S003F3 + STM8S103F3)
+	;******  STM8SF103 Registers  ******
 	REGBASE =	0x5000	;register base
 
 	PA_ODR	=	0x5000	; Port A data output latch register
@@ -90,10 +122,14 @@
 	PD_CR1	=	0x5012	; Port D control register 1
 	PD_CR2	=	0x5013	; Port D control register 2
 
-        ; *** 
+        ; *** Non-Volatile Memory ***
+        FLASH_IAPSR =   0x505F  ; Flash in-application programming status register
+        FLASH_DUKR =    0x5064  ; Data EEPROM unprotection register
+
+         ; *** Clock Control ***
         CLK_CKDIVR =    0x50C6  ; Clock divider register
 
-	; *** UART1 
+	; *** UART1 ***
         UART1_SR   =	0x5230	;UART status reg
 	UART1_DR   =	0x5231	;UART data reg
 	UART1_BRR1  =	0x5232	;baud rate control 1
@@ -111,35 +147,54 @@
         TIM4_PSCR =     0x5347  ; 3 (1/8)
         TIM4_ARR =      0x5348  ; 0xCF (Reload 0.104 ms)
 
-
 	;******  Memory ******
 	RAMBASE =	0x0000	; ram base
-        UPPOFFS =       0x06    ; offset user area
+        UPPOFFS =       USRBASE ; offset user area
         CTOPOFFS =      0x80    ; dictionary start 
 	DATSOFFS =	0x380	; data stack 
         TIBOFFS = DATSOFFS+CELLL; Terminal Input Buffer start
         STACK   =	0x3FF	; system (return) stack
-	
-	;******  System Variables  ******
-        USRBASE =        6      ; radix base for numeric I/O
-        USREVAL =        8      ; execution vector of EVAL 
-        USRCONTEXT =    10      ; start vocabulary search
-        USRCP   =       12      ; point to top of dictionary
-        USRLAST =       14      ; point to last name in dictionary
-        USRTIB  =       16      ; address of terminal input buffer
-        USRNTIB =       18      ; count in terminal input buffer 
-        USR_IN  =       20      ; hold parsing pointer
-        USRHLD  =       22      ; hold a pointer of output string
-        USRTEMP =       24      ; temporary storage   
-	XTEMP	=	26	; address called by CREATE
-	PROD1   =       26	; space for UM*
-	YTEMP	=	28	; address called by CREATE
-        PROD2   =       28      ; 
-	PROD3   =       30
-	CARRY   =       32
-	SP0	=	34	; initial data stack pointer
-	RP0	=	36	; initial return stack pointer
-	
+        .endif
+        
+        	
+	;; Memory allocation
+	UPP     =     RAMBASE + UPPOFFS
+	CTOP    =     RAMBASE + CTOPOFFS	
+	SPP     =     RAMBASE + DATSOFFS
+	TIBB    =     RAMBASE + TIBOFFS
+	RPP     =     RAMBASE + STACK
+
+	;******  User & System Variables  ******
+
+        .ifne   MODULE_W1209
+	;******  W1209 Variables  ******
+        WE7SFLAG =      0x59    ; 7S output control flags 
+        WLED7S1  =      0x5A    ; word 7S LEDs digits  .3..
+        WLED7S2  =      0x5C    ; word 7S LEDs digits  ..21
+        TIM4TX7S =      0x5E    ; TIM4 TxD & LED interrupt states 
+        TIM4TXREG  =    0x5F    ; W1209 TxD simulation register 
+        .endif
+        
+        ;******  STM8EF Variables  ******
+        USRBASE =       0x60    ; radix base for numeric I/O
+        USREVAL =       0x62    ; execution vector of EVAL 
+        USRCONTEXT =    0x64    ; start vocabulary search
+        USRCP   =       0x66    ; point to top of dictionary
+        USRLAST =       0x68    ; point to last name in dictionary
+        USRTIB  =       0x6A    ; address of terminal input buffer
+        USRNTIB =       0x6C    ; count in terminal input buffer 
+        USR_IN  =       0x6E    ; hold parsing pointer
+        USRHLD  =       0x70    ; hold a pointer of output string
+        USRTEMP =       0x72    ; temporary storage   
+	XTEMP	=	0x74	; temporary storage
+	PROD1   =       0x74	; temporary storage for UM*
+	YTEMP	=	0x76	; temporary storage
+        PROD2   =       0x76    ; temporary storage for UM*
+	PROD3   =       0x78    ; temporary storage for UM* 
+	CARRY   =       0x7A    ; temporary storage for UM* 
+	SP0	=       0x7C    ; initial data stack pointer
+	RP0	=       0x7E	; initial return stack pointer
+
 	;***********************************************
 	;; Version control
 	VER     =     2         ; major release version
@@ -162,29 +217,17 @@
 	TIC     =     39       ; tick
 	CALLL   =     0xCD     ; CALL opcodes
 
-	;; Memory allocation
-	UPP     =     RAMBASE + UPPOFFS
-	CTOP    =     RAMBASE + CTOPOFFS	
-	SPP     =     RAMBASE + DATSOFFS
-	TIBB    =     RAMBASE + TIBOFFS
-	RPP     =     RAMBASE + STACK
 
 ;; Hardware reset
 
 _forth:
-	; clear stacks
-	; ldw     X,#0x300
-        CLRW    X
+	; ldw     X,#0x300     ; Just clear stacks 
+        CLRW    X              ; Clear all RAM 
 1$:
-	clr     (X)                    ; STM8S105 : FixMe
-	incw    X
-	cpw     X,#(STACK+1)               
-	jrule   1$
-
-; initialize SP
-;	ldw     X,#(STACK-1)           
-;	ldw     SP,X
-;	jp      ORIG
+	CLR     (X)                    
+	INCW    X
+	CPW     X,#(STACK+1)               
+	JRULE   1$
 
 ;; Main entry points and COLD start data
 	
@@ -224,7 +267,6 @@ COLD:
 	.dw	(ULAST-UZERO)
 	CALL	CMOVE	        ;initialize user area
 	CALL	PRESE	        ;initialize data stack and TIB
-        CALL    PORTINIT        ;initialize board specific ports
 
         ;; Device dependent HW initialization
 PORTINIT:
@@ -269,7 +311,7 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
         MOV     TIM4_PSCR,#0x03 ; prescaler 1/8
         MOV     TIM4_ARR,#0xCF  ; reload 0.104 ms (9600 baud)
         MOV     TIM4_CR1,#0x01  ; enable TIM4
-        MOV     TIM4_IER,#0x01  ; enble TIM4 interrupt
+        MOV     TIM4_IER,#0x01  ; enable TIM4 interrupt
         RIM                     ; enable interrupts 
         .endif
         
@@ -320,6 +362,144 @@ TBOOT:
 
 ;; Device dependent I/O
 
+        .ifne   MODULE_W1209
+        ; TIM4 interrupt handler for W1209 TxD, and 7-seg MPXd 
+        ; The W1209 has RxD (PD_6) on the sensor header, but STM8S UART1 
+        ; half-duplex mode requires TxD (PD_5). 
+        ; As a work-around, a convoluted state machine/counter controls
+        ; SW-TxD through PD_6, and W1209 7-seg-LED-display multiplex. 
+        ; RS232 TX works by writing a char to uint8_t TIM4TXREG, 
+        ; and clearing TIM4TX7S Bit4.
+_TIM4_IRQHandler:
+        PDTX =  6
+        BRES    TIM4_SR,#0             ; clear TIM4 UIF 
+        
+        LD      A,TIM4TX7S
+        JREQ    TIM4_ENDTX
+
+        ; TIM4TX7S == 0x1F:0x1D ?
+        CP     A,#0x1D         
+        JRPL    TIM4_LED               ; State is "Wait"
+
+        ; TIM4TX7S < 0x10 ?
+        CP      A,#0x10                ; Active state?   
+        JRMI    TIM4_ACTIVE_SYNC
+
+        ; 0x1C <= TIM4TX7S >= 0x10
+        MOV     TIM4TX7S,#0x20         ; Renew state "Wait", set TIM4TX7S to (0x20-1)
+        JRA     TIM4_LED
+
+TIM4_ACTIVE_SYNC:      
+        CP      A,#0x0C                ; After clearing TIM4TX7S.4 we'll get here after some ticks
+        JRMI    TIM4_TEST      
+        JRA     TIM4_LED               ; State is "Sync"
+
+TIM4_TEST:
+        CP      A,#0x0B
+        JRNE    TIM4_START
+        
+        BRES	UART1_CR2,#2	       ; disable RX
+        ; TODO: if RX isn't free, 
+        ;    return to (0x1F - 1)
+        JRA     TIM4_LED
+
+TIM4_START:  
+        CP      A,#0x0A
+        JRNE    TIM4_STOP
+        ; TIM4TX7S == A 
+        ; set PD_6 LOW
+        BSET    PD_DDR,#PDTX       ; set PD_6 to output
+        RCF
+        JRA     TIM4_BIT         
+
+TIM4_STOP:  
+        CP      A,#0x01
+        JRNE    TIM4_SER
+        ; TIM4TX7S == 1 
+        ; set PD_6 high
+        SCF
+        JRA     TIM4_BIT         
+
+TIM4_ENDTX: 
+        ; TIM4TX7S == 0
+        BRES    PD_DDR,#PDTX    ; set PD_6 to input
+        BSET	UART1_CR2,#2	; enable RX
+        ; fall through
+                
+TIM4_SER:
+        ; TIM4TX7S == 9:2
+        SRL     TIM4TXREG    
+        ; fall through
+
+TIM4_BIT:
+        ; Set RxTx port to CF value
+        BCCM    PD_ODR,#PDTX
+
+TIM4_LED:   
+        ; W1209 multiplexed 7-seg LED display
+        ; A contains TIM4TX7S, bis 1:0 are display counter  
+        BSET    PD_ODR,#4       ; clear digit outputs .321
+        BSET    PB_ODR,#5
+        BSET    PB_ODR,#4
+
+        AND     A,#3        
+        JRNE    1$
+        LD      A,WLED7S1+1
+        BRES    PD_ODR,#4       ; digit .3.. 
+        JRA     TIM4_SSEG
+
+1$:     CP      A,#1
+        JRNE    2$
+        LD      A,WLED7S2
+        BRES    PB_ODR,#5       ; digit ..2.
+        JRA     TIM4_SSEG
+
+2$:     CP      A,#2
+        JRNE    TIM4_END  
+        LD      A,WLED7S2+1 
+        BRES    PB_ODR,#4       ; digit ...1
+        ; fall through
+         
+TIM4_SSEG:
+        ; W1209 7S LED display row
+        ; bit 76453210 input (parameter A)
+        ;  PA .....FB.
+        ;  PC CG...... 
+        ;  PD ..A.DPE.
+        RRC     A
+        BCCM    PD_ODR,#5       ; A
+        RRC     A
+        BCCM    PA_ODR,#2       ; B
+        RRC     A
+        BCCM    PC_ODR,#7       ; C
+        RRC     A
+        BCCM    PD_ODR,#3       ; D
+        RRC     A
+        BCCM    PD_ODR,#1       ; E
+        RRC     A
+        BCCM    PA_ODR,#1       ; F
+        RRC     A
+        BCCM    PC_ODR,#6       ; G
+        RRC     A
+        BCCM    PD_ODR,#2       ; P
+
+TIM4_END:             
+        DEC     TIM4TX7S        ; next (convoluted) TXD TIM4 state/LED column
+        JRPL    1$
+        MOV     TIM4TX7S,#0x1F
+1$:     
+        IRET        
+
+        .else
+
+        ; Minimal IRQ handler for TIM4
+_TIM4_IRQHandler:
+        BRES    TIM4_SR,#0              ; clear TIM4 UIF 
+        IRET 
+
+        .endif
+
+
 ;	?RX	( -- c T | F )
 ;	Return input byte and true, or false.
 	.dw	LINK
@@ -354,12 +534,12 @@ EMIT:
 	BRES	UART1_CR2,#2	;disable rx
 
         .ifne   MODULE_W1209
-1$:     BTJF    ITICK,#4,1$
+1$:     BTJF    TIM4TX7S,#4,1$
  	LD      A,(1,X)
         ADDW    X,#2       
-        LD      TXREG,A
-        BRES    ITICK,#4
-2$:     BTJT    ITICK,#3,2$
+        LD      TIM4TXREG,A
+        BRES    TIM4TX7S,#4
+2$:     BTJT    TIM4TX7S,#3,2$
         .else                          ; HALF_DUPLEX, not MODULE_W1209
 	LD	A,(1,X)
 	ADDW	X,#2
@@ -579,12 +759,12 @@ RFROM:
 	.ascii	"R@"
 RAT:
 	POPW	Y
-	LDW YTEMP,Y
+	LDW     YTEMP,Y
 	POPW	Y
-	PUSHW Y
-	SUBW X,#2
-	LDW (X),Y
-	JP [YTEMP]
+	PUSHW   Y
+	SUBW    X,#2
+	LDW     (X),Y
+	JP      [YTEMP]
 
 ;	>R	( w -- )
 ;	Push data stack to return stack.
@@ -595,12 +775,12 @@ RAT:
 	.ascii	">R"
 TOR:
 	POPW	Y	;save return addr
-	LDW YTEMP,Y
-	LDW Y,X
-	LDW Y,(Y)
-	PUSHW Y	;restore return addr
-	ADDW X,#2
-	JP [YTEMP]
+	LDW     YTEMP,Y
+	LDW     Y,X
+	LDW     Y,(Y)
+	PUSHW   Y	;restore return addr
+	ADDW    X,#2
+	JP      [YTEMP]
 
 
 ;	DROP	( w -- )
@@ -622,10 +802,10 @@ DROP:
 	.db	3
 	.ascii	"DUP"
 DUPP:
-	LDW Y,X
-	SUBW X,#2
-	LDW Y,(Y)
-	LDW (X),Y
+	LDW     Y,X
+	SUBW    X,#2
+	LDW     Y,(Y)
+	LDW     (X),Y
 	RET	
 
 ;	SWAP  	( w1 w2 -- w2 w1 )
@@ -636,14 +816,14 @@ DUPP:
 	.db	4
 	.ascii	"SWAP"
 SWAPP:
-	LDW Y,X
-	LDW Y,(Y)
-	LDW YTEMP,Y
-	LDW Y,X
-	LDW Y,(2,Y)
-	LDW (X),Y
-	LDW Y,YTEMP
-	LDW (2,X),Y
+	LDW     Y,X
+	LDW     Y,(Y)
+	LDW     YTEMP,Y
+	LDW     Y,X
+	LDW     Y,(2,Y)
+	LDW     (X),Y
+	LDW     Y,YTEMP
+	LDW     (2,X),Y
 	RET	
 
 ;	OVER	( w1 w2 -- w1 w2 w1 )
@@ -654,10 +834,10 @@ SWAPP:
 	.db	4
 	.ascii	"OVER"
 OVER:
-	SUBW X,#2
-	LDW Y,X
-	LDW Y,(4,Y)
-	LDW (X),Y
+	SUBW    X,#2
+	LDW     Y,X
+	LDW     Y,(4,Y)
+	LDW     (X),Y
 	RET	
 
 ;	0<	( n -- t )
@@ -668,13 +848,13 @@ OVER:
 	.db	2
 	.ascii	"0<"
 ZLESS:
-	LD A,#0x0FF
-	LDW Y,X
-	LDW Y,(Y)
+	LD      A,#0x0FF
+	LDW     Y,X
+	LDW     Y,(Y)
 	JRMI	ZL1
-	CLR A	;false
-ZL1:    LD (X),A
-	LD (1,X),A
+	CLR     A	;false
+ZL1:    LD      (X),A
+	LD      (1,X),A
 	RET	
 
 ;	AND	( w w -- w )
@@ -686,13 +866,13 @@ ZL1:    LD (X),A
 	.ascii	"AND"
 ANDD:
 	LD	A,(X)	;D=w
-	AND A,(2,X)
-	LD (2,X),A
-	LD A,(1,X)
-	AND A,(3,X)
+	AND     A,(2,X)
+	LD      (2,X),A
+	LD      A,(1,X)
+	AND     A,(3,X)
 LDADROP:
-	LD (3,X),A
-	ADDW X,#2
+	LD      (3,X),A
+	ADDW    X,#2
 	RET
 
 ;	OR	( w w -- w )
@@ -705,12 +885,12 @@ LDADROP:
 	.ascii	"OR"
 ORR:
 	LD	A,(X)	;D=w
-	OR A,(2,X)
-	LD (2,X),A
-	LD A,(1,X)
-	OR A,(3,X)
-;	LD (3,X),A
-;	ADDW X,#2
+	OR      A,(2,X)
+	LD      (2,X),A
+	LD      A,(1,X)
+	OR      A,(3,X)
+;	LD      (3,X),A
+;	ADDW    X,#2
 ;	RET
         JRA     LDADROP
 
@@ -724,12 +904,12 @@ ORR:
 	.ascii	"XOR"
 XORR:
 	LD	A,(X)	;D=w
-	XOR A,(2,X)
-	LD (2,X),A
-	LD A,(1,X)
-	XOR A,(3,X)
-;	LD (3,X),A
-;	ADDW X,#2
+	XOR     A,(2,X)
+	LD      (2,X),A
+	LD      A,(1,X)
+	XOR     A,(3,X)
+;	LD      (3,X),A
+;	ADDW    X,#2
 ;	RET
         JRA     LDADROP
 
@@ -742,18 +922,18 @@ XORR:
 	.db	3
 	.ascii	"UM+"
 UPLUS:
-	LD A,#1
-	LDW Y,X
-	LDW Y,(2,Y)
-	LDW YTEMP,Y
-	LDW Y,X
-	LDW Y,(Y)
-	ADDW Y,YTEMP
-	LDW (2,X),Y
+	LD      A,#1
+	LDW     Y,X
+	LDW     Y,(2,Y)
+	LDW     YTEMP,Y
+	LDW     Y,X
+	LDW     Y,(Y)
+	ADDW    Y,YTEMP
+	LDW     (2,X),Y
 	JRC	UPL1
-	CLR A
-UPL1:   LD (1,X),A
-	CLR (X)
+	CLR     A
+UPL1:   LD      (1,X),A
+	CLR     (X)
 	RET
 
 ;	SP!	( a -- )
@@ -775,9 +955,9 @@ SPSTO:
 	.db	3
 	.ascii	"sp@"
 SPAT:
-	LDW Y,X
-;	SUBW X,#2
-;	LDW (X),Y
+	LDW     Y,X
+;	SUBW    X,#2
+;	LDW     (X),Y
 ;	RET	
         JRA     YSTOR
 
@@ -792,8 +972,8 @@ SPAT:
 	.ascii	"doVar"
 DOVAR:
 	POPW	Y	;get return addr (pfa)
-;	SUBW X,#2
-;	LDW (X),Y	;push on stack
+;	SUBW    X,#2
+;	LDW     (X),Y	;push on stack
 ;	RET	;go to RET of EXEC
         JRA     YSTOR
 
@@ -805,9 +985,9 @@ DOVAR:
 	.db	4
 	.ascii	"BASE"
 BASE:
-	LDW Y,#(RAMBASE+USRBASE)
-;	SUBW X,#2
-;	LDW (X),Y
+	LDW     Y,#(RAMBASE+USRBASE)
+;	SUBW    X,#2
+;	LDW     (X),Y
 ;	RET
         JRA     YSTOR
 
@@ -820,9 +1000,9 @@ BASE:
 	.db	3
 	.ascii	"tmp"
 TEMP:
-	LDW Y,#(RAMBASE+USRTEMP)
-;	SUBW X,#2
-;	LDW (X),Y
+	LDW     Y,#(RAMBASE+USRTEMP)
+;	SUBW    X,#2
+;	LDW     (X),Y
 ;	RET
         JRA     YSTOR
 
@@ -835,9 +1015,9 @@ TEMP:
 	.db	3
 	.ascii	">IN"
 INN:
-	LDW Y,#(RAMBASE+USR_IN)
-;	SUBW X,#2
-;	LDW (X),Y
+	LDW     Y,#(RAMBASE+USR_IN)
+;	SUBW    X,#2
+;	LDW     (X),Y
 ;	RET
         JRA     YSTOR
 
@@ -850,9 +1030,9 @@ INN:
 	.db	4
 	.ascii	"#TIB"
 NTIB:
-	LDW Y,#(RAMBASE+USRNTIB)
-;	SUBW X,#2
-;	LDW (X),Y
+	LDW     Y,#(RAMBASE+USRNTIB)
+;	SUBW    X,#2
+;	LDW     (X),Y
 ;	RET
         JRA     YSTOR
 
@@ -865,9 +1045,9 @@ NTIB:
 	.db	5
 	.ascii	"'eval"
 TEVAL:
-	LDW Y,#(RAMBASE+USREVAL)
-;	SUBW X,#2
-;	LDW (X),Y
+	LDW     Y,#(RAMBASE+USREVAL)
+;	SUBW    X,#2
+;	LDW     (X),Y
 ;	RET
         JRA     YSTOR
 
@@ -881,9 +1061,9 @@ TEVAL:
 	.db	3
 	.ascii	"hld"
 HLD:
-	LDW Y,#(RAMBASE+USRHLD)
-;	SUBW X,#2
-;	LDW (X),Y
+	LDW     Y,#(RAMBASE+USRHLD)
+;	SUBW    X,#2
+;	LDW     (X),Y
 ;	RET
         JRA     YSTOR
 
@@ -896,9 +1076,9 @@ HLD:
 	.db	7
 	.ascii	"CONTEXT"
 CNTXT:
-	LDW Y,#(RAMBASE+USRCONTEXT)
-;	SUBW X,#2
-;	LDW (X),Y
+	LDW     Y,#(RAMBASE+USRCONTEXT)
+;	SUBW    X,#2
+;	LDW     (X),Y
 ;	RET
         JRA     YSTOR
 
@@ -911,9 +1091,9 @@ CNTXT:
 	.db	2
 	.ascii	"cp"
 CPP:
-	LDW Y,#(RAMBASE+USRCP)
-;	SUBW X,#2
-;	LDW (X),Y
+	LDW     Y,#(RAMBASE+USRCP)
+;	SUBW    X,#2
+;	LDW     (X),Y
 ;	RET
         JRA     YSTOR
 
@@ -927,11 +1107,11 @@ CPP:
 	.db	4
 	.ascii	"last"
 LAST:
-	LDW Y,#(RAMBASE+USRLAST)
+	LDW     Y,#(RAMBASE+USRLAST)
 ; "!" for Y for variable addresses, and constants
 YSTOR:        
-	SUBW X,#2
-	LDW (X),Y
+	SUBW    X,#2
+	LDW     (X),Y
 	RET
 
 ;	TIB	( -- a )
@@ -943,9 +1123,9 @@ YSTOR:
 	.db	3
 	.ascii	"TIB"
 TIB:
-	LDW Y,#(RAMBASE+USRTIB)
-;	SUBW X,#2
-;	LDW (X),Y
+	LDW     Y,#(RAMBASE+USRTIB)
+;	SUBW    X,#2
+;	LDW     (X),Y
 ;	RET
         JRA     YSTOR
 
@@ -961,9 +1141,9 @@ TIB:
 	.db	2
 	.ascii	"BL"
 BLANK:
-	LDW Y,#32
-;	SUBW X,#2
-;	LDW (X),Y
+	LDW     Y,#32
+;	SUBW    X,#2
+;	LDW     (X),Y
 ;	RET
         JRA     YSTOR
 
@@ -976,9 +1156,9 @@ BLANK:
 	.db	1
 	.ascii	"0"
 ZERO:
-	CLRW Y
-;	SUBW X,#2
-;	LDW (X),Y
+	CLRW    Y
+;	SUBW    X,#2
+;	LDW     (X),Y
 ;	RET
         JRA     YSTOR
 
@@ -991,9 +1171,9 @@ ZERO:
 	.db	1
 	.ascii	"1"
 ONE:
-	LDW Y,#1
-;	SUBW X,#2
-;	LDW (X),Y
+	LDW     Y,#1
+;	SUBW    X,#2
+;	LDW     (X),Y
 ;	RET
         JRA     YSTOR
 
@@ -1006,9 +1186,9 @@ ONE:
 	.db	2
 	.ascii	"-1"
 MONE:
-	LDW Y,#0x0FFFF
-;	SUBW X,#2
-;	LDW (X),Y
+	LDW     Y,#0x0FFFF
+;	SUBW    X,#2
+;	LDW     (X),Y
 ;	RET
         JRA     YSTOR
 
@@ -1025,11 +1205,11 @@ MONE:
 	.db	4
 	.ascii	"?DUP"
 QDUP:
-	LDW Y,X
-	LDW Y,(Y)
+	LDW     Y,X
+	LDW     Y,(Y)
 	JREQ	QDUP1
-	SUBW X,#2
-	LDW (X),Y
+	SUBW    X,#2
+	LDW     (X),Y
 QDUP1:	RET
 
 ;	ROT	( w1 w2 w3 -- w2 w3 w1 )
@@ -1041,19 +1221,19 @@ QDUP1:	RET
 	.db	3
 	.ascii	"ROT"
 ROT:
-	LDW Y,X
-	LDW Y,(4,Y)
-	LDW YTEMP,Y
-	LDW Y,X
-	LDW Y,(2,Y)
-	LDW XTEMP,Y
-	LDW Y,X
-	LDW Y,(Y)
-	LDW (2,X),Y
-	LDW Y,XTEMP
-	LDW (4,X),Y
-	LDW Y,YTEMP
-	LDW (X),Y
+	LDW     Y,X
+	LDW     Y,(4,Y)
+	LDW     YTEMP,Y
+	LDW     Y,X
+	LDW     Y,(2,Y)
+	LDW     XTEMP,Y
+	LDW     Y,X
+	LDW     Y,(Y)
+	LDW     (2,X),Y
+	LDW     Y,XTEMP
+	LDW     (4,X),Y
+	LDW     Y,YTEMP
+	LDW     (X),Y
 	RET
 
 ;	2DROP	( w w -- )
@@ -1065,7 +1245,7 @@ ROT:
 	.db	5
 	.ascii	"2DROP"
 DDROP:
-	ADDW X,#4
+	ADDW    X,#4
 	RET
 
 ;	2DUP	( w1 w2 -- w1 w2 w1 w2 )
@@ -1077,13 +1257,13 @@ DDROP:
 	.db	4
 	.ascii	"2DUP"
 DDUP:
-	SUBW X,#4
-	LDW Y,X
-	LDW Y,(6,Y)
-	LDW (2,X),Y
-	LDW Y,X
-	LDW Y,(4,Y)
-	LDW (X),Y
+	SUBW    X,#4
+	LDW     Y,X
+	LDW     Y,(6,Y)
+	LDW     (2,X),Y
+	LDW     Y,X
+	LDW     Y,(4,Y)
+	LDW     (X),Y
 	RET
 
 ;	+	( w w -- sum )
@@ -1095,14 +1275,14 @@ DDUP:
 	.db	1
 	.ascii	"+"
 PLUS:
-	LDW Y,X
-	LDW Y,(Y)
-	LDW YTEMP,Y
-	ADDW X,#2
-	LDW Y,X
-	LDW Y,(Y)
-	ADDW Y,YTEMP
-	LDW (X),Y
+	LDW     Y,X
+	LDW     Y,(Y)
+	LDW     YTEMP,Y
+	ADDW    X,#2
+	LDW     Y,X
+	LDW     Y,(Y)
+	ADDW    Y,YTEMP
+	LDW     (X),Y
 	RET
 
 ;	NOT	( w -- w )
@@ -1114,10 +1294,10 @@ PLUS:
 	.db	3
 	.ascii	"NOT"
 INVER:
-	LDW Y,X
-	LDW Y,(Y)
-	CPLW Y
-	LDW (X),Y
+	LDW     Y,X
+	LDW     Y,(Y)
+	CPLW    Y
+	LDW     (X),Y
 	RET
 
 ;	NEGATE	( n -- -n )
@@ -1129,10 +1309,10 @@ INVER:
 	.db	6
 	.ascii	"NEGATE"
 NEGAT:
-	LDW Y,X
-	LDW Y,(Y)
-	NEGW Y
-	LDW (X),Y
+	LDW     Y,X
+	LDW     Y,(Y)
+	NEGW    Y
+	LDW     (X),Y
 	RET
 
 ;	DNEGATE ( d -- -d )
@@ -1144,19 +1324,19 @@ NEGAT:
 	.db	7
 	.ascii	"DNEGATE"
 DNEGA:
-	LDW Y,X
-	LDW Y,(Y)
-	CPLW Y	
-	LDW YTEMP,Y
-	LDW Y,X
-	LDW Y,(2,Y)
-	CPLW Y
-	INCW Y
-	LDW (2,X),Y
-	LDW Y,YTEMP
-	JRNC DN1 
-	INCW Y
-DN1:    LDW (X),Y
+	LDW     Y,X
+	LDW     Y,(Y)
+	CPLW    Y	
+	LDW     YTEMP,Y
+	LDW     Y,X
+	LDW     Y,(2,Y)
+	CPLW    Y
+	INCW    Y
+	LDW     (2,X),Y
+	LDW     Y,YTEMP
+	JRNC    DN1 
+	INCW    Y
+DN1:    LDW     (X),Y
 	RET
 
 ;	-	( n1 n2 -- n1-n2 )
@@ -1168,14 +1348,14 @@ DN1:    LDW (X),Y
 	.db	1
 	.ascii	"-"
 SUBB:
-	LDW Y,X
-	LDW Y,(Y)
-	LDW YTEMP,Y
-	ADDW X,#2
-	LDW Y,X
-	LDW Y,(Y)
-	SUBW Y,YTEMP
-	LDW (X),Y
+	LDW     Y,X
+	LDW     Y,(Y)
+	LDW     YTEMP,Y
+	ADDW    X,#2
+	LDW     Y,X
+	LDW     Y,(Y)
+	SUBW    Y,YTEMP
+	LDW     (X),Y
 	RET
 
 ;	ABS	( n -- n )
@@ -1187,11 +1367,11 @@ SUBB:
 	.db	3
 	.ascii	"ABS"
 ABSS:
-	LDW Y,X
-	LDW Y,(Y)
+	LDW     Y,X
+	LDW     Y,(Y)
 	JRPL	AB1	;negate:
 	NEGW	Y	;else negate hi byte
-	LDW (X),Y
+	LDW     (X),Y
 AB1:    RET
 
 ;	=	( w w -- t )
@@ -1203,18 +1383,18 @@ AB1:    RET
 	.db	1
 	.ascii	"="
 EQUAL:
-	LD A,#0x0FF	;true
-	LDW Y,X	;D = n2
-	LDW Y,(Y)
-	LDW YTEMP,Y
-	ADDW X,#2
-	LDW Y,X
-	LDW Y,(Y)
-	CPW Y,YTEMP	;if n2 <> n1
+	LD      A,#0x0FF	;true
+	LDW     Y,X	;D = n2
+	LDW     Y,(Y)
+	LDW     YTEMP,Y
+	ADDW    X,#2
+	LDW     Y,X
+	LDW     Y,(Y)
+	CPW     Y,YTEMP	;if n2 <> n1
 	JREQ	EQ1
-	CLR A
-EQ1:    LD (X),A
-	LD (1,X),A
+	CLR     A
+EQ1:    LD      (X),A
+	LD      (1,X),A
 	RET	
 
 ;	U<	( u u -- t )
@@ -1226,18 +1406,18 @@ EQ1:    LD (X),A
 	.db	2
 	.ascii	"U<"
 ULESS:
-	LD A,#0x0FF	;true
-	LDW Y,X	;D = n2
-	LDW Y,(Y)
-	LDW YTEMP,Y
-	ADDW X,#2
-	LDW Y,X
-	LDW Y,(Y)
-	CPW Y,YTEMP	;if n2 <> n1
+	LD      A,#0x0FF	;true
+	LDW     Y,X	;D = n2
+	LDW     Y,(Y)
+	LDW     YTEMP,Y
+	ADDW    X,#2
+	LDW     Y,X
+	LDW     Y,(Y)
+	CPW     Y,YTEMP	;if n2 <> n1
 	JRULT	ULES1
-	CLR A
-ULES1:  LD (X),A
-	LD (1,X),A
+	CLR     A
+ULES1:  LD      (X),A
+	LD      (1,X),A
 	RET	
 
 ;	<	( n1 n2 -- t )
@@ -1249,18 +1429,18 @@ ULES1:  LD (X),A
 	.db	1
 	.ascii	"<"
 LESS:
-	LD A,#0x0FF	;true
-	LDW Y,X	;D = n2
-	LDW Y,(Y)
-	LDW YTEMP,Y
-	ADDW X,#2
-	LDW Y,X
-	LDW Y,(Y)
-	CPW Y,YTEMP	;if n2 <> n1
+	LD      A,#0x0FF	;true
+	LDW     Y,X	;D = n2
+	LDW     Y,(Y)
+	LDW     YTEMP,Y
+	ADDW    X,#2
+	LDW     Y,X
+	LDW     Y,(Y)
+	CPW     Y,YTEMP	;if n2 <> n1
 	JRSLT	LT1
-	CLR A
-LT1:    LD (X),A
-	LD (1,X),A
+	CLR     A
+LT1:    LD      (X),A
+	LD      (1,X),A
 	RET	
 
 ;	MAX	( n n -- n )
@@ -1272,15 +1452,15 @@ LT1:    LD (X),A
 	.db	3
 	.ascii	"MAX"
 MAX:
-	LDW Y,X	;D = n2
-	LDW Y,(2,Y)
-	LDW YTEMP,Y
-	LDW Y,X
-	LDW Y,(Y)
-	CPW Y,YTEMP	;if n2 <> n1
+	LDW     Y,X	;D = n2
+	LDW     Y,(2,Y)
+	LDW     YTEMP,Y
+	LDW     Y,X
+	LDW     Y,(Y)
+	CPW     Y,YTEMP	;if n2 <> n1
 	JRSLT	MAX1
-	LDW (2,X),Y
-MAX1:   ADDW X,#2
+	LDW     (2,X),Y
+MAX1:   ADDW    X,#2
 	RET	
 
 ;	MIN	( n n -- n )
@@ -1292,15 +1472,15 @@ MAX1:   ADDW X,#2
 	.db	3
 	.ascii	"MIN"
 MIN:
-	LDW Y,X	;D = n2
-	LDW Y,(2,Y)
-	LDW YTEMP,Y
-	LDW Y,X
-	LDW Y,(Y)
-	CPW Y,YTEMP	;if n2 <> n1
+	LDW     Y,X	;D = n2
+	LDW     Y,(2,Y)
+	LDW     YTEMP,Y
+	LDW     Y,X
+	LDW     Y,(Y)
+	CPW     Y,YTEMP	;if n2 <> n1
 	JRSGT	MIN1
-	LDW (2,X),Y
-MIN1:   ADDW X,#2
+	LDW     (2,X),Y
+MIN1:   ADDW    X,#2
 	RET	
 
 ;	WITHIN	( u ul uh -- t )
@@ -1332,41 +1512,41 @@ WITHI:
 	.db	6
 	.ascii	"UM/MOD"
 UMMOD:
-	LDW XTEMP,X	; save stack pointer
-	LDW X,(X)	; un
-	LDW YTEMP,X ; save un
-	LDW Y,XTEMP	; stack pointer
-	LDW Y,(4,Y) ; Y=udl
-	LDW X,XTEMP
-	LDW X,(2,X)	; X=udh
-	CPW X,YTEMP
-	JRULE MMSM1
-	LDW X,XTEMP
-	ADDW X,#2	; pop off 1 level
-	LDW Y,#0x0FFFF
-	LDW (X),Y
-	CLRW Y
-	LDW (2,X),Y
+	LDW     XTEMP,X	; save stack pointer
+	LDW     X,(X)	; un
+	LDW     YTEMP,X ; save un
+	LDW     Y,XTEMP	; stack pointer
+	LDW     Y,(4,Y) ; Y=udl
+	LDW     X,XTEMP
+	LDW     X,(2,X)	; X=udh
+	CPW     X,YTEMP
+	JRULE   MMSM1
+	LDW     X,XTEMP
+	ADDW    X,#2	; pop off 1 level
+	LDW     Y,#0x0FFFF
+	LDW     (X),Y
+	CLRW    Y
+	LDW     (2,X),Y
 	RET
 MMSM1:
-	LD A,#17	; loop count
+	LD      A,#17	; loop count
 MMSM3:
-	CPW X,YTEMP	; compare udh to un
-	JRULT MMSM4	; can't subtract
-	SUBW X,YTEMP	; can subtract
+	CPW     X,YTEMP	; compare udh to un
+	JRULT   MMSM4	; can't subtract
+	SUBW    X,YTEMP	; can subtract
 MMSM4:
-	CCF	; quotient bit
-	RLCW Y	; rotate into quotient
-	RLCW X	; rotate into remainder
-	DEC A	; repeat
-	JRUGT MMSM3
-	SRAW X
-	LDW YTEMP,X	; done, save remainder
-	LDW X,XTEMP
-	ADDW X,#2	; drop
-	LDW (X),Y
-	LDW Y,YTEMP	; save quotient
-	LDW (2,X),Y
+	CCF	        ; quotient bit
+	RLCW    Y	; rotate into quotient
+	RLCW    X	; rotate into remainder
+	DEC     A	; repeat
+	JRUGT   MMSM3
+	SRAW    X
+	LDW     YTEMP,X	; done, save remainder
+	LDW     X,XTEMP
+	ADDW    X,#2	; drop
+	LDW     (X),Y
+	LDW     Y,YTEMP	; save quotient
+	LDW     (2,X),Y
 	RET
 	
 ;	M/MOD	( d n -- r q )
@@ -1455,46 +1635,46 @@ SLASH:
 	LINK =	.
 	.db	3
 	.ascii	"UM*"
-UMSTA:	; stack have 4 bytes u1=a,b u2=c,d
-	LD A,(2,X)	; b
-	LD YL,A
-	LD A,(X)	; d
-	MUL Y,A
-	LDW PROD1,Y
-	LD A,(3,X)	; a
-	LD YL,A
-	LD A,(X)	; d
-	MUL Y,A
-	LDW PROD2,Y
-	LD A,(2,X)	; b
-	LD YL,A
-	LD A,(1,X)	; c
-	MUL Y,A
-	LDW PROD3,Y
-	LD A,(3,X)	; a
-	LD YL,A
-	LD A,(1,X)	; c
-	MUL Y,A	; least signifiant product
-	CLR A
-	RRWA Y
-	LD (3,X),A	; store least significant byte
-	ADDW Y,PROD3
-	CLR A
-	ADC A,#0	; save carry
-	LD CARRY,A
-	ADDW Y,PROD2
-	LD A,CARRY
-	ADC A,#0	; add 2nd carry
-	LD CARRY,A
-	CLR A
-	RRWA Y
-	LD (2,X),A	; 2nd product byte
-	ADDW Y,PROD1
-	RRWA Y
-	LD (1,X),A	; 3rd product byte
-	RRWA Y		; 4th product byte now in A
-	ADC A,CARRY	; fill in carry bits
-	LD (X),A
+UMSTA:	                        ; stack have 4 bytes u1=a,b u2=c,d
+	LD      A,(2,X)	; b
+	LD      YL,A
+	LD      A,(X)	; d
+	MUL     Y,A
+	LDW     PROD1,Y
+	LD      A,(3,X)	; a
+	LD      YL,A
+	LD      A,(X)	; d
+	MUL     Y,A
+	LDW     PROD2,Y
+	LD      A,(2,X)	; b
+	LD      YL,A
+	LD      A,(1,X)	; c
+	MUL     Y,A
+	LDW     PROD3,Y
+	LD      A,(3,X)	; a
+	LD      YL,A
+	LD      A,(1,X)	; c
+	MUL     Y,A	; least signifiant product
+	CLR     A
+	RRWA    Y
+	LD      (3,X),A	; store least significant byte
+	ADDW    Y,PROD3
+	CLR     A
+	ADC     A,#0	; save carry
+	LD      CARRY,A
+	ADDW    Y,PROD2
+	LD      A,CARRY
+	ADC     A,#0	; add 2nd carry
+	LD      CARRY,A
+	CLR     A
+	RRWA    Y
+	LD      (2,X),A	; 2nd product byte
+	ADDW    Y,PROD1
+	RRWA    Y
+	LD      (1,X),A	; 3rd product byte
+	RRWA    Y		; 4th product byte now in A
+	ADC     A,CARRY	; fill in carry bits
+	LD      (X),A
 	RET
 
 ;	*	( n n -- n )
@@ -1572,10 +1752,10 @@ STASL:
 	.db	2
 	.ascii	"2+"
 CELLP:
-	LDW Y,X
-	LDW Y,(Y)
-	ADDW Y,#2
-	LDW (X),Y
+	LDW     Y,X
+	LDW     Y,(Y)
+	ADDW    Y,#2
+	LDW     (X),Y
 	RET
 
 ;	CELL-	( a -- a )
@@ -1587,10 +1767,10 @@ CELLP:
 	.db	2
 	.ascii	"2-"
 CELLM:
-	LDW Y,X
-	LDW Y,(Y)
-	SUBW Y,#2
-	LDW (X),Y
+	LDW     Y,X
+	LDW     Y,(Y)
+	SUBW    Y,#2
+	LDW     (X),Y
 	RET
 
 ;	CELLS	( n -- n )
@@ -1602,10 +1782,10 @@ CELLM:
 	.db	2
 	.ascii	"2*"
 CELLS:
-	LDW Y,X
-	LDW Y,(Y)
-	SLAW Y
-	LDW (X),Y
+	LDW     Y,X
+	LDW     Y,(Y)
+	SLAW    Y
+	LDW     (X),Y
 	RET
 
 ;	1+	( n -- n )
@@ -1617,10 +1797,10 @@ CELLS:
 	.db	2
 	.ascii	"1+"
 ONEP:
-	LDW Y,X
-	LDW Y,(Y)
-	INCW Y
-	LDW (X),Y
+	LDW     Y,X
+	LDW     Y,(Y)
+	INCW    Y
+	LDW     (X),Y
 	RET
 
 ;	1-	( n -- n )
@@ -1632,10 +1812,10 @@ ONEP:
 	.db	2
 	.ascii	"1-"
 ONEM:
-	LDW Y,X
-	LDW Y,(Y)
-	DECW Y
-	LDW (X),Y
+	LDW     Y,X
+	LDW     Y,(Y)
+	DECW    Y
+	LDW     (X),Y
 	RET
 
 ;	2/	( n -- n )
@@ -1647,10 +1827,10 @@ ONEM:
 	.db	2
 	.ascii	"2/"
 TWOSL:
-	LDW Y,X
-	LDW Y,(Y)
-	SRAW Y
-	LDW (X),Y
+	LDW     Y,X
+	LDW     Y,(Y)
+	SRAW    Y
+	LDW     (X),Y
 	RET
 
 ;	>CHAR	( c -- c )
@@ -1686,13 +1866,13 @@ TCHA1:	RET
 	.db	5
 	.ascii	"DEPTH"
 DEPTH:
-	LDW Y,SP0	;save data stack ptr
-	LDW XTEMP,X
-	SUBW Y,XTEMP	;#bytes = SP0 - X
-	SRAW Y	;D = #stack items
-	DECW Y
-	SUBW X,#2
-	LDW (X),Y	; if neg, underflow
+	LDW     Y,SP0	;save data stack ptr
+	LDW     XTEMP,X
+	SUBW    Y,XTEMP	;#bytes = SP0 - X
+	SRAW    Y	;D = #stack items
+	DECW    Y
+	SUBW    X,#2
+	LDW     (X),Y	; if neg, underflow
 	RET
 
 ;	PICK	( ... +n -- ... w )
@@ -1704,13 +1884,13 @@ DEPTH:
 	.db	4
 	.ascii	"PICK"
 PICK:
-	LDW Y,X	;D = n1
-	LDW Y,(Y)
-	SLAW Y
-	LDW XTEMP,X
-	ADDW Y,XTEMP
-	LDW Y,(Y)
-	LDW (X),Y
+	LDW     Y,X	;D = n1
+	LDW     Y,(Y)
+	SLAW    Y
+	LDW     XTEMP,X
+	ADDW    Y,XTEMP
+	LDW     Y,(Y)
+	LDW     (X),Y
 	RET
 
 ;; Memory access
@@ -2249,7 +2429,14 @@ NUFQ1:	RET
 	.db	5
 	.ascii	"SPACE"
 SPACE:
-	CALL	BLANK
+        .ifne  MODULE_W1209
+        TNZ     WE7SFLAG        ; NZ: don't emit blank on W1209 7-seg LED 
+        JREQ    1$  
+        BSET    WE7SFLAG,#7
+        RET
+        .endif
+
+1$:	CALL	BLANK
 	JP	EMIT
 
 ;	SPACES	( +n -- )
@@ -2283,11 +2470,24 @@ TYPES:
 	JRA	TYPE2
 TYPE1:	CALL	DUPP
 	CALL	CAT
-	CALL	EMIT
-	CALL	ONEP
-TYPE2:	CALL	DONXT
+        .ifne  MODULE_W1209
+        TNZ     WE7SFLAG        ; NZ: output c on W1209 7-seg LED 
+        JREQ    1$  
+	CALL	EMIT7S	        ;display on 7-seg
+        JRA     2$
+        .endif
+
+1$:	CALL	EMIT
+2$:	CALL	ONEP
+TYPE2:	
+        CALL	DONXT
 	.dw	TYPE1
-	JP	DROP
+        .ifne   MODULE_W1209
+        TNZ     WE7SFLAG         ; B7 set: output c on W1209 7-seg LED 
+        JRPL    1$  
+        CLR     WE7SFLAG
+        .endif
+1$:	JP	DROP
 
 ;	CR	( -- )
 ;	Output a carriage return
@@ -3834,13 +4034,11 @@ WORS2:	RET
 	
 ;	
 ;===============================================================
-        .ifne   MODULE_W1209
 
 ;; tg9541 additions
 
 ;	I	( -- n )
 ;	Get inner FOR - NEXT index
-
 	.dw	LINK
 
 	LINK =	.
@@ -3856,7 +4054,6 @@ IGET:
 ;	BSR ( t a b -- )
 ;	Set/RESET bit# b (0..7) at address a to bool t
 ;       Creates/executes BSER/BRES + RET on data stack  
-
 	.dw	LINK
 	
         LINK =	.
@@ -3882,7 +4079,6 @@ $1:     LD      (1,X),A
 
 ;	0=	( n -- t )
 ;	Return true if n is equal to 0
-
 	.dw	LINK
 	
         LINK =	.
@@ -3936,63 +4132,44 @@ DCAT:
         CALL    DROP
         RET
 
-;        .ifne   MODULE_W1209
-;-----------------------------------------------
 
-;       7S  ( n -- )
-;       Put n to W1209 7-seg LED display (hex) 
-	.dw	LINK
-        
-        LINK =  .
-	.db	(2)
-	.ascii	"7S"
-SSEG:   
- ; doLit 2 >R DUP doLit F AND 7SH + C@ I 2+ C! doLit 10 / next 8C DROP
-        CALL    DOLIT
-        .dw     2
-        CALL    TOR
-1$:
-        CALL    DUPP
-        CALL    DOLIT
-        .dw     0x0F
-        CALL    ANDD
-        CALL    SSHEX
-        CALL    PLUS
-        CALL    CAT
-        CALL    IGET
-        CALL    CELLP
-        CALL    CSTOR
-        CALL    DOLIT
-        .dw     0x10
-        CALL    SLASH
-        CALL    DONXT
-        .dw     1$
-        CALL    DROP
-        RET
-
-;       7SH  ( c -- )
-;       Table for 7-seg hex number patterns
-	.dw	LINK
-        
-        LINK =  .
-	.db	(3)
-	.ascii	"7SH"
-SSHEX:   
-        CALL    DOVAR
-        .db     0x3F, 0x06, 0x5B, 0x4F
-        .db     0x66, 0x6D, 0x7D, 0x07
-        .db     0x7F, 0x6F, 0x77, 0x7C
-        .db     0x39, 0x5E, 0x79, 0x71
-
-
-;       KEY?  ( -- n )
-;       Read W1209 keys "set" (1), "+" (2), and "-" (4) as bitfield
+;       ULCK  ( -- )
+;       Unlock EEPROM (STM8S Value Line)
 	.dw	LINK
         
         LINK =  .
 	.db	(4)
-	.ascii	"KEY?"
-KEYQ:   
+	.ascii	"ULCK"
+UNLOCK:
+        MOV     FLASH_DUKR,#0xAE
+        MOV     FLASH_DUKR,#0x56
+1$:     BTJF    FLASH_IAPSR,#3,1$    ; PM0051 4.1 requires polling bit3=1 before writing
+        RET
+
+
+;       LCK  ( -- )
+;       Lock EEPROM (STM8S Value Line)
+	.dw	LINK
+        
+        LINK =  .
+	.db	(3)
+	.ascii	"LCK"
+LOCK:
+        BRES    FLASH_IAPSR,#3
+        RET
+
+         
+ ;-----------------------------------------------
+        .ifne   MODULE_W1209
+
+;       WKEY  ( -- n )
+;       Read W1209 key value "set" (1), "+" (2), and "-" (4) as a bitfield
+	.dw	LINK
+        
+        LINK =  .
+	.db	(4)
+	.ascii	"KEY@"
+WKEY:   
         CALL    DOLIT
         .dw     PC_IDR
         CALL    CAT
@@ -4006,158 +4183,106 @@ KEYQ:
         RET
 
 
-;---- W1209 TIM4 interrupt handler TxD simmulation, and display ----
-; The W1209 only has RxD (PD_6) on a header. Unfortunately, STM8S HW-support for
-; half-duplex would require TxD (PD_5). As a work-around, a TIM4 triggered counter/
-; state machine serves both as SW-TxD through PD_6, and as MPX for the LED-Display 
-; by evaluating Bits 1:0. RS232 transmit is used by writing a char to uint8_t TXREG, 
-; and clearing ITICK Bit4
-  
-_TIM4_IRQHandler:
-        PDTX =  6
-        BRES    TIM4_SR,#0              ; clear TIM4 UIF 
+;       7S  ( -- )
+;       Temporarily redirect "TYPE" to W1209 7-seg LED buffer 
+;       up to end of string *after* the first non-rendered char 
+	.dw	LINK
         
-        LD      A,ITICK
-        JREQ    TIM4_ENDTX
+        LINK =  .
+	.db	(2)
+	.ascii	"7S"
+SSEG:   
+        CLRW    Y 
+        LDW     WLED7S1,Y
+        LDW     WLED7S2,Y
+        MOV     WE7SFLAG,#1
+        RET
 
-        ; ITICK == 0x1F:0x1D ?
-        CP     A,#0x1D         
-        JRPL    TIM4_LED               ; State is "Wait"
+;       7S rendered chars 7-seg patterns: 
+PAT7SM9:   
+        .db     0x00, 0x40, 0x80, 0x52 ;  ,-,.,/ (',' as blank)
+        .db     0x3F, 0x06, 0x5B, 0x4F ; 0,1,2,3
+        .db     0x66, 0x6D, 0x7D, 0x07 ; 4,5,6,7
+        .db     0x7F, 0x6F             ; 8,9 
+PAT7SAZ:
+        .db           0x77, 0x7C, 0x39 ;   A,B,C
+        .db     0x5E, 0x79, 0x71, 0x3D ; D,E,F,G
+        .db     0x74, 0x30, 0x1E, 0x7A ; H,I,J,K
+        .db     0x38, 0x55, 0x54, 0x5C ; L,M,N,O
+        .db     0x73, 0x67, 0x50, 0x6D ; P,Q,R,S
+        .db     0x78, 0x3E, 0x1C, 0x1D ; T,U,V,W
+        .db     0x76, 0x6E, 0x6D       ; X,Y,Z
 
-        ; ITICK < 0x10 ?
-        CP      A,#0x10                ; Active state?   
-        JRMI    TIM4_ACTIVE_SYNC
-
-        ; 0x1C <= ITICK >= 0x10
-        MOV     ITICK,#0x20            ; Renew state "Wait", set ITICK to (0x20-1)
-        JRA     TIM4_LED
-
-TIM4_ACTIVE_SYNC:      
-        CP      A,#0x0C                ; After clearing ITICK.4 we'll get here after some ticks
-        JRMI    TIM4_TEST      
-        JRA     TIM4_LED               ; State is "Sync"
-
-TIM4_TEST:
-        CP      A,#0x0B
-        JRNE    TIM4_START
-        
-        BRES	UART1_CR2,#2	       ; disable RX
-        ; ITICK == B
-        ; if RX isn't free, 
-        ;    return to (0x1F - 1)
-        ; MOV     ITICK,#0x1F
-        ; JPA     TIM4_LED
-        ;  else 
-        
-        JRA     TIM4_LED
-
-TIM4_START:  
-        CP      A,#0x0A
-        JRNE    TIM4_STOP
-        ; ITICK == A 
-        ; set PD_6 LOW
-        BSET    PD_DDR,#PDTX       ; set PD_6 to output
-        RCF
-        JRA     TIM4_BIT         
-
-TIM4_STOP:  
-        CP      A,#0x01
-        JRNE    TIM4_SER
-        ; ITICK == 1 
-        ; set PD_6 high
-        SCF
-        JRA     TIM4_BIT         
-
-TIM4_ENDTX: 
-        ; ITICK == 0
-        BRES    PD_DDR,#PDTX    ; set PD_6 to input
-        BSET	UART1_CR2,#2	; enable RX
-        ; fall through
-                
-TIM4_SER:
-        ; ITICK == 9:2
-        SRL     TXREG    
-        ; fall through
-
-TIM4_BIT:
-        ; Set port to CF value
-        BCCM    PD_ODR,#PDTX
-
-TIM4_LED:   
-        ; do LED
-        BSET    PD_ODR,#4
-        BSET    PB_ODR,#5
-        BSET    PB_ODR,#4
-        ;.db     0x3F, 0x06, 0x5B, 0x4F
-
-        AND     A,#3
-        JRNE    1$
-        LD      A,2
-        CALL    SSEGOUT
-        BRES    PD_ODR,#4
-        JRA     TIM4_END
-
-1$:     CP      A,#1
-        JREQ    2$
-        LD      A,3
-        CALL    SSEGOUT
-        BRES    PB_ODR,#5
-        JRA     TIM4_END
-
-2$:     CP      A,#2
-        JREQ    TIM4_END  
-        LD      A,4
-        CALL    SSEGOUT
-        BRES    PB_ODR,#4
-
-TIM4_END:             
-        DEC     ITICK
-        JRPL    1$
-        MOV     ITICK,#0x1F
-1$:     
-        IRET        
-
-
-; W1209 7S LED display row
-        ; bit 76453210 input (parameter A)
-        ;  PA .....FB.
-        ;  PC CG...... 
-        ;  PD ..A.DPE.
-SSEGOUT:
-        RRC     A
-        BCCM    PD_ODR,#5       ; A
-        RRC     A
-        BCCM    PA_ODR,#2       ; B
-        RRC     A
-        BCCM    PC_ODR,#7       ; C
-        RRC     A
-        BCCM    PD_ODR,#3       ; D
-        RRC     A
-        BCCM    PD_ODR,#1       ; E
-        RRC     A
-        BCCM    PA_ODR,#1       ; F
-        RRC     A
-        BCCM    PC_ODR,#6       ; G
-        RRC     A
-        BCCM    PD_ODR,#2       ; P
-        RET      
-
-;       E7S  ( -- n )
-;       Emit 7-seg pattern to W1209 LED display buffer
+;       E7S  ( c -- )
+;       Convert char to 7-seg LED pattern, and put to W1209 display buffer
 	.dw	LINK
         
         LINK =  .
 	.db	(3)
 	.ascii	"E7S"
-E7S:       
+EMIT7S: 
+        LD      A,(1,X)         ; c to A
 
-;-----------------------------------------------
-        .else
-; Minimal IRQ handler for TIM4
-_TIM4_IRQHandler:
-        BRES    TIM4_SR,#0              ; clear TIM4 UIF 
-        IRET 
+        CP      A,#'.'
+        JREQ    E7DOT
+        CP      A,#','
+        JRMI    E7NOR
+        CP      A,#'z'
+        JRPL    E7NOR
+        CP      A,#'A'
+        JRUGE   E7ALPH
+
+        ; '-'--'9' (and '@') 
+        SUB     A,#','
+        LD      (1,X),A
+        CALL    DOLIT
+        .dw     PAT7SM9
+        JRA     E7LOOKA 
+E7ALPH:
+        ; 'A'--'z'
+        AND     A,#0x5F         ; convert to uppercase
+        SUB     A,#'A'
+        LD      (1,X),A
+        CALL    DOLIT
+        .dw     PAT7SAZ
+E7LOOKA:
+        CALL    PLUS
+        CALL    CAT
+        JP      PUT7S
+
+E7DOT:
+        LD      A,#0x80         ; 7-seg P (dot) 
+        OR      A,WLED7S2+1
+        LD      WLED7S2+1,A
+        JRA     E7END
+        
+E7NOR:
+        BSET    WE7SFLAG,#7     ; "TYPE" no longer calls EMIT7S after this string
+E7END:
+        JP      DROP
+
+
+;       P7S  ( c -- )
+;       Insert 7-seg pattern at left side of W1209 LED display buffer, rotate buffer left
+	.dw	LINK
+        
+        LINK =  .
+	.db	(3)
+	.ascii	"P7S"
+PUT7S:       
+        LDW     Y,X             ; w to AX
+        LD      A,(1,Y)
+PUT7SA:
+        LDW     Y,WLED7S2
+        RLWA    Y
+        LDW     WLED7S2,Y
+        LDW     Y,WLED7S1
+        RLWA    Y
+        LDW     WLED7S1,Y
+        ADDW    X,#2
+        RET
         .endif
+;-----------------------------------------------
 
 
 ;===============================================================
