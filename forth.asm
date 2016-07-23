@@ -1,32 +1,40 @@
 ;===============================================================
 ; STM8EF for STM8S003F3 (Value Line) devives
 ;
-; Based on http://www.forth.org/svfig/kk/07-2010.html
+; This is derived work based on 
+; http://www.forth.org/svfig/kk/07-2010.html
 ;--------------------------------------------------------
+; Original author:
 ;       STM8EF, Version 2.1, 13jul10cht
 ;       Copyright (c) 2000
 ;       Dr. C. H. Ting
 ;       156 14th Avenue
 ;       San Mateo, CA 94402
 ;       (650) 571-7639
-;
+
+; Original main description: 
 ;       FORTH Virtual Machine:
 ;       Subroutine threaded model
 ;       SP Return stack pointer
 ;       X Data stack pointer
 ;       A,Y Scratch pad registers
 ;--------------------------------------------------------
+; So far my attempts to contact the author over copyright 
+; questions remained without reply. From early eForth  
+; publications, I conclude that the license is akin to
+; an open source license that requires derived work to be 
+; published under the same condtions.
 ;
 ; Changes and code refactoring due to the following:
-; * SDCC tool chain "ASxxxx V2.0" syntax
 ; * conditional code for different target devices
-; * STM8S105C6 (Access Line) dependencies, e.g. UART2
+; * memory usage explicit, calculated from few constants
+; * STM8S105C6 dependencies removed (e.g. UART2)
 ; * compactness (size over speed, 1K RAM layout)
-; * new features, e.g. W1209 7-seg LED  
+; * new features, e.g. W1209 display & TxD with TIM4
+; * SDCC tool chain "ASxxxx V2.0" syntax
 ;
-;  The docs for the SDCC integated assembler are very 
-;  thin. SDCC was used to create a template:
-;
+; The docs for the SDCC integated assembler are very 
+; thin. SDCC was used to create a template:
 ;--------------------------------------------------------
 ; File Created by SDCC : free open source ANSI-C Compiler
 ; Version 3.6.0 #9615 (Linux)
@@ -70,22 +78,31 @@
 ; code
 ;--------------------------------------------------------
 	.area CODE
-;	-----------------------------------------
-;	 function forth
-;	-----------------------------------------
-	;******  Global Configuration ******
-        STM8S_DISCOVERY = 0     ; (currently broken)
-        MODULE_W1209 =    1     ; W1209 thermostat 
-        MODULE_MINIMAL =  0     ; generic STM8S103F3 breakout board 
 
-        ;****** Defaults ******
+        ;*************************************************
+        ;******  1) Hardware module type selection  ******
+        ;*************************************************
+        ; Note: add new variants here 
+        STM8S_DISCOVERY = 0     ; (currently considered broken)
+        MODULE_MINIMAL =  0     ; generic STM8S103F3 breakout board 
+        MODULE_W1209 =    1     ; W1209 Chinese made thermostat module 
+
+        ;**********************************
+        ;******  2) Global defaults  ******
+        ;**********************************
         STM8S103F3   =    0     ; 8K flash, 1K RAM, 640 bytes EEPROM
         STM8S003F3   =    0     ; like STM8S103F3, 128 bytes EEPROM 
         HALF_DUPLEX  =    0     ; RS232 shared Rx/Tx line, bus style
         TERM_LINUX   =    1     ; LF terminates line 
+        HWREG_WORDS  =    0     ; Peripheral Register words
+
+        ;********************************************************
+        ;******  3) Hardware module feature configuration  ******
+        ;********************************************************
+        ; Note: add new variants here 
 
         .ifne   MODULE_W1209
-        ; UART half-duplex PD_6 (RxD) SW simylation, bus style
+        ; UART half-duplex PD_6 (RxD) SW simulation "bus style"
         ; Multiplexed 3 digit 7 seg LED display
         ; Clock: HSI (no crystal)
         STM8S003F3   =    1 
@@ -95,12 +112,37 @@
         .ifne   MODULE_MINIMAL
         ; Clock: HSI (no crystal)
         STM8S103F3   =    1 
+        HWREG_WORDS  =    1
         .endif
-          
-        .ifne   (STM8S003F3 + STM8S103F3)
-	;******  STM8SF103 Registers  ******
-	REGBASE =	0x5000	;register base
 
+        ;**********************************************
+        ;******  4) Device dependent features  ******
+        ;**********************************************
+        ; Note: add new STM8S device types here 
+
+	;******  STM8S memory addresses ******
+	RAMBASE =	0x0000	; STM8S RAM start
+        EEPROMBASE =    0x4000  ; STM8S EEPROM start
+
+        .ifne   STM8S003F3
+        EEPROMEND =     0x407F  ; STM8S003F3: 128 bytes EEPROM
+        .endif
+
+        .ifne   STM8S103F3
+        EEPROMEND =     0x427F  ; STM8S103F3: 640 bytes EEPROM
+        .endif
+
+        .ifne   (STM8S003F3 + STM8S103F3)
+        ;******  STM8SF103 Memory Layout ******
+        RAMEND =        0x03FF	; system (return) stack, growing down
+
+        DRIVLOC =       0x0040  ; Hardware driver data 
+        UPPLOC  =       0x0060  ; UPP (user/system area) location for 1K RAM
+        CTOPLOC =       0x0080  ; CTOP (user dictionary) location for 1K RAM
+        SPPLOC  =       0x0380  ; SPP (data stack) location for 1K RAM
+        RPPLOC  =       RAMEND  ; RPP (return stack) location for 1K RAM
+        
+	;******  STM8SF103 Registers  ******
 	PA_ODR	=	0x5000	; Port A data output latch register
 	PA_IDR	=	0x5001	; Port A input pin value register
 	PA_DDR	=	0x5002	; Port A data direction register
@@ -122,7 +164,7 @@
 	PD_CR1	=	0x5012	; Port D control register 1
 	PD_CR2	=	0x5013	; Port D control register 2
 
-        ; *** Non-Volatile Memory ***
+        ; *** Non-Volatile Memory Control ***
         FLASH_IAPSR =   0x505F  ; Flash in-application programming status register
         FLASH_DUKR =    0x5064  ; Data EEPROM unprotection register
 
@@ -146,26 +188,14 @@
         TIM4_CNTR =     0x5346
         TIM4_PSCR =     0x5347  ; 3 (1/8)
         TIM4_ARR =      0x5348  ; 0xCF (Reload 0.104 ms)
-
-	;******  Memory ******
-	RAMBASE =	0x0000	; ram base
-        UPPOFFS =       USRBASE ; offset user area
-        CTOPOFFS =      0x80    ; dictionary start 
-	DATSOFFS =	0x380	; data stack 
-        TIBOFFS = DATSOFFS+CELLL; Terminal Input Buffer start
-        STACK   =	0x3FF	; system (return) stack
         .endif
-        
-        	
-	;; Memory allocation
-	UPP     =     RAMBASE + UPPOFFS
-	CTOP    =     RAMBASE + CTOPOFFS	
-	SPP     =     RAMBASE + DATSOFFS
-	TIBB    =     RAMBASE + TIBOFFS
-	RPP     =     RAMBASE + STACK
 
-	;******  User & System Variables  ******
 
+        ;************************************************
+        ;******  5) Module Driver Memory  ******
+        ;************************************************
+        ; Memory for module hardware related things, e.g. interrupt routines
+         
         .ifne   MODULE_W1209
 	;******  W1209 Variables  ******
         WE7SFLAG =      0x59    ; 7S output control flags 
@@ -174,33 +204,55 @@
         TIM4TX7S =      0x5E    ; TIM4 TxD & LED interrupt states 
         TIM4TXREG  =    0x5F    ; W1209 TxD simulation register 
         .endif
-        
-        ;******  STM8EF Variables  ******
-        USRBASE =       0x60    ; radix base for numeric I/O
-        USREVAL =       0x62    ; execution vector of EVAL 
-        USRCONTEXT =    0x64    ; start vocabulary search
-        USRCP   =       0x66    ; point to top of dictionary
-        USRLAST =       0x68    ; point to last name in dictionary
-        USRTIB  =       0x6A    ; address of terminal input buffer
-        USRNTIB =       0x6C    ; count in terminal input buffer 
-        USR_IN  =       0x6E    ; hold parsing pointer
-        USRHLD  =       0x70    ; hold a pointer of output string
-        USRTEMP =       0x72    ; temporary storage   
-	XTEMP	=	0x74	; temporary storage
-	PROD1   =       0x74	; temporary storage for UM*
-	YTEMP	=	0x76	; temporary storage
-        PROD2   =       0x76    ; temporary storage for UM*
-	PROD3   =       0x78    ; temporary storage for UM* 
-	CARRY   =       0x7A    ; temporary storage for UM* 
-	SP0	=       0x7C    ; initial data stack pointer
-	RP0	=       0x7E	; initial return stack pointer
 
-	;***********************************************
+
+        ;**************************************************
+	;******  6) General User & System Variables  ******
+        ;**************************************************
+
+        ;Note: "RAMBASE +" made more sense for multi-user/multi-tasking
+        ;      the STM8EF implementation has addressing mode limitations.
+        ;      "VARIABLE words" like "BASE" can add an UPP offset, but
+        ;      code accessing scratchpad (XTENP, etc) must be refactored, too!
+
+        UPP   = UPPLOC          ; offset user area
+        CTOP  = CTOPLOC         ; dictionary start, growing up
+                                ; note: PAD is inbetween CTOP and SPP
+	SPP   = SPPLOC	        ; data stack, growing down (with SPP-1 first)
+        TIBB  = SPPLOC          ; Term. Input Buf. TIBLENGTH between SPP and RPP
+	RPP   = RPPLOC          ; return stack, growing down
+        
+        ; Regular user variables
+        USRBASE =    UPP+0      ; radix base for numeric I/O
+        USREVAL =    UPP+2      ; execution vector of EVAL 
+        USRCONTEXT=  UPP+4      ; start vocabulary search
+        USRCP   =    UPP+6      ; point to top of dictionary
+        USRLAST =    UPP+8      ; point to last name in dictionary
+        USRTIB  =    UPP+10     ; address of terminal input buffer
+        USRNTIB =    UPP+12     ; count in terminal input buffer 
+        USR_IN  =    UPP+14     ; hold parsing pointer
+        USRHLD  =    UPP+16     ; hold a pointer of output string
+        USRTEMP =    UPP+18     ; temporary storage (VARIABLE tmp)
+	SP0	=    UPP+20     ; initial data stack pointer
+	RP0	=    UPP+22	; initial return stack pointer
+
+        ; Scratchpad memory, directly used in assembler code
+	XTEMP	=    UPP+24	; scratchpad (usually for X)
+	YTEMP	=    UPP+26	; scratchpad (usually for Y)
+	PROD1   =    XTEMP	; scratchpad alias for UM*
+        PROD2   =    YTEMP      ; scratchpad alias for UM*
+	PROD3   =    UPP+28     ; scratchpad for UM* 
+	CARRY   =    UPP+30     ; scratchpad for UM* 
+
+
+        ;************************************
+	;******  7) General Constants  ******
+        ;************************************
+
 	;; Version control
 	VER     =     2         ; major release version
 	EXT     =     1         ; minor extension
 
-	;; Constants
 	TRUEE   =     0xFFFF   ; true flag
 	COMPO   =     0x40     ; lexicon compile only bit
 	IMEDD   =     0x80     ; lexicon immediate bit
@@ -218,21 +270,24 @@
 	CALLL   =     0xCD     ; CALL opcodes
 
 
-;; Hardware reset
+        ;***********************
+	;******  8) Code  ******
+        ;***********************
 
+;; Entry point 
 _forth:
 	; ldw     X,#0x300     ; Just clear stacks 
         CLRW    X              ; Clear all RAM 
 1$:
 	CLR     (X)                    
 	INCW    X
-	CPW     X,#(STACK+1)               
+	CPW     X,#(RAMEND+1)
 	JRULE   1$
 
 ;; Main entry points and COLD start data
 	
 ORIG:	
-	LDW	X,#STACK	;initialize return stack
+	LDW	X,#RPP	        ;initialize return stack
 	LDW	SP,X
 	LDW	RP0,X
 	LDW	X,#SPP          ; initialize data stack
@@ -298,7 +353,7 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
           .endif
         .endif 
 
- .ifne   MODULE_W1209
+        .ifne   MODULE_W1209
         ; W1209 STM8S003F3 init GPIO & UART
         MOV     PA_DDR,#0b00001110 ; relay,B,F        
         MOV     PA_CR1,#0b00001110         
@@ -319,14 +374,13 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
         ; STM8S103F3 minimal breakout board init GPIO
         BSET     PB_DDR,#5  
         BSET     PB_CR1,#5 
-        BSET     PB_ODR,#5 ; LED off
+        BSET     PB_ODR,#5      ; LED off
         .endif
         
 	CALL	TBOOT
 	CALL	ATEXE	        ;application boot
 	CALL	OVERT
-	JP	QUIT	;start interpretation
-
+	JP	QUIT	        ;start interpretation
 
 ;	hi	( -- )
 ;	Display sign-on message.
@@ -338,12 +392,12 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
 	.ascii	"hi"
 HI:
 	CALL	CR
-	CALL	DOTQP	;initialize I/O
+	CALL	DOTQP	        ; initialize I/O
 	.db	15
 	.ascii	"stm8eForth v"
 	.db	(VER+'0')
 	.ascii	"."
-	.db	(EXT+'0') ;version
+	.db	(EXT+'0')       ;version
 	JP	CR
 
 
@@ -357,48 +411,53 @@ HI:
 	.ascii	"'BOOT"
 TBOOT:
 	CALL	DOVAR
-	.dw	HI	;application to boot
+	.dw	HI	        ;application to boot
 
 
-;; Device dependent I/O
+        ;; Device dependent I/O
 
         .ifne   MODULE_W1209
-        ; TIM4 interrupt handler for W1209 TxD, and 7-seg MPXd 
-        ; The W1209 has RxD (PD_6) on the sensor header, but STM8S UART1 
-        ; half-duplex mode requires TxD (PD_5). 
-        ; As a work-around, a convoluted state machine/counter controls
-        ; SW-TxD through PD_6, and W1209 7-seg-LED-display multiplex. 
+
+        ; TIM4 interrupt handler for 7-seg LED MPX and W1209 SW TxD. 
         ; RS232 TX works by writing a char to uint8_t TIM4TXREG, 
         ; and clearing TIM4TX7S Bit4.
+
+        ; The W1209 has RxD (PD_6) on the sensor header, but STM8S UART1 
+        ; half-duplex mode requires TxD (PD_5). The work-around here is 
+        ; SW-TxD through PD_6 by switching between RxD, and GPIO. 
+        ; Hint: bits TIM4TX7S.1:0 act as the LED MPX column counter.
+        ; This is convoluted (= bad) code but the TxD phase won't be 
+        ; disturbed by the LED MPX, and TxD needs a counter, anyway.
+
 _TIM4_IRQHandler:
         PDTX =  6
-        BRES    TIM4_SR,#0             ; clear TIM4 UIF 
+        BRES    TIM4_SR,#0      ; clear TIM4 UIF 
         
         LD      A,TIM4TX7S
         JREQ    TIM4_ENDTX
 
         ; TIM4TX7S == 0x1F:0x1D ?
         CP     A,#0x1D         
-        JRPL    TIM4_LED               ; State is "Wait"
+        JRPL    TIM4_LED        ; State is "Wait"
 
         ; TIM4TX7S < 0x10 ?
-        CP      A,#0x10                ; Active state?   
+        CP      A,#0x10         ; Active state?   
         JRMI    TIM4_ACTIVE_SYNC
 
         ; 0x1C <= TIM4TX7S >= 0x10
-        MOV     TIM4TX7S,#0x20         ; Renew state "Wait", set TIM4TX7S to (0x20-1)
+        MOV     TIM4TX7S,#0x20  ; Renew state "Wait", set TIM4TX7S to (0x20-1)
         JRA     TIM4_LED
 
 TIM4_ACTIVE_SYNC:      
-        CP      A,#0x0C                ; After clearing TIM4TX7S.4 we'll get here after some ticks
+        CP      A,#0x0C         ; After clearing TIM4TX7S.4 we'll get here after some ticks
         JRMI    TIM4_TEST      
-        JRA     TIM4_LED               ; State is "Sync"
+        JRA     TIM4_LED        ; State is "Sync"
 
 TIM4_TEST:
         CP      A,#0x0B
         JRNE    TIM4_START
         
-        BRES	UART1_CR2,#2	       ; disable RX
+        BRES	UART1_CR2,#2	; disable RX
         ; TODO: if RX isn't free, 
         ;    return to (0x1F - 1)
         JRA     TIM4_LED
@@ -408,7 +467,7 @@ TIM4_START:
         JRNE    TIM4_STOP
         ; TIM4TX7S == A 
         ; set PD_6 LOW
-        BSET    PD_DDR,#PDTX       ; set PD_6 to output
+        BSET    PD_DDR,#PDTX    ; set PD_6 to output
         RCF
         JRA     TIM4_BIT         
 
@@ -507,7 +566,7 @@ _TIM4_IRQHandler:
 	.db	4
 	.ascii	"?KEY"
 QKEY:
-	BTJF    UART1_SR,#5,INCH	;check status
+	BTJF    UART1_SR,#5,INCH ;check status
 	LD	A,UART1_DR	;get char in A
 	SUBW	X,#2
 	LD	(1,X),A
@@ -523,7 +582,7 @@ INCH:   CLRW    Y
 
 
 ;	TX!	( c -- )
-;	Send character c to	output device.
+;	Send character c to output device.
 
 	.dw	LINK
 	LINK =	.
@@ -540,16 +599,16 @@ EMIT:
         LD      TIM4TXREG,A
         BRES    TIM4TX7S,#4
 2$:     BTJT    TIM4TX7S,#3,2$
-        .else                          ; HALF_DUPLEX, not MODULE_W1209
+        .else                   ; HALF_DUPLEX, not MODULE_W1209
 	LD	A,(1,X)
 	ADDW	X,#2
-1$:	BTJF	UART1_SR,#7,1$    ;loop until tdre
+1$:	BTJF	UART1_SR,#7,1$  ;loop until tdre
 	LD	UART1_DR,A	;send A
-2$:	BTJF	UART1_SR,#6,2$    ;loop until tc
+2$:	BTJF	UART1_SR,#6,2$  ;loop until tc
 	BSET	UART1_CR2,#2	;enable rx
         .endif  
 
-        .else                          ; not HALF_DUPLEX
+        .else                   ; not HALF_DUPLEX
 	LD	A,(1,X)
 	ADDW	X,#2
 11$:	BTJF	UART1_SR,#7,11$ ;loop until tdre
@@ -576,7 +635,7 @@ DOLIT:
 	JP      (2,Y)
 
 ;	next	( -- )
-;	Code for	single index loop.
+;	Code for single index loop.
 
 	.dw	LINK
 	LINK =	.
@@ -647,7 +706,7 @@ EXIT:
 	RET
 
 ;	!	( w a -- )
-;	Pop	data stack to memory.
+;	Pop data stack to memory.
 
 	.dw	LINK
 	LINK =	.
@@ -655,12 +714,12 @@ EXIT:
 	.ascii	"!"
 STORE:
 	LDW     Y,X
-	LDW     Y,(Y)	;Y=a
+	LDW     Y,(Y)	        ;Y=a
 	LDW     YTEMP,Y
 	LDW     Y,X
 	LDW     Y,(2,Y)
 	LDW     [YTEMP],Y
-	ADDW    X,#4 ;store w at a
+	ADDW    X,#4            ;store w at a
 	RET	
 
 ;	@	( a -- w )
@@ -671,10 +730,10 @@ STORE:
 	.db	1
 	.ascii	"@"
 AT:
-	LDW     Y,X	;Y = a
-	LDW     Y,(Y)                  ; tg9541 why twice?
+	LDW     Y,X	        ;Y = a
+	LDW     Y,(Y)           
 	LDW     Y,(Y)
-	LDW     (X),Y ;w = @Y
+	LDW     (X),Y           ;w = @Y
 	RET	
 
 ;	C!	( c b -- )
@@ -700,7 +759,7 @@ CSTOR:
 	.db	2
 	.ascii	"C@"
 CAT:
-	LDW     Y,X	                   ;Y=b
+	LDW     Y,X	        ;Y=b
 	LDW     Y,(Y)
 	LD      A,(Y)
 	LD      (1,X),A
@@ -715,7 +774,7 @@ CAT:
 	.db	3
 	.ascii	"rp@"
 RPAT:
-	LDW     Y,SP	                  ;save return addr
+	LDW     Y,SP	        ;save return addr
 	SUBW    X,#2
 	LDW     (X),Y
 	RET	
@@ -743,7 +802,7 @@ RPSTO:
 	.db	(COMPO+2)
 	.ascii	"R>"
 RFROM:
-	POPW	Y	                     ;save return addr
+	POPW	Y	        ;save return addr
 	LDW     YTEMP,Y
 	POPW	Y
 	SUBW    X,#2
@@ -795,7 +854,7 @@ DROP:
 	RET	
 
 ;	DUP	( w -- w w )
-;	Duplicate	top stack item.
+;	Duplicate top stack item.
 
 	.dw	LINK
 	LINK =	.
@@ -937,7 +996,7 @@ UPL1:   LD      (1,X),A
 	RET
 
 ;	SP!	( a -- )
-;	Set	data stack pointer.
+;	Set data stack pointer.
 
 	.dw	LINK
 	LINK =	.
@@ -1108,6 +1167,7 @@ CPP:
 	.ascii	"last"
 LAST:
 	LDW     Y,#(RAMBASE+USRLAST)
+
 ; "!" for Y for variable addresses, and constants
 YSTOR:        
 	SUBW    X,#2
@@ -1129,11 +1189,10 @@ TIB:
 ;	RET
         JRA     YSTOR
 
-
 ;; Constants
 
 ;	BL	( -- 32 )
-;	Return 32,	blank character.
+;	Return 32, blank character.
 
 	.dw	LINK
 	
@@ -1178,7 +1237,7 @@ ONE:
         JRA     YSTOR
 
 ;	-1	( -- -1)
-;	Return 32,	blank character.
+;	Return 32, blank character.
 
 	.dw	LINK
 	
@@ -4096,7 +4155,7 @@ ZEQS:
 
 
 ;       2C!  ( n b -- )
-;       Store word C-wise to consecutive byte registers 
+;       Store word C-wise to 16 bit HW registers 
 	.dw	LINK
 	
         LINK =	.
@@ -4113,7 +4172,7 @@ DCSTOR:
 
 
 ;       2C@  ( a -- n )
-;       Fetch word C-wise from consecutive byte registers 
+;       Fetch word C-wise from 16 bit HW config. registers 
 	.dw	LINK
         
         LINK =  .
@@ -4134,7 +4193,7 @@ DCAT:
 
 
 ;       ULCK  ( -- )
-;       Unlock EEPROM (STM8S Value Line)
+;       Unlock EEPROM (STM8S)
 	.dw	LINK
         
         LINK =  .
@@ -4148,7 +4207,7 @@ UNLOCK:
 
 
 ;       LCK  ( -- )
-;       Lock EEPROM (STM8S Value Line)
+;       Lock EEPROM (STM8S)
 	.dw	LINK
         
         LINK =  .
@@ -4159,7 +4218,7 @@ LOCK:
         RET
 
          
- ;-----------------------------------------------
+;-----------------------------------------------
         .ifne   MODULE_W1209
 
 ;       WKEY  ( -- n )
@@ -4200,7 +4259,7 @@ SSEG:
 
 ;       7S rendered chars 7-seg patterns: 
 PAT7SM9:   
-        .db     0x00, 0x40, 0x80, 0x52 ;  ,-,.,/ (',' as blank)
+        .db     0x00, 0x40, 0x80, 0x52 ; ,,-,.,/ (',' as blank)
         .db     0x3F, 0x06, 0x5B, 0x4F ; 0,1,2,3
         .db     0x66, 0x6D, 0x7D, 0x07 ; 4,5,6,7
         .db     0x7F, 0x6F             ; 8,9 
@@ -4282,8 +4341,10 @@ PUT7SA:
         ADDW    X,#2
         RET
         .endif
-;-----------------------------------------------
 
+        .ifne HWREG_WORDS * (STM8S003F3 + STM8S103F3)
+            .include "hwregs8s003.inc"
+        .endif
 
 ;===============================================================
 

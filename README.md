@@ -1,7 +1,7 @@
 # stm8ef
 Port of Dr. C.H. Ting's eForth for the `STM8S Discovery` to STM8S *Value Line* devices like STM8S003F3, and to the SDCC toolchain.
 
-I refactored the code to make initialization more modular, added some useful low level words, and fixed some bugs (e.g. the SEE "decompiler"). 
+The code was refactored to make initialization more modular, some useful low level words were added, and some bugs were fixed (e.g. the SEE "decompiler"). 
 Most of the changes are related to providing "board support" for STM8S based low-cost "gadgets".
 
 Please check [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) for documentation! 
@@ -34,8 +34,8 @@ Instructions for using eForth on a W1209:
 
 * remove the capacitor next to header: 0.47µF is way too much for the UART, I'll experiment with lower values (e.g. a few nF)
 * on the terminal side, use wired-or *RXD || TxD*  /w open drain (e.g. USB CH340 with 1N4148 in series with TxD) 
-* Set options `HALF_DUPLEX = 1`, and `GADGET_W1209 = 1` in `forth.asm`
+* Set options `HALF_DUPLEX = 1`, and `MODULE_W1209 = 1` in `forth.asm`
 
 ## STM8S Discovery
 
-Assumed broken (I don't have any device for testing it).
+The code is assumed broken (I don't have any device for testing it).
