@@ -85,7 +85,8 @@
         ; Note: add new variants here 
         STM8S_DISCOVERY = 0     ; (currently considered broken)
         MODULE_MINIMAL =  0     ; generic STM8S103F3 breakout board 
-        MODULE_W1209 =    1     ; W1209 Chinese made thermostat module 
+        MODULE_W1209 =    0     ; W1209 Chinese made thermostat module 
+        MODULE_RELAY =    1     ; "Relay Board-4", Chinese made relays module
 
         ;**********************************
         ;******  2) Global defaults  ******
@@ -111,6 +112,12 @@
 
         .ifne   MODULE_MINIMAL
         ; Clock: HSI (no crystal)
+        STM8S103F3   =    1 
+        HWREG_WORDS  =    1
+        .endif
+
+        .ifne   MODULE_RELAY
+        ; Clock: HSI (8MHz crystal not used)
         STM8S103F3   =    1 
         HWREG_WORDS  =    1
         .endif
