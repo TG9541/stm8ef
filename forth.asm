@@ -83,32 +83,27 @@
         ;******  1) Hardware module type selection  ******
         ;*************************************************
         ; Note: add new variants here 
-        STM8S_DISCOVERY = 0     ; (currently considered broken)
-        MODULE_MINIMAL =  0     ; generic STM8S103F3 breakout board 
-        MODULE_W1209 =    0     ; W1209 Chinese made thermostat module 
-        MODULE_RELAY =    1     ; "Relay Board-4", Chinese made relays module
+        STM8S_DISCOVERY = 0     ; (currently broken)
+        MODULE_MINIMAL =  1     ; generic STM8S103F3 breakout board 
+        MODULE_W1209 =    0     ; W1209 thermostat module 
+        MODULE_RELAY =    0     ; "Relay Board-4", STM8S relay module
 
         ;**********************************
         ;******  2) Global defaults  ******
         ;**********************************
         STM8S103F3   =    0     ; 8K flash, 1K RAM, 640 bytes EEPROM
         STM8S003F3   =    0     ; like STM8S103F3, 128 bytes EEPROM 
+
         HALF_DUPLEX  =    0     ; RS232 shared Rx/Tx line, bus style
         TERM_LINUX   =    1     ; LF terminates line 
         HWREG_WORDS  =    0     ; Peripheral Register words
+        HAS_LED7SEG  =    0     ; 7-seg LED on module
+        HAS_OUTPUTS  =    0     ; Outputs, like relays, on module
 
         ;********************************************************
         ;******  3) Hardware module feature configuration  ******
         ;********************************************************
         ; Note: add new variants here 
-
-        .ifne   MODULE_W1209
-        ; UART half-duplex PD_6 (RxD) SW simulation "bus style"
-        ; Multiplexed 3 digit 7 seg LED display
-        ; Clock: HSI (no crystal)
-        STM8S003F3   =    1 
-        HALF_DUPLEX  =    1     ; RS232 Half Duplex Mode
-        .endif
 
         .ifne   MODULE_MINIMAL
         ; Clock: HSI (no crystal)
@@ -116,10 +111,20 @@
         HWREG_WORDS  =    1
         .endif
 
+        .ifne   MODULE_W1209
+        ; UART half-duplex PD_6 (RxD) SW simulation "bus style"
+        ; Multiplexed 3 digit 7 seg LED display
+        ; Clock: HSI (no crystal)
+        STM8S003F3   =    1 
+        HALF_DUPLEX  =    1     ; RS232 Half Duplex Mode
+        HAS_LED7SEG  =    1     ; 7-seg LED on module
+        HAS_OUTPUTS  =    1     ; Outputs, like relays, on module
+        .endif
+
         .ifne   MODULE_RELAY
         ; Clock: HSI (8MHz crystal not used)
         STM8S103F3   =    1 
-        HWREG_WORDS  =    1
+        HAS_OUTPUTS  =    1     ; Outputs, like relays, on module
         .endif
 
         ;**********************************************
@@ -143,11 +148,12 @@
         ;******  STM8SF103 Memory Layout ******
         RAMEND =        0x03FF	; system (return) stack, growing down
 
-        DRIVLOC =       0x0040  ; Hardware driver data 
+        MODDLOC =       0x0050  ; Hardware module driver data 
         UPPLOC  =       0x0060  ; UPP (user/system area) location for 1K RAM
         CTOPLOC =       0x0080  ; CTOP (user dictionary) location for 1K RAM
         SPPLOC  =       0x0380  ; SPP (data stack) location for 1K RAM
         RPPLOC  =       RAMEND  ; RPP (return stack) location for 1K RAM
+        
         
 	;******  STM8SF103 Registers  ******
 	PA_ODR	=	0x5000	; Port A data output latch register
@@ -203,13 +209,21 @@
         ;************************************************
         ; Memory for module hardware related things, e.g. interrupt routines
          
+        
         .ifne   MODULE_W1209
 	;******  W1209 Variables  ******
-        WE7SFLAG =      0x59    ; 7S output control flags 
-        WLED7S1  =      0x5A    ; word 7S LEDs digits  .3..
-        WLED7S2  =      0x5C    ; word 7S LEDs digits  ..21
-        TIM4TX7S =      0x5E    ; TIM4 TxD & LED interrupt states 
-        TIM4TXREG  =    0x5F    ; W1209 TxD simulation register 
+        TIM4TX7S =      0x58    ; TIM4 TxD & LED interrupt states 
+        TIM4TXREG  =    0x59    ; W1209 TxD simulation register 
+        .endif
+
+        .ifne   HAS_OUTPUTS
+        OUTPUTS =       0x5A    ; outputs, like relays, LEDs, etc. 
+        .endif
+
+        .ifne   HAS_LED7SEG
+        LED7FLAG =      0x5B    ; 7S output control flags 
+        LED7MSB  =      0x5C    ; word 7S LEDs digits  43..
+        LED7LSB  =      0x5E    ; word 7S LEDs digits  ..21
         .endif
 
 
@@ -283,8 +297,9 @@
 
 ;; Entry point 
 _forth:
-	; ldw     X,#0x300     ; Just clear stacks 
-        CLRW    X              ; Clear all RAM 
+        LDW     X,#(MODDLOC)
+	; LDW     X,#0x300     ; Just clear stacks 
+        ; CLRW    X              ; Clear all RAM 
 1$:
 	CLR     (X)                    
 	INCW    X
@@ -384,7 +399,20 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
         BSET     PB_ODR,#5      ; LED off
         .endif
         
-	CALL	TBOOT
+        .ifne   MODULE_RELAY
+        ; "Nano PLC Relay module"
+        MOV     PB_DDR,#0x10
+        MOV     PC_DDR,#0x38
+        MOV     PD_DDR,#0x10
+        MOV     PD_CR1,#0x10
+        .endif
+
+        .ifne   HAS_OUTPUTS
+        CALL    ZERO
+        CALL    OUTSTOR
+        .endif
+
+ 	CALL	TBOOT
 	CALL	ATEXE	        ;application boot
 	CALL	OVERT
 	JP	QUIT	        ;start interpretation
@@ -510,19 +538,19 @@ TIM4_LED:
 
         AND     A,#3        
         JRNE    1$
-        LD      A,WLED7S1+1
+        LD      A,LED7MSB+1
         BRES    PD_ODR,#4       ; digit .3.. 
         JRA     TIM4_SSEG
 
 1$:     CP      A,#1
         JRNE    2$
-        LD      A,WLED7S2
+        LD      A,LED7LSB
         BRES    PB_ODR,#5       ; digit ..2.
         JRA     TIM4_SSEG
 
 2$:     CP      A,#2
         JRNE    TIM4_END  
-        LD      A,WLED7S2+1 
+        LD      A,LED7LSB+1 
         BRES    PB_ODR,#4       ; digit ...1
         ; fall through
          
@@ -1195,6 +1223,22 @@ TIB:
 ;	LDW     (X),Y
 ;	RET
         JRA     YSTOR
+
+;	OUT	( -- a )
+;	Return address of OUTPUTS register
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	3
+	.ascii	"OUT"
+OUTA:
+	LDW     Y,#(OUTPUTS)
+;	SUBW    X,#2
+;	LDW     (X),Y
+;	RET
+        JRA     YSTOR
+
 
 ;; Constants
 
@@ -2496,9 +2540,9 @@ NUFQ1:	RET
 	.ascii	"SPACE"
 SPACE:
         .ifne  MODULE_W1209
-        TNZ     WE7SFLAG        ; NZ: don't emit blank on W1209 7-seg LED 
+        TNZ     LED7FLAG        ; NZ: don't emit blank on W1209 7-seg LED 
         JREQ    1$  
-        BSET    WE7SFLAG,#7
+        BSET    LED7FLAG,#7
         RET
         .endif
 
@@ -2537,7 +2581,7 @@ TYPES:
 TYPE1:	CALL	DUPP
 	CALL	CAT
         .ifne  MODULE_W1209
-        TNZ     WE7SFLAG        ; NZ: output c on W1209 7-seg LED 
+        TNZ     LED7FLAG        ; NZ: output c on W1209 7-seg LED 
         JREQ    1$  
 	CALL	EMIT7S	        ;display on 7-seg
         JRA     2$
@@ -2549,9 +2593,9 @@ TYPE2:
         CALL	DONXT
 	.dw	TYPE1
         .ifne   MODULE_W1209
-        TNZ     WE7SFLAG         ; B7 set: output c on W1209 7-seg LED 
+        TNZ     LED7FLAG         ; B7 set: output c on W1209 7-seg LED 
         JRPL    1$  
-        CLR     WE7SFLAG
+        CLR     LED7FLAG
         .endif
 1$:	JP	DROP
 
@@ -4247,8 +4291,9 @@ WKEY:
         .dw     7
         CALL    ANDD
         RET
+        .endif
 
-
+        .ifne   HAS_LED7SEG
 ;       7S  ( -- )
 ;       Temporarily redirect "TYPE" to W1209 7-seg LED buffer 
 ;       up to end of string *after* the first non-rendered char 
@@ -4259,9 +4304,9 @@ WKEY:
 	.ascii	"7S"
 SSEG:   
         CLRW    Y 
-        LDW     WLED7S1,Y
-        LDW     WLED7S2,Y
-        MOV     WE7SFLAG,#1
+        LDW     LED7MSB,Y
+        LDW     LED7LSB,Y
+        MOV     LED7FLAG,#1     ; redirect EMIT from TYPE and SPACE
         RET
 
 ;       7S rendered chars 7-seg patterns: 
@@ -4318,12 +4363,12 @@ E7LOOKA:
 
 E7DOT:
         LD      A,#0x80         ; 7-seg P (dot) 
-        OR      A,WLED7S2+1
-        LD      WLED7S2+1,A
+        OR      A,LED7LSB+1
+        LD      LED7LSB+1,A
         JRA     E7END
         
 E7NOR:
-        BSET    WE7SFLAG,#7     ; "TYPE" no longer calls EMIT7S after this string
+        BSET    LED7FLAG,#7     ; "TYPE" no longer calls EMIT7S after this string
 E7END:
         JP      DROP
 
@@ -4339,19 +4384,53 @@ PUT7S:
         LDW     Y,X             ; w to AX
         LD      A,(1,Y)
 PUT7SA:
-        LDW     Y,WLED7S2
+        LDW     Y,LED7LSB
         RLWA    Y
-        LDW     WLED7S2,Y
-        LDW     Y,WLED7S1
+        LDW     LED7LSB,Y
+        LDW     Y,LED7MSB
         RLWA    Y
-        LDW     WLED7S1,Y
+        LDW     LED7MSB,Y
         ADDW    X,#2
         RET
         .endif
 
+        .ifne   HAS_OUTPUTS
+;       OUT!  ( c -- )
+;       Put c to module outputs, storing a copy in OUTPUTS  
+	.dw	LINK
+        
+        LINK =  .
+	.db	(4)
+	.ascii	"OUT!"
+OUTSTOR:
+        LD      A,(1,X)
+        LD      OUTPUTS,A
+        ADDW    X,#2
+        .ifne   MODULE_W1209
+        RRC     A
+        BCCM    PA_ODR,#3       ; W1209 relay
+         .endif
+        .ifne   MODULE_RELAY
+        XOR     A,#0x0F
+        RRC     A
+        BCCM    PB_ODR,#4       ; Relay1
+        RRC     A
+        BCCM    PC_ODR,#3       ; Relay2
+        RRC     A
+        BCCM    PC_ODR,#4       ; Relay3
+        RRC     A
+        BCCM    PC_ODR,#5       ; Relay4
+        RRC     A
+        BCCM    PD_ODR,#4       ; LED
+        .endif
+        RET       
+        .endif
+
+
         .ifne HWREG_WORDS * (STM8S003F3 + STM8S103F3)
             .include "hwregs8s003.inc"
         .endif
+        
 
 ;===============================================================
 
