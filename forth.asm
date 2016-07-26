@@ -84,8 +84,8 @@
         ;*************************************************
         ; Note: add new variants here 
         STM8S_DISCOVERY = 0     ; (currently broken)
-        MODULE_MINIMAL =  1     ; generic STM8S103F3 breakout board 
-        MODULE_W1209 =    0     ; W1209 thermostat module 
+        MODULE_MINIMAL =  0     ; generic STM8S103F3 breakout board 
+        MODULE_W1209 =    1     ; W1209 thermostat module 
         MODULE_RELAY =    0     ; "Relay Board-4", STM8S relay module
 
         ;**********************************
@@ -578,6 +578,28 @@ TIM4_SSEG:
         BCCM    PD_ODR,#2       ; P
 
 TIM4_END:             
+        LDW     Y,0x50
+        TNZW    Y
+        JREQ    2$
+        LDW     X,XTEMP
+        PUSHW   X
+        LDW     X,YTEMP
+        PUSHW   X
+        LDW     X,PROD3
+        PUSHW   X
+        LDW     X,CARRY
+        PUSHW   X
+        LDW     X,#(MODDLOC)
+        CALL    (Y)
+        POPW    X
+        LDW     CARRY,X
+        POPW    X
+        LDW     PROD3,X
+        POPW    X
+        LDW     YTEMP,X
+        POPW    X
+        LDW     XTEMP,X
+2$:
         DEC     TIM4TX7S        ; next (convoluted) TXD TIM4 state/LED column
         JRPL    1$
         MOV     TIM4TX7S,#0x1F
@@ -3384,8 +3406,7 @@ TICK:
 	.dw	ABOR1
 	RET	;yes, push code address
 
-;	ALLOT	( n -- )
-;	Allocate n bytes to	code dictionary.
+;	Allocate n bytes to	code DICTIONARY.
 
 	.dw	LINK
 	
