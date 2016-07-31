@@ -581,24 +581,29 @@ TIM4_END:
         LDW     Y,0x50
         TNZW    Y
         JREQ    2$
-        LDW     X,XTEMP
-        PUSHW   X
-        LDW     X,YTEMP
+
+        LDW     X,CARRY
         PUSHW   X
         LDW     X,PROD3
         PUSHW   X
-        LDW     X,CARRY
+        LDW     X,YTEMP
         PUSHW   X
+        LDW     X,XTEMP
+        PUSHW   X
+        LD      A,XH            ; XH!=0 marks DSP must be read from XTEMP 
+        JRNE    3$
+        LDW     X,(0x0B,SP)     ; else: set DSP to X pushed by TIM4 ISR
+3$:     
         LDW     X,#(MODDLOC)
         CALL    (Y)
         POPW    X
-        LDW     CARRY,X
-        POPW    X
-        LDW     PROD3,X
+        LDW     XTEMP,X
         POPW    X
         LDW     YTEMP,X
         POPW    X
-        LDW     XTEMP,X
+        LDW     PROD3,X
+        POPW    X
+        LDW     CARRY,X
 2$:
         DEC     TIM4TX7S        ; next (convoluted) TXD TIM4 state/LED column
         JRPL    1$
@@ -1654,6 +1659,7 @@ UMMOD:
 	CPW     X,YTEMP
 	JRULE   MMSM1
 	LDW     X,XTEMP
+        CLR     XTEMP   ; invalidate XTEMP for TIM4 ISR
 	ADDW    X,#2	; pop off 1 level
 	LDW     Y,#0x0FFFF
 	LDW     (X),Y
@@ -1675,6 +1681,7 @@ MMSM4:
 	SRAW    X
 	LDW     YTEMP,X	; done, save remainder
 	LDW     X,XTEMP
+        CLR     XTEMP   ; invalidate XTEMP for TIM4 ISR
 	ADDW    X,#2	; drop
 	LDW     (X),Y
 	LDW     Y,YTEMP	; save quotient
