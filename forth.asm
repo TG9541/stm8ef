@@ -46,6 +46,8 @@
 ;--------------------------------------------------------
 ; Public variables in this module
 ;--------------------------------------------------------
+
+        .globl _TIM2_UO_IRQHandler
 	.globl _TIM4_IRQHandler
 	.globl _forth
 
@@ -99,6 +101,7 @@
         HWREG_WORDS  =    0     ; Peripheral Register words
         HAS_LED7SEG  =    0     ; 7-seg LED on module
         HAS_OUTPUTS  =    0     ; Outputs, like relays, on module
+        HAS_BACKGROUND =  1     ; Background Forth task (TIM2 ticker)
 
         ;********************************************************
         ;******  3) Hardware module feature configuration  ******
@@ -185,13 +188,36 @@
         CLK_CKDIVR =    0x50C6  ; Clock divider register
 
 	; *** UART1 ***
-        UART1_SR   =	0x5230	;UART status reg
-	UART1_DR   =	0x5231	;UART data reg
-	UART1_BRR1  =	0x5232	;baud rate control 1
-	UART1_BRR2  =	0x5233	;baud rate control 2
-	UART1_CR1  =	0x5234	;UART control reg 2
-	UART1_CR2  =	0x5235	;UART control reg 2
-	UART1_CR3  =	0x5236	;UART control reg 2
+        UART1_SR   =	0x5230	; UART status reg
+	UART1_DR   =	0x5231	; UART data reg
+	UART1_BRR1  =	0x5232	; baud rate control 1
+	UART1_BRR2  =	0x5233	; baud rate control 2
+	UART1_CR1  =	0x5234	; UART control reg 2
+	UART1_CR2  =	0x5235	; UART control reg 2
+	UART1_CR3  =	0x5236	; UART control reg 2
+
+        ; *** TIM2 for background task ***
+	TIM2_CR1  =	0x5300	; TIM2 control register 1 (0x00)
+	TIM2_IER  =	0x5303	; TIM2 interrupt enable register (0x00)
+	TIM2_SR1  =	0x5304	; TIM2 status register 1 (0x00)
+	TIM2_SR2  =	0x5305	; TIM2 status register 2 (0x00)
+	TIM2_EGR  =	0x5306	; TIM2 event generation register (0x00)
+	TIM2_CCMR1  =	0x5307	; TIM2 capture/compare mode register 1 (0x00)
+	TIM2_CCMR2  =	0x5308	; TIM2 capture/compare mode register 2 (0x00)
+	TIM2_CCMR3  =	0x5309	; TIM2 capture/compare mode register 3 (0x00)
+	TIM2_CCER1  =	0x530A	; TIM2 capture/compare enable register (1)
+	TIM2_CCER2  =	0x530B	; TIM2 capture/compare enable register (2)
+	TIM2_CNTRH  =	0x530C	; TIM2 counter high (0x00)
+	TIM2_CNTRL  =	0x530D	; TIM2 counter low (0x00)
+	TIM2_PSCR  =	0x530E	; TIM2 prescaler register (0x00)
+	TIM2_ARRH  =	0x530F	; TIM2 auto-reload register high (0xFF)
+	TIM2_ARRL  =	0x5310	; TIM2 auto-reload register low (0xFF)
+	TIM2_CCR1H  =	0x5311	; TIM2 capture/compare register 1 high (0x00)
+	TIM2_CCR1L  =	0x5312	; TIM2 capture/compare register 1 low (0x00)
+	TIM2_CCR2H  =	0x5313	; TIM2 capture/compare register 2 high (0x00)
+	TIM2_CCR2L  =	0x5314	; TIM2 capture/compare register 2 low (0x00)
+	TIM2_CCR3H  =	0x5315	; TIM2 capture/compare register 3 high (0x00)
+	TIM2_CCR3L  =	0x5316	; TIM2 capture/compare register 3 low (0x00)
 
         ; *** TIM4 (e.g. for RS232 TxD simulation) ***
         TIM4_CR1 =      0x5340  ; 1 (ENABLE)
@@ -201,6 +227,19 @@
         TIM4_CNTR =     0x5346
         TIM4_PSCR =     0x5347  ; 3 (1/8)
         TIM4_ARR =      0x5348  ; 0xCF (Reload 0.104 ms)
+         
+        ; Global configuation 
+	CFG_GCR  =	0x7F60	; Global configuration register (0x00)
+         
+        ; interrupt priorities
+	ITC_SPR1  =	0x7F70	; Interrupt software priority register 1 (0xFF)
+	ITC_SPR2  =	0x7F71	; Interrupt software priority register 2 (0xFF)
+	ITC_SPR3  =	0x7F72	; Interrupt software priority register 3 (0xFF)
+	ITC_SPR4  =	0x7F73	; Interrupt software priority register 4 (0xFF)
+	ITC_SPR5  =	0x7F74	; Interrupt software priority register 5 (0xFF)
+	ITC_SPR6  =	0x7F75	; Interrupt software priority register 6 (0xFF)
+	ITC_SPR7  =	0x7F76	; Interrupt software priority register 7 (0xFF)
+	ITC_SPR8  =	0x7F77	; Interrupt software priority register 8 (0xFF)
         .endif
 
 
@@ -391,7 +430,7 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
         MOV     TIM4_IER,#0x01  ; enable TIM4 interrupt
         RIM                     ; enable interrupts 
         .endif
-        
+       
         .ifne   MODULE_MINIMAL
         ; STM8S103F3 minimal breakout board init GPIO
         BSET     PB_DDR,#5  
@@ -410,6 +449,16 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
         .ifne   HAS_OUTPUTS
         CALL    ZERO
         CALL    OUTSTOR
+        .endif
+
+        .ifne   HAS_BACKGROUND
+        MOV     TIM2_PSCR,#0x03 ; prescaler 1/8
+        MOV     TIM2_ARRH,#0x07 ; reload 1ms H 
+        MOV     TIM2_ARRL,#0xC6 ;        1ms L
+        MOV     TIM2_CR1,#0x01  ; enable TIM2
+        MOV     TIM2_IER,#0x01  ; enable TIM2 interrupt
+
+	MOV     ITC_SPR4,#0xF3  ; Interrupt prio. low for TIM3 (Int13)
         .endif
 
  	CALL	TBOOT
@@ -452,7 +501,6 @@ TBOOT:
         ;; Device dependent I/O
 
         .ifne   MODULE_W1209
-
         ; TIM4 interrupt handler for 7-seg LED MPX and W1209 SW TxD. 
         ; RS232 TX works by writing a char to uint8_t TIM4TXREG, 
         ; and clearing TIM4TX7S Bit4.
@@ -465,6 +513,7 @@ TBOOT:
         ; disturbed by the LED MPX, and TxD needs a counter, anyway.
 
 _TIM4_IRQHandler:
+        BCPL    PA_ODR,#3
         PDTX =  6
         BRES    TIM4_SR,#0      ; clear TIM4 UIF 
         
@@ -578,6 +627,26 @@ TIM4_SSEG:
         BCCM    PD_ODR,#2       ; P
 
 TIM4_END:             
+        DEC     TIM4TX7S        ; next (convoluted) TXD TIM4 state/LED column
+        JRPL    1$
+        MOV     TIM4TX7S,#0x1F
+1$:     
+        BRES    PA_ODR,#3
+        IRET        
+
+        .else
+        ; Minimal IRQ handler for TIM4
+_TIM4_IRQHandler:
+        BCPL    TIM4_SR,#0              ; clear TIM4 UIF 
+        IRET 
+        .endif
+
+        .ifne  HAS_BACKGROUND 
+        ; TIM2 interrupt handler for background task 
+_TIM2_UO_IRQHandler:
+        BSET    PA_ODR,#3
+        BRES    TIM2_SR1,#0              ; clear TIM4 UIF 
+        
         LDW     Y,0x50
         TNZW    Y
         JREQ    2$
@@ -605,22 +674,11 @@ TIM4_END:
         POPW    X
         LDW     CARRY,X
 2$:
-        DEC     TIM4TX7S        ; next (convoluted) TXD TIM4 state/LED column
-        JRPL    1$
-        MOV     TIM4TX7S,#0x1F
-1$:     
-        IRET        
-
-        .else
-
-        ; Minimal IRQ handler for TIM4
-_TIM4_IRQHandler:
-        BRES    TIM4_SR,#0              ; clear TIM4 UIF 
-        IRET 
-
+        BRES    PA_ODR,#3
+        IRET
         .endif
 
-
+; ==============================================
 ;	?RX	( -- c T | F )
 ;	Return input byte and true, or false.
 	.dw	LINK
@@ -4437,7 +4495,7 @@ OUTSTOR:
         .ifne   MODULE_W1209
         RRC     A
         BCCM    PA_ODR,#3       ; W1209 relay
-         .endif
+        .endif
         .ifne   MODULE_RELAY
         XOR     A,#0x0F
         RRC     A
@@ -4456,10 +4514,9 @@ OUTSTOR:
 
 
         .ifne HWREG_WORDS * (STM8S003F3 + STM8S103F3)
-            .include "hwregs8s003.inc"
+          .include "hwregs8s003.inc"
         .endif
         
-
 ;===============================================================
 
 	LASTN	=	LINK	;last name defined
@@ -4467,4 +4524,6 @@ OUTSTOR:
  	.area CODE
 	.area INITIALIZER
 	.area CABS (ABS)
+
+
 
