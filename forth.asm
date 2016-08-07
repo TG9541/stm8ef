@@ -255,6 +255,9 @@
         ;************************************************
         ; Memory for module hardware related things, e.g. interrupt routines
          
+        .ifne   HAS_BACKGROUND
+        BACKGRND =      0x50    ; address of background routine (0: off) 
+        .endif
         
         .ifne   HAS_OUTPUTS
         OUTPUTS =       0x56    ; outputs, like relays, LEDs, etc. 
@@ -593,11 +596,11 @@ _TIM2_UO_IRQHandler:
         CALL    LED_MPX
         .endif
 
-        LDW     Y,0x50
-        TNZW    Y
+        LDW     Y,BACKGRND      ; address of background routine
+        TNZW    Y               ; 0: background operation off 
         JREQ    2$
 
-        LDW     X,CARRY
+        LDW     X,CARRY         ; Safe context
         PUSHW   X
         LDW     X,PROD3
         PUSHW   X
@@ -1313,6 +1316,7 @@ TIB:
 ;	RET
         JRA     YSTOR
 
+        .ifne   HAS_OUTPUTS
 ;	OUT	( -- a )
 ;	Return address of OUTPUTS register
 
@@ -1327,7 +1331,7 @@ OUTA:
 ;	LDW     (X),Y
 ;	RET
         JRA     YSTOR
-
+        .endif
 
 ;; Constants
 
@@ -1392,19 +1396,30 @@ MONE:
         JRA     YSTOR
 
         .ifne   HAS_BACKGROUND
-;	TIM	( -- n)
-;	Return TICKCNT
-	.dw	LINK
+;	TIM	( -- T)
+;	Return TICKCNT as timer
 	
+        .dw	LINK
+
 	LINK =	.
 	.db	3
 	.ascii	"TIM"
 TIMM:
 	LDW     Y,TICKCNT
-	; SUBW    X,#2
-	; LDW     (X),Y
-	; RET
         JRA     YSTOR
+
+;	BG	( -- a)
+;	Return address of BACKGRND vector
+	
+        .dw	LINK
+
+	LINK =	.
+	.db	2
+	.ascii	"BG"
+BGG:
+	LDW     Y,#(BACKGRND)
+        JRA     YSTOR
+
         .endif
 
 ;; Common functions
