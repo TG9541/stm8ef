@@ -590,9 +590,9 @@ _TIM2_UO_IRQHandler:
         BRES    TIM2_SR1,#0     ; clear TIM2 UIF 
 
         .ifne   HAS_BACKGROUND 
-        INC     TICKCNTL
-        JRNV    1$
-        INC     TICKCNT
+        LDW     Y,TICKCNT
+        INCW    Y
+        LDW     TICKCNT,Y
 1$:
         .ifne   HAS_LED7SEG
         CALL    LED_MPX
