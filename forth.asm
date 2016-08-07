@@ -249,18 +249,19 @@
         ; Memory for module hardware related things, e.g. interrupt routines
          
         
+        .ifne   HAS_OUTPUTS
+        OUTPUTS =       0x57    ; outputs, like relays, LEDs, etc. 
+        .endif
+
         .ifne   MODULE_W1209
 	;******  W1209 Variables  ******
-        TIM4TX7S =      0x58    ; TIM4 TxD & LED interrupt states 
+        TIM4TCNT =      0x58    ; TIM4 TxD interrupt counter
         TIM4TXREG  =    0x59    ; W1209 TxD simulation register 
         .endif
 
-        .ifne   HAS_OUTPUTS
-        OUTPUTS =       0x5A    ; outputs, like relays, LEDs, etc. 
-        .endif
-
         .ifne   HAS_LED7SEG
-        LED7FLAG =      0x5B    ; 7S output control flags 
+        LED7FLAG =      0x5A    ; 7S output control flags 
+        LEDMPXCNT =     0x5B    ; 7S LED interrupt states  
         LED7MSB  =      0x5C    ; word 7S LEDs digits  43..
         LED7LSB  =      0x5E    ; word 7S LEDs digits  ..21
         .endif
@@ -426,9 +427,10 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
         MOV     PD_CR1,#0b00111110 
         MOV     TIM4_PSCR,#0x03 ; prescaler 1/8
         MOV     TIM4_ARR,#0xCF  ; reload 0.104 ms (9600 baud)
+ 	MOV     ITC_SPR6,#0x3F  ; Interrupt prio. high for TIM4 (Int23)
         MOV     TIM4_CR1,#0x01  ; enable TIM4
         MOV     TIM4_IER,#0x01  ; enable TIM4 interrupt
-        RIM                     ; enable interrupts 
+
         .endif
        
         .ifne   MODULE_MINIMAL
@@ -453,13 +455,16 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
 
         .ifne   HAS_BACKGROUND
         MOV     TIM2_PSCR,#0x03 ; prescaler 1/8
-        MOV     TIM2_ARRH,#0x07 ; reload 1ms H 
-        MOV     TIM2_ARRL,#0xC6 ;        1ms L
+;        MOV     TIM2_ARRH,#0x07 ; reload 1ms H 
+;        MOV     TIM2_ARRL,#0xC6 ;        1ms L
+        MOV     TIM2_ARRH,#0x26 ; reload 1ms H 
+        MOV     TIM2_ARRL,#0xDE ;        1ms L
+ 	MOV     ITC_SPR4,#0b11110111  ; Interrupt prio. low for TIM2 (Int13)
         MOV     TIM2_CR1,#0x01  ; enable TIM2
         MOV     TIM2_IER,#0x01  ; enable TIM2 interrupt
-
-	MOV     ITC_SPR4,#0xF3  ; Interrupt prio. low for TIM3 (Int13)
         .endif
+
+        RIM                     ; enable interrupts 
 
  	CALL	TBOOT
 	CALL	ATEXE	        ;application boot
@@ -501,137 +506,66 @@ TBOOT:
         ;; Device dependent I/O
 
         .ifne   MODULE_W1209
-        ; TIM4 interrupt handler for 7-seg LED MPX and W1209 SW TxD. 
-        ; RS232 TX works by writing a char to uint8_t TIM4TXREG, 
-        ; and clearing TIM4TX7S Bit4.
-
-        ; The W1209 has RxD (PD_6) on the sensor header, but STM8S UART1 
-        ; half-duplex mode requires TxD (PD_5). The work-around here is 
-        ; SW-TxD through PD_6 by switching between RxD, and GPIO. 
-        ; Hint: bits TIM4TX7S.1:0 act as the LED MPX column counter.
-        ; This is convoluted (= bad) code but the TxD phase won't be 
-        ; disturbed by the LED MPX, and TxD needs a counter, anyway.
+        ; TIM4 interrupt handler W1209 software TxD. 
+        ; RxD (PD_6) is on the module's sensor header, while STM8S UART1 
+        ; half-duplex mode requires TxD (PD_5). 
+        ; The work-around is SW-TxD through PD_6 by switching between RxD, and GPIO. 
+        ; Hint: TX works by writing a char to uint8_t TIM4TXREG, and 0x0A to TIM4TCNT
 
 _TIM4_IRQHandler:
         BCPL    PA_ODR,#3
+
         PDTX =  6
-        BRES    TIM4_SR,#0      ; clear TIM4 UIF 
+;        LD      A,TIM4_SR
+        BCPL    TIM4_SR,#0      ; clear TIM4 UIF 
         
-        LD      A,TIM4TX7S
-        JREQ    TIM4_ENDTX
+        LD      A,TIM4TCNT
+        JREQ    TIM4_END        ; nothing to transmit
 
-        ; TIM4TX7S == 0x1F:0x1D ?
-        CP     A,#0x1D         
-        JRPL    TIM4_LED        ; State is "Wait"
-
-        ; TIM4TX7S < 0x10 ?
-        CP      A,#0x10         ; Active state?   
-        JRMI    TIM4_ACTIVE_SYNC
-
-        ; 0x1C <= TIM4TX7S >= 0x10
-        MOV     TIM4TX7S,#0x20  ; Renew state "Wait", set TIM4TX7S to (0x20-1)
-        JRA     TIM4_LED
-
-TIM4_ACTIVE_SYNC:      
-        CP      A,#0x0C         ; After clearing TIM4TX7S.4 we'll get here after some ticks
-        JRMI    TIM4_TEST      
-        JRA     TIM4_LED        ; State is "Sync"
-
-TIM4_TEST:
-        CP      A,#0x0B
-        JRNE    TIM4_START
-        
-        BRES	UART1_CR2,#2	; disable RX
-        ; TODO: if RX isn't free, 
-        ;    return to (0x1F - 1)
-        JRA     TIM4_LED
+        CP      A,#0x0B         ; TIM4TCNT > 0x0A: count down
+        JRMI    TIM4_START      
+        JRA     TIM4_DEC       
 
 TIM4_START:  
         CP      A,#0x0A
         JRNE    TIM4_STOP
-        ; TIM4TX7S == A 
-        ; set PD_6 LOW
+
+        ; TODO: wait some more if RX isn't free 
+        
+        BRES	UART1_CR2,#2	; disable RX
         BSET    PD_DDR,#PDTX    ; set PD_6 to output
-        RCF
+
+        RCF                     ; set PD_6 LOW 
         JRA     TIM4_BIT         
 
 TIM4_STOP:  
         CP      A,#0x01
         JRNE    TIM4_SER
-        ; TIM4TX7S == 1 
-        ; set PD_6 high
-        SCF
+        ; TIM4TCNT == 1 
+        SCF                     ; set PD_6 high 
         JRA     TIM4_BIT         
-
-TIM4_ENDTX: 
-        ; TIM4TX7S == 0
-        BRES    PD_DDR,#PDTX    ; set PD_6 to input
-        BSET	UART1_CR2,#2	; enable RX
-        ; fall through
-                
+               
 TIM4_SER:
-        ; TIM4TX7S == 9:2
+        ; TIM4TCNT == 9:2
         SRL     TIM4TXREG    
         ; fall through
 
 TIM4_BIT:
         ; Set RxTx port to CF value
         BCCM    PD_ODR,#PDTX
-
-TIM4_LED:   
-        ; W1209 multiplexed 7-seg LED display
-        ; A contains TIM4TX7S, bis 1:0 are display counter  
-        BSET    PD_ODR,#4       ; clear digit outputs .321
-        BSET    PB_ODR,#5
-        BSET    PB_ODR,#4
-
-        AND     A,#3        
-        JRNE    1$
-        LD      A,LED7MSB+1
-        BRES    PD_ODR,#4       ; digit .3.. 
-        JRA     TIM4_SSEG
-
-1$:     CP      A,#1
-        JRNE    2$
-        LD      A,LED7LSB
-        BRES    PB_ODR,#5       ; digit ..2.
-        JRA     TIM4_SSEG
-
-2$:     CP      A,#2
-        JRNE    TIM4_END  
-        LD      A,LED7LSB+1 
-        BRES    PB_ODR,#4       ; digit ...1
         ; fall through
-         
-TIM4_SSEG:
-        ; W1209 7S LED display row
-        ; bit 76453210 input (parameter A)
-        ;  PA .....FB.
-        ;  PC CG...... 
-        ;  PD ..A.DPE.
-        RRC     A
-        BCCM    PD_ODR,#5       ; A
-        RRC     A
-        BCCM    PA_ODR,#2       ; B
-        RRC     A
-        BCCM    PC_ODR,#7       ; C
-        RRC     A
-        BCCM    PD_ODR,#3       ; D
-        RRC     A
-        BCCM    PD_ODR,#1       ; E
-        RRC     A
-        BCCM    PA_ODR,#1       ; F
-        RRC     A
-        BCCM    PC_ODR,#6       ; G
-        RRC     A
-        BCCM    PD_ODR,#2       ; P
+
+TIM4_DEC:             
+        DEC     TIM4TCNT        ; next TXD TIM4 state
+        JRNE    TIM4_END
+
+        ; TIM4TCNT == 0
+        BRES    PD_DDR,#PDTX    ; set PD_6 to input
+        BSET	UART1_CR2,#2	; enable RX
+        ; fall through
 
 TIM4_END:             
-        DEC     TIM4TX7S        ; next (convoluted) TXD TIM4 state/LED column
-        JRPL    1$
-        MOV     TIM4TX7S,#0x1F
-1$:     
-        BRES    PA_ODR,#3
+        BCPL    PA_ODR,#3
         IRET        
 
         .else
@@ -641,12 +575,19 @@ _TIM4_IRQHandler:
         IRET 
         .endif
 
+
         .ifne  HAS_BACKGROUND 
         ; TIM2 interrupt handler for background task 
 _TIM2_UO_IRQHandler:
         BSET    PA_ODR,#3
-        BRES    TIM2_SR1,#0              ; clear TIM4 UIF 
-        
+
+;        LD      A,TIM2_SR1
+        BRES    TIM2_SR1,#0              ; clear TIM2 UIF 
+
+        .ifne   HAS_LED7SEG
+        CALL    LED_MPX
+        .endif
+
         LDW     Y,0x50
         TNZW    Y
         JREQ    2$
@@ -676,6 +617,62 @@ _TIM2_UO_IRQHandler:
 2$:
         BRES    PA_ODR,#3
         IRET
+        .endif
+
+
+        .ifne   HAS_LED7SEG
+        ; W1209 multiplexed 7-seg LED display
+LED_MPX:        
+        BSET    PD_ODR,#4       ; clear digit outputs .321
+        BSET    PB_ODR,#5
+        BSET    PB_ODR,#4
+
+        INC     LEDMPXCNT
+        LD      A,LEDMPXCNT
+        AND     A,#3        
+
+        JRNE    1$
+        LD      A,LED7MSB+1
+        BRES    PD_ODR,#4       ; digit .3.. 
+        JRA     3$
+
+1$:     CP      A,#1
+        JRNE    2$
+        LD      A,LED7LSB
+        BRES    PB_ODR,#5       ; digit ..2.
+        JRA     3$
+
+2$:     CP      A,#2
+        JRNE    4$  
+        LD      A,LED7LSB+1 
+        BRES    PB_ODR,#4       ; digit ...1
+        ; fall through
+         
+3$:
+        ; W1209 7S LED display row
+        ; bit 76453210 input (parameter A)
+        ;  PA .....FB.
+        ;  PC CG...... 
+        ;  PD ..A.DPE.
+        RRC     A
+        BCCM    PD_ODR,#5       ; A
+        RRC     A
+        BCCM    PA_ODR,#2       ; B
+        RRC     A
+        BCCM    PC_ODR,#7       ; C
+        RRC     A
+        BCCM    PD_ODR,#3       ; D
+        RRC     A
+        BCCM    PD_ODR,#1       ; E
+        RRC     A
+        BCCM    PA_ODR,#1       ; F
+        RRC     A
+        BCCM    PC_ODR,#6       ; G
+        RRC     A
+        BCCM    PD_ODR,#2       ; P
+4$:        
+        RET
+
         .endif
 
 ; ==============================================
@@ -713,12 +710,14 @@ EMIT:
 	BRES	UART1_CR2,#2	;disable rx
 
         .ifne   MODULE_W1209
-1$:     BTJF    TIM4TX7S,#4,1$
+
+1$:     TNZ     TIM4TCNT        ; await end of transmission
+        JRNE    1$
  	LD      A,(1,X)
         ADDW    X,#2       
         LD      TIM4TXREG,A
-        BRES    TIM4TX7S,#4
-2$:     BTJT    TIM4TX7S,#3,2$
+        MOV     TIM4TCNT,#0x0A  ; start transmission
+         
         .else                   ; HALF_DUPLEX, not MODULE_W1209
 	LD	A,(1,X)
 	ADDW	X,#2
@@ -4234,7 +4233,7 @@ WORS2:	RET
 ;; tg9541 additions
 
 ;	I	( -- n )
-;	Get inner FOR - NEXT index
+;	Get inner FOR - NEXT index value
 	.dw	LINK
 
 	LINK =	.
@@ -4248,8 +4247,8 @@ IGET:
 
 
 ;	BSR ( t a b -- )
-;	Set/RESET bit# b (0..7) at address a to bool t
-;       Creates/executes BSER/BRES + RET on data stack  
+;	Set/Reset bit #b (0..7) at address a to bool t
+;       Note: creates/executes BSER/BRES + RET code on Data Stack
 	.dw	LINK
 	
         LINK =	.
@@ -4269,8 +4268,9 @@ $1:     LD      (1,X),A
         LD      A,#0x81         ; Opcode RET
         LD      (4,X),A
         LDW     Y,X
-        ADDW    X,#6
-        JP      (Y)
+        CALL    (Y)             ; call code to avoid "use after free"
+        ADDW    X,#6            
+        RET
 
 
 ;	0=	( n -- t )
@@ -4292,7 +4292,7 @@ ZEQS:
 
 
 ;       2C!  ( n b -- )
-;       Store word C-wise to 16 bit HW registers 
+;       Store word C-wise to 16 bit HW registers "MSB first" 
 	.dw	LINK
 	
         LINK =	.
@@ -4309,7 +4309,7 @@ DCSTOR:
 
 
 ;       2C@  ( a -- n )
-;       Fetch word C-wise from 16 bit HW config. registers 
+;       Fetch word C-wise from 16 bit HW config. registers "MSB first" 
 	.dw	LINK
         
         LINK =  .
@@ -4395,7 +4395,7 @@ SSEG:
         MOV     LED7FLAG,#1     ; redirect EMIT from TYPE and SPACE
         RET
 
-;       7S rendered chars 7-seg patterns: 
+;       7-seg LED patterns, "70s chique"
 PAT7SM9:   
         .db     0x00, 0x40, 0x80, 0x52 ; ,,-,.,/ (',' as blank)
         .db     0x3F, 0x06, 0x5B, 0x4F ; 0,1,2,3
@@ -4516,6 +4516,18 @@ OUTSTOR:
         .ifne HWREG_WORDS * (STM8S003F3 + STM8S103F3)
           .include "hwregs8s003.inc"
         .endif
+        
+; //////////////////////
+	.dw	LINK
+        
+        LINK =  .
+	.db	(4)
+	.ascii	"wait"
+wait:              
+        ldw    Y,#0xD000
+1$:     incw    Y
+        jrne    1$
+        ret
         
 ;===============================================================
 
