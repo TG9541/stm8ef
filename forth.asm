@@ -4,7 +4,7 @@
 ; This is derived work based on 
 ; http://www.forth.org/svfig/kk/07-2010.html
 ;--------------------------------------------------------
-; Original author:
+; Original author, and copyright:
 ;       STM8EF, Version 2.1, 13jul10cht
 ;       Copyright (c) 2000
 ;       Dr. C. H. Ting
@@ -26,15 +26,21 @@
 ; published under the same condtions.
 ;
 ; Changes and code refactoring due to the following:
-; * conditional code for different target devices
-; * memory usage explicit, calculated from few constants
-; * STM8S105C6 dependencies removed (e.g. UART2)
-; * compactness (size over speed, 1K RAM layout)
-; * new features, e.g. W1209 display & TxD with TIM4
 ; * SDCC tool chain "ASxxxx V2.0" syntax
+; * conditional code for different target devices
+; * 1K RAM layout, symbols for RAM loc. ROM size opt.
+; * STM8S105C6 dependencies removed (e.g. UART2)
+; New features, e.g.:
+; * device support:
+;       - W1209 LED display & half-duplex /w SW TX 
+;       - C0125 Relay-4 Board
+;       - "75ct" STM8S103F3 breakout board
+; * simple 'concurrent' operation /w TIM2
+; * words for device keys, outputs, leds
+; * words for EEPROM, bit operations, inv. order 16bit acc.
 ;
-; The docs for the SDCC integated assembler are very 
-; thin. SDCC was used to create a template:
+; Docs for the SDCC integated assembler are scarce.
+; SDCC was used to create a template for this file:
 ;--------------------------------------------------------
 ; File Created by SDCC : free open source ANSI-C Compiler
 ; Version 3.6.0 #9615 (Linux)
@@ -119,15 +125,16 @@
         ; Multiplexed 3 digit 7 seg LED display
         ; Clock: HSI (no crystal)
         STM8S003F3   =    1 
+        PDTX         =    6     ; GPIO for SW half-duplex /w TIM4
         HALF_DUPLEX  =    1     ; RS232 Half Duplex Mode
         HAS_LED7SEG  =    1     ; 7-seg LED on module
-        HAS_OUTPUTS  =    1     ; Outputs, like relays, on module
+        HAS_OUTPUTS  =    1     ; yes, one relay 
         .endif
 
         .ifne   MODULE_RELAY
         ; Clock: HSI (8MHz crystal not used)
         STM8S103F3   =    1 
-        HAS_OUTPUTS  =    1     ; Outputs, like relays, on module
+        HAS_OUTPUTS  =    1     ; yes, 4 relays
         .endif
 
         ;**********************************************
@@ -250,22 +257,25 @@
          
         
         .ifne   HAS_OUTPUTS
-        OUTPUTS =       0x57    ; outputs, like relays, LEDs, etc. 
+        OUTPUTS =       0x56    ; outputs, like relays, LEDs, etc. 
+        .endif
+
+        .ifne   HAS_LED7SEG
+        LED7FLAG =      0x57    ; 7S output control flags 
+        LED7MSB  =      0x58    ; word 7S LEDs digits  43..
+        LED7LSB  =      0x5A    ; word 7S LEDs digits  ..21
+        .endif
+
+        .ifne   HAS_BACKGROUND
+        TICKCNT =       0x5C    ; 16 bit ticker (counts up)
+        TICKCNTL =      0x5D    ; ticker LSB
         .endif
 
         .ifne   MODULE_W1209
 	;******  W1209 Variables  ******
-        TIM4TCNT =      0x58    ; TIM4 TxD interrupt counter
-        TIM4TXREG  =    0x59    ; W1209 TxD simulation register 
+        TIM4TCNT =      0x5E    ; TIM4 TX interrupt counter
+        TIM4TXREG  =    0x5F    ; TIM4 char for TX
         .endif
-
-        .ifne   HAS_LED7SEG
-        LED7FLAG =      0x5A    ; 7S output control flags 
-        LEDMPXCNT =     0x5B    ; 7S LED interrupt states  
-        LED7MSB  =      0x5C    ; word 7S LEDs digits  43..
-        LED7LSB  =      0x5E    ; word 7S LEDs digits  ..21
-        .endif
-
 
         ;**************************************************
 	;******  6) General User & System Variables  ******
@@ -428,9 +438,7 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
         MOV     TIM4_PSCR,#0x03 ; prescaler 1/8
         MOV     TIM4_ARR,#0xCF  ; reload 0.104 ms (9600 baud)
  	MOV     ITC_SPR6,#0x3F  ; Interrupt prio. high for TIM4 (Int23)
-        MOV     TIM4_CR1,#0x01  ; enable TIM4
-        MOV     TIM4_IER,#0x01  ; enable TIM4 interrupt
-
+        MOV     TIM4_CR1,#0x01  ; enable TIM4 (don't enable interrupt)
         .endif
        
         .ifne   MODULE_MINIMAL
@@ -503,46 +511,47 @@ TBOOT:
 	.dw	HI	        ;application to boot
 
 
-        ;; Device dependent I/O
+;;      Device dependent I/O
+
+
+_TIM4_IRQHandler:
+        ; BCPL    PA_ODR,#3     ; pin debug
+        BRES    TIM4_SR,#0      ; clear TIM4 UIF 
 
         .ifne   MODULE_W1209
         ; TIM4 interrupt handler W1209 software TxD. 
-        ; RxD (PD_6) is on the module's sensor header, while STM8S UART1 
-        ; half-duplex mode requires TxD (PD_5). 
-        ; The work-around is SW-TxD through PD_6 by switching between RxD, and GPIO. 
-        ; Hint: TX works by writing a char to uint8_t TIM4TXREG, and 0x0A to TIM4TCNT
-
-_TIM4_IRQHandler:
-        BCPL    PA_ODR,#3
-
-        PDTX =  6
-;        LD      A,TIM4_SR
-        BCPL    TIM4_SR,#0      ; clear TIM4 UIF 
-        
+        ; RxD (PD_6) is on the module's sensor header, 
+        ; STM8S UART1 half-duplex mode requires TxD (PD_5) 
+        ; Work-around: change from RxD to GPIO for SW-TX
+        ; To use, write char to TIM4TXREG, then 0x0A to TIM4TCNT
         LD      A,TIM4TCNT
-        JREQ    TIM4_END        ; nothing to transmit
+        JRNE    TIM4_TRANS      ; transmit in progress
 
+        BRES    TIM4_IER,#0     ; disable TIM4 interrupt
+
+        JRNE    TIM4_END        ; nothing to transmit
+
+TIM4_TRANS:        
         CP      A,#0x0B         ; TIM4TCNT > 0x0A: count down
         JRMI    TIM4_START      
         JRA     TIM4_DEC       
 
 TIM4_START:  
-        CP      A,#0x0A
+        CP      A,#10
         JRNE    TIM4_STOP
 
-        ; TODO: wait some more if RX isn't free 
-        
+        ; configure PD_6 from RX to GPIO 
         BRES	UART1_CR2,#2	; disable RX
         BSET    PD_DDR,#PDTX    ; set PD_6 to output
 
-        RCF                     ; set PD_6 LOW 
+        RCF                     ; start bit, set PD_6 low 
         JRA     TIM4_BIT         
 
 TIM4_STOP:  
-        CP      A,#0x01
+        CP      A,#1
         JRNE    TIM4_SER
         ; TIM4TCNT == 1 
-        SCF                     ; set PD_6 high 
+        SCF                     ; stop bit, set PD_6 high 
         JRA     TIM4_BIT         
                
 TIM4_SER:
@@ -551,7 +560,7 @@ TIM4_SER:
         ; fall through
 
 TIM4_BIT:
-        ; Set RxTx port to CF value
+        ; Set RxTx port to CF 
         BCCM    PD_ODR,#PDTX
         ; fall through
 
@@ -561,29 +570,25 @@ TIM4_DEC:
 
         ; TIM4TCNT == 0
         BRES    PD_DDR,#PDTX    ; set PD_6 to input
-        BSET	UART1_CR2,#2	; enable RX
+        BSET	UART1_CR2,#2	; re-enable RX
         ; fall through
 
 TIM4_END:             
-        BCPL    PA_ODR,#3
-        IRET        
-
-        .else
-        ; Minimal IRQ handler for TIM4
-_TIM4_IRQHandler:
-        BCPL    TIM4_SR,#0              ; clear TIM4 UIF 
-        IRET 
         .endif
+        ; BCPL    PA_ODR,#3
+        IRET 
 
 
-        .ifne  HAS_BACKGROUND 
         ; TIM2 interrupt handler for background task 
 _TIM2_UO_IRQHandler:
-        BSET    PA_ODR,#3
+        ; BSET    PA_ODR,#3     ; pin debug
+        BRES    TIM2_SR1,#0     ; clear TIM2 UIF 
 
-;        LD      A,TIM2_SR1
-        BRES    TIM2_SR1,#0              ; clear TIM2 UIF 
-
+        .ifne   HAS_BACKGROUND 
+        INC     TICKCNTL
+        JRNV    1$
+        INC     TICKCNT
+1$:
         .ifne   HAS_LED7SEG
         CALL    LED_MPX
         .endif
@@ -600,9 +605,9 @@ _TIM2_UO_IRQHandler:
         PUSHW   X
         LDW     X,XTEMP
         PUSHW   X
-        LD      A,XH            ; XH!=0 marks DSP must be read from XTEMP 
+        LD      A,XH            ; MSB(XTEMP)!=0 means that XTEMP contains DSP
         JRNE    3$
-        LDW     X,(0x0B,SP)     ; else: set DSP to X pushed by TIM4 ISR
+        LDW     X,(0x0B,SP)     ; else set DSP to X pushed by ISR
 3$:     
         LDW     X,#(MODDLOC)
         CALL    (Y)
@@ -615,21 +620,20 @@ _TIM2_UO_IRQHandler:
         POPW    X
         LDW     CARRY,X
 2$:
-        BRES    PA_ODR,#3
-        IRET
         .endif
+        ; BRES    PA_ODR,#3
+        IRET
 
 
         .ifne   HAS_LED7SEG
         ; W1209 multiplexed 7-seg LED display
 LED_MPX:        
+        LD      A,TICKCNTL
+        AND     A,#3        
+        .ifne   MODULE_W1209        
         BSET    PD_ODR,#4       ; clear digit outputs .321
         BSET    PB_ODR,#5
         BSET    PB_ODR,#4
-
-        INC     LEDMPXCNT
-        LD      A,LEDMPXCNT
-        AND     A,#3        
 
         JRNE    1$
         LD      A,LED7MSB+1
@@ -671,6 +675,7 @@ LED_MPX:
         RRC     A
         BCCM    PD_ODR,#2       ; P
 4$:        
+        .endif
         RET
 
         .endif
@@ -711,12 +716,12 @@ EMIT:
 
         .ifne   MODULE_W1209
 
-1$:     TNZ     TIM4TCNT        ; await end of transmission
-        JRNE    1$
+1$:     BTJT    TIM4_IER,#0,1$  ; wait for end of TX
  	LD      A,(1,X)
         ADDW    X,#2       
         LD      TIM4TXREG,A
-        MOV     TIM4TCNT,#0x0A  ; start transmission
+        MOV    TIM4TCNT,#11     ; init next transfer 
+        BSET    TIM4_IER,#0     ; enabale TIM4 interrupt
          
         .else                   ; HALF_DUPLEX, not MODULE_W1209
 	LD	A,(1,X)
@@ -1372,7 +1377,7 @@ ONE:
         JRA     YSTOR
 
 ;	-1	( -- -1)
-;	Return 32, blank character.
+;	Return -1
 
 	.dw	LINK
 	
@@ -1386,7 +1391,21 @@ MONE:
 ;	RET
         JRA     YSTOR
 
-
+        .ifne   HAS_BACKGROUND
+;	TIM	( -- n)
+;	Return TICKCNT
+	.dw	LINK
+	
+	LINK =	.
+	.db	3
+	.ascii	"TIM"
+TIMM:
+	LDW     Y,TICKCNT
+	; SUBW    X,#2
+	; LDW     (X),Y
+	; RET
+        JRA     YSTOR
+        .endif
 
 ;; Common functions
 
@@ -2600,9 +2619,17 @@ KEY1:	CALL	QKEY
 	.ascii	"NUF?"
 NUFQ:
         .ifne   HALF_DUPLEX
-        CLRW    Y            ; delay to slow EMIT down 
+        ; slow EMIT down to free the line for RX 
+        .ifne   HAS_BACKGROUND
+        LD      A,TICKCNTL
+        ADD     A,#3
+1$:     CP      A,TICKCNTL
+        JRNE    1$ 
+        .else
+        CLRW    Y            
 1$:     DECW    Y             
         JRNE    1$
+        .endif
         .endif
 	CALL	QKEY
 	CALL	DUPP
@@ -4516,18 +4543,6 @@ OUTSTOR:
         .ifne HWREG_WORDS * (STM8S003F3 + STM8S103F3)
           .include "hwregs8s003.inc"
         .endif
-        
-; //////////////////////
-	.dw	LINK
-        
-        LINK =  .
-	.db	(4)
-	.ascii	"wait"
-wait:              
-        ldw    Y,#0xD000
-1$:     incw    Y
-        jrne    1$
-        ret
         
 ;===============================================================
 
