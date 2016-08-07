@@ -161,8 +161,8 @@
         MODDLOC =       0x0050  ; Hardware module driver data 
         UPPLOC  =       0x0060  ; UPP (user/system area) location for 1K RAM
         CTOPLOC =       0x0080  ; CTOP (user dictionary) location for 1K RAM
-        SPPLOC  =       0x0380  ; SPP (data stack) location for 1K RAM
-        RPPLOC  =       RAMEND  ; RPP (return stack) location for 1K RAM
+        SPPLOC  =       0x0350  ; SPP (data stack top), TIB start
+        RPPLOC  =       RAMEND  ; RPP (return stack top)
         
         
 	;******  STM8SF103 Registers  ******
@@ -256,7 +256,10 @@
         ; Memory for module hardware related things, e.g. interrupt routines
          
         .ifne   HAS_BACKGROUND
-        BACKGRND =      0x50    ; address of background routine (0: off) 
+        BGADDR   =      0x50    ; address of background routine (0: off) 
+        BSPPSIZE  =     0x20    ; Size of data stack for background tasks
+        .else
+        BSPPSIZE  =     0       ; no extra data stack
         .endif
         
         .ifne   HAS_OUTPUTS
@@ -292,8 +295,9 @@
         UPP   = UPPLOC          ; offset user area
         CTOP  = CTOPLOC         ; dictionary start, growing up
                                 ; note: PAD is inbetween CTOP and SPP
-	SPP   = SPPLOC	        ; data stack, growing down (with SPP-1 first)
-        TIBB  = SPPLOC          ; Term. Input Buf. TIBLENGTH between SPP and RPP
+	SPP   = SPPLOC-BSPPSIZE	; data stack, growing down (with SPP-1 first)
+        BSPP  = SPPLOC          ; Background data stack, grouwing down
+        TIBB  = SPPLOC          ; Term. Input Buf. TIBLENGTH between SPPLOC and RPP
 	RPP   = RPPLOC          ; return stack, growing down
         
         ; Regular user variables
@@ -466,11 +470,9 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
 
         .ifne   HAS_BACKGROUND
         MOV     TIM2_PSCR,#0x03 ; prescaler 1/8
-;        MOV     TIM2_ARRH,#0x07 ; reload 1ms H 
-;        MOV     TIM2_ARRL,#0xC6 ;        1ms L
         MOV     TIM2_ARRH,#0x26 ; reload 1ms H 
         MOV     TIM2_ARRL,#0xDE ;        1ms L
- 	MOV     ITC_SPR4,#0b11110111  ; Interrupt prio. low for TIM2 (Int13)
+ 	MOV     ITC_SPR4,#0xF7  ; Interrupt prio. low for TIM2 (Int13)
         MOV     TIM2_CR1,#0x01  ; enable TIM2
         MOV     TIM2_IER,#0x01  ; enable TIM2 interrupt
         .endif
@@ -596,11 +598,11 @@ _TIM2_UO_IRQHandler:
         CALL    LED_MPX
         .endif
 
-        LDW     Y,BACKGRND      ; address of background routine
+        LDW     Y,BGADDR        ; address of background routine
         TNZW    Y               ; 0: background operation off 
         JREQ    2$
 
-        LDW     X,CARRY         ; Safe context
+        LDW     X,CARRY         ; Save context
         PUSHW   X
         LDW     X,PROD3
         PUSHW   X
@@ -608,11 +610,7 @@ _TIM2_UO_IRQHandler:
         PUSHW   X
         LDW     X,XTEMP
         PUSHW   X
-        LD      A,XH            ; MSB(XTEMP)!=0 means that XTEMP contains DSP
-        JRNE    3$
-        LDW     X,(0x0B,SP)     ; else set DSP to X pushed by ISR
-3$:     
-        LDW     X,#(MODDLOC)
+        LDW     X,#(BSPP)       ; init data stack for background task to BSPP 
         CALL    (Y)
         POPW    X
         LDW     XTEMP,X
@@ -831,6 +829,19 @@ EXECU:
 EXIT:
 	POPW	Y
 	RET
+
+;	doVAR	( -- a )
+;	Code for VARIABLE and CREATE.
+
+	.dw	LINK
+	LINK =	.
+	.db	(COMPO+5)
+	.ascii	"doVar"
+DOVAR:
+	POPW	Y	;get return addr (pfa)
+	SUBW    X,#2
+	LDW     (X),Y	;push on stack
+	RET	;go to RET of EXEC
 
 ;	!	( w a -- )
 ;	Pop data stack to memory.
@@ -1149,20 +1160,6 @@ SPAT:
 
 ;; System and user variables
 
-;	doVAR	( -- a )
-;	Code for VARIABLE and CREATE.
-
-	.dw	LINK
-	LINK =	.
-	.db	(COMPO+5)
-	.ascii	"doVar"
-DOVAR:
-	POPW	Y	;get return addr (pfa)
-;	SUBW    X,#2
-;	LDW     (X),Y	;push on stack
-;	RET	;go to RET of EXEC
-        JRA     YSTOR
-
 ;	BASE	( -- a )
 ;	Radix base for numeric I/O.
 
@@ -1409,7 +1406,7 @@ TIMM:
         JRA     YSTOR
 
 ;	BG	( -- a)
-;	Return address of BACKGRND vector
+;	Return address of BGADDR vector
 	
         .dw	LINK
 
@@ -1417,7 +1414,7 @@ TIMM:
 	.db	2
 	.ascii	"BG"
 BGG:
-	LDW     Y,#(BACKGRND)
+	LDW     Y,#(BGADDR)
         JRA     YSTOR
 
         .endif
@@ -1750,7 +1747,6 @@ UMMOD:
 	CPW     X,YTEMP
 	JRULE   MMSM1
 	LDW     X,XTEMP
-        CLR     XTEMP   ; invalidate XTEMP for TIM4 ISR
 	ADDW    X,#2	; pop off 1 level
 	LDW     Y,#0x0FFFF
 	LDW     (X),Y
@@ -1772,7 +1768,6 @@ MMSM4:
 	SRAW    X
 	LDW     YTEMP,X	; done, save remainder
 	LDW     X,XTEMP
-        CLR     XTEMP   ; invalidate XTEMP for TIM4 ISR
 	ADDW    X,#2	; drop
 	LDW     (X),Y
 	LDW     Y,YTEMP	; save quotient
