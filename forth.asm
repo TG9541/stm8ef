@@ -92,8 +92,8 @@
         ;*************************************************
         ; Note: add new variants here 
         STM8S_DISCOVERY = 0     ; (currently broken)
-        MODULE_MINIMAL =  0     ; generic STM8S103F3 breakout board 
-        MODULE_W1209 =    1     ; W1209 thermostat module 
+        MODULE_MINIMAL =  1     ; generic STM8S103F3 breakout board 
+        MODULE_W1209 =    0     ; W1209 thermostat module 
         MODULE_RELAY =    0     ; "Relay Board-4", STM8S relay module
 
         ;**********************************
@@ -593,7 +593,7 @@ _TIM2_UO_IRQHandler:
         LDW     Y,TICKCNT
         INCW    Y
         LDW     TICKCNT,Y
-1$:
+
         .ifne   HAS_LED7SEG
         CALL    LED_MPX
         .endif
