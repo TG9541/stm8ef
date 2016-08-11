@@ -3,6 +3,12 @@
 ;
 ; This is derived work based on 
 ; http://www.forth.org/svfig/kk/07-2010.html
+;
+; Attempts to contact the author over copyright 
+; questions remained without reply, but early eForth  
+; publications suggest that the license is akin to
+; CC BY-SA 2.5 (share, adapt, attribution, sharealike)
+;
 ;--------------------------------------------------------
 ; Original author, and copyright:
 ;       STM8EF, Version 2.1, 13jul10cht
@@ -18,20 +24,17 @@
 ;       SP Return stack pointer
 ;       X Data stack pointer
 ;       A,Y Scratch pad registers
+;
 ;--------------------------------------------------------
-; So far my attempts to contact the author over copyright 
-; questions remained without reply. From early eForth  
-; publications, I conclude that the license is akin to
-; an open source license that requires derived work to be 
-; published under the same condtions.
 ;
 ; Changes and code refactoring due to the following:
 ; * SDCC tool chain "ASxxxx V2.0" syntax
-; * conditional code for different target devices
-; * 1K RAM layout, symbols for RAM loc. ROM size opt.
+; * conditional code for different target boards
+; * 1K RAM layout, symbols for RAM loc. ROM size options
 ; * STM8S105C6 dependencies removed (e.g. UART2)
+;
 ; New features, e.g.:
-; * device support:
+; * board support:
 ;       - W1209 LED display & half-duplex /w SW TX 
 ;       - C0125 Relay-4 Board
 ;       - "75ct" STM8S103F3 breakout board
@@ -39,8 +42,8 @@
 ; * words for device keys, outputs, leds
 ; * words for EEPROM, bit operations, inv. order 16bit acc.
 ;
-; Docs for the SDCC integated assembler are scarce.
-; SDCC was used to create a template for this file:
+; Docs for the SDCC integated assembler are scarce,
+; hence SDCC was used to create a template for this file:
 ;--------------------------------------------------------
 ; File Created by SDCC : free open source ANSI-C Compiler
 ; Version 3.6.0 #9615 (Linux)
@@ -92,8 +95,8 @@
         ;*************************************************
         ; Note: add new variants here 
         STM8S_DISCOVERY = 0     ; (currently broken)
-        MODULE_MINIMAL =  1     ; generic STM8S103F3 breakout board 
-        MODULE_W1209 =    0     ; W1209 thermostat module 
+        MODULE_MINIMAL =  0     ; generic STM8S103F3 breakout board 
+        MODULE_W1209 =    1     ; W1209 thermostat module 
         MODULE_RELAY =    0     ; "Relay Board-4", STM8S relay module
 
         ;**********************************
@@ -255,33 +258,33 @@
         ;************************************************
         ; Memory for module hardware related things, e.g. interrupt routines
          
-        .ifne   HAS_BACKGROUND
-        BGADDR   =      0x50    ; address of background routine (0: off) 
-        BSPPSIZE  =     0x20    ; Size of data stack for background tasks
-        .else
-        BSPPSIZE  =     0       ; no extra data stack
+
+	;******  W1209 Variables  ******
+        .ifne   MODULE_W1209
+        TIM4TCNT =      0x50    ; TIM4 TX interrupt counter
+        TIM4TXREG  =    0x51    ; TIM4 char for TX
         .endif
-        
+
         .ifne   HAS_OUTPUTS
-        OUTPUTS =       0x56    ; outputs, like relays, LEDs, etc. 
+        OUTPUTS =       0x52    ; outputs, like relays, LEDs, etc. 
         .endif
 
         .ifne   HAS_LED7SEG
-        LED7FLAG =      0x57    ; 7S output control flags 
-        LED7MSB  =      0x58    ; word 7S LEDs digits  43..
-        LED7LSB  =      0x5A    ; word 7S LEDs digits  ..21
+        LED7FLAG =      0x53    ; 7S output control flags 
+        LED7MSB  =      0x54    ; word 7S LEDs digits  43..
+        LED7LSB  =      0x56    ; word 7S LEDs digits  ..21
         .endif
 
         .ifne   HAS_BACKGROUND
-        TICKCNT =       0x5C    ; 16 bit ticker (counts up)
-        TICKCNTL =      0x5D    ; ticker LSB
+        TICKCNT =       0x58    ; 16 bit ticker (counts up)
+        TICKCNTL =      0x59    ; ticker LSB
+        BGADDR   =      0x5E    ; address of background routine (0: off) 
+
+        BSPPSIZE  =     32      ; Size of data stack for background tasks
+        .else
+        BSPPSIZE  =     0       ; no extra data stack
         .endif
 
-        .ifne   MODULE_W1209
-	;******  W1209 Variables  ******
-        TIM4TCNT =      0x5E    ; TIM4 TX interrupt counter
-        TIM4TXREG  =    0x5F    ; TIM4 char for TX
-        .endif
 
         ;**************************************************
 	;******  6) General User & System Variables  ******
@@ -301,18 +304,24 @@
 	RPP   = RPPLOC          ; return stack, growing down
         
         ; Regular user variables
-        USRBASE =    UPP+0      ; radix base for numeric I/O
-        USREVAL =    UPP+2      ; execution vector of EVAL 
-        USRCONTEXT=  UPP+4      ; start vocabulary search
-        USRCP   =    UPP+6      ; point to top of dictionary
-        USRLAST =    UPP+8      ; point to last name in dictionary
-        USRTIB  =    UPP+10     ; address of terminal input buffer
-        USRNTIB =    UPP+12     ; count in terminal input buffer 
-        USR_IN  =    UPP+14     ; hold parsing pointer
-        USRHLD  =    UPP+16     ; hold a pointer of output string
+        USRHLD  =    UPP+0      ; hold a pointer of output string
+        USRBASE =    UPP+2      ; radix base for numeric I/O
+        USREVAL =    UPP+4      ; execution vector of EVAL 
+        USRCONTEXT=  UPP+6      ; start vocabulary search
+        USRCP   =    UPP+8      ; point to top of dictionary
+        USRLAST =    UPP+10     ; point to last name in dictionary
+        USRTIB  =    UPP+12     ; address of terminal input buffer
+        USRNTIB =    UPP+14     ; count in terminal input buffer 
+        USR_IN  =    UPP+16     ; hold parsing pointer
         USRTEMP =    UPP+18     ; temporary storage (VARIABLE tmp)
-	SP0	=    UPP+20     ; initial data stack pointer
-	RP0	=    UPP+22	; initial return stack pointer
+
+        ; Background task variables
+        BGHLD    =   UPP+20     ; USRHLD  for background task
+        BGBASE   =   UPP+22     ; USRBASE replacement for background task 
+
+        ; Only required for some multi-tasking/multi-user systems
+	; SP0	=    UPP+20     ; initial data stack pointer
+	; RP0	=    UPP+22	; initial return stack pointer
 
         ; Scratchpad memory, directly used in assembler code
 	XTEMP	=    UPP+24	; scratchpad (usually for X)
@@ -368,21 +377,21 @@ _forth:
 ORIG:	
 	LDW	X,#RPP	        ;initialize return stack
 	LDW	SP,X
-	LDW	RP0,X
+	; LDW	RP0,X
 	LDW	X,#SPP          ; initialize data stack
-	LDW	SP0,X
+	; LDW	SP0,X
        
 	JP	COLD	;default=MN1
 
 ; COLD start initiates these variables.
 
 UZERO:
-	.dw	BASEE	; BASE
-	.dw	INTER	; 'EVAL
-	.dw	LASTN	; CONTEXT pointer
-	.dw	CTOP	; CP in RAM
-	.dw	LASTN	; LAST
-ULAST:                  ; end of UZERO block
+	.dw	BASEE	        ; BASE
+	.dw	INTER	        ; 'EVAL
+	.dw	LASTN	        ; CONTEXT pointer
+	.dw	CTOP	        ; CP in RAM
+	.dw	LASTN	        ; LAST
+ULAST:                           ; end of UZERO block
 
 ;	COLD	( -- )
 ;	The hilevel cold start sequence.
@@ -396,7 +405,7 @@ COLD:
 	CALL	DOLIT
 	.dw	UZERO
 	CALL	DOLIT
-	.dw	UPP
+	.dw	USRBASE
 	CALL	DOLIT
 	.dw	(ULAST-UZERO)
 	CALL	CMOVE	        ;initialize user area
@@ -469,12 +478,17 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
         .endif
 
         .ifne   HAS_BACKGROUND
+        ; init 5ms timer interrupt
         MOV     TIM2_PSCR,#0x03 ; prescaler 1/8
-        MOV     TIM2_ARRH,#0x26 ; reload 1ms H 
-        MOV     TIM2_ARRL,#0xDE ;        1ms L
+        MOV     TIM2_ARRH,#0x26 ; reload 5ms H 
+        MOV     TIM2_ARRL,#0xDE ;        5ms L
  	MOV     ITC_SPR4,#0xF7  ; Interrupt prio. low for TIM2 (Int13)
         MOV     TIM2_CR1,#0x01  ; enable TIM2
         MOV     TIM2_IER,#0x01  ; enable TIM2 interrupt
+
+        ; init background USR variables
+        LDW     Y,#BASEE
+        LDW     BGBASE,Y     
         .endif
 
         RIM                     ; enable interrupts 
@@ -1169,6 +1183,7 @@ SPAT:
 	.ascii	"BASE"
 BASE:
 	LDW     Y,#(RAMBASE+USRBASE)
+        CALL    ADDBGUPP
 ;	SUBW    X,#2
 ;	LDW     (X),Y
 ;	RET
@@ -1245,6 +1260,7 @@ TEVAL:
 	.ascii	"hld"
 HLD:
 	LDW     Y,#(RAMBASE+USRHLD)
+        CALL    ADDBGUPP
 ;	SUBW    X,#2
 ;	LDW     (X),Y
 ;	RET
@@ -2091,7 +2107,8 @@ TCHA1:	RET
 	.db	5
 	.ascii	"DEPTH"
 DEPTH:
-	LDW     Y,SP0	;save data stack ptr
+	LDW     Y,#SPP	
+	; LDW     Y,SP0	;save data stack ptr
 	LDW     XTEMP,X
 	SUBW    Y,XTEMP	;#bytes = SP0 - X
 	SRAW    Y	;D = #stack items
@@ -2206,6 +2223,9 @@ PAD:
 	CALL	HERE
 	CALL	DOLIT
 	.dw	PADOFFS
+ 
+ ; ooooooooooooooooooo
+
 	JP	PLUS
 
 ;	@EXECUTE	( a -- )
@@ -4553,6 +4573,31 @@ OUTSTOR:
         .ifne HWREG_WORDS * (STM8S003F3 + STM8S103F3)
           .include "hwregs8s003.inc"
         .endif
+
+ADDBGUPP:
+        push    CC
+        pop     A
+        and     A,#0x20
+        jrne    1$
+        addw    Y,#(BGHLD-USRHLD)
+1$:     ret
+
+ ;       itest  ( -- )
+ ;       store CC & 0x28 to mem
+         .dw     LINK
+ 
+         LINK =  .
+         .db     (5)
+         .ascii  "itest"
+ itestt:
+         push    CC
+         pop     A
+         and     A,#0x28
+         ld      0x03,A
+         clr     A
+         ret
+ 
+        
         
 ;===============================================================
 
