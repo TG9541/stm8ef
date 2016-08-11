@@ -270,7 +270,7 @@
         .endif
 
         .ifne   HAS_LED7SEG
-        LED7FLAG =      0x53    ; 7S output control flags 
+;        LED7FLAG =      0x53    ; 7S output control flags 
         LED7MSB  =      0x54    ; word 7S LEDs digits  43..
         LED7LSB  =      0x56    ; word 7S LEDs digits  ..21
         .endif
@@ -726,6 +726,15 @@ INCH:   CLRW    Y
 	.db	4
 	.ascii	"EMIT"
 EMIT:
+        .ifne  MODULE_W1209
+        PUSH    CC
+        POP     A
+        AND     A,#0x20
+        JRNE    11$  
+	CALL	EMIT7S	        ;display on 7-seg
+        JRA     12$
+        .endif
+11$:
         .ifne   HALF_DUPLEX
 	BRES	UART1_CR2,#2	;disable rx
 
@@ -750,9 +759,10 @@ EMIT:
         .else                   ; not HALF_DUPLEX
 	LD	A,(1,X)
 	ADDW	X,#2
-11$:	BTJF	UART1_SR,#7,11$ ;loop until tdre
+3$:	BTJF	UART1_SR,#7,3$ ;loop until tdre
 	LD	UART1_DR,A	;send A
         .endif
+12$:
 	RET
 
 
@@ -2223,8 +2233,17 @@ PAD:
 	CALL	HERE
 	CALL	DOLIT
 	.dw	PADOFFS
- 
- ; ooooooooooooooooooo
+
+        ; hack for background task PAD
+        .ifne   HAS_BACKGROUND
+        PUSH    CC
+        POP     A
+        AND     A,#0x20
+        JRNE    1$
+        CALL    DUPP
+	CALL	PLUS
+1$:
+        .endif        
 
 	JP	PLUS
 
@@ -2682,12 +2701,12 @@ NUFQ1:	RET
 	.db	5
 	.ascii	"SPACE"
 SPACE:
-        .ifne  MODULE_W1209
-        TNZ     LED7FLAG        ; NZ: don't emit blank on W1209 7-seg LED 
-        JREQ    1$  
-        BSET    LED7FLAG,#7
-        RET
-        .endif
+;        .ifne  MODULE_W1209
+;        TNZ     LED7FLAG        ; NZ: don't emit blank on W1209 7-seg LED 
+;        JREQ    1$  
+;       BSET    LED7FLAG,#7
+;        RET
+;        .endif
 
 1$:	CALL	BLANK
 	JP	EMIT
@@ -2723,24 +2742,12 @@ TYPES:
 	JRA	TYPE2
 TYPE1:	CALL	DUPP
 	CALL	CAT
-        .ifne  MODULE_W1209
-        TNZ     LED7FLAG        ; NZ: output c on W1209 7-seg LED 
-        JREQ    1$  
-	CALL	EMIT7S	        ;display on 7-seg
-        JRA     2$
-        .endif
-
-1$:	CALL	EMIT
-2$:	CALL	ONEP
+	CALL	EMIT
+	CALL	ONEP
 TYPE2:	
         CALL	DONXT
 	.dw	TYPE1
-        .ifne   MODULE_W1209
-        TNZ     LED7FLAG         ; B7 set: output c on W1209 7-seg LED 
-        JRPL    1$  
-        CLR     LED7FLAG
-        .endif
-1$:	JP	DROP
+	JP	DROP
 
 ;	CR	( -- )
 ;	Output a carriage return
@@ -4440,17 +4447,17 @@ WKEY:
 ;       7S  ( -- )
 ;       Temporarily redirect "TYPE" to W1209 7-seg LED buffer 
 ;       up to end of string *after* the first non-rendered char 
-	.dw	LINK
+;	.dw	LINK
         
-        LINK =  .
-	.db	(2)
-	.ascii	"7S"
-SSEG:   
-        CLRW    Y 
-        LDW     LED7MSB,Y
-        LDW     LED7LSB,Y
-        MOV     LED7FLAG,#1     ; redirect EMIT from TYPE and SPACE
-        RET
+;        LINK =  .
+;	.db	(2)
+;	.ascii	"7S"
+;SSEG:   
+;        CLRW    Y 
+;        LDW     LED7MSB,Y
+;        LDW     LED7LSB,Y
+;        MOV     LED7FLAG,#1     ; redirect EMIT from TYPE and SPACE
+;        RET
 
 ;       7-seg LED patterns, "70s chique"
 PAT7SM9:   
@@ -4475,9 +4482,17 @@ PAT7SAZ:
 	.db	(3)
 	.ascii	"E7S"
 EMIT7S: 
+
         LD      A,(1,X)         ; c to A
 
-        CP      A,#'.'
+        CP      A,#32
+        JRNE    1$
+        CLRW    Y 
+        LDW     LED7MSB,Y
+        LDW     LED7LSB,Y
+        JRA     E7END
+
+1$:     CP      A,#'.'
         JREQ    E7DOT
         CP      A,#','
         JRMI    E7NOR
@@ -4511,7 +4526,7 @@ E7DOT:
         JRA     E7END
         
 E7NOR:
-        BSET    LED7FLAG,#7     ; "TYPE" no longer calls EMIT7S after this string
+;        BSET    LED7FLAG,#7     ; "TYPE" no longer calls EMIT7S after this string
 E7END:
         JP      DROP
 
