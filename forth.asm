@@ -270,17 +270,17 @@
         .endif
 
         .ifne   HAS_LED7SEG
-;        LED7FLAG =      0x53    ; 7S output control flags 
-        LED7MSB  =      0x54    ; word 7S LEDs digits  43..
-        LED7LSB  =      0x56    ; word 7S LEDs digits  ..21
+        LED7MSB  =      0x58    ; word 7S LEDs digits  43..
+        LED7LSB  =      0x5A    ; word 7S LEDs digits  ..21
         .endif
 
         .ifne   HAS_BACKGROUND
-        TICKCNT =       0x58    ; 16 bit ticker (counts up)
-        TICKCNTL =      0x59    ; ticker LSB
+        TICKCNT =       0x5C    ; 16 bit ticker (counts up)
+        TICKCNTL =      0x5D    ; ticker LSB
         BGADDR   =      0x5E    ; address of background routine (0: off) 
 
         BSPPSIZE  =     32      ; Size of data stack for background tasks
+        PADBG     =     16      ; Size of PAD for background task 
         .else
         BSPPSIZE  =     0       ; no extra data stack
         .endif
@@ -644,7 +644,7 @@ _TIM2_UO_IRQHandler:
         ; W1209 multiplexed 7-seg LED display
 LED_MPX:        
         LD      A,TICKCNTL
-        AND     A,#3        
+        AND	A,#3        
         .ifne   MODULE_W1209        
         BSET    PD_ODR,#4       ; clear digit outputs .321
         BSET    PB_ODR,#5
@@ -726,10 +726,10 @@ INCH:   CLRW    Y
 	.db	4
 	.ascii	"EMIT"
 EMIT:
-        .ifne  MODULE_W1209
-        PUSH    CC
-        POP     A
-        AND     A,#0x20
+        .ifne (HAS_LED7SEG + HAS_BACKGROUND) 
+        PUSH	CC
+        POP	A
+        AND	A,#0x20
         JRNE    11$  
 	CALL	EMIT7S	        ;display on 7-seg
         JRA     12$
@@ -795,8 +795,8 @@ DONXT:
 	DECW    Y
 	JRPL    NEX1
 	POPW	Y
-	POP     A
-	POP     A
+	POP	A
+	POP	A
 	JP      (2,Y)
 NEX1:   LDW     (3,SP),Y
 	POPW	Y
@@ -1087,10 +1087,10 @@ ZL1:    LD      (X),A
 	.ascii	"AND"
 ANDD:
 	LD	A,(X)	;D=w
-	AND     A,(2,X)
+	AND	A,(2,X)
 	LD      (2,X),A
 	LD      A,(1,X)
-	AND     A,(3,X)
+	AND	A,(3,X)
 LDADROP:
 	LD      (3,X),A
 	ADDW    X,#2
@@ -1193,7 +1193,9 @@ SPAT:
 	.ascii	"BASE"
 BASE:
 	LDW     Y,#(RAMBASE+USRBASE)
-        CALL    ADDBGUPP
+        .ifne   HAS_BACKGROUND
+        CALL    BGUPPOFFS
+        .endif
 ;	SUBW    X,#2
 ;	LDW     (X),Y
 ;	RET
@@ -1270,7 +1272,9 @@ TEVAL:
 	.ascii	"hld"
 HLD:
 	LDW     Y,#(RAMBASE+USRHLD)
-        CALL    ADDBGUPP
+        .ifne   HAS_BACKGROUND
+        CALL    BGUPPOFFS
+        .endif
 ;	SUBW    X,#2
 ;	LDW     (X),Y
 ;	RET
@@ -1443,7 +1447,19 @@ BGG:
 	LDW     Y,#(BGADDR)
         JRA     YSTOR
 
+;       - 
+;       Add offset to USR variable address when in background task
+BGUPPOFFS:
+        PUSH	CC
+        POP	A
+        AND	A,#0x20
+        JRNE    1$
+        ADDW    Y,#(BGHLD-USRHLD)
+1$:     
+        RET
+
         .endif
+
 
 ;; Common functions
 
@@ -2231,20 +2247,21 @@ HERE:
 	.ascii	"PAD"
 PAD:
 	CALL	HERE
-	CALL	DOLIT
-	.dw	PADOFFS
-
-        ; hack for background task PAD
         .ifne   HAS_BACKGROUND
-        PUSH    CC
-        POP     A
-        AND     A,#0x20
+        ; hack for background task PAD
+        ; create offset for PAD area
+        PUSH	CC
+        POP	A
+        AND	A,#0x20
         JRNE    1$
-        CALL    DUPP
-	CALL	PLUS
+       	CALL	DOLIT              
+	.dw	(PADOFFS+PADBG) ; leave space for background PAD
+        JRA     2$
 1$:
         .endif        
-
+	CALL	DOLIT
+	.dw	PADOFFS
+2$:
 	JP	PLUS
 
 ;	@EXECUTE	( a -- )
@@ -2701,14 +2718,8 @@ NUFQ1:	RET
 	.db	5
 	.ascii	"SPACE"
 SPACE:
-;        .ifne  MODULE_W1209
-;        TNZ     LED7FLAG        ; NZ: don't emit blank on W1209 7-seg LED 
-;        JREQ    1$  
-;       BSET    LED7FLAG,#7
-;        RET
-;        .endif
 
-1$:	CALL	BLANK
+	CALL	BLANK
 	JP	EMIT
 
 ;	SPACES	( +n -- )
@@ -4444,20 +4455,6 @@ WKEY:
         .endif
 
         .ifne   HAS_LED7SEG
-;       7S  ( -- )
-;       Temporarily redirect "TYPE" to W1209 7-seg LED buffer 
-;       up to end of string *after* the first non-rendered char 
-;	.dw	LINK
-        
-;        LINK =  .
-;	.db	(2)
-;	.ascii	"7S"
-;SSEG:   
-;        CLRW    Y 
-;        LDW     LED7MSB,Y
-;        LDW     LED7LSB,Y
-;        MOV     LED7FLAG,#1     ; redirect EMIT from TYPE and SPACE
-;        RET
 
 ;       7-seg LED patterns, "70s chique"
 PAT7SM9:   
@@ -4495,9 +4492,9 @@ EMIT7S:
 1$:     CP      A,#'.'
         JREQ    E7DOT
         CP      A,#','
-        JRMI    E7NOR
+        JRMI    E7END
         CP      A,#'z'
-        JRPL    E7NOR
+        JRPL    E7END
         CP      A,#'A'
         JRUGE   E7ALPH
 
@@ -4509,7 +4506,7 @@ EMIT7S:
         JRA     E7LOOKA 
 E7ALPH:
         ; 'A'--'z'
-        AND     A,#0x5F         ; convert to uppercase
+        AND	A,#0x5F         ; convert to uppercase
         SUB     A,#'A'
         LD      (1,X),A
         CALL    DOLIT
@@ -4525,8 +4522,6 @@ E7DOT:
         LD      LED7LSB+1,A
         JRA     E7END
         
-E7NOR:
-;        BSET    LED7FLAG,#7     ; "TYPE" no longer calls EMIT7S after this string
 E7END:
         JP      DROP
 
@@ -4589,30 +4584,7 @@ OUTSTOR:
           .include "hwregs8s003.inc"
         .endif
 
-ADDBGUPP:
-        push    CC
-        pop     A
-        and     A,#0x20
-        jrne    1$
-        addw    Y,#(BGHLD-USRHLD)
-1$:     ret
 
- ;       itest  ( -- )
- ;       store CC & 0x28 to mem
-         .dw     LINK
- 
-         LINK =  .
-         .db     (5)
-         .ascii  "itest"
- itestt:
-         push    CC
-         pop     A
-         and     A,#0x28
-         ld      0x03,A
-         clr     A
-         ret
- 
-        
         
 ;===============================================================
 
