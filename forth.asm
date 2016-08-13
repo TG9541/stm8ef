@@ -448,7 +448,7 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
         MOV     PB_DDR,#0b00110000 ; d2,d3
         MOV     PB_CR1,#0b00110000 
         MOV     PC_DDR,#0b11000000 ; G,C        
-        MOV     PC_CR1,#0b11000000         
+        MOV     PC_CR1,#0b11111000 ; G,C-+S... Key pullups        
         MOV     PD_DDR,#0b00111110 ; A,DP,D,d1,A
         MOV     PD_CR1,#0b00111110 
         MOV     TIM4_PSCR,#0x03 ; prescaler 1/8
@@ -603,14 +603,14 @@ _TIM2_UO_IRQHandler:
         ; BSET    PA_ODR,#3     ; pin debug
         BRES    TIM2_SR1,#0     ; clear TIM2 UIF 
 
+        .ifne   HAS_LED7SEG
+        CALL    LED_MPX
+        .endif
+
         .ifne   HAS_BACKGROUND 
         LDW     Y,TICKCNT
         INCW    Y
         LDW     TICKCNT,Y
-
-        .ifne   HAS_LED7SEG
-        CALL    LED_MPX
-        .endif
 
         LDW     Y,BGADDR        ; address of background routine
         TNZW    Y               ; 0: background operation off 
@@ -636,6 +636,7 @@ _TIM2_UO_IRQHandler:
         LDW     CARRY,X
 2$:
         .endif
+
         ; BRES    PA_ODR,#3
         IRET
 
@@ -703,8 +704,23 @@ LED_MPX:
 	.db	4
 	.ascii	"?KEY"
 QKEY:
+        .ifne   HAS_BACKGROUND
+        PUSH    CC
+        POP     A
+        AND     A,#0x20
+        JRNE    1$
+        CALL    BKEY
+        LD      A,(1,X)
+        ADDW    X,#2
+        OR      A,#0
+        JREQ    INCH
+        ADD     A,#0x40 
+        JRA     2$
+        .endif
+1$:
 	BTJF    UART1_SR,#5,INCH ;check status
 	LD	A,UART1_DR	;get char in A
+2$:
 	SUBW	X,#2
 	LD	(1,X),A
 	CLR	(X)
@@ -4431,28 +4447,29 @@ LOCK:
 
          
 ;-----------------------------------------------
-        .ifne   MODULE_W1209
+    ;    .ifne   MODULE_W1209
 
-;       WKEY  ( -- n )
-;       Read W1209 key value "set" (1), "+" (2), and "-" (4) as a bitfield
+;       BKEY  ( -- n )
+;       Read board key value "set" (1), "+" (2), and "-" (4) as a bitfield
 	.dw	LINK
         
         LINK =  .
 	.db	(4)
-	.ascii	"KEY@"
-WKEY:   
-        CALL    DOLIT
-        .dw     PC_IDR
-        CALL    CAT
-        CALL    INVER
-        CALL    DOLIT
-        .dw     8
-        CALL    SLASH
-        CALL    DOLIT
-        .dw     7
-        CALL    ANDD
-        RET
+	.ascii	"BKEY"
+BKEY:   
+        .ifne   MODULE_W1209
+        ; "set" (1), "+" (2), and "-" (4) 
+        LD      A,PC_IDR
+        SRA     A
+        SRA     A
+        SRA     A
+        CPL     A
+        AND     A,#0x07
         .endif
+        SUBW    X,#2
+        LD      (1,X),A
+        CLR     (X)
+        RET
 
         .ifne   HAS_LED7SEG
 
