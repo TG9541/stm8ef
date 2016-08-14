@@ -291,7 +291,7 @@
         .endif
 
         .ifne   HAS_KEYS
-        KEYSTATE =      0x53    ; last key pattern  
+        KEYREPET =      0x53    ; board key repetition control  
         .endif
 
         .ifne   HAS_LED7SEG
@@ -452,7 +452,13 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
 	BRES    CLK_SWCR,#3     ; clear SWIF
         .endif
 
-         .ifne   MODULE_W1209
+        .ifne   MODULE_MINDEV
+        ; STM8S103F3 minimal breakout board init GPIO
+        BSET     PB_DDR,#5  
+        BSET     PB_CR1,#5 
+        .endif
+
+        .ifne   MODULE_W1209
         ; W1209 STM8S003F3 init GPIO
         MOV     PA_DDR,#0b00001110 ; relay,B,F        
         MOV     PA_CR1,#0b00001110         
@@ -462,14 +468,9 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
         MOV     PC_CR1,#0b11111000 ; G,C-+S... Key pullups        
         MOV     PD_DDR,#0b00111110 ; A,DP,D,d1,A
         MOV     PD_CR1,#0b00111110 
-       .endif
-       
-        .ifne   MODULE_MINDEV
-        ; STM8S103F3 minimal breakout board init GPIO
-        BSET     PB_DDR,#5  
-        BSET     PB_CR1,#5 
         .endif
-        
+       
+       
         .ifne   MODULE_RELAY
         ; "Nano PLC Relay module"
         MOV     PB_DDR,#0x10
@@ -516,6 +517,14 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
         ;; Init background interrupt, and task USR variables 
 
         .ifne   HAS_BACKGROUND
+        ; background USR variables
+        LDW     Y,#BASEE
+        LDW     BGBASE,Y     
+        CLRW    Y
+        LDW     BGADDR,Y
+        .endif
+
+        .ifne   (HAS_BACKGROUND + HAS_LED7SEG)
         ; init 5ms timer interrupt
         MOV     TIM2_PSCR,#0x03 ; prescaler 1/8
         MOV     TIM2_ARRH,#0x26 ; reload 5ms H 
@@ -523,9 +532,6 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
  	MOV     ITC_SPR4,#0xF7  ; Interrupt prio. low for TIM2 (Int13)
         MOV     TIM2_CR1,#0x01  ; enable TIM2
         MOV     TIM2_IER,#0x01  ; enable TIM2 interrupt
-        ; background USR variables
-        LDW     Y,#BASEE
-        LDW     BGBASE,Y     
         .endif
 
         ; Hardware initialization complete
@@ -742,39 +748,44 @@ LED_MPX:
 	.db	4
 	.ascii	"?KEY"
 QKEY:
+        CLRW    Y               ; flag: no char
         .ifne   (HAS_BACKGROUND * HAS_KEYS)
+        ; Foreground: char from RxD, background: char from BKEY 
         PUSH    CC
         POP     A
         AND     A,#0x20
-        JRNE    1$
+        JRNE    SERKEY
         CALL    BKEY
         LD      A,(1,X)
         ADDW    X,#2
         TNZ     A
-        JRNE    11$
-        LD      KEYSTATE,A
+        JRNE    KEYPRESS     
+        ; Bit7: flag press + 100*5ms hold before repetition
+        MOV     KEYREPET,#(0x80 + 100)
         JRA     INCH
-11$:
-        TNZ     KEYSTATE
-        JRNE    INCH
-        LD      KEYSTATE,A
-        ADD     A,#0x40 
-        JRA     2$
+KEYPRESS:
+        ADD     A,#0x40         ; bit values 1,2,4 to 'A','B','D'
+        BTJF    KEYREPET,#7,KEYHOLD
+        BRES    KEYREPET,#7
+        JRA     ATOKEY
+KEYHOLD:        
+        DEC     KEYREPET
+        JRNE    INCH 
+        MOV     KEYREPET,#30    ; repetition time: n*5ms 
+        JRA     ATOKEY
         .endif
-1$:
+SERKEY:
 	BTJF    UART1_SR,#5,INCH ;check status
-	LD	A,UART1_DR	;get char in A
-2$:
-	SUBW	X,#2
-	LD	(1,X),A
+	LD	A,UART1_DR	; get char in A
+ATOKEY:
+	SUBW	X,#2            ; push char
+	LD	(1,X),A         
 	CLR	(X)
-	SUBW	X,#2
-	LDW	Y,#0x0FFFF
-	LDW	(X),Y
-	RET
-INCH:   CLRW    Y
-	SUBW	X,#2
-	LDW	(X),Y
+        DECW    Y               ; flag: char
+        ; fall through
+INCH:   
+	SUBW	X,#2            ; push flag
+	LDW	(X),Y           
 	RET
 
 
