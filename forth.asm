@@ -108,8 +108,11 @@
         HALF_DUPLEX  =    0     ; RS232 shared Rx/Tx line, bus style
         TERM_LINUX   =    1     ; LF terminates line 
         HWREG_WORDS  =    0     ; Peripheral Register words
+        HAS_TXDSIM   =    0     ; TxD SW simulation
         HAS_LED7SEG  =    0     ; 7-seg LED on module
-        HAS_OUTPUTS  =    0     ; Outputs, like relays, on module
+        HAS_KEYS     =    0     ; Module has keys
+        HAS_OUTPUTS  =    0     ; Module uutputs, like relays
+        HAS_INPUTS   =    0     ; Module inputs
         HAS_BACKGROUND =  1     ; Background Forth task (TIM2 ticker)
 
         ;********************************************************
@@ -125,19 +128,22 @@
 
         .ifne   MODULE_W1209
         ; UART half-duplex PD_6 (RxD) SW simulation "bus style"
-        ; Multiplexed 3 digit 7 seg LED display
+        ; Multiplexed 3 digit 7S-LED display, 3 keys, relay
         ; Clock: HSI (no crystal)
         STM8S003F3   =    1 
-        PDTX         =    6     ; GPIO for SW half-duplex /w TIM4
         HALF_DUPLEX  =    1     ; RS232 Half Duplex Mode
-        HAS_LED7SEG  =    1     ; 7-seg LED on module
+        HAS_TXDSIM   =    1     ; TxD SW simulation
+        PDTX         =    6     ; GPIO for SW half-duplex /w TIM4
+        HAS_LED7SEG  =    3     ; yes, 3 dig. 7-seg LED on module
+        HAS_KEYS     =    3     ; yes, 3 keys on mudule
         HAS_OUTPUTS  =    1     ; yes, one relay 
         .endif
 
         .ifne   MODULE_RELAY
         ; Clock: HSI (8MHz crystal not used)
         STM8S103F3   =    1 
-        HAS_OUTPUTS  =    1     ; yes, 4 relays
+        HAS_KEYS     =    1     ; yes, 1 key 
+        HAS_OUTPUTS  =    4     ; yes, 4 relays
         .endif
 
         ;**********************************************
@@ -259,8 +265,8 @@
         ; Memory for module hardware related things, e.g. interrupt routines
          
 
-	;******  W1209 Variables  ******
-        .ifne   MODULE_W1209
+	;******  Board/Module variables  ******
+        .ifne   HAS_TXDSIM
         TIM4TCNT =      0x50    ; TIM4 TX interrupt counter
         TIM4TXREG  =    0x51    ; TIM4 char for TX
         .endif
@@ -274,6 +280,8 @@
         LED7LSB  =      0x5A    ; word 7S LEDs digits  ..21
         .endif
 
+        
+	;******  Background task variables  ******
         .ifne   HAS_BACKGROUND
         TICKCNT =       0x5C    ; 16 bit ticker (counts up)
         TICKCNTL =      0x5D    ; ticker LSB
@@ -411,10 +419,11 @@ COLD:
 	CALL	CMOVE	        ;initialize user area
 	CALL	PRESE	        ;initialize data stack and TIB
 
-        ;; Device dependent HW initialization
+        ;; STM8S Device dependent HW initialization
+
 PORTINIT:
         .ifne   STM8S_DISCOVERY
-        ; STM8S Discovery init GPIO & UART
+        ; STM8S Discovery init GPIO & clock
 	MOV	PD_DDR,#0x01	; LED, SWIM
 	MOV	PD_CR1,#0x03	; pullups
 	MOV	PD_CR2,#0x01	; speed
@@ -422,27 +431,10 @@ PORTINIT:
 	MOV     CLK_SWR,#0x0B4  ; external cyrstal clock
 WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
 	BRES    CLK_SWCR,#3     ; clear SWIF
-	MOV	UART2_BD2,#0x003	; 9600 baud
-	MOV	UART2_BD1,#0x068	; 0068 9600 baud
-	MOV	UART2_CR1,#0x006	; 8 data bits, no parity
-	MOV	UART2_CR3,#0x000	; 1 stop bit
         .endif
 
-        .ifne  (STM8S003F3 + STM8S103F3)
-        ; STM8S[01]003F3 init UART
-        MOV     CLK_CKDIVR,#0           ; Clock divider register
-	MOV	UART1_BRR2,#0x003	; 9600 baud
-	MOV	UART1_BRR1,#0x068	; 0068 9600 baud
-	;MOV	UART1_CR1,#0x006	; 8 data bits, no parity
-          .ifne HALF_DUPLEX
-	MOV	UART1_CR2,#0x004	; enable rx 
-          .else              
-	MOV	UART1_CR2,#0x00C	; enable tx & rx
-          .endif
-        .endif 
-
-        .ifne   MODULE_W1209
-        ; W1209 STM8S003F3 init GPIO & UART
+         .ifne   MODULE_W1209
+        ; W1209 STM8S003F3 init GPIO
         MOV     PA_DDR,#0b00001110 ; relay,B,F        
         MOV     PA_CR1,#0b00001110         
         MOV     PB_DDR,#0b00110000 ; d2,d3
@@ -451,11 +443,7 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
         MOV     PC_CR1,#0b11111000 ; G,C-+S... Key pullups        
         MOV     PD_DDR,#0b00111110 ; A,DP,D,d1,A
         MOV     PD_CR1,#0b00111110 
-        MOV     TIM4_PSCR,#0x03 ; prescaler 1/8
-        MOV     TIM4_ARR,#0xCF  ; reload 0.104 ms (9600 baud)
- 	MOV     ITC_SPR6,#0x3F  ; Interrupt prio. high for TIM4 (Int23)
-        MOV     TIM4_CR1,#0x01  ; enable TIM4 (don't enable interrupt)
-        .endif
+       .endif
        
         .ifne   MODULE_MINIMAL
         ; STM8S103F3 minimal breakout board init GPIO
@@ -472,10 +460,42 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
         MOV     PD_CR1,#0x10
         .endif
 
+        ;; Module I/O initialization
+
         .ifne   HAS_OUTPUTS
         CALL    ZERO
         CALL    OUTSTOR
         .endif
+
+        ;; Init RS232 communication port
+
+        .ifne  (STM8S003F3 + STM8S103F3)
+        ; STM8S[01]003F3 init UART
+        MOV     CLK_CKDIVR,#0           ; Clock divider register
+	MOV	UART1_BRR2,#0x003	; 9600 baud
+	MOV	UART1_BRR1,#0x068	; 0068 9600 baud
+	;MOV	UART1_CR1,#0x006	; 8 data bits, no parity
+        .ifne HALF_DUPLEX
+	MOV	UART1_CR2,#0x004	; enable rx 
+        .else              
+	MOV	UART1_CR2,#0x00C	; enable tx & rx
+        .endif
+        .else                           
+        ; Other STM8S controller - UART2, assume 16MHz clock  
+	MOV	UART2_BD2,#0x003	; 9600 baud
+	MOV	UART2_BD1,#0x068	; 0068 9600 baud
+	MOV	UART2_CR1,#0x006	; 8 data bits, no parity
+	MOV	UART2_CR3,#0x000	; 1 stop bit
+        .endif 
+
+        .ifne   HAS_TXDSIM
+        MOV     TIM4_PSCR,#0x03 ; prescaler 1/8
+        MOV     TIM4_ARR,#0xCF  ; reload 0.104 ms (9600 baud)
+ 	MOV     ITC_SPR6,#0x3F  ; Interrupt prio. high for TIM4 (Int23)
+        MOV     TIM4_CR1,#0x01  ; enable TIM4 (don't enable interrupt)
+        .endif
+
+        ;; Init background interrupt, and task USR variables 
 
         .ifne   HAS_BACKGROUND
         ; init 5ms timer interrupt
@@ -485,12 +505,12 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
  	MOV     ITC_SPR4,#0xF7  ; Interrupt prio. low for TIM2 (Int13)
         MOV     TIM2_CR1,#0x01  ; enable TIM2
         MOV     TIM2_IER,#0x01  ; enable TIM2 interrupt
-
-        ; init background USR variables
+        ; background USR variables
         LDW     Y,#BASEE
         LDW     BGBASE,Y     
         .endif
 
+        ; Hardware initialization complete
         RIM                     ; enable interrupts 
 
  	CALL	TBOOT
@@ -537,7 +557,7 @@ _TIM4_IRQHandler:
         ; BCPL    PA_ODR,#3     ; pin debug
         BRES    TIM4_SR,#0      ; clear TIM4 UIF 
 
-        .ifne   MODULE_W1209
+        .ifne   HAS_TXDSIM
         ; TIM4 interrupt handler W1209 software TxD. 
         ; RxD (PD_6) is on the module's sensor header, 
         ; STM8S UART1 half-duplex mode requires TxD (PD_5) 
