@@ -9,20 +9,22 @@ Changes and code refactoring:
 * SDCC tool chain "ASxxxx V2.0" syntax
 * conditional code for different target devices
 * 1K RAM layout, symbols for RAM loc. ROM size opt.
-* STM8S105C6 dependencies removed (e.g. UART2)
-* some bugfixes (e.g. SEE)
+* No hard STM8S105C6 dependencies (e.g. RAM layout, UART2)
+* some bugfixes (e.g. SEE better for "Subroutine Threaded")
 
 New features:
 
-* simple *concurrent* background operation with 5 ms timebase (using TIM2)
-* words for device keys, outputs, leds
+* simple **concurrent INPUT-PROCESS-OUTPUT** background tasks with 5 ms timebase (using TIM2) 
+* 7Seg-LED Displays supported, also as char output (in background tasks `123 .` will go to 7Seg-LED)
+* words for module keys, relays, leds
 * words for EEPROM, bit operations, inv. order 16bit acc.
 
 Board/module support:
 
-* W1209 LED display & half-duplex with software TX (9600 baud using TIM4) 
-* C0125 Relay-4 Board (as a *Nano PLC*)
-* "75ct" cheap STM8S103F3 breakout board
+* `MODULE_CORE` STM8S003F3 core 
+* `MODULE_MINDEV` STM8S103F3 "minimum development board"
+* `MODULE_W1209` W1209 thermostat with LED display, provides half-duplex RS232 through SW TxD through RxD pin (9600 baud) 
+* `MODULE_RELAY` C0125 Relay-4 Board (can be used as a *Nano PLC*)
 
 Please refer to the [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) for more information! 
 
@@ -35,14 +37,20 @@ Some of the differences between STM8S003F3, and the STM8S105C6T6 (*STM8S Discove
 * UART1 instead of UART2
 * 8 KiB Flash instead of 32 KiB
 * 1 KiB RAM instead of 2 KiB
-* 128 bytes EEPROM (STM8S103F3 bytes) instead of 1 KiB
-* reduced set of GPIO and other peripherals 
+* 128 or 640 bytes EEPROM (STM8S103F3) instead of 1 KiB
+* reduced set of GPIO and other peripherals
 
 ## Value Line modules 
 
 There is board suport for some easily available modules. For details, refer to [STM8S-Value-Line-Gadgets](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets) in the Wiki.
 
-### STM8S103F3 Breakout
+### STM8S003F3 Core
+
+STM8S003F3 core for new experiments.
+
+Set option `MODULE_CORE = 1` in `forth.asm`.
+
+### STM8S103F3 "minimum development board"
 
 Cheap STM8S103F3-based breakout board with LED on port B5 (there are plenty of vendors on EBay or AliExpress, the price starts at about $0.75 incl. shipping)
 
@@ -50,7 +58,7 @@ Cheap STM8S103F3-based breakout board with LED on port B5 (there are plenty of v
 * LED on GPIO PB5
 * reset key
 
-Set option `MODULE_MINIMAL = 1` in `forth.asm`
+Set option `MODULE_MINDEV = 1` in `forth.asm`.
 
 ### W1209 Thermostat Module
 
@@ -85,5 +93,5 @@ Set option `MODULE_RELAY = 1` in `forth.asm`
 
 ## STM8S Discovery
 
-The code is currently assumed broken (I don't have any device for testing it).
+I don't have any device for testing, and most likely the code is currently brokend.
 

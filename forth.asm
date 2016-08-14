@@ -94,36 +94,50 @@
         ;******  1) Hardware module type selection  ******
         ;*************************************************
         ; Note: add new variants here 
+        
+        MODULE_CORE =     0     ; generic STM8S003F3 core 
+        MODULE_MINDEV =   1     ; STM8S103F3 "minimum development board"
+        MODULE_W1209 =    0     ; W1209 thermostat module 
+        MODULE_RELAY =    0     ; C0135 "Relay Board-4 STM8S" 
         STM8S_DISCOVERY = 0     ; (currently broken)
-        MODULE_MINIMAL =  0     ; generic STM8S103F3 breakout board 
-        MODULE_W1209 =    1     ; W1209 thermostat module 
-        MODULE_RELAY =    0     ; "Relay Board-4", STM8S relay module
 
         ;**********************************
         ;******  2) Global defaults  ******
         ;**********************************
-        STM8S103F3   =    0     ; 8K flash, 1K RAM, 640 bytes EEPROM
-        STM8S003F3   =    0     ; like STM8S103F3, 128 bytes EEPROM 
+
+        STM8S003F3   =    0     ; 8K flash, 1K RAM, 128 EEPROM, UART1
+        STM8S103F3   =    0     ; like STM8S003F3, 640 EEPROM 
+        STM8S105C6   =    0     ; 32K flash, 2K RAM, 1K EEPROM, UART2
 
         HALF_DUPLEX  =    0     ; RS232 shared Rx/Tx line, bus style
         TERM_LINUX   =    1     ; LF terminates line 
-        HWREG_WORDS  =    0     ; Peripheral Register words
+
         HAS_TXDSIM   =    0     ; TxD SW simulation
         HAS_LED7SEG  =    0     ; 7-seg LED on module
         HAS_KEYS     =    0     ; Module has keys
         HAS_OUTPUTS  =    0     ; Module uutputs, like relays
         HAS_INPUTS   =    0     ; Module inputs
-        HAS_BACKGROUND =  1     ; Background Forth task (TIM2 ticker)
+        HAS_BACKGROUND =  0     ; Background Forth task (TIM2 ticker)
+
+        WORDS_EXTRACORE = 1     ; Extra core words: I =0
+        WORDS_EXTRAMEM =  0     ; Extra mem words: BSR 2C@ 2C! LCK ULCK 
+        WORDS_HWREG  =    0     ; Peripheral Register words
 
         ;********************************************************
         ;******  3) Hardware module feature configuration  ******
         ;********************************************************
         ; Note: add new variants here 
 
-        .ifne   MODULE_MINIMAL
+        .ifne   MODULE_CORE
+        ; Clock: HSI (no crystal)
+        STM8S003F3   =    1 
+        .endif
+
+        .ifne   MODULE_MINDEV
         ; Clock: HSI (no crystal)
         STM8S103F3   =    1 
-        HWREG_WORDS  =    1
+        WORDS_HWREG  =    1
+        HAS_OUTPUTS  =    1     ; yes, one LED 
         .endif
 
         .ifne   MODULE_W1209
@@ -298,11 +312,6 @@
 	;******  6) General User & System Variables  ******
         ;**************************************************
 
-        ;Note: "RAMBASE +" made more sense for multi-user/multi-tasking
-        ;      the STM8EF implementation has addressing mode limitations.
-        ;      "VARIABLE words" like "BASE" can add an UPP offset, but
-        ;      code accessing scratchpad (XTENP, etc) must be refactored, too!
-
         UPP   = UPPLOC          ; offset user area
         CTOP  = CTOPLOC         ; dictionary start, growing up
                                 ; note: PAD is inbetween CTOP and SPP
@@ -324,14 +333,19 @@
         USRTEMP =    UPP+18     ; temporary storage (VARIABLE tmp)
 
         ; Background task variables
+        ; Note: "RAMBASE +" addressing in the STM8EF implementation 
+        ;       has addressing mode limitations. "VARIABLE words" 
+        ;       required in multi-user/multi-tasking like "BASE" 
+        ;       have to add offset to UPP  
         BGHLD    =   UPP+20     ; USRHLD  for background task
         BGBASE   =   UPP+22     ; USRBASE replacement for background task 
 
-        ; Only required for some multi-tasking/multi-user systems
+        ; Only required for multi-user implementation
 	; SP0	=    UPP+20     ; initial data stack pointer
 	; RP0	=    UPP+22	; initial return stack pointer
 
         ; Scratchpad memory, directly used in assembler code
+        ; Note: this is part of the multi-taskin gcontext 
 	XTEMP	=    UPP+24	; scratchpad (usually for X)
 	YTEMP	=    UPP+26	; scratchpad (usually for Y)
 	PROD1   =    XTEMP	; scratchpad alias for UM*
@@ -445,11 +459,10 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
         MOV     PD_CR1,#0b00111110 
        .endif
        
-        .ifne   MODULE_MINIMAL
+        .ifne   MODULE_MINDEV
         ; STM8S103F3 minimal breakout board init GPIO
         BSET     PB_DDR,#5  
         BSET     PB_CR1,#5 
-        BSET     PB_ODR,#5      ; LED off
         .endif
         
         .ifne   MODULE_RELAY
@@ -724,7 +737,7 @@ LED_MPX:
 	.db	4
 	.ascii	"?KEY"
 QKEY:
-        .ifne   HAS_BACKGROUND
+        .ifne   (HAS_BACKGROUND * HAS_KEYS)
         PUSH    CC
         POP     A
         AND     A,#0x20
@@ -762,7 +775,7 @@ INCH:   CLRW    Y
 	.db	4
 	.ascii	"EMIT"
 EMIT:
-        .ifne (HAS_LED7SEG + HAS_BACKGROUND) 
+        .ifne (HAS_LED7SEG * HAS_BACKGROUND) 
         PUSH	CC
         POP	A
         AND	A,#0x20
@@ -4343,6 +4356,8 @@ WORS2:	RET
 
 ;; tg9541 additions
 
+        .ifne   WORDS_EXTRACORE
+
 ;	I	( -- n )
 ;	Get inner FOR - NEXT index value
 	.dw	LINK
@@ -4357,6 +4372,25 @@ IGET:
         RET
 
 
+;	0=	( n -- t )
+;	Return true if n is equal to 0
+	.dw	LINK
+	
+        LINK =	.
+	.db	(2)
+	.ascii	"0="
+ZEQS:
+	LDW     Y,X
+        LDW     Y,(Y)
+        JREQ    1$
+        CLRW    Y
+        JRT     2$        
+1$:     CPLW    Y
+2$:     LDW     (X),Y
+        RET
+        .endif
+
+        .ifne   WORDS_EXTRAMEM
 ;	BSR ( t a b -- )
 ;	Set/Reset bit #b (0..7) at address a to bool t
 ;       Note: creates/executes BSER/BRES + RET code on Data Stack
@@ -4381,24 +4415,6 @@ $1:     LD      (1,X),A
         LDW     Y,X
         CALL    (Y)             ; call code to avoid "use after free"
         ADDW    X,#6            
-        RET
-
-
-;	0=	( n -- t )
-;	Return true if n is equal to 0
-	.dw	LINK
-	
-        LINK =	.
-	.db	(2)
-	.ascii	"0="
-ZEQS:
-	LDW     Y,X
-        LDW     Y,(Y)
-        JREQ    1$
-        CLRW    Y
-        JRT     2$        
-1$:     CPLW    Y
-2$:     LDW     (X),Y
         RET
 
 
@@ -4464,13 +4480,13 @@ UNLOCK:
 LOCK:
         BRES    FLASH_IAPSR,#3
         RET
+        .endif
 
          
 ;-----------------------------------------------
-    ;    .ifne   MODULE_W1209
-
+        .ifne   HAS_KEYS
 ;       BKEY  ( -- n )
-;       Read board key value "set" (1), "+" (2), and "-" (4) as a bitfield
+;       Read board key state as a bitfield
 	.dw	LINK
         
         LINK =  .
@@ -4478,18 +4494,21 @@ LOCK:
 	.ascii	"BKEY"
 BKEY:   
         .ifne   MODULE_W1209
-        ; "set" (1), "+" (2), and "-" (4) 
+        ; Keys "set" (1), "+" (2), and "-" (4) on PC.3:5
         LD      A,PC_IDR
         SRA     A
         SRA     A
         SRA     A
         CPL     A
         AND     A,#0x07
+        .else
+        CLR     A
         .endif
         SUBW    X,#2
         LD      (1,X),A
         CLR     (X)
         RET
+        .endif
 
         .ifne   HAS_LED7SEG
 
@@ -4613,11 +4632,16 @@ OUTSTOR:
         RRC     A
         BCCM    PD_ODR,#4       ; LED
         .endif
+        .ifne   MODULE_MINDEV
+        RRC     A
+        CCF
+        BCCM    PB_ODR,#5       ; PB5 LED
+        .endif
         RET       
         .endif
 
 
-        .ifne HWREG_WORDS * (STM8S003F3 + STM8S103F3)
+        .ifne WORDS_HWREG * (STM8S003F3 + STM8S103F3)
           .include "hwregs8s003.inc"
         .endif
 
