@@ -96,8 +96,8 @@
         ; Note: add new variants here 
         
         MODULE_CORE =     0     ; generic STM8S003F3 core 
-        MODULE_MINDEV =   1     ; STM8S103F3 "minimum development board"
-        MODULE_W1209 =    0     ; W1209 thermostat module 
+        MODULE_MINDEV =   0     ; STM8S103F3 "minimum development board"
+        MODULE_W1209 =    1     ; W1209 thermostat module 
         MODULE_RELAY =    0     ; C0135 "Relay Board-4 STM8S" 
         STM8S_DISCOVERY = 0     ; (currently broken)
 
@@ -115,7 +115,7 @@
         HAS_TXDSIM   =    0     ; TxD SW simulation
         HAS_LED7SEG  =    0     ; 7-seg LED on module
         HAS_KEYS     =    0     ; Module has keys
-        HAS_OUTPUTS  =    0     ; Module uutputs, like relays
+        HAS_OUTPUTS  =    0     ; Module outputs, like relays
         HAS_INPUTS   =    0     ; Module inputs
         HAS_BACKGROUND =  0     ; Background Forth task (TIM2 ticker)
 
@@ -151,6 +151,7 @@
         HAS_LED7SEG  =    3     ; yes, 3 dig. 7-seg LED on module
         HAS_KEYS     =    3     ; yes, 3 keys on mudule
         HAS_OUTPUTS  =    1     ; yes, one relay 
+        HAS_BACKGROUND =  1     ; Background Forth task (TIM2 ticker)
         .endif
 
         .ifne   MODULE_RELAY
@@ -287,6 +288,10 @@
 
         .ifne   HAS_OUTPUTS
         OUTPUTS =       0x52    ; outputs, like relays, LEDs, etc. 
+        .endif
+
+        .ifne   HAS_KEYS
+        KEYSTATE =      0x53    ; last key pattern  
         .endif
 
         .ifne   HAS_LED7SEG
@@ -745,8 +750,14 @@ QKEY:
         CALL    BKEY
         LD      A,(1,X)
         ADDW    X,#2
-        OR      A,#0
-        JREQ    INCH
+        TNZ     A
+        JRNE    11$
+        LD      KEYSTATE,A
+        JRA     INCH
+11$:
+        TNZ     KEYSTATE
+        JRNE    INCH
+        LD      KEYSTATE,A
         ADD     A,#0x40 
         JRA     2$
         .endif
