@@ -96,8 +96,8 @@
         ; Note: add new variants here 
         
         MODULE_CORE =     0     ; generic STM8S003F3 core 
-        MODULE_MINDEV =   0     ; STM8S103F3 "minimum development board"
-        MODULE_W1209 =    1     ; W1209 thermostat module 
+        MODULE_MINDEV =   1     ; STM8S103F3 "minimum development board"
+        MODULE_W1209 =    0     ; W1209 thermostat module 
         MODULE_RELAY =    0     ; C0135 "Relay Board-4 STM8S" 
         STM8S_DISCOVERY = 0     ; (currently broken)
 
@@ -136,8 +136,10 @@
         .ifne   MODULE_MINDEV
         ; Clock: HSI (no crystal)
         STM8S103F3   =    1 
-        WORDS_HWREG  =    1
+        ; WORDS_HWREG  =    1
         HAS_OUTPUTS  =    1     ; yes, one LED 
+        WORDS_EXTRACORE = 1
+        WORDS_EXTRAMEM  = 1
         .endif
 
         .ifne   MODULE_W1209
@@ -1734,6 +1736,8 @@ EQUAL:
 EQ1:    LD      (X),A
 	LD      (1,X),A
 	RET	
+        
+
 
 ;	U<	( u u -- t )
 ;	Unsigned compare of top two items.
@@ -4663,6 +4667,47 @@ OUTSTOR:
         .endif
 
 
+;       ADC!  ( c -- )
+;       Init ADC, select channel for conversion 
+	.dw	LINK
+        
+        LINK =  .
+	.db	(4)
+	.ascii	"ADC!"
+        ADC_CSR = 0x5400
+        ADC_CR1 = 0x5401
+        ADC_CR2 = 0x5402
+ADCSTOR:
+        LD      A,(1,X)
+        INCW    X
+        INCW    X
+        AND     A,#0x0F
+        LD      ADC_CSR,A       ; select channel
+        BSET    ADC_CR2,#3      ; align ADC to LSB
+        BSET    ADC_CR1,#0      ; enable ADC
+        RET
+
+;       ADC@  ( -- w )
+;       start ADC conversion, read result
+	.dw	LINK
+        
+        LINK =  .
+	.db	(4)
+	.ascii	"ADC@"
+
+        ADC_DRH = 0x5404
+ADCAT:
+        BRES    ADC_CSR,#7      ; reset EOC
+        BSET    ADC_CR1,#0      ; start ADC
+        DECW    X
+        DECW    X
+1$:     BTJF    ADC_CSR,#7,1$   ; wait until EOC 
+        LDW     Y,ADC_DRH       ; read ADC
+        LDW     (X),Y
+        RET
+
+
+
         .ifne WORDS_HWREG * (STM8S003F3 + STM8S103F3)
           .include "hwregs8s003.inc"
         .endif
@@ -4672,6 +4717,7 @@ OUTSTOR:
 ;===============================================================
 
 	LASTN	=	LINK	;last name defined
+
 
  	.area CODE
 	.area INITIALIZER
