@@ -96,8 +96,8 @@
         ; Note: add new variants here 
         
         MODULE_CORE =     0     ; generic STM8S003F3 core 
-        MODULE_MINDEV =   1     ; STM8S103F3 "minimum development board"
-        MODULE_W1209 =    0     ; W1209 thermostat module 
+        MODULE_MINDEV =   0     ; STM8S103F3 "minimum development board"
+        MODULE_W1209 =    1     ; W1209 thermostat module 
         MODULE_RELAY =    0     ; C0135 "Relay Board-4 STM8S" 
         STM8S_DISCOVERY = 0     ; (currently broken)
 
@@ -140,6 +140,7 @@
         HAS_OUTPUTS  =    1     ; yes, one LED 
         WORDS_EXTRACORE = 1
         WORDS_EXTRAMEM  = 1
+        HAS_BACKGROUND =  1     ; Background Forth task (TIM2 ticker)
         .endif
 
         .ifne   MODULE_W1209
