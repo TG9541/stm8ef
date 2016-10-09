@@ -1,13 +1,14 @@
 # STM8S eForth (stm8ef)
 
-This is a refactored port of Dr. C.H. Ting's eForth for the *STM8S Discovery* to STM8S *Value Line* devices like *STM8S003F3* and to the SDCC toolchain, which makes mixing Forth, assembler, and C is possible.
+This is a refactored port of Dr. C.H. Ting's eForth for the *STM8S Discovery* to STM8S *Value Line* devices like *STM8S003F3* and to the [SDCC toolchain](http://sdcc.sourceforge.net/), 
+which makes mixing Forth, assembler, and C possible.
 
-Most of the changes are related to providing "board support" for STM8S based low-cost Chinese made "gadgets", but there are also additions, like support for a background control task.
+Most of the changes are related to providing "board support" for STM8S based low-cost Chinese made "gadgets", but there are also additions, like support for [background control tasks](https://github.com/TG9541/stm8ef/wiki/eForth-Background-Task).
 
-Changes to the original code 
+Changes to the original code:
 
 * SDCC tool chain "ASxxxx V2.0" syntax
-* SDCC linker support through declaration of ISR routines in `main.c`
+* Usage of the SDCC linker with declaration of ISR routines in `main.c`
 * hard STM8S105C6 dependencies removed (e.g. RAM layout, UART2)
 * 1K RAM layout, meaningful symbols for RAM locations
 * conditional code for different target boards
@@ -17,7 +18,7 @@ Changes to the original code
 New features:
 
 * concurrent **cyclic INPUT-PROCESS-OUTPUT background tasks** with a fixed timebase (e.g. 5ms using TIM2) 
-* support for [boards with 7Seg-LED UI](https://github.com/TG9541/stm8ef/wiki/eForth-Background-Task): in a background task, `123 .` goes to the 7Seg-LED display, and '?KEY' reads pushbuttons
+* support for [boards with 7Seg-LED UI](https://github.com/TG9541/stm8ef/wiki/eForth-Background-Task): in a background task, `123 .` goes to the 7Seg-LED display, and `?KEY` reads board keys
 * words for board keys, ADC, outputs/relays/leds
 * words for Flash, EEPROM, direct bit operations, inv. order 16bit memory access
 
