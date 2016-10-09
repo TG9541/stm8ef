@@ -95,8 +95,8 @@
         ;*************************************************
         ; Note: add new variants here 
         
-        MODULE_CORE =     0     ; generic STM8S003F3 core 
-        MODULE_MINDEV =   1     ; STM8S103F3 "minimum development board"
+        MODULE_CORE =     1     ; generic STM8S003F3 core 
+        MODULE_MINDEV =   0     ; STM8S103F3 "minimum development board"
         MODULE_W1209 =    0     ; W1209 thermostat module 
         MODULE_RELAY =    0     ; C0135 "Relay Board-4 STM8S" 
         STM8S_DISCOVERY = 0     ; (currently broken)
@@ -119,7 +119,7 @@
         HAS_INPUTS   =    0     ; Module inputs
         HAS_BACKGROUND =  0     ; Background Forth task (TIM2 ticker)
 
-        WORDS_EXTRACORE = 1     ; Extra core words: I =0
+        WORDS_EXTRACORE = 0     ; Extra core words: I =0
         WORDS_EXTRAMEM =  0     ; Extra mem words: BSR 2C@ 2C! LCK ULCK 
         WORDS_HWREG  =    0     ; Peripheral Register words
 
@@ -215,6 +215,7 @@
 
         ; *** Non-Volatile Memory Control ***
         FLASH_IAPSR =   0x505F  ; Flash in-application programming status register
+        FLASH_PUKR =    0x5062  ; Flash unprotection register
         FLASH_DUKR =    0x5064  ; Data EEPROM unprotection register
 
          ; *** Clock Control ***
@@ -4482,13 +4483,13 @@ DCAT:
         RET
 
 
-;       ULCK  ( -- )
+;       ULOCK  ( -- )
 ;       Unlock EEPROM (STM8S)
 	.dw	LINK
         
         LINK =  .
-	.db	(4)
-	.ascii	"ULCK"
+	.db	(5)
+	.ascii	"ULOCK"
 UNLOCK:
         MOV     FLASH_DUKR,#0xAE
         MOV     FLASH_DUKR,#0x56
@@ -4496,17 +4497,42 @@ UNLOCK:
         RET
 
 
-;       LCK  ( -- )
+;       LOCK  ( -- )
 ;       Lock EEPROM (STM8S)
 	.dw	LINK
         
         LINK =  .
-	.db	(3)
-	.ascii	"LCK"
+	.db	(4)
+	.ascii	"LOCK"
 LOCK:
         BRES    FLASH_IAPSR,#3
         RET
-        .endif
+
+;       ULOCKF  ( -- )
+;       Unlock Flash (STM8S)
+	.dw	LINK
+        
+        LINK =  .
+	.db	(6)
+	.ascii	"ULOCKF"
+UNLOCK_FLASH:
+        MOV     FLASH_PUKR,#0x56
+        MOV     FLASH_PUKR,#0xAE
+1$:     BTJF    FLASH_IAPSR,#1,1$    ; PM0051 4.1 requires polling bit1=1 before writing
+        RET
+
+
+;       LOCKF  ( -- )
+;       Lock Flash (STM8S)
+	.dw	LINK
+        
+        LINK =  .
+	.db	(5)
+	.ascii	"LOCKF"
+LOCK_FLASH:
+        BRES    FLASH_IAPSR,#1
+        RET
+         .endif
 
          
 ;-----------------------------------------------
