@@ -95,11 +95,16 @@
         ;*************************************************
         ; Note: add new variants here 
         
-        MODULE_CORE =     0     ; generic STM8S003F3 core 
+        MODULE_CORE =     1     ; generic STM8S003F3 core 
         MODULE_MINDEV =   0     ; STM8S103F3 "minimum development board"
-        MODULE_W1209 =    1     ; W1209 thermostat module 
+        MODULE_W1209 =    0     ; W1209 thermostat module 
         MODULE_RELAY =    0     ; C0135 "Relay Board-4 STM8S" 
         STM8S_DISCOVERY = 0     ; (currently broken)
+
+        ; sdasstm8 doesn't accept constants on the command line. 
+        ; work-around: use directories with include files, and use the -I option
+        .include "globconf.inc"
+        
 
         ;**********************************
         ;******  2) Global defaults  ******
@@ -138,6 +143,7 @@
         STM8S103F3   =    1 
         ; WORDS_HWREG  =    1
         HAS_OUTPUTS  =    1     ; yes, one LED 
+        HAS_BACKGROUND =  1     ; Background Forth task (TIM2 ticker)
         WORDS_EXTRACORE = 1
         WORDS_EXTRAMEM  = 1
         .endif
@@ -554,6 +560,11 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
 	.db	2
 	.ascii	"hi"
 HI:
+        .ifne   HAS_LED7SEG
+        MOV     LED7MSB+1,#0x66 ; 7S LEDs .4..
+        MOV     LED7LSB,#0x78   ; 7S LEDs ..t.
+        MOV     LED7LSB+1,#0x74 ; 7S LEDs ...h
+        .endif
 	CALL	CR
 	CALL	DOTQP	        ; initialize I/O
 	.db	15

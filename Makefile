@@ -1,16 +1,52 @@
-MDEPS = forth.rel forth.h
-FDEPS = hwregs8s003.inc
 
-all: flash 
+ifeq ($(BOARD),)
 
-main.ihx: main.c $(MDEPS)
-	sdcc -mstm8 main.c forth.rel
+all: zip 
 
-forth.rel: forth.asm $(FDEPS) 
-	sdasstm8 -plosgffw forth.asm
+zip: build
+	find out/ -name "*.ihx" -print | zip out/stm8ef -@
 
-flash: main.ihx  
-	./stm8flash -c stlinkv2 -p stm8s103f3 -w main.ihx
+build:
+	make BOARD=CORE
+	make BOARD=W1209
+	make BOARD=C0135
+	make BOARD=MINIMAL
 
 clean:
-	rm -f *\.rel *\.ihx *\.sym *\.lst *\.map *\.lk *\.rst *\.cdb main.asm
+	rm -rf out/*
+	# rm -f *\.rel *\.ihx *\.sym *\.lst *\.map *\.lk *\.rst *\.cdb main.asm
+
+else
+
+MDEPS = forth.rel forth.h
+FDEPS = hwregs8s003.inc
+MKDIR_P = mkdir -p out
+
+all: directories main.ihx 
+
+main.ihx: main.c $(MDEPS)
+	sdcc -mstm8 -oout/$(BOARD)/$(BOARD).ihx main.c out/$(BOARD)/forth.rel 
+
+forth.rel: forth.asm $(FDEPS) 
+	mkdir -p out/$(BOARD)
+	sdasstm8 -I./$(BOARD) -plosgffw out/$(BOARD)/forth.rel forth.asm 
+
+flash: main.ihx  
+	./stm8flash -c stlinkv2 -p stm8s103f3 -w out/$(BOARD)/$(BOARD).ihx
+
+directories: out
+
+out:
+	${MKDIR_P} 
+
+.PHONY: directories
+endif
+
+
+#directories: out
+
+#out:
+#	${MKDIR_P} 
+
+.PHONY: all zip build 
+
