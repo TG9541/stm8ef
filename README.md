@@ -39,7 +39,7 @@ Some of the differences between STM8S003F3 and STM8S105C6T6 (*STM8S Discovery*) 
 * `MODULE_CORE` STM8S003F3 core, most extra feature words disabled 
 * `MODULE_MINDEV` STM8S103F3 low cost "minimum development board"
 * `MODULE_W1209` W1209 low cost thermostat with LED display and half-duplex RS232 through sensor header (9600 baud) 
-* `MODULE_RELAY` C0125 "Relay-4 Board" (can be used as a *Nano PLC*)
+* `MODULE_RELAY` C0135 "Relay-4 Board" (can be used as a *Nano PLC*)
 
 Please refer to the [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) for more information! 
 
@@ -49,24 +49,24 @@ There is board suport for some easily available "Chinese gadgets". For details, 
 
 STM8S003F3 core for new experiments.
 
-Set option `MODULE_CORE = 1` in `forth.asm`.
+Run `make BOARD=CORE flash` for building and flashing.
 
 ### STM8S103F3 "minimum development board"
 
-Cheap STM8S103F3-based breakout board with LED on port B5 (there are plenty of vendors on EBay or AliExpress, the price starts below $0.70 incl. shipping)
+Cheap STM8S103F3P6-based breakout board with LED on port B5 (there are plenty of vendors on EBay or AliExpress, the price starts below $0.70 incl. shipping)
 
-* clock source internal 16 MHz RC oscillator `HSI` (instead of 16 MHz crystal)
+* clock source internal 16 MHz RC oscillator `HSI`
 * LED on GPIO PB5
 * reset key
 
-Set option `MODULE_MINDEV = 1` in `forth.asm`.
+Run `make BOARD=MINDEV flash` for building and flashing.
 
 ### W1209 Thermostat Module
 
-Low-cost STM8S003F3-based thermostat module with a 3 digit 7S-LED display, relay, and a 10k NTC sensor. 
+Low-cost STM8S003F3P6-based thermostat module with a 3 digit 7S-LED display, relay, and a 10k NTC sensor. 
 This very cheap board can be easily used for single input/single output control tasks with UI (e.g. timer, counter, dosing, monitoring).
 
-Set option `MODULE_W1209 = 1` in `forth.asm`.
+Run `make BOARD=W1209 flash` for building and flashing.
 
 #### Note:
 
@@ -83,9 +83,9 @@ Please refer to the [wiki](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Lin
 
 ### Relay Board-4
 
-The board, sometimes labelled C0125 or "Relay Board-4" is a low cost PLC I/O expander with the following features:
+The board, sometimes labelled C0135 or "Relay Board-4" is a low cost PLC I/O expander with the following features:
 
-* STM8S103F3 (640 bytes EEPROM) 
+* STM8S103F3P6 (640 bytes EEPROM) 
 * 4 relays NC/NO rated 250VAC-10A (with red monitoring LEDs) on PB4, PC3, PC4, and PC5 
 * 4 unprotected inputs (PC6, PC7, PD2, PD3, 2 usable as 3.3V analog-in), 
 * 1 LED on PD4, 
@@ -93,14 +93,14 @@ The board, sometimes labelled C0125 or "Relay Board-4" is a low cost PLC I/O exp
 * RS485 (PB5 enable - PD5 TX, PD6 RX on headers)
 * 8MHz crystal (I use the 16 MHz HSI) 
 
-Set option `MODULE_RELAY = 1` in `forth.asm`
+Run `make BOARD=C0135 flash` for building and flashing.
 
 ### STM8S Discovery
 
-I currently don't have a STM8S105C6T6 device for testing, and the code is most likely brokend.
+I currently don't have a STM8S105C6T6 device for testing - the code is most likely brokend!
 
 ## Outlook
 
-I'll be working on the code on-and-off as a hobbie project, connecting with the Forth world.  
+I'll be working on the code on-and-off as a hobby project, for connecting with the Forth world.  
 Even if I like squezing the last microsecond out of time-critical code, please don't even think about using it for anything that requires safety, or dependability!
 

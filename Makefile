@@ -10,7 +10,7 @@ build:
 	make BOARD=CORE
 	make BOARD=W1209
 	make BOARD=C0135
-	make BOARD=MINIMAL
+	make BOARD=MINDEV
 
 clean:
 	rm -rf out/*
