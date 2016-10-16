@@ -14,7 +14,6 @@ build:
 
 clean:
 	rm -rf out/*
-	# rm -f *\.rel *\.ihx *\.sym *\.lst *\.map *\.lk *\.rst *\.cdb main.asm
 
 else
 

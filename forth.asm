@@ -36,13 +36,13 @@
 ; New features, e.g.:
 ; * board support:
 ;       - W1209 LED display & half-duplex /w SW TX 
-;       - C0125 Relay-4 Board
-;       - "75ct" STM8S103F3 breakout board
-; * simple 'concurrent' operation /w TIM2
+;       - C0135 Relay-4 Board
+;       - STM8S103F3 "$0.70" breakout board
+; * simple concurrent operation /w TIM2
 ; * words for device keys, outputs, leds
 ; * words for EEPROM, bit operations, inv. order 16bit acc.
 ;
-; Docs for the SDCC integated assembler are scarce,
+; Docs for the SDCC integrated assembler are scarce, and
 ; hence SDCC was used to create a template for this file:
 ;--------------------------------------------------------
 ; File Created by SDCC : free open source ANSI-C Compiler
@@ -90,25 +90,16 @@
 ;--------------------------------------------------------
 	.area CODE
 
-        ;*************************************************
-        ;******  1) Hardware module type selection  ******
-        ;*************************************************
-        ; Note: add new variants here 
-        
-        MODULE_CORE =     1     ; generic STM8S003F3 core 
-        MODULE_MINDEV =   0     ; STM8S103F3 "minimum development board"
-        MODULE_W1209 =    0     ; W1209 thermostat module 
-        MODULE_RELAY =    0     ; C0135 "Relay Board-4 STM8S" 
+        ;**********************************
+        ;******  1) Global defaults  ******
+        ;**********************************
+        ; Note: add defaults for new features here but 
+        ;       configure them in globconf.inc  
+
         STM8S_DISCOVERY = 0     ; (currently broken)
-
-        ; sdasstm8 doesn't accept constants on the command line. 
-        ; work-around: use directories with include files, and use the -I option
-        .include "globconf.inc"
-        
-
-        ;**********************************
-        ;******  2) Global defaults  ******
-        ;**********************************
+        BOARD_MINDEV =    0     ; STM8S103F3 "minimum development board"
+        BOARD_W1209 =     0     ; W1209 Thermostat board
+        BOARD_C0135 =     0     ; C0135 "Relay Board-4 STM8S"
 
         STM8S003F3   =    0     ; 8K flash, 1K RAM, 128 EEPROM, UART1
         STM8S103F3   =    0     ; like STM8S003F3, 640 EEPROM 
@@ -118,61 +109,32 @@
         TERM_LINUX   =    1     ; LF terminates line 
 
         HAS_TXDSIM   =    0     ; TxD SW simulation
-        HAS_LED7SEG  =    0     ; 7-seg LED on module
-        HAS_KEYS     =    0     ; Module has keys
-        HAS_OUTPUTS  =    0     ; Module outputs, like relays
-        HAS_INPUTS   =    0     ; Module inputs
+        HAS_LED7SEG  =    0     ; 7-seg LED on board
+        HAS_KEYS     =    0     ; Board has keys
+        HAS_OUTPUTS  =    0     ; Board outputs, e.g. relays
+        HAS_INPUTS   =    0     ; Board digital inputs
+        HAS_ADC      =    0     ; Board analog inputs
         HAS_BACKGROUND =  0     ; Background Forth task (TIM2 ticker)
 
-        WORDS_EXTRACORE = 1     ; Extra core words: I =0
-        WORDS_EXTRAMEM =  1     ; Extra mem words: BSR 2C@ 2C! LCK ULCK 
+        WORDS_EXTRACORE = 0     ; Extra core words: I =0
+        WORDS_EXTRAMEM =  0     ; Extra memory words: BSR 2C@ 2C! LCK ULCK 
         WORDS_HWREG  =    0     ; Peripheral Register words
 
-        ;********************************************************
-        ;******  3) Hardware module feature configuration  ******
-        ;********************************************************
-        ; Note: add new variants here 
+        ;*************************************************
+        ;******  2) Hardware/board type selection  ******
+        ;*************************************************
 
-        .ifne   MODULE_CORE
-        ; Clock: HSI (no crystal)
-        STM8S003F3   =    1 
-        .endif
+        ; sdasstm8 doesn't accept constants on the command line. 
+        ; work-around: define directory for reading the config with 
+        ; the "-I" option 
 
-        .ifne   MODULE_MINDEV
-        ; Clock: HSI (no crystal)
-        STM8S103F3   =    1 
-        ; WORDS_HWREG  =    1
-        HAS_OUTPUTS  =    1     ; yes, one LED 
-        HAS_BACKGROUND =  1     ; Background Forth task (TIM2 ticker)
-        WORDS_EXTRACORE = 1
-        WORDS_EXTRAMEM  = 1
-        .endif
-
-        .ifne   MODULE_W1209
-        ; UART half-duplex PD_6 (RxD) SW simulation "bus style"
-        ; Multiplexed 3 digit 7S-LED display, 3 keys, relay
-        ; Clock: HSI (no crystal)
-        STM8S003F3   =    1 
-        HALF_DUPLEX  =    1     ; RS232 Half Duplex Mode
-        HAS_TXDSIM   =    1     ; TxD SW simulation
-        PDTX         =    6     ; GPIO for SW half-duplex /w TIM4
-        HAS_LED7SEG  =    3     ; yes, 3 dig. 7-seg LED on module
-        HAS_KEYS     =    3     ; yes, 3 keys on mudule
-        HAS_OUTPUTS  =    1     ; yes, one relay 
-        HAS_BACKGROUND =  1     ; Background Forth task (TIM2 ticker)
-        .endif
-
-        .ifne   MODULE_RELAY
-        ; Clock: HSI (8MHz crystal not used)
-        STM8S103F3   =    1 
-        HAS_KEYS     =    1     ; yes, 1 key 
-        HAS_OUTPUTS  =    4     ; yes, 4 relays
-        .endif
+        .include "globconf.inc"
+        
 
         ;**********************************************
-        ;******  4) Device dependent features  ******
+        ;******  3) Device dependent features  ******
         ;**********************************************
-        ; Note: add new STM8S device types here 
+        ; Define memory location for device dependent features here
 
 	;******  STM8S memory addresses ******
 	RAMBASE =	0x0000	; STM8S RAM start
@@ -190,7 +152,7 @@
         ;******  STM8SF103 Memory Layout ******
         RAMEND =        0x03FF	; system (return) stack, growing down
 
-        MODDLOC =       0x0050  ; Hardware module driver data 
+        MODDLOC =       0x0050  ; Hardware driver data 
         UPPLOC  =       0x0060  ; UPP (user/system area) location for 1K RAM
         CTOPLOC =       0x0080  ; CTOP (user dictionary) location for 1K RAM
         SPPLOC  =       0x0350  ; SPP (data stack top), TIB start
@@ -284,12 +246,12 @@
 
 
         ;************************************************
-        ;******  5) Module Driver Memory  ******
+        ;******  4) Board Driver Memory  ******
         ;************************************************
-        ; Memory for module hardware related things, e.g. interrupt routines
+        ; Memory for board related code, e.g. interrupt routines
          
 
-	;******  Board/Module variables  ******
+	;******  Board variables  ******
         .ifne   HAS_TXDSIM
         TIM4TCNT =      0x50    ; TIM4 TX interrupt counter
         TIM4TXREG  =    0x51    ; TIM4 char for TX
@@ -323,7 +285,7 @@
 
 
         ;**************************************************
-	;******  6) General User & System Variables  ******
+	;******  5) General User & System Variables  ******
         ;**************************************************
 
         UPP   = UPPLOC          ; offset user area
@@ -369,12 +331,11 @@
 
 
         ;************************************
-	;******  7) General Constants  ******
+	;******  6) General Constants  ******
         ;************************************
 
-	;; Version control
-	VER     =     2         ; major release version
-	EXT     =     1         ; minor extension
+	VER     =     2         ; Version major release version
+	EXT     =     1         ; Version minor extension
 
 	TRUEE   =     0xFFFF   ; true flag
 	COMPO   =     0x40     ; lexicon compile only bit
@@ -394,7 +355,7 @@
 
 
         ;***********************
-	;******  8) Code  ******
+	;******  7) Code  ******
         ;***********************
 
 ;; Entry point 
@@ -461,13 +422,13 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
 	BRES    CLK_SWCR,#3     ; clear SWIF
         .endif
 
-        .ifne   MODULE_MINDEV
+        .ifne   BOARD_MINDEV
         ; STM8S103F3 minimal breakout board init GPIO
         BSET     PB_DDR,#5  
         BSET     PB_CR1,#5 
         .endif
 
-        .ifne   MODULE_W1209
+        .ifne   BOARD_W1209
         ; W1209 STM8S003F3 init GPIO
         MOV     PA_DDR,#0b00001110 ; relay,B,F        
         MOV     PA_CR1,#0b00001110         
@@ -480,15 +441,15 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
         .endif
        
        
-        .ifne   MODULE_RELAY
-        ; "Nano PLC Relay module"
+        .ifne   BOARD_C0135
+        ; "Nano PLC Relay board"
         MOV     PB_DDR,#0x10
         MOV     PC_DDR,#0x38
         MOV     PD_DDR,#0x10
         MOV     PD_CR1,#0x10
         .endif
 
-        ;; Module I/O initialization
+        ;; Board I/O initialization
 
         .ifne   HAS_OUTPUTS
         CALL    ZERO
@@ -597,7 +558,7 @@ _TIM4_IRQHandler:
 
         .ifne   HAS_TXDSIM
         ; TIM4 interrupt handler W1209 software TxD. 
-        ; RxD (PD_6) is on the module's sensor header, 
+        ; RxD (PD_6) is on the board's sensor header, 
         ; STM8S UART1 half-duplex mode requires TxD (PD_5) 
         ; Work-around: change from RxD to GPIO for SW-TX
         ; To use, write char to TIM4TXREG, then 0x0A to TIM4TCNT
@@ -704,7 +665,7 @@ _TIM2_UO_IRQHandler:
 LED_MPX:        
         LD      A,TICKCNTL
         AND	A,#3        
-        .ifne   MODULE_W1209        
+        .ifne   BOARD_W1209        
         BSET    PD_ODR,#4       ; clear digit outputs .321
         BSET    PB_ODR,#5
         BSET    PB_ODR,#4
@@ -823,7 +784,7 @@ EMIT:
         .ifne   HALF_DUPLEX
 	BRES	UART1_CR2,#2	;disable rx
 
-        .ifne   MODULE_W1209
+        .ifne   BOARD_W1209
 
 1$:     BTJT    TIM4_IER,#0,1$  ; wait for end of TX
  	LD      A,(1,X)
@@ -832,7 +793,7 @@ EMIT:
         MOV    TIM4TCNT,#11     ; init next transfer 
         BSET    TIM4_IER,#0     ; enabale TIM4 interrupt
          
-        .else                   ; HALF_DUPLEX, not MODULE_W1209
+        .else                   ; HALF_DUPLEX, not BOARD_W1209
 	LD	A,(1,X)
 	ADDW	X,#2
 1$:	BTJF	UART1_SR,#7,1$  ;loop until tdre
@@ -4556,16 +4517,24 @@ LOCK_FLASH:
 	.db	(4)
 	.ascii	"BKEY"
 BKEY:   
-        .ifne   MODULE_W1209
+        .ifne   BOARD_W1209
         ; Keys "set" (1), "+" (2), and "-" (4) on PC.3:5
         LD      A,PC_IDR
-        SRA     A
-        SRA     A
-        SRA     A
+        SLA     A
+        SWAP    A
         CPL     A
         AND     A,#0x07
         .else
+        .ifne   BOARD_C0135
+        ; Key "S2" port PA3 (inverted)
+        LD      A,PA_IDR
+        SLA     A
+        SWAP    A
+        CPL     A
+        AND     A,#0x01
+        .else
         CLR     A
+        .endif
         .endif
         SUBW    X,#2
         LD      (1,X),A
@@ -4668,7 +4637,7 @@ PUT7SA:
 
         .ifne   HAS_OUTPUTS
 ;       OUT!  ( c -- )
-;       Put c to module outputs, storing a copy in OUTPUTS  
+;       Put c to board outputs, storing a copy in OUTPUTS  
 	.dw	LINK
         
         LINK =  .
@@ -4678,12 +4647,12 @@ OUTSTOR:
         LD      A,(1,X)
         LD      OUTPUTS,A
         ADDW    X,#2
-        .ifne   MODULE_W1209
+        .ifne   BOARD_W1209
         RRC     A
         BCCM    PA_ODR,#3       ; W1209 relay
         .endif
-        .ifne   MODULE_RELAY
-        XOR     A,#0x0F
+        .ifne   BOARD_C0135
+        XOR     A,#0x0F         ; C0135 Relay-4 Board 
         RRC     A
         BCCM    PB_ODR,#4       ; Relay1
         RRC     A
@@ -4695,7 +4664,7 @@ OUTSTOR:
         RRC     A
         BCCM    PD_ODR,#4       ; LED
         .endif
-        .ifne   MODULE_MINDEV
+        .ifne   BOARD_MINDEV
         RRC     A
         CCF
         BCCM    PB_ODR,#5       ; PB5 LED
@@ -4703,7 +4672,7 @@ OUTSTOR:
         RET       
         .endif
 
-
+        .ifne   HAS_ADC
 ;       ADC!  ( c -- )
 ;       Init ADC, select channel for conversion 
 	.dw	LINK
@@ -4742,6 +4711,7 @@ ADCAT:
         LDW     Y,ADC_DRH       ; read ADC
         LDW     (X),Y
         RET
+        .endif
 
 
 
