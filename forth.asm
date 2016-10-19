@@ -3975,7 +3975,7 @@ RBRAC:
 	.dw	LINK
 	
 	LINK =	.
-	.db	4
+	.db	5
 	.ascii	"CALL,"
 JSRC:
 	CALL	DOLIT
