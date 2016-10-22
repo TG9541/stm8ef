@@ -1,6 +1,6 @@
 # STM8S eForth (stm8ef)
 
-This is a refactored port of Dr. C.H. Ting's eForth for the *STM8S Discovery* to boards based on STM8S *Value Line* µCs using the [SDCC toolchain](http://sdcc.sourceforge.net/). SDCC makes mixing Forth, assembler, and C is possible.  
+This is a refactored port of Dr. C.H. Ting's eForth for the *STM8S Discovery* to boards based on STM8S *Value Line* µCs using the [SDCC toolchain](http://sdcc.sourceforge.net/). SDCC makes mixing Forth, assembler, and C possible.  
 
 Please refer to the [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) for more information! 
 
