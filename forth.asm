@@ -114,7 +114,9 @@
         HAS_OUTPUTS  =    0     ; Board outputs, e.g. relays
         HAS_INPUTS   =    0     ; Board digital inputs
         HAS_ADC      =    0     ; Board analog inputs
+        
         HAS_BACKGROUND =  0     ; Background Forth task (TIM2 ticker)
+        HAS_CPNVM  =    0     ; Can compile to Flash, always interpret to RAM 
 
         WORDS_EXTRACORE = 0     ; Extra core words: I =0
         WORDS_EXTRAMEM =  0     ; Extra memory words: BSR 2C@ 2C! LCK ULCK 
@@ -158,7 +160,8 @@
         SPPLOC  =       0x0350  ; SPP (data stack top), TIB start
         RPPLOC  =       RAMEND  ; RPP (return stack top)
         
-        
+        FLASHEND =      0x9FFF  ; 8K devices 
+       
 	;******  STM8SF103 Registers  ******
         .include        "stm8s003f3.inc"
         .endif
@@ -192,12 +195,13 @@
         
 	;******  Background task variables  ******
         .ifne   HAS_BACKGROUND
+
         TICKCNT =       0x5C    ; 16 bit ticker (counts up)
         TICKCNTL =      0x5D    ; ticker LSB
         BGADDR   =      0x5E    ; address of background routine (0: off) 
 
         BSPPSIZE  =     32      ; Size of data stack for background tasks
-        PADBG     =     16      ; Size of PAD for background task 
+        PADBG     =     0x4F    ; PAD in background task growing down from here 
         .else
         BSPPSIZE  =     0       ; no extra data stack
         .endif
@@ -210,6 +214,7 @@
         UPP   = UPPLOC          ; offset user area
         CTOP  = CTOPLOC         ; dictionary start, growing up
                                 ; note: PAD is inbetween CTOP and SPP
+        CTOPNVM = FLASHEND-0x03FF  ; CTOP location in NVM (Flash)  
 	SPP   = SPPLOC-BSPPSIZE	; data stack, growing down (with SPP-1 first)
         BSPP  = SPPLOC          ; Background data stack, grouwing down
         TIBB  = SPPLOC          ; Term. Input Buf. TIBLENGTH between SPPLOC and RPP
@@ -222,7 +227,7 @@
         USRCONTEXT=  UPP+6      ; start vocabulary search
         USRCP   =    UPP+8      ; point to top of dictionary
         USRLAST =    UPP+10     ; point to last name in dictionary
-        USRTIB  =    UPP+12     ; address of terminal input buffer
+        USRCPNVM =   UPP+12     ; point to top of dictionary in Non Volatile Memory 
         USRNTIB =    UPP+14     ; count in terminal input buffer 
         USR_IN  =    UPP+16     ; hold parsing pointer
         USRTEMP =    UPP+18     ; temporary storage (VARIABLE tmp)
@@ -307,7 +312,11 @@ UZERO:
 	.dw	LASTN	        ; CONTEXT pointer
 	.dw	CTOP	        ; CP in RAM
 	.dw	LASTN	        ; LAST
-ULAST:                           ; end of UZERO block
+
+        .ifne   HAS_CPNVM       
+        .dw     CTOPNVM         ; CP in NVM
+        .endif
+ULAST:                          ; end of UZERO block
 
 ;	COLD	( -- )
 ;	The hilevel cold start sequence.
@@ -325,7 +334,7 @@ COLD:
 	CALL	DOLIT
 	.dw	(ULAST-UZERO)
 	CALL	CMOVE	        ;initialize user area
-	CALL	PRESE	        ;initialize data stack and TIB
+	CALL	PRESE	        ;initialize data stack 
 
         ;; STM8S Device dependent HW initialization
 
@@ -1133,6 +1142,24 @@ SPSTO:
 	LDW	X,(X)	;X = a
 	RET	
 
+
+;	CP	( -- a )
+;	Point to top of dictionary.
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	2
+	.ascii	"cp"
+CPP:
+	LDW     Y,#(RAMBASE+USRCP)
+        JRA     YSTOR
+
+CPNVM:
+	LDW     Y,#(RAMBASE+USRCPNVM)
+        JRA     YSTOR
+
+
 ;	SP@	( -- a )
 ;	Push current stack pointer.
 
@@ -1142,9 +1169,6 @@ SPSTO:
 	.ascii	"sp@"
 SPAT:
 	LDW     Y,X
-;	SUBW    X,#2
-;	LDW     (X),Y
-;	RET	
         JRA     YSTOR
 
 ;; System and user variables
@@ -1161,9 +1185,6 @@ BASE:
         .ifne   HAS_BACKGROUND
         CALL    BGUPPOFFS
         .endif
-;	SUBW    X,#2
-;	LDW     (X),Y
-;	RET
         JRA     YSTOR
 
 ;	tmp	( -- a )
@@ -1176,9 +1197,6 @@ BASE:
 	.ascii	"tmp"
 TEMP:
 	LDW     Y,#(RAMBASE+USRTEMP)
-;	SUBW    X,#2
-;	LDW     (X),Y
-;	RET
         JRA     YSTOR
 
 ;	>IN	( -- a )
@@ -1191,9 +1209,6 @@ TEMP:
 	.ascii	">IN"
 INN:
 	LDW     Y,#(RAMBASE+USR_IN)
-;	SUBW    X,#2
-;	LDW     (X),Y
-;	RET
         JRA     YSTOR
 
 ;	#TIB	( -- a )
@@ -1206,9 +1221,6 @@ INN:
 	.ascii	"#TIB"
 NTIB:
 	LDW     Y,#(RAMBASE+USRNTIB)
-;	SUBW    X,#2
-;	LDW     (X),Y
-;	RET
         JRA     YSTOR
 
 ;	"EVAL	( -- a )
@@ -1221,9 +1233,6 @@ NTIB:
 	.ascii	"'eval"
 TEVAL:
 	LDW     Y,#(RAMBASE+USREVAL)
-;	SUBW    X,#2
-;	LDW     (X),Y
-;	RET
         JRA     YSTOR
 
 
@@ -1240,9 +1249,6 @@ HLD:
         .ifne   HAS_BACKGROUND
         CALL    BGUPPOFFS
         .endif
-;	SUBW    X,#2
-;	LDW     (X),Y
-;	RET
         JRA     YSTOR
 
 ;	CONTEXT ( -- a )
@@ -1255,24 +1261,6 @@ HLD:
 	.ascii	"CONTEXT"
 CNTXT:
 	LDW     Y,#(RAMBASE+USRCONTEXT)
-;	SUBW    X,#2
-;	LDW     (X),Y
-;	RET
-        JRA     YSTOR
-
-;	CP	( -- a )
-;	Point to top of dictionary.
-
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"cp"
-CPP:
-	LDW     Y,#(RAMBASE+USRCP)
-;	SUBW    X,#2
-;	LDW     (X),Y
-;	RET
         JRA     YSTOR
 
 
@@ -1287,7 +1275,8 @@ CPP:
 LAST:
 	LDW     Y,#(RAMBASE+USRLAST)
 
-; "!" for Y for variable addresses, and constants
+;      core only  ( a -- )
+;      push Y to stack
 YSTOR:        
 	SUBW    X,#2
 	LDW     (X),Y
@@ -1302,10 +1291,7 @@ YSTOR:
 	.db	3
 	.ascii	"TIB"
 TIB:
-	LDW     Y,#(RAMBASE+USRTIB)
-;	SUBW    X,#2
-;	LDW     (X),Y
-;	RET
+	LDW     Y,#(TIBB)
         JRA     YSTOR
 
         .ifne   HAS_OUTPUTS
@@ -1319,9 +1305,6 @@ TIB:
 	.ascii	"OUT"
 OUTA:
 	LDW     Y,#(OUTPUTS)
-;	SUBW    X,#2
-;	LDW     (X),Y
-;	RET
         JRA     YSTOR
         .endif
 
@@ -1337,9 +1320,6 @@ OUTA:
 	.ascii	"BL"
 BLANK:
 	LDW     Y,#32
-;	SUBW    X,#2
-;	LDW     (X),Y
-;	RET
         JRA     YSTOR
 
 ;	0	( -- 0)
@@ -1352,9 +1332,6 @@ BLANK:
 	.ascii	"0"
 ZERO:
 	CLRW    Y
-;	SUBW    X,#2
-;	LDW     (X),Y
-;	RET
         JRA     YSTOR
 
 ;	1	( -- 1)
@@ -1367,9 +1344,6 @@ ZERO:
 	.ascii	"1"
 ONE:
 	LDW     Y,#1
-;	SUBW    X,#2
-;	LDW     (X),Y
-;	RET
         JRA     YSTOR
 
 ;	-1	( -- -1)
@@ -1382,9 +1356,6 @@ ONE:
 	.ascii	"-1"
 MONE:
 	LDW     Y,#0x0FFFF
-;	SUBW    X,#2
-;	LDW     (X),Y
-;	RET
         JRA     YSTOR
 
         .ifne   HAS_BACKGROUND
@@ -2200,8 +2171,22 @@ COUNT:
 	.db	4
 	.ascii	"HERE"
 HERE:
-	CALL	CPP
-	JP	AT
+
+        .ifne  HAS_CPNVM
+        CALL    NVMQ
+        CALL    QBRAN
+        .dw     1$
+        CALL    INTERQ
+        CALL    QBRAN
+        .dw     1$
+
+        CALL    DOLIT
+        .dw     USRCPNVM
+        JP	AT
+        .endif
+1$:
+        CALL	CPP
+        JP	AT
 
 ;	PAD	( -- a )
 ;	Return address of text buffer
@@ -2213,22 +2198,21 @@ HERE:
 	.db	3
 	.ascii	"PAD"
 PAD:
-	CALL	HERE
         .ifne   HAS_BACKGROUND
         ; hack for background task PAD
         ; create offset for PAD area
-        PUSH	CC
+        PUSH	CC              ; Test interrupt level flags in CC 
         POP	A
         AND	A,#0x20
         JRNE    1$
        	CALL	DOLIT              
-	.dw	(PADOFFS+PADBG) ; leave space for background PAD
-        JRA     2$
+	.dw	(PADBG+1)       ; dedicated memory for PAD in background task
+        RET     
 1$:
         .endif        
+	CALL	HERE            ; regular PAD with offset to HERE
 	CALL	DOLIT
 	.dw	PADOFFS
-2$:
 	JP	PLUS
 
 ;	@EXECUTE	( a -- )
@@ -2973,7 +2957,6 @@ PARS8:	CALL	OVER
 PARSE:
 	CALL	TOR
 	CALL	TIB
-	CALL	AT
 	CALL	INN
 	CALL	AT
 	CALL	PLUS	;current input buffer pointer
@@ -3307,7 +3290,6 @@ ACCP4:	CALL	DROP
 	.ascii	"QUERY"
 QUERY:
 	CALL	TIB
-	CALL	AT
 	CALL	DOLIT
 	.dw	TIBLENGTH                      
 	CALL	ACCEP                         
@@ -3399,6 +3381,23 @@ LBRAC:
 	CALL	TEVAL
 	JP	STORE
 
+
+;	INTER?	( -- F )
+;	Test if 'EVAL points to $INTERPRETER
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	6
+	.ascii	"INTER?"
+INTERQ:
+	CALL	DOLIT
+	.dw     INTER	
+	CALL	TEVAL
+	CALL	AT
+	JP	EQUAL
+
+
 ;	.OK	( -- )
 ;	Display 'ok' while interpreting.
 
@@ -3408,11 +3407,7 @@ LBRAC:
 	.db	3
 	.ascii	".OK"
 DOTOK:
-	CALL	DOLIT
-	.dw	INTER
-	CALL	TEVAL
-	CALL	AT
-	CALL	EQUAL
+	CALL	INTERQ
 	CALL	QBRAN
 	.dw	DOTO1
 	CALL	DOTQP
@@ -3470,11 +3465,7 @@ EVAL2:	CALL	DROP
 PRESE:
 	CALL	DOLIT
 	.dw	SPP
-	CALL	SPSTO
-	CALL	DOLIT
-	.dw	TIBB
-	CALL	TIB
-	JP	STORE    ; TIB
+	JP	SPSTO
 
 ;	QUIT	( -- )
 ;	Reset return stack pointer
@@ -3993,9 +3984,16 @@ JSRC:
 	.db	1
 	.ascii	":"
 COLON:
+        .ifne  HAS_CPNVM
+        ; TODO: I don't know yet if this won't have any inexpected consequence
+	CALL	RBRAC   ; directly do "]" to indicate to HERE that we're no longer interpreting
+	CALL	TOKEN
+	JP	SNAME
+        .else
 	CALL	TOKEN
 	CALL	SNAME
-	JP	RBRAC
+       	JP	RBRAC
+        .endif
 
 ;	IMMEDIATE	( -- )
 ;	Make last compiled word
@@ -4638,8 +4636,90 @@ ADCAT:
           .include "hwregs8s003.inc"
         .endif
 
+;===============================================================
 
+        .ifne  HAS_CPNVM
+
+;	NVM?	( -- F )
+;	Test if CP points doesn't point to RAM
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	4
+	.ascii	"NVM?"
+NVMQ:
+	CALL	DOLIT
+	.dw	0xf800
+	CALL	CPP
+        CALL    AT
+        JP      ANDD
+
+; : SW 2DUP @ >R @ SWAP ! R> SWAP ! ;
+
+SWAPLAST:        
+        LDW     Y,CTOP
+        PUSHW   Y
+        LDW     Y,USRLAST
+        LDW     CTOP,Y
+        POPW    Y
+        LDW     USRLAST,Y
+        RET
+
+SWAPCP:        
+        LDW     Y,USRCP
+        PUSHW   Y
+        LDW     Y,USRCPNVM
+        LDW     USRCP,Y
+        POPW    Y
+        LDW     USRCPNVM,Y
+        RET
+
+
+
+;        LD      A,(1,X)
+;        ADDW    X,#2
+;        JRNE    NVMFLASH
+
+;       NVM  ( -- )
+;       Compile to NVM 
+	.dw	LINK
         
+        LINK =  .
+	.db	(3)
+	.ascii	"NVM"
+NVMM:        
+        
+        CALL    NVMQ
+        CALL    INVER
+        CALL    QBRAN
+        .dw     1$
+        ;CALL    SWAPLAST
+        CALL    SWAPCP
+        CALL    UNLOCK_FLASH
+1$:
+        RET
+
+
+;       RAM  ( -- )
+;       Compile to RAM 
+	.dw	LINK
+        
+        LINK =  .
+	.db	(3)
+	.ascii	"RAM"
+RAMM:        
+        CALL    NVMQ
+        CALL    QBRAN
+        .dw     1$
+        ;CALL    SWAPLAST
+        CALL    SWAPCP
+        CALL    LOCK_FLASH
+1$:
+        RET
+
+        .endif
+         
 ;===============================================================
 
 	LASTN	=	LINK	;last name defined

@@ -18,7 +18,7 @@ Changes for refactoring the original code:
 * some bugfixes (e.g. SEE better for "Subroutine Threaded")
 * reduced binary code size
 
-Including `main.c` an interactive system uses below 5500 bytes!
+The binary of an interactive system uses below 5500 bytes (including `main.c`).
 
 New features:
 
@@ -26,9 +26,6 @@ New features:
 * support for [boards with 7Seg-LED UI](https://github.com/TG9541/stm8ef/wiki/eForth-Background-Task): in a background task, `123 .` goes to the 7Seg-LED display, and `?KEY` reads board keys
 * words for board keys, ADC, outputs/relays/leds
 * words for Flash, EEPROM, direct bit operations, inv. order 16bit memory access
-
-I'll be working on the code on-and-off as a hobby project, for learning to know the Forth world.
-
 
 ## Support for STM8S Value Line µC 
 
@@ -51,16 +48,18 @@ There is board suport for some easily available "Chinese gadgets". For details, 
 * `BOARD_CORE` STM8S003F3 core, most extra feature words disabled 
 * `BOARD_MINDEV` STM8S103F3 low cost "minimum development board"
 * `BOARD_W1209` W1209 low cost thermostat with LED display and half-duplex RS232 through sensor header (9600 baud) 
-* `BOARD_RELAY` C0135 "Relay-4 Board" (can be used as a *Nano PLC*)
+* `BOARD_C0135` C0135 "Relay-4 Board" (can be used as a *Nano PLC*)
 
-There is currently no support for the STM8S Discovery, since don't have STM8S105C6T6 based boards for testing.
+There is currently no support for the STM8S Discovery, since I don't have STM8S105C6T6 based boards for testing.
 
 ### STM8S003F3 Core
 
-STM8S003F3 core as a starting point for new experiments.
+The plain STM8S003F3P6 eForth core as a starting point for new experiments:
 
-* serial console
-* no special I/O words
+* 16MHz HSI, serial console
+* no special features (I/O words, background tasks)
+
+Selecting features from the list of options in `forth.asm` is possible.
 
 Run `make BOARD=CORE flash` for building and flashing.
 
