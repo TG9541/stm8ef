@@ -167,7 +167,7 @@
         ;******  STM8SF103 Memory Layout ******
         RAMEND =        0x03FF	; system (return) stack, growing down
 
-        MODDLOC =       0x0050  ; Hardware driver data 
+        FORTHRAM =      0x0020  ; Start of RAM controlled by Forth
         UPPLOC  =       0x0060  ; UPP (user/system area) location for 1K RAM
         CTOPLOC =       0x0080  ; CTOP (user dictionary) location for 1K RAM
         SPPLOC  =       0x0350  ; SPP (data stack top), TIB start
@@ -187,42 +187,46 @@
          
         ; ****** Indirect variables for code in NVM *****
         .ifne   HAS_CPNVM
-        USRPOOL =       0x20    ; RAM for indirect variables (grow up)  
+        USRPOOL =    FORTHRAM   ; RAM for indirect variables (grow up)  
         .endif
 
-	;******  Board variables  ******
-        .ifne   HAS_TXDSIM
-        TIM4TCNT =      0x50    ; TIM4 TX interrupt counter
-        TIM4TXREG  =    0x51    ; TIM4 char for TX
-        .endif
-
-        .ifne   HAS_OUTPUTS
-        OUTPUTS =       0x52    ; outputs, like relays, LEDs, etc. 
-        .endif
-
-        .ifne   HAS_KEYS
-        KEYREPET =      0x53    ; board key repetition control  
-        .endif
-
-        .ifne   HAS_LED7SEG
-        LED7MSB  =      0x58    ; word 7S LEDs digits  43..
-        LED7LSB  =      0x5A    ; word 7S LEDs digits  ..21
-        .endif
 
         
 	;******  Background task variables  ******
         .ifne   HAS_BACKGROUND
-
-        TICKCNT =       0x5C    ; 16 bit ticker (counts up)
-        TICKCNTL =      0x5D    ; ticker LSB
-        BGADDR   =      0x5E    ; address of background routine (0: off) 
-
-        BSPPSIZE  =     32      ; Size of data stack for background tasks
         PADBG     =     0x4F    ; PAD in background task growing down from here 
+
+        BGADDR   =      0x50    ; address of background routine (0: off) 
+        TICKCNT =       0x52    ; 16 bit ticker (counts up)
+        TICKCNTL =      0x53    ; ticker LSB
+
+        BGHLD    =      0x54    ; USRHLD  for background task (8 bit)
+
+        .ifne   HAS_KEYS
+        KEYREPET =      0x55    ; board key repetition control (8 bit)
+        .endif
+        
+        BSPPSIZE  =     32      ; Size of data stack for background tasks
+
         .else
-        BSPPSIZE  =     0       ; no extra data stack
+        BSPPSIZE  =     0       ;  no background, no extra data stack
         .endif
 
+	;******  Board variables  ******
+        .ifne   HAS_TXDSIM
+        TIM4TCNT =      0x58    ; TIM4 TX interrupt counter
+        TIM4TXREG  =    0x59    ; TIM4 char for TX
+        .endif
+
+        .ifne   HAS_OUTPUTS
+        OUTPUTS =       0x5A    ; outputs, like relays, LEDs, etc. (16 bit)
+        .endif
+
+
+        .ifne   HAS_LED7SEG
+        LED7MSB  =      0x5C    ; word 7S LEDs digits  43..
+        LED7LSB  =      0x5E    ; word 7S LEDs digits  ..21
+        .endif
 
         ;**************************************************
 	;******  5) General User & System Variables  ******
@@ -231,36 +235,31 @@
         UPP   = UPPLOC          ; offset user area
         CTOP  = CTOPLOC         ; dictionary start, growing up
                                 ; note: PAD is inbetween CTOP and SPP
-        CTOPNVM = FLASHEND-0x03FF  ; CTOP location in NVM (Flash)  
 	SPP   = SPPLOC-BSPPSIZE	; data stack, growing down (with SPP-1 first)
         BSPP  = SPPLOC          ; Background data stack, grouwing down
         TIBB  = SPPLOC          ; Term. Input Buf. TIBLENGTH between SPPLOC and RPP
 	RPP   = RPPLOC          ; return stack, growing down
         
-        ; Regular user variables
-        USRHLD  =    UPP+0      ; hold a pointer of output string
-        USRBASE =    UPP+2      ; radix base for numeric I/O
-        USREVAL =    UPP+4      ; execution vector of EVAL 
-        USRCONTEXT=  UPP+6      ; start vocabulary search
-        USRCP   =    UPP+8      ; point to top of dictionary
-        USRLAST =    UPP+10     ; point to last name in dictionary
-        USRCPNVM =   UPP+12     ; point to top of dictionary in Non Volatile Memory 
-        USRNTIB =    UPP+14     ; count in terminal input buffer 
-        USR_IN  =    UPP+16     ; hold parsing pointer
-        USRTEMP =    UPP+18     ; temporary storage (VARIABLE tmp)
+        ; Core variables (same order as 'BOOT initializer block)
 
-        ; Background task variables
-        ; Note: "RAMBASE +" addressing in the STM8EF implementation 
-        ;       has addressing mode limitations. "VARIABLE words" 
-        ;       required in multi-user/multi-tasking like "BASE" 
-        ;       have to add offset to UPP  
-        BGHLD    =   UPP+20     ; USRHLD  for background task
-        BGBASE   =   UPP+22     ; USRBASE replacement for background task 
+        ; TODO: refactor into BGPP, UPP and UPP0 
+        USRRAMINIT = BGBASE
 
-        ; Scratchpad memory, directly used in assembler code
-        ; Note: this is part of the multi-taskin gcontext 
-	YTEMP	=    UPP+24	; scratchpad (usually for Y)
+        BGBASE  =    UPP+0      ; USRBASE replacement for background task 
+        USRBASE =    UPP+2      ; i radix base for numeric I/O
+        USREVAL =    UPP+4      ; i execution vector of EVAL 
+        USRCP   =    UPP+6      ; i point to top of dictionary
+        USRLAST =    UPP+8      ; id currently last name in dictionary (init: to LASTN)
+        USRCONTEXT = UPP+10      ; ir start vocabulary search
+        NVMCONTEXT = UPP+12     ; ir upoint to top of dictionary in Non Volatile Memory 
+        NVMCP   =    UPP+14     ; ir point to top of dictionary in Non Volatile Memory 
 
+        ; Null initialized core variables (growing down)
+	YTEMP	=    UPP+22	; scratchpad (usually for Y)
+        USRHLD  =    UPP+24     ; hold a pointer of output string
+        USRNTIB =    UPP+26     ; count in terminal input buffer 
+        USR_IN  =    UPP+28     ; hold parsing pointer
+        USRTEMP =    UPP+30     ; temporary storage (VARIABLE tmp)
 
         ;************************************
 	;******  6) General Constants  ******
@@ -290,39 +289,9 @@
 	;******  7) Code  ******
         ;***********************
 
-; Entry point 
-_forth:
-        ; LDW     X,#(MODDLOC)
-	; LDW     X,#0x300     ; Just clear stacks 
-        CLRW    X              ; Clear all RAM 
-1$:
-	CLR     (X)                    
-	INCW    X
-	CPW     X,#(RAMEND+1)
-	JRULE   1$
-
-; Main entry points and COLD start data
-	
-ORIG:	
-	LDW	X,#RPP	        ;initialize return stack
-	LDW	SP,X
-	LDW	X,#SPP          ; initialize data stack
-       
-	JP	COLD	;default=MN1
-
 ; COLD start initiates these variables.
 
-UZERO:
-	.dw	BASEE	        ; BASE
-	.dw	INTER	        ; 'EVAL
-	.dw	LASTN	        ; CONTEXT pointer
-	.dw	CTOP	        ; CP in RAM
-	.dw	LASTN	        ; LAST
-
-        .ifne   HAS_CPNVM       
-        .dw     CTOPNVM         ; CP in NVM
-        .endif
-ULAST:                          ; end of UZERO block
+; Main entry points and COLD start data
 
 ;	COLD	( -- )
 ;	The hilevel cold start sequence.
@@ -332,111 +301,38 @@ ULAST:                          ; end of UZERO block
 	LINK =	.
 	.db	4
 	.ascii	"COLD"
+_forth:                         ; SDCC entry point 
 COLD:
+        SIM                     ; disable interrupts 
+
+        ; TODO make this a constant
+        LDW     X,#FORTHRAM
+1$:
+	CLR     (X)                    
+	INCW    X
+	CPW     X,#(RAMEND+1)
+	JRULE   1$
+
+	LDW	X,#RPP	        ;initialize return stack
+	LDW	SP,X
+	LDW	X,#SPP          ; initialize data stack
+
 	CALL	DOLIT
 	.dw	UZERO
 	CALL	DOLIT
-	.dw	USRBASE
+        .dw     USRRAMINIT
 	CALL	DOLIT
 	.dw	(ULAST-UZERO)
 	CALL	CMOVE	        ;initialize user area
 
 	CALL	PRESE	        ;initialize data stack 
 
-        ; STM8S Device dependent HW initialization
-
-PORTINIT:
-        .ifne   STM8S_DISCOVERY
-        ; STM8S Discovery init GPIO & clock
-	MOV	PD_DDR,#0x01	; LED, SWIM
-	MOV	PD_CR1,#0x03	; pullups
-	MOV	PD_CR2,#0x01	; speed
-	BSET    CLK_SWCR,#1     ; enable external clcok
-	MOV     CLK_SWR,#0x0B4  ; external cyrstal clock
-WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
-	BRES    CLK_SWCR,#3     ; clear SWIF
-        .endif
-
-        .ifne   BOARD_MINDEV
-        ; STM8S103F3 minimal breakout board init GPIO
-        BSET     PB_DDR,#5  
-        BSET     PB_CR1,#5 
-        .endif
-
-        .ifne   BOARD_W1209
-        ; W1209 STM8S003F3 init GPIO
-        MOV     PA_DDR,#0b00001110 ; relay,B,F        
-        MOV     PA_CR1,#0b00001110         
-        MOV     PB_DDR,#0b00110000 ; d2,d3
-        MOV     PB_CR1,#0b00110000 
-        MOV     PC_DDR,#0b11000000 ; G,C        
-        MOV     PC_CR1,#0b11111000 ; G,C-+S... Key pullups        
-        MOV     PD_DDR,#0b00111110 ; A,DP,D,d1,A
-        MOV     PD_CR1,#0b00111110 
-        .endif
-       
-       
-        .ifne   BOARD_C0135
-        ; "Nano PLC Relay board"
-        MOV     PB_DDR,#0x10
-        MOV     PC_DDR,#0x38
-        MOV     PD_DDR,#0x10
-        MOV     PD_CR1,#0x10
-        .endif
-
-        ; Board I/O initialization
+         ; Board I/O initialization
+        .include "boardinit.inc"
 
         .ifne   HAS_OUTPUTS
         CALL    ZERO
         CALL    OUTSTOR
-        .endif
-
-        ; Init RS232 communication port
-
-        .ifne  (STM8S003F3 + STM8S103F3)
-        ; STM8S[01]003F3 init UART
-        MOV     CLK_CKDIVR,#0           ; Clock divider register
-	MOV	UART1_BRR2,#0x003	; 9600 baud
-	MOV	UART1_BRR1,#0x068	; 0068 9600 baud
-	;MOV	UART1_CR1,#0x006	; 8 data bits, no parity
-        .ifne HALF_DUPLEX
-	MOV	UART1_CR2,#0x004	; enable rx 
-        .else              
-	MOV	UART1_CR2,#0x00C	; enable tx & rx
-        .endif
-        .else                           
-        ; Other STM8S controller - UART2, assume 16MHz clock  
-	MOV	UART2_BD2,#0x003	; 9600 baud
-	MOV	UART2_BD1,#0x068	; 0068 9600 baud
-	MOV	UART2_CR1,#0x006	; 8 data bits, no parity
-	MOV	UART2_CR3,#0x000	; 1 stop bit
-        .endif 
-
-        .ifne   HAS_TXDSIM
-        MOV     TIM4_PSCR,#0x03 ; prescaler 1/8
-        MOV     TIM4_ARR,#0xCF  ; reload 0.104 ms (9600 baud)
- 	MOV     ITC_SPR6,#0x3F  ; Interrupt prio. high for TIM4 (Int23)
-        MOV     TIM4_CR1,#0x01  ; enable TIM4 (don't enable interrupt)
-        .endif
-
-        ; Init background interrupt, and task USR variables 
-
-        .ifne   HAS_BACKGROUND
-        ; background USR variables
-        LDW     Y,#BASEE
-        LDW     BGBASE,Y     
-        CLRW    Y
-        LDW     BGADDR,Y
-        .endif
-
-        .ifne   (HAS_BACKGROUND + HAS_LED7SEG)
-        ; init 5ms timer interrupt
-        MOV     TIM2_PSCR,#0x03 ; prescaler 1/8
-        MOV     TIM2_ARRH,#0x26 ; reload 5ms H 
-        MOV     TIM2_ARRL,#0xDE ;        5ms L
- 	MOV     ITC_SPR4,#0xF7  ; Interrupt prio. low for TIM2 (Int13)
-        MOV     TIM2_CR1,#0x01  ; enable TIM2
-        MOV     TIM2_IER,#0x01  ; enable TIM2 interrupt
         .endif
 
         ; Hardware initialization complete
@@ -447,9 +343,51 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
 	CALL	OVERT
 	JP	QUIT	        ;start interpretation
 
+;	'BOOT	( -- a )
+;	The application startup vector and NVM USR setting array 
+
+        .ifne   WORDS_LINKINTER + HAS_CPNVM
+	.dw	LINK
+	
+	LINK =	.
+	.db	5
+	.ascii	"'BOOT"
+        .endif
+TBOOT:
+	CALL	DOVAR
         .ifne   WORDS_BAREBONES
-        HI      =       DOTOK
+        .dw     HIOK
         .else
+	.dw	HI	        ;application to boot
+        .endif
+
+        UZERO = .
+	.dw	BASEE	        ; Background BASE
+	.dw	BASEE	        ; BASE
+	.dw	INTER	        ; 'EVAL
+	.dw	CTOP	        ; CP in RAM
+	.dw	LASTN	        ; LAST
+	.dw	LASTN	        ; CONTEXT pointer
+
+        .ifne   HAS_CPNVM
+	.dw	LASTN	        ; NVM CONTEXT pointer
+        .dw     END_SDCC_FLASH  ; CP in NVM
+        ULAST = .
+        ; Second copy of USR setting for NVM reset
+	.dw	BASEE	        ; Background BASE
+	.dw	BASEE	        ; BASE
+	.dw	INTER	        ; 'EVAL
+	.dw	CTOP	        ; CP in RAM
+	.dw	LASTN	        ; LAST
+	.dw	LASTN	        ; CONTEXT pointer
+	.dw	LASTN	        ; NVM CONTEXT pointer
+        .dw     END_SDCC_FLASH  ; CP in NVM
+        .else
+        ULAST = .
+        .endif
+
+
+        .ifeq   WORDS_BAREBONES
 ;	hi	( -- )
 ;	Display sign-on message.
 
@@ -463,40 +401,27 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
 HI:
         .ifne   HAS_LED7SEG
         MOV     LED7MSB+1,#0x66 ; 7S LEDs .4..
-        MOV     LED7LSB,#0x78   ; 7S LEDs ..t.
+        MOV     LED7LSB,  #0x78 ; 7S LEDs ..t.
         MOV     LED7LSB+1,#0x74 ; 7S LEDs ...h
         .endif
-	CALL	CR
+	
+        CALL	CR
 	CALL	DOTQP	        ; initialize I/O
 	.db	15
 	.ascii	"stm8eForth v"
 	.db	(VER+'0')
 	.ascii	"."
 	.db	(EXT+'0')       ;version
+
 	JP	CR
         .endif
 
 
-;	'BOOT	( -- a )
-;	The application startup vector.
-
-        .ifne   WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"'BOOT"
-        .endif
-TBOOT:
-	CALL	DOVAR
-	.dw	HI	        ;application to boot
 
 ;      Device dependent I/O
 
 
 _TIM4_IRQHandler:
-        ; BCPL    PA_ODR,#3     ; pin debug
-        BRES    TIM4_SR,#0      ; clear TIM4 UIF 
 
         .ifne   HAS_TXDSIM
         ; TIM4 interrupt handler W1209 software TxD. 
@@ -504,6 +429,8 @@ _TIM4_IRQHandler:
         ; STM8S UART1 half-duplex mode requires TxD (PD_5) 
         ; Work-around: change from RxD to GPIO for SW-TX
         ; To use, write char to TIM4TXREG, then 0x0A to TIM4TCNT
+        ; BCPL    PA_ODR,#3     ; pin debug
+        BRES    TIM4_SR,#0      ; clear TIM4 UIF 
         LD      A,TIM4TCNT
         JRNE    TIM4_TRANS      ; transmit in progress
         BRES    TIM4_IER,#0     ; disable TIM4 interrupt
@@ -551,13 +478,14 @@ TIM4_DEC:
         ; fall through
 
 TIM4_END:             
-        .endif
         ; BCPL    PA_ODR,#3
         IRET 
+        .endif
 
 
         ; TIM2 interrupt handler for background task 
 _TIM2_UO_IRQHandler:
+        .ifne   (HAS_LED7SEG + HAS_BACKGROUND)
         ; BSET    PA_ODR,#3     ; pin debug
         BRES    TIM2_SR1,#0     ; clear TIM2 UIF 
 
@@ -574,17 +502,43 @@ _TIM2_UO_IRQHandler:
         TNZW    Y               ; 0: background operation off 
         JREQ    2$
 
+
+        ; TODO: need more efficient RAM swap word 
+        PUSHW    Y
+        CALL    BGSWAPBASEHLD
+        POPW    Y
+
         LDW     X,YTEMP         ; Save context 
         PUSHW   X
         LDW     X,#(BSPP)       ; init data stack for background task to BSPP 
         CALL    (Y)
         POPW    X
         LDW     YTEMP,X
+
+        CALL    BGSWAPBASEHLD
 2$:
         .endif
 
         ; BRES    PA_ODR,#3
         IRET
+        .endif
+
+
+        ; Helper routine for swapping USRBASE and USRHLD in background
+        .ifne   HAS_BACKGROUND 
+BGSWAPBASEHLD:
+        ; 8 bit since BASE is never going to be more than 80 = 128-ORD('0')
+        LD      A,USRBASE+1
+        MOV     USRBASE+1,BGBASE+1
+        LD      BGBASE+1,A
+        
+
+        ; 8 bit since 32 chars are enough for 32 digits BASE 2
+        LD      A,USRHLD+1
+        MOV     USRHLD+1,BGHLD
+        LD      BGHLD,A
+        RET
+        .endif
 
 
         .ifne   HAS_LED7SEG
@@ -643,6 +597,7 @@ LED_MPX:
         .endif
 
 ; ==============================================
+
 ;	?RX	( -- c T | F )
 ;	Return input byte and true, or false.
 	.dw	LINK
@@ -651,6 +606,7 @@ LED_MPX:
 	.ascii	"?KEY"
 QKEY:
         CLRW    Y               ; flag: no char
+
         .ifne   (HAS_BACKGROUND * HAS_KEYS)
         ; Foreground: char from RxD, background: char from BKEY 
         PUSH    CC
@@ -676,6 +632,7 @@ KEYHOLD:
         MOV     KEYREPET,#30    ; repetition time: n*5ms 
         JRA     ATOKEY
         .endif
+
 SERKEY:
 	BTJF    UART1_SR,#5,INCH ;check status
 	LD	A,UART1_DR	; get char in A
@@ -756,6 +713,7 @@ DOLIT:
 	LDW     (X),Y
 	POPW	Y
 	JP      (2,Y)
+
 
 ;	next	( -- )
 ;	Code for single index loop.
@@ -1102,9 +1060,6 @@ ORR:
 	LD      (2,X),A
 	LD      A,(1,X)
 	OR      A,(3,X)
-;	LD      (3,X),A
-;	ADDW    X,#2
-;	RET
         JRA     LDADROP
 
 
@@ -1121,9 +1076,6 @@ XORR:
 	LD      (2,X),A
 	LD      A,(1,X)
 	XOR     A,(3,X)
-;	LD      (3,X),A
-;	ADDW    X,#2
-;	RET
         JRA     LDADROP
 
 ;	UM+	( u u -- udsum )
@@ -1163,6 +1115,30 @@ SPSTO:
 	RET	
 
 
+;	CONTEXT ( -- a )
+;	Start vocabulary search.
+
+	.ifne	WORDS_LINKINTER
+	.dw	LINK
+	
+	LINK =	.
+	.db	7
+	.ascii	"CONTEXT"
+        .endif
+CNTXT:
+        .ifne  HAS_CPNVM
+        CALL    INTERQ
+        CALL    QBRAN
+        .dw     1$
+        CALL    NVMQ
+        CALL    QBRAN
+        .dw     1$
+        LDW     Y,#(RAMBASE+NVMCONTEXT)
+        JRA     YSTOR
+1$:
+        .endif
+	LDW     Y,#(RAMBASE+USRCONTEXT)
+        JRA     YSTOR
 ;	CP	( -- a )
 ;	Point to top of dictionary.
 
@@ -1178,7 +1154,7 @@ CPP:
         JRA     YSTOR
 
 CPNVM:
-	LDW     Y,#(RAMBASE+USRCPNVM)
+	LDW     Y,#(RAMBASE+NVMCP)
         JRA     YSTOR
 
 
@@ -1206,9 +1182,6 @@ SPAT:
 	.ascii	"BASE"
 BASE:
 	LDW     Y,#(RAMBASE+USRBASE)
-        .ifne   HAS_BACKGROUND
-        CALL    BGUPPOFFS
-        .endif
         JRA     YSTOR
 
 ;	tmp	( -- a )
@@ -1280,24 +1253,8 @@ TEVAL:
 	.endif
 HLD:
 	LDW     Y,#(RAMBASE+USRHLD)
-        .ifne   HAS_BACKGROUND
-        CALL    BGUPPOFFS
-        .endif
         JRA     YSTOR
 
-;	CONTEXT ( -- a )
-;	Start vocabulary search.
-
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	7
-	.ascii	"CONTEXT"
-        .endif
-CNTXT:
-	LDW     Y,#(RAMBASE+USRCONTEXT)
-        JRA     YSTOR
 
 
 ;	LAST	( -- a )
@@ -1423,16 +1380,6 @@ BGG:
 	LDW     Y,#(BGADDR)
         JRA     YSTOR
 
-;       - 
-;       Add offset to USR variable address when in background task
-BGUPPOFFS:
-        PUSH	CC
-        POP	A
-        AND	A,#0x20
-        JRNE    1$
-        ADDW    Y,#(BGHLD-USRHLD)
-1$:     
-        RET
 
         .endif
 
@@ -2221,15 +2168,15 @@ COUNT:
 HERE:
 
         .ifne  HAS_CPNVM
-        CALL    NVMQ
-        CALL    QBRAN
+        CALL    NVMQ            
+        CALL    QBRAN           ; NVM: CP points to NVM, NVMCP points to RAM
         .dw     1$
-        CALL    INTERQ
+        CALL    INTERQ         
         CALL    QBRAN
         .dw     1$
 
         CALL    DOLIT
-        .dw     USRCPNVM
+        .dw     NVMCP        ; 'eval in Interpreter mode: HERE returns pointer to RAM 
         JP	AT
         .endif
 1$:
@@ -2711,7 +2658,7 @@ KEY1:	CALL	QKEY
 NUFQ:
         .ifne   HALF_DUPLEX
         ; slow EMIT down to free the line for RX 
-        .ifne   HAS_BACKGROUND
+        .ifne   HAS_BACKGROUND * HALF_DUPLEX 
         LD      A,TICKCNTL
         ADD     A,#3
 1$:     CP      A,TICKCNTL
@@ -3526,6 +3473,7 @@ DOTOK:
 	CALL	INTERQ
 	CALL	QBRAN
 	.dw	DOTO1
+HIOK:
 	CALL	DOTQP
 	.db	3
 	.ascii	" ok"
@@ -3585,9 +3533,10 @@ EVAL2:	CALL	DROP
 	.ascii	"PRESET"
 	.endif
 PRESE:
-	CALL	DOLIT
-	.dw	SPP
-	JP	SPSTO
+        CLRW    Y
+        LDW     RAMBASE+USRNTIB,Y
+	LDW	X,#SPP          ; initialize data stack
+        RET
 
 ;	QUIT	( -- )
 ;	Reset return stack pointer
@@ -4474,9 +4423,9 @@ BRSS:
         OR      A,#0x10
         LDW     Y,X
         LDW     Y,(4,Y)         ; bool b (0..15) -> Z
-        JRNE    $1              ; b!=0: BSET
+        JRNE    1$              ; b!=0: BSET
         INC     A               ; b==0: BRES
-$1:     LD      (1,X),A
+1$:     LD      (1,X),A
         LD      A,#0x81         ; Opcode RET
         LD      (4,X),A
         LDW     Y,X
@@ -4822,10 +4771,10 @@ SWAPLAST:
 SWAPCP:        
         LDW     Y,USRCP
         PUSHW   Y
-        LDW     Y,USRCPNVM
+        LDW     Y,NVMCP
         LDW     USRCP,Y
         POPW    Y
-        LDW     USRCPNVM,Y
+        LDW     NVMCP,Y
         RET
 
 ;       NVM  ( -- )
@@ -4841,7 +4790,8 @@ NVMM:
         CALL    INVER
         CALL    QBRAN
         .dw     1$
-        ;CALL    SWAPLAST
+        ;CALL    SWAPLAST;
+
         CALL    SWAPCP
         CALL    UNLOCK_FLASH
 1$:
@@ -4859,39 +4809,20 @@ RAMM:
         CALL    NVMQ
         CALL    QBRAN
         .dw     1$
-        ;CALL    SWAPLAST
         CALL    SWAPCP
+
+        ;CALL    SWAPLAST
         CALL    LOCK_FLASH
 1$:
         RET
 
-; ======== Note: this must be the last word in Flash ========
-;       nvdat  ( -- )
-;       Data about persistent memory 
-	.dw	LINK
-        
-        .ifne   WORDS_LINKCOMP
-        LINK =  .
-	.db	(5)
-	.ascii	"nvdat"
-        .endif
-NVDAT:
-        CALL    DOVAR
-        .dw     LASTN            ; Init for LASTN
-        .dw     END_SDCC_FLASH   ; init for USRCPNVM (free Flash starts here) 
-        .dw     USRPOOL          ; Next RAM cell for indirect variables  
-1$:
         .endif
          
 ;===============================================================
-
 	LASTN	=	LINK	;last name defined
-
 
  	.area CODE
 	.area INITIALIZER
         END_SDCC_FLASH = .
 	.area CABS (ABS)
-
-
 
