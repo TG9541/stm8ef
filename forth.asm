@@ -245,28 +245,29 @@
         ; TODO: refactor into BGPP, UPP and UPP0 
         USRRAMINIT = BGBASE
 
-        BGBASE  =    UPP+0      ; USRBASE replacement for background task 
+        BGBASE  =    UPP+0      ; i USRBASE replacement for background task 
         USRBASE =    UPP+2      ; i radix base for numeric I/O
         USREVAL =    UPP+4      ; i execution vector of EVAL 
         USRCP   =    UPP+6      ; i point to top of dictionary
-        USRLAST =    UPP+8      ; id currently last name in dictionary (init: to LASTN)
-        USRCONTEXT = UPP+10      ; ir start vocabulary search
-        NVMCONTEXT = UPP+12     ; ir upoint to top of dictionary in Non Volatile Memory 
-        NVMCP   =    UPP+14     ; ir point to top of dictionary in Non Volatile Memory 
+        USRCONTEXT = UPP+8      ; i start vocabulary search
+        NVMCP   =    UPP+10     ; i point to top of dictionary in Non Volatile Memory 
 
         ; Null initialized core variables (growing down)
-	YTEMP	=    UPP+22	; scratchpad (usually for Y)
-        USRHLD  =    UPP+24     ; hold a pointer of output string
-        USRNTIB =    UPP+26     ; count in terminal input buffer 
-        USR_IN  =    UPP+28     ; hold parsing pointer
-        USRTEMP =    UPP+30     ; temporary storage (VARIABLE tmp)
+
+        NVMCONTEXT = UPP+18     ; id point to top of dictionary in Non Volatile Memory 
+        USRLAST =    UPP+20     ; id currently last name in dictionary (init: to LASTN)
+        USRHLD  =    UPP+22     ; hold a pointer of output string
+        USRNTIB =    UPP+24     ; count in terminal input buffer 
+        USR_IN  =    UPP+26     ; hold parsing pointer
+        USRTEMP =    UPP+28     ; temporary storage (VARIABLE tmp)
+        YTEMP	=    UPP+30	; scratchpad (usually for Y)
 
         ;************************************
 	;******  6) General Constants  ******
         ;************************************
 
-	VER     =     2         ; Version major release version
-	EXT     =     1         ; Version minor extension
+	VER     =     2        ; Version major release version
+	EXT     =     1        ; Version minor extension
 
 	TRUEE   =     0xFFFF   ; true flag
 	COMPO   =     0x40     ; lexicon compile only bit
@@ -289,7 +290,6 @@
 	;******  7) Code  ******
         ;***********************
 
-; COLD start initiates these variables.
 
 ; Main entry points and COLD start data
 
@@ -301,21 +301,21 @@
 	LINK =	.
 	.db	4
 	.ascii	"COLD"
-_forth:                         ; SDCC entry point 
+_forth:                         ; SDCC entry 
+        ; Note: no return to main.c possible unless RAMEND equals SP, 
+        ; and RPP init skipped
+
 COLD:
         SIM                     ; disable interrupts 
+        
+        LDW     X,#(RAMEND-FORTHRAM) 
+1$:	CLR     (FORTHRAM,X)                    
+	DECW    X
+	JRPL    1$
 
-        ; TODO make this a constant
-        LDW     X,#FORTHRAM
-1$:
-	CLR     (X)                    
-	INCW    X
-	CPW     X,#(RAMEND+1)
-	JRULE   1$
-
-	LDW	X,#RPP	        ;initialize return stack
+	LDW	X,#RPP	        ; initialize return stack
 	LDW	SP,X
-	LDW	X,#SPP          ; initialize data stack
+	LDW	X,#SPP          ; Pre-initialize data stack
 
 	CALL	DOLIT
 	.dw	UZERO
@@ -323,9 +323,15 @@ COLD:
         .dw     USRRAMINIT
 	CALL	DOLIT
 	.dw	(ULAST-UZERO)
-	CALL	CMOVE	        ;initialize user area
+	CALL	CMOVE	        ; initialize user area
 
-	CALL	PRESE	        ;initialize data stack 
+        LDW     X,USRCONTEXT    ; initialize vocabularies 
+        LDW     USRLAST,X
+        .ifne   HAS_CPNVM
+        LDW     NVMCONTEXT,X
+        .endif
+        
+	CALL	PRESE	        ; initialize data stack, TIB 
 
          ; Board I/O initialization
         .include "boardinit.inc"
@@ -339,14 +345,14 @@ COLD:
         RIM                     ; enable interrupts 
 
  	CALL	TBOOT
-	CALL	ATEXE	        ;application boot
-	CALL	OVERT
-	JP	QUIT	        ;start interpretation
+	CALL	ATEXE	        ; application boot
+	; CALL	OVERT
+	JP	QUIT	        ; start interpretation
 
 ;	'BOOT	( -- a )
 ;	The application startup vector and NVM USR setting array 
 
-        .ifne   WORDS_LINKINTER + HAS_CPNVM
+        .ifne   (WORDS_LINKINTER + HAS_CPNVM)
 	.dw	LINK
 	
 	LINK =	.
@@ -361,26 +367,25 @@ TBOOT:
 	.dw	HI	        ;application to boot
         .endif
 
+        ; COLD start initiates these variables.
         UZERO = .
 	.dw	BASEE	        ; Background BASE
 	.dw	BASEE	        ; BASE
 	.dw	INTER	        ; 'EVAL
 	.dw	CTOP	        ; CP in RAM
-	.dw	LASTN	        ; LAST
-	.dw	LASTN	        ; CONTEXT pointer
-
+        COLDCONTEXT = .
+	.dw	LASTN	        ; Initial CONTEXT pointer
         .ifne   HAS_CPNVM
-	.dw	LASTN	        ; NVM CONTEXT pointer
+        COLDNVMCP = .
         .dw     END_SDCC_FLASH  ; CP in NVM
         ULAST = .
+
         ; Second copy of USR setting for NVM reset
 	.dw	BASEE	        ; Background BASE
 	.dw	BASEE	        ; BASE
 	.dw	INTER	        ; 'EVAL
 	.dw	CTOP	        ; CP in RAM
-	.dw	LASTN	        ; LAST
 	.dw	LASTN	        ; CONTEXT pointer
-	.dw	LASTN	        ; NVM CONTEXT pointer
         .dw     END_SDCC_FLASH  ; CP in NVM
         .else
         ULAST = .
@@ -500,23 +505,19 @@ _TIM2_UO_IRQHandler:
 
         LDW     Y,BGADDR        ; address of background routine
         TNZW    Y               ; 0: background operation off 
-        JREQ    2$
-
-
-        ; TODO: need more efficient RAM swap word 
-        PUSHW    Y
-        CALL    BGSWAPBASEHLD
-        POPW    Y
+        JREQ    1$
 
         LDW     X,YTEMP         ; Save context 
         PUSHW   X
+        CALL    BGSWAPBASEHLD
+        
         LDW     X,#(BSPP)       ; init data stack for background task to BSPP 
         CALL    (Y)
-        POPW    X
-        LDW     YTEMP,X
 
         CALL    BGSWAPBASEHLD
-2$:
+        POPW    X
+        LDW     YTEMP,X
+1$:
         .endif
 
         ; BRES    PA_ODR,#3
@@ -1128,6 +1129,7 @@ SPSTO:
 CNTXT:
         .ifne  HAS_CPNVM
         CALL    INTERQ
+        CALL    INVER
         CALL    QBRAN
         .dw     1$
         CALL    NVMQ
@@ -1139,6 +1141,8 @@ CNTXT:
         .endif
 	LDW     Y,#(RAMBASE+USRCONTEXT)
         JRA     YSTOR
+
+
 ;	CP	( -- a )
 ;	Point to top of dictionary.
 
@@ -1152,11 +1156,6 @@ CNTXT:
 CPP:
 	LDW     Y,#(RAMBASE+USRCP)
         JRA     YSTOR
-
-CPNVM:
-	LDW     Y,#(RAMBASE+NVMCP)
-        JRA     YSTOR
-
 
 ;	SP@	( -- a )
 ;	Push current stack pointer.
@@ -4032,6 +4031,33 @@ SCOM2:	CALL	NUMBQ	;try to convert to number
 OVERT:
 	CALL	LAST
 	CALL	AT
+
+        .ifne   HAS_CPNVM
+        CALL    NVMQ
+        CALL    QBRAN
+        .dw     1$
+        CALL    DUPP
+        CALL    DOLIT
+        .dw     USRCONTEXT
+        CALL    AT
+        CALL    NORAMQ
+        CALL    QBRAN
+        .dw     2$
+        CALL    DOLIT
+        .dw     USRCONTEXT
+        CALL    OVER
+	CALL	STORE
+        JRA     3$
+2$:
+        CALL    DOLIT
+        .dw     CTOP           ; link dictionary in RAM
+	CALL	STORE
+3$:
+        CALL    DOLIT          ; Context in mode NVM
+        .dw     (RAMBASE+NVMCONTEXT)
+	JP	STORE
+1$:                            ; Context in mode RAM
+        .endif
 	CALL	CNTXT
 	JP	STORE
 
@@ -4751,47 +4777,38 @@ ADCAT:
 	.ascii	"NVM?"
         .endif
 NVMQ:
-	CALL	DOLIT
-	.dw	0xf800
 	CALL	CPP
         CALL    AT
+NORAMQ:
+	CALL	DOLIT
+	.dw	0xf800
         JP      ANDD
 
-; : SW 2DUP @ >R @ SWAP ! R> SWAP ! ;
 
-SWAPLAST:        
-        LDW     Y,CTOP
-        PUSHW   Y
-        LDW     Y,USRLAST
-        LDW     CTOP,Y
-        POPW    Y
-        LDW     USRLAST,Y
-        RET
-
+;       Helper routine: swap USRCP and NVMCP
 SWAPCP:        
         LDW     Y,USRCP
-        PUSHW   Y
-        LDW     Y,NVMCP
-        LDW     USRCP,Y
-        POPW    Y
+        MOV     USRCP,NVMCP
+        MOV     USRCP+1,NVMCP+1
         LDW     NVMCP,Y
         RET
 
+
 ;       NVM  ( -- )
-;       Compile to NVM 
+;       Compile to NVM (enter mode NVM)
 	.dw	LINK
         
         LINK =  .
 	.db	(3)
 	.ascii	"NVM"
 NVMM:        
-        
         CALL    NVMQ
         CALL    INVER
-        CALL    QBRAN
+        CALL    QBRAN           ; state entry action?
         .dw     1$
-        ;CALL    SWAPLAST;
-
+        ; in NVM mode only link words in NVM
+        MOV     USRLAST,NVMCONTEXT
+        MOV     USRLAST+1,NVMCONTEXT+1
         CALL    SWAPCP
         CALL    UNLOCK_FLASH
 1$:
@@ -4799,7 +4816,7 @@ NVMM:
 
 
 ;       RAM  ( -- )
-;       Compile to RAM 
+;       Compile to RAM (enter mode RAM)
 	.dw	LINK
         
         LINK =  .
@@ -4809,9 +4826,22 @@ RAMM:
         CALL    NVMQ
         CALL    QBRAN
         .dw     1$
-        CALL    SWAPCP
+        CALL    SWAPCP          ; Switch back to mode RAM
 
-        ;CALL    SWAPLAST
+        MOV     COLDNVMCP,NVMCP ; Store NCM pointers for init in COLD 
+        MOV     COLDNVMCP+1,NVMCP+1
+        MOV     COLDCONTEXT,NVMCONTEXT
+        MOV     COLDCONTEXT+1,NVMCONTEXT+1
+
+        CALL    CNTXT           ; Does USRCONTEXT point to word in RAM?
+        CALL    NORAMQ                 
+        CALL    QBRAN
+        .dw     2$
+        MOV     USRCONTEXT,NVMCONTEXT
+        MOV     USRCONTEXT+1,NVMCONTEXT+1
+2$:
+        MOV     USRLAST,USRCONTEXT
+        MOV     USRLAST+1,USRCONTEXT+1
         CALL    LOCK_FLASH
 1$:
         RET
