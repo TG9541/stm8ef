@@ -325,12 +325,6 @@ COLD:
 	.dw	(ULAST-UZERO)
 	CALL	CMOVE	        ; initialize user area
 
-;        LDW     X,USRCONTEXT    ; initialize vocabularies 
-;        LDW     USRLAST,X
-;        .ifne   HAS_CPNVM
-;        LDW     NVMCONTEXT,X
-;        .endif
-        
 	CALL	PRESE	        ; initialize data stack, TIB 
 
          ; Board I/O initialization
@@ -4113,7 +4107,6 @@ JSRC:
 	.ascii	":"
 COLON:
         .ifne  HAS_CPNVM
-        ; TODO: I don't know yet if this won't have any inexpected consequence
 	CALL	RBRAC   ; directly do "]" to indicate to HERE that we're no longer interpreting
 	CALL	TOKEN
 	JP	SNAME
