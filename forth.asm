@@ -249,13 +249,13 @@
         USRBASE =    UPP+2      ; i radix base for numeric I/O
         USREVAL =    UPP+4      ; i execution vector of EVAL 
         USRCP   =    UPP+6      ; i point to top of dictionary
-        USRCONTEXT = UPP+8      ; i start vocabulary search
+        USRLAST =    UPP+8      ; i currently last name in dictionary (init: to LASTN)
         NVMCP   =    UPP+10     ; i point to top of dictionary in Non Volatile Memory 
 
         ; Null initialized core variables (growing down)
 
-        NVMCONTEXT = UPP+18     ; id point to top of dictionary in Non Volatile Memory 
-        USRLAST =    UPP+20     ; id currently last name in dictionary (init: to LASTN)
+        NVMCONTEXT = UPP+18     ; point to top of dictionary in Non Volatile Memory 
+        USRCONTEXT = UPP+20     ; start vocabulary search
         USRHLD  =    UPP+22     ; hold a pointer of output string
         USRNTIB =    UPP+24     ; count in terminal input buffer 
         USR_IN  =    UPP+26     ; hold parsing pointer
@@ -325,11 +325,11 @@ COLD:
 	.dw	(ULAST-UZERO)
 	CALL	CMOVE	        ; initialize user area
 
-        LDW     X,USRCONTEXT    ; initialize vocabularies 
-        LDW     USRLAST,X
-        .ifne   HAS_CPNVM
-        LDW     NVMCONTEXT,X
-        .endif
+;        LDW     X,USRCONTEXT    ; initialize vocabularies 
+;        LDW     USRLAST,X
+;        .ifne   HAS_CPNVM
+;        LDW     NVMCONTEXT,X
+;        .endif
         
 	CALL	PRESE	        ; initialize data stack, TIB 
 
@@ -346,7 +346,7 @@ COLD:
 
  	CALL	TBOOT
 	CALL	ATEXE	        ; application boot
-	; CALL	OVERT
+        CALL	OVERT
 	JP	QUIT	        ; start interpretation
 
 ;	'BOOT	( -- a )
@@ -374,7 +374,7 @@ TBOOT:
 	.dw	INTER	        ; 'EVAL
 	.dw	CTOP	        ; CP in RAM
         COLDCONTEXT = .
-	.dw	LASTN	        ; Initial CONTEXT pointer
+	.dw	LASTN	        ; USRLAST and CONTEXT through OVERT
         .ifne   HAS_CPNVM
         COLDNVMCP = .
         .dw     END_SDCC_FLASH  ; CP in NVM
@@ -4033,33 +4033,31 @@ OVERT:
 	CALL	AT
 
         .ifne   HAS_CPNVM
-        CALL    NVMQ
+        CALL    DUPP
+        CALL    NVMADRQ         ; does USRLAST point to NVM?
         CALL    QBRAN
         .dw     1$
-        CALL    DUPP
+        CALL    DUPP             
         CALL    DOLIT
-        .dw     USRCONTEXT
+        .dw     NVMCONTEXT
+        CALL    STORE           ; update NVMCONTEXT
+        CALL    DOLIT
+        .dw     CTOP            ; is there any vocabulary in RAM?
+        CALL    DUPP
         CALL    AT
-        CALL    NORAMQ
         CALL    QBRAN
         .dw     2$
-        CALL    DOLIT
-        .dw     USRCONTEXT
-        CALL    OVER
-	CALL	STORE
-        JRA     3$
+        JP      STORE           ; link dictionary in RAM
 2$:
+        CALL    DROP
+1$:
         CALL    DOLIT
-        .dw     CTOP           ; link dictionary in RAM
-	CALL	STORE
-3$:
-        CALL    DOLIT          ; Context in mode NVM
-        .dw     (RAMBASE+NVMCONTEXT)
-	JP	STORE
-1$:                            ; Context in mode RAM
-        .endif
+        .dw     USRCONTEXT            
+        JP      STORE           ; or update USRCONTEXT
+        .else
 	CALL	CNTXT
 	JP	STORE
+        .endif
 
 ;	;	( -- )
 ;	Terminate a colon definition.
@@ -4779,7 +4777,10 @@ ADCAT:
 NVMQ:
 	CALL	CPP
         CALL    AT
-NORAMQ:
+        ; fall through
+
+;       return 0 if address is in RAM
+NVMADRQ:
 	CALL	DOLIT
 	.dw	0xf800
         JP      ANDD
@@ -4834,7 +4835,7 @@ RAMM:
         MOV     COLDCONTEXT+1,NVMCONTEXT+1
 
         CALL    CNTXT           ; Does USRCONTEXT point to word in RAM?
-        CALL    NORAMQ                 
+        CALL    NVMADRQ                 
         CALL    QBRAN
         .dw     2$
         MOV     USRCONTEXT,NVMCONTEXT
