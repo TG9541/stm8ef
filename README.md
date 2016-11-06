@@ -1,33 +1,33 @@
 # STM8S eForth (stm8ef)
 
-This is a refactored port of Dr. C.H. Ting's eForth for the *STM8S Discovery* to STM8S *Value Line* µCs boards based using the [SDCC toolchain](http://sdcc.sourceforge.net/). By using SDCC mixing Forth, assembler, and C is possible.
+This is a heavily refactored port of Dr. C.H. Ting's eForth for the *STM8S Discovery* to STM8S *Value Line* µCs boards and the [SDCC toolchain](http://sdcc.sourceforge.net/). Mixing C, Forth, and assembler is possible.
 
-The binary of the core interactive Forth system uses below 4700 bytes, including the overhead from SDCC, like C startup code, and interrupt tables.
+The binary of the core interactive Forth system uses below 4700 bytes, including the overhead from SDCC, like C startup code, and interrupt tables. The binary size with a rich feature feature set, including *Compile to Flash* and *Background Task*, is below 5400 bytes!
 
 Please refer to the [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) for more information! 
 
 ## Overview
 
-Many changes to the original source are due to "board support" for Chinese made STM8S based low-cost "gadgets". There are also important additions, like [background control tasks](https://github.com/TG9541/stm8ef/wiki/eForth-Background-Task). 
-
-Changes for refactoring the original code:
-
-* SDCC tool chain "ASxxxx V2.0" syntax
-* Usage of the SDCC linker with declaration of ISR routines in `main.c`
-* STM8S105C6 dependencies removed (e.g. RAM layout, UART2)
-* Flexible RAM layout, meaningful symbols for RAM locations
-* conditional code for different target boards
-* some bugfixes (e.g. SEE better for "Subroutine Threaded")
-* reduced binary size (core binary now below 4700 bytes down from more than 5500 bytes) 
-
-
 New features:
 
-* concurrent `INPUT-PROCESS-OUTPUT background` tasks with a fixed cycle (e.g. 5ms using TIM2) 
+* compile Forth words to Flash
+* background tasks for concurrent `INPUT-PROCESS-OUTPUT` processing with a fixed cycle time (e.g. 5ms using TIM2) 
 * support for [boards with 7Seg-LED UI](https://github.com/TG9541/stm8ef/wiki/eForth-Background-Task): in a background task, `123 .` goes to the 7Seg-LED display, and `?KEY` reads board keys
 * words for board keys, ADC, outputs/relays/leds
-* words for Flash, EEPROM, direct bit operations, inv. order 16bit memory access
-* constituting words of core compiler, interpreter, etc can be removed from dictionary, for clarity and to safe ROM space
+* words for Flash, EEPROM, direct bit operations, inverted order 16bit memory access
+* constituting words of core compiler, interpreter, etc can be removed from dictionary to save ROM space and clean up the vocabulary
+
+Many changes to the original source are due to "board support" for Chinese made [STM8S based very low cost boards][WG1].
+
+Canges that required refactoring the original code:
+
+* use of the free SDCC tool chain ("ASxxxx V2.0" syntax, SDCC linker with declaration of ISR routines in `main.c`)
+* removal of hard STM8S105C6 dependencies (e.g. RAM layout, UART2)
+* flexible RAM layout, meaningful symbols for RAM locations
+* conditional code for different target boards with a subdirectory based configuration framework 
+* some bugfixes (e.g. SEE better for "Subroutine Threaded")
+* reduced binary size (core binary now below 4700 bytes, down from more than 5500 bytes) 
+
 
 ## Support for STM8S Value Line µC 
 
@@ -35,17 +35,15 @@ The availability of low-cost boards (e.g. thermostats, power supplies, WIFI modu
 
 The main differences between STM8S003F3P6 and STM8S105C6T6 (*STM8S Discovery*) are:
 
-* UART1 instead of UART2
 * 8 KiB Flash instead of 32 KiB
 * 1 KiB RAM instead of 2 KiB
-* 128 or 640 bytes EEPROM (STM8S103F3) instead of 1 KiB
+* 128 bytes EEPROM instead of 1 KiB (the STM8S103F3 has 640 bytes) 
 * reduced set of GPIO and other peripherals
-
-Support for other STM8S devices depends on the future availability of boards for testing.
+* UART1 instead of UART2
 
 ## Board support:
 
-There is board suport for some easily available "Chinese gadgets". For details, refer to [STM8S-Value-Line-Gadgets](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets) in the Wiki.
+There is board suport for some easily available "Chinese gadgets". For details, refer to [STM8S-Value-Line-Gadgets][WG1] in the Wiki.
 
 * `BOARD_CORE` STM8S003F3 core, most extra feature words disabled 
 * `BOARD_MINDEV` STM8S103F3 low cost "minimum development board"
@@ -61,7 +59,7 @@ The plain STM8S003F3P6 eForth core as a starting point for new experiments:
 * 16MHz HSI, serial console
 * no special features (I/O words, background tasks)
 
-Selecting features from the list of options in `forth.asm` is possible.
+More features can be selected from the list of options in `globalconf.inc`.
 
 Run `make BOARD=CORE flash` for building and flashing.
 
@@ -131,3 +129,4 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 (MIT License)
 
+[WG1]: https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets
