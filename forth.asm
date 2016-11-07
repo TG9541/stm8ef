@@ -1,4 +1,4 @@
-;==============================================================
+;==========================================
 ; STM8EF for STM8S003F3 (Value Line) devives
 ;
 ; This is derived work based on 
@@ -340,8 +340,9 @@ COLD:
 
  	CALL	TBOOT
 	CALL	ATEXE	        ; application boot
-        CALL	OVERT
+        CALL	OVERT           ; initialize CONTEXT from USRLAST 
 	JP	QUIT	        ; start interpretation
+
 
 ;	'BOOT	( -- a )
 ;	The application startup vector and NVM USR setting array 
@@ -368,7 +369,7 @@ TBOOT:
 	.dw	INTER	        ; 'EVAL
 	.dw	CTOP	        ; CP in RAM
         COLDCONTEXT = .
-	.dw	LASTN	        ; USRLAST and CONTEXT through OVERT
+	.dw	LASTN	        ; USRLAST 
         .ifne   HAS_CPNVM
         COLDNVMCP = .
         .dw     END_SDCC_FLASH  ; CP in NVM
@@ -2163,16 +2164,16 @@ HERE:
         .ifne  HAS_CPNVM
         CALL    NVMQ            
         CALL    QBRAN           ; NVM: CP points to NVM, NVMCP points to RAM
-        .dw     1$
+        .dw     HERECP
         CALL    INTERQ         
         CALL    QBRAN
-        .dw     1$
+        .dw     HERECP
 
         CALL    DOLIT
         .dw     NVMCP        ; 'eval in Interpreter mode: HERE returns pointer to RAM 
         JP	AT
         .endif
-1$:
+HERECP: 
         CALL	CPP
         JP	AT
 
@@ -3569,7 +3570,7 @@ TICK:
 	.dw	ABOR1
 	RET	;yes, push code address
 
-;	Allocate n bytes to	code DICTIONARY.
+;	Allocate n bytes to code DICTIONARY.
 
 	.dw	LINK
 	
@@ -3590,7 +3591,7 @@ ALLOT:
 	.db	1
 	.ascii	","
 COMMA:
-	CALL	HERE
+	CALL	HERECP                    ; directly write to CP
 	CALL	DUPP
 	CALL	CELLP	;cell boundary
 	CALL	CPP
@@ -3607,7 +3608,7 @@ COMMA:
 	.db	2
 	.ascii	"C,"
 CCOMMA:
-	CALL	HERE
+	CALL	HERECP                    ; directly write to CP
 	CALL	DUPP
 	CALL	ONEP
 	CALL	CPP
@@ -3678,7 +3679,7 @@ STRCQ:
 	CALL	DOLIT
 	.dw	34	; "
 	CALL	PARSE
-	CALL	HERE
+	CALL	HERECP
 	CALL	PACKS	;string to code dictionary
 	CALL	COUNT
 	CALL	PLUS	;calculate aligned end of string
@@ -4148,12 +4149,19 @@ IMMED:
 	.db	6
 	.ascii	"CREATE"
 CREAT:
+        .ifne   HAS_CPNVM
+        CALL    RBRAC           ; make HERE return CP even in INTERPRETER mode
+        .endif
 	CALL	TOKEN
 	CALL	SNAME
 	CALL	OVERT
 	CALL	COMPI
 	CALL	DOVAR
+        .ifne   HAS_CPNVM
+        CALL    LBRAC           ; from here on ',', 'C,', '$,"' and 'ALLOT' write to CP
+        .endif
 	RET
+
 
 ;	VARIABLE	( -- ; <string> )
 ;	Compile a new variable
