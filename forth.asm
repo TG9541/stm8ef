@@ -113,7 +113,6 @@
 
         HALF_DUPLEX  =    0     ; RS232 shared Rx/Tx line, bus style
         TERM_LINUX   =    1     ; LF terminates line 
-        HAS_XONXOFF  =    0     ; XOFF/XON flow control
 
         HAS_TXDSIM   =    0     ; TxD SW simulation
         HAS_LED7SEG  =    0     ; 7-seg LED on board
@@ -246,12 +245,13 @@
         ; TODO: refactor into BGPP, UPP and UPP0 
         USRRAMINIT = BGBASE
 
-        BGBASE  =    UPP+0      ; i USRBASE replacement for background task 
-        USRBASE =    UPP+2      ; i radix base for numeric I/O
-        USREVAL =    UPP+4      ; i execution vector of EVAL 
-        USRCP   =    UPP+6      ; i point to top of dictionary
-        USRLAST =    UPP+8      ; i currently last name in dictionary (init: to LASTN)
-        NVMCP   =    UPP+10     ; i point to top of dictionary in Non Volatile Memory 
+        BGBASE  =    UPP+0      ; USRBASE replacement for background task 
+        USRBASE =    UPP+2      ; radix base for numeric I/O
+        USREVAL =    UPP+4      ; execution vector of EVAL 
+        USRPROMPT =  UPP+6      ; point to prompt word (default .OK)
+        USRCP   =    UPP+8      ; point to top of dictionary
+        USRLAST =    UPP+10     ; currently last name in dictionary (init: to LASTN)
+        NVMCP   =    UPP+12     ; point to top of dictionary in Non Volatile Memory 
 
         ; Null initialized core variables (growing down)
 
@@ -371,6 +371,7 @@ TBOOT:
 	.dw	BASEE	        ; Background BASE
 	.dw	BASEE	        ; BASE
 	.dw	INTER	        ; 'EVAL
+        .dw     DOTOK           ; 'PROMPT 
 	.dw	CTOP	        ; CP in RAM
         COLDCONTEXT = .
 	.dw	LASTN	        ; USRLAST 
@@ -383,6 +384,7 @@ TBOOT:
 	.dw	BASEE	        ; Background BASE
 	.dw	BASEE	        ; BASE
 	.dw	INTER	        ; 'EVAL
+        .dw     DOTOK           ; 'PROMPT 
 	.dw	CTOP	        ; CP in RAM
 	.dw	LASTN	        ; CONTEXT pointer
         .dw     END_SDCC_FLASH  ; CP in NVM
@@ -1385,6 +1387,7 @@ TIMM:
 	LDW     Y,TICKCNT
         JRA     YSTOR
 
+
 ;	BG	( -- a)
 ;	Return address of BGADDR vector
 	
@@ -1396,9 +1399,55 @@ TIMM:
 BGG:
 	LDW     Y,#(BGADDR)
         JRA     YSTOR
-
-
         .endif
+
+
+;	'PROMPT	( -- a)
+;	Return address of PROMPT vector
+	
+	.ifne	WORDS_LINKINTER
+        .dw	LINK
+
+	LINK =	.
+	.db	7
+	.ascii	"'PROMPT"
+TPROMPT:
+	LDW     Y,#(USRPROMPT)
+        JRA     YSTOR
+        .endif
+
+
+;       ( -- ) EMIT pace character for handshake in FILE mode 
+PACEE:
+	LDW     Y,#11           ; ASCII VT (same as in eForth Overview)
+        CALL    YSTOR
+        JP      EMIT
+
+;	HAND	( -- )
+;	set PROMPT vector to interactive mode
+	
+        .dw	LINK
+
+	LINK =	.
+	.db	4
+	.ascii	"HAND"
+HANDD:
+	LDW     Y,#(DOTOK)
+        LDW     USRPROMPT,Y
+        RET
+
+;	FILE	( -- )
+;	set PROMPT vector to file transfer mode
+	
+        .dw	LINK
+
+	LINK =	.
+	.db	4
+	.ascii	"FILE"
+FILEE:
+	LDW     Y,#(PACEE)
+        LDW     USRPROMPT,Y
+        RET
 
 
 ; Common functions
@@ -1415,7 +1464,7 @@ QDUP:
 	LDW     Y,X
 	LDW     Y,(Y)
 	JREQ	QDUP1
-        DECW    X               ;SUBW	X,#2    
+        DECW    X               ; SUBW	X,#2    
         DECW    X
 	LDW     (X),Y
 QDUP1:	RET
@@ -3315,13 +3364,7 @@ KTAP:
 	CALL	BLANK
 	JP	TAP
 KTAP1:	JP	BKSP
-KTAP2:	
-        .ifne   HAS_XONXOFF
-       	;CALL	DOLIT
-	;.dw	XOFF
-	;CALL	EMIT
-        .endif
-        CALL	DROP
+KTAP2:	CALL	DROP
 	CALL	SWAPP
 	CALL	DROP
 	JP	DUPP
@@ -3508,15 +3551,7 @@ HIOK:
 	CALL	DOTQP
 	.db	3
 	.ascii	" ok"
-DOTO1:	
-        .ifne   HAS_XONXOFF
-        CALL    CR 
-       	CALL	DOLIT
-	.dw	XON
-	JP	EMIT
-        .else
-        JP	CR
-        .endif
+DOTO1:	JP	CR
 
 ;	?STACK	( -- )
 ;	Abort if stack underflows.
@@ -3549,16 +3584,16 @@ QSTAC:
 EVAL:
 EVAL1:	CALL	TOKEN
 	CALL	DUPP
-	CALL	CAT	;?input stream empty
+	CALL	CAT	        ; ?input stream empty
 	CALL	QBRAN
 	.dw	EVAL2
 	CALL	TEVAL
 	CALL	ATEXE
-	CALL	QSTAC	;evaluate input, check stack
+	CALL	QSTAC	        ; evaluate input, check stack
 	CALL	BRAN
 	.dw	EVAL1
 EVAL2:	CALL	DROP
-	JP	DOTOK
+	JP	[USRPROMPT]     ; DOTOK or PACE
 
 ;	PRESET	( -- )
 ;	Reset data stack pointer and
