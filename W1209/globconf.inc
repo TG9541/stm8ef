@@ -27,4 +27,4 @@
         WORDS_EXTRASTACK = 1    ; Link/include stack core words: rp@ rp! R@ sp! sp@ DEPTH 
         WORDS_EXTRADEBUG = 0    ; Extra debug words: SEE
         WORDS_EXTRACORE =  1    ; Extra core words: I =0
-        WORDS_EXTRAMEM =   1    ; Extra memory words: BSR 2C@ 2C! LCK ULCK
+        WORDS_EXTRAMEM =   0    ; Extra memory words: BSR 2C@ 2C! LCK ULCK

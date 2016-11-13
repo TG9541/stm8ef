@@ -1,4 +1,4 @@
-;==========================================
+;========================================================
 ; STM8EF for STM8S003F3 (Value Line) devives
 ;
 ; This is derived work based on 
@@ -113,6 +113,7 @@
 
         HALF_DUPLEX  =    0     ; RS232 shared Rx/Tx line, bus style
         TERM_LINUX   =    1     ; LF terminates line 
+        HAS_XONXOFF  =    0     ; XOFF/XON flow control
 
         HAS_TXDSIM   =    0     ; TxD SW simulation
         HAS_LED7SEG  =    0     ; 7-seg LED on board
@@ -125,15 +126,15 @@
         HAS_CPNVM    =    0     ; Can compile to Flash, always interpret to RAM 
 
         WORDS_LINKCOMP =  0     ; Link comp. ext.: doLit next ?branch branch EXECUTE EXIT doVAR HERE $"| ."| [COMPILE] COMPILE LITERAL $," do$
-        WORDS_LINKINTER = 0     ; Link interpreter core words: hi 'BOOT rp! cp tmp >IN 'eval CONTEXT last parse PARSE WORD TOKEN NAME> SAME? find ^h TAP kTAP ACCEPT QUERY ABORT abort $INTERPRET INTER? .OK ?STACK EVAL PRESET QUIT ?UNIQUE $,n $COMPILE OVERT 
-        WORDS_LINKCHAR =  0     ; Link char I/O core words: #TIB hld TIB >CHAR COUNT DIGIT <# HOLD # #S SIGN #> str DIGIT? NUMBER? _TYPE 
+        WORDS_LINKINTER = 0     ; Link interpreter core words: hi 'BOOT cp tmp >IN 'eval CONTEXT last parse PARSE WORD TOKEN NAME> SAME? find ABORT abort $INTERPRET INTER? .OK ?STACK EVAL PRESET QUIT ?UNIQUE $,n $COMPILE OVERT 
+        WORDS_LINKCHAR =  0     ; Link char I/O core words: ACCEPT TAP kTAP QUERY #TIB hld TIB >CHAR COUNT DIGIT <# HOLD # #S SIGN #> str DIGIT? NUMBER? _TYPE 
         WORDS_LINKMISC =  0     ; Link core words of SEE DUMP WORDS 
 
         WORDS_BAREBONES  = 0    ; Remove convenience words: hi 
         WORDS_EXTRASTACK = 0    ; Link/include stack core words: rp@ rp! R@ sp! sp@ DEPTH 
         WORDS_EXTRADEBUG = 0    ; Extra debug words: SEE
-        WORDS_EXTRACORE = 0     ; Extra core words: I =0
-        WORDS_EXTRAMEM =  0     ; Extra memory words: BSR 2C@ 2C! LCK ULCK 
+        WORDS_EXTRACORE = 0     ; Extra core words: =0
+        WORDS_EXTRAMEM =  0     ; Extra memory words: BSR 2C@ 2C! LOCK ULOCK LOCKF ULOCKF
         WORDS_HWREG  =    0     ; Peripheral Register words
 
         ;*************************************************
@@ -281,6 +282,9 @@
         BKSPP   =      8       ; backspace
 	LF      =     10       ; line feed
 	CRR     =     13       ; carriage return
+        XON     =    '~'       ; resume transmission 
+        ; XON     =     17       ; resume transmission 
+        XOFF    =     19       ; pause transmission 
 	ERR     =     27       ; error escape
 	TIC     =     39       ; tick
 	CALLL   =     0xCD     ; CALL opcodes
@@ -391,7 +395,7 @@ TBOOT:
 ;	hi	( -- )
 ;	Display sign-on message.
 
-        .ifne   WORDS_LINKINTER
+        .ifne   (WORDS_LINKINTER + HAS_CPNVM)
 	.dw	LINK
 	
 	LINK =	.
@@ -494,9 +498,9 @@ _TIM2_UO_IRQHandler:
         .endif
 
         .ifne   HAS_BACKGROUND 
-        LDW     Y,TICKCNT
-        INCW    Y
-        LDW     TICKCNT,Y
+        LDW     X,TICKCNT
+        INCW    X
+        LDW     TICKCNT,X
 
         LDW     Y,BGADDR        ; address of background routine
         TNZW    Y               ; 0: background operation off 
@@ -611,7 +615,8 @@ QKEY:
         JRNE    SERKEY
         CALL    BKEY
         LD      A,(1,X)
-        ADDW    X,#2
+        INCW    X               ; ADDW   X,#2 
+        INCW    X
         TNZ     A
         JRNE    KEYPRESS     
         ; Bit7: flag press + 100*5ms hold before repetition
@@ -633,13 +638,16 @@ SERKEY:
 	BTJF    UART1_SR,#5,INCH ;check status
 	LD	A,UART1_DR	; get char in A
 ATOKEY:
-	SUBW	X,#2            ; push char
+	
+        DECW    X               ; push char
+        DECW    X               ;SUBW	X,#2             
 	LD	(1,X),A         
 	CLR	(X)
         DECW    Y               ; flag: char
         ; fall through
 INCH:   
-	SUBW	X,#2            ; push flag
+        DECW    X               ; push flag
+        DECW    X               ;SUBW	X,#2 
 	LDW	(X),Y           
 	RET
 
@@ -657,36 +665,39 @@ EMIT:
         POP	A
         AND	A,#0x20
         JRNE    11$  
-	CALL	EMIT7S	        ;display on 7-seg
+	CALL	EMIT7S	        ; display on 7-seg
         JRA     12$
         .endif
 11$:
         .ifne   HALF_DUPLEX
-	BRES	UART1_CR2,#2	;disable rx
+	BRES	UART1_CR2,#2	; disable rx
 
         .ifne   BOARD_W1209
 
 1$:     BTJT    TIM4_IER,#0,1$  ; wait for end of TX
  	LD      A,(1,X)
-        ADDW    X,#2       
+        INCW    X               ; ADDW   X,#2 
+        INCW    X
         LD      TIM4TXREG,A
         MOV    TIM4TCNT,#11     ; init next transfer 
         BSET    TIM4_IER,#0     ; enabale TIM4 interrupt
          
         .else                   ; HALF_DUPLEX, not BOARD_W1209
 	LD	A,(1,X)
-	ADDW	X,#2
-1$:	BTJF	UART1_SR,#7,1$  ;loop until tdre
-	LD	UART1_DR,A	;send A
-2$:	BTJF	UART1_SR,#6,2$  ;loop until tc
-	BSET	UART1_CR2,#2	;enable rx
+        INCW    X               ; ADDW   X,#2 
+        INCW    X
+1$:	BTJF	UART1_SR,#7,1$  ; loop until tdre
+	LD	UART1_DR,A	; send A
+2$:	BTJF	UART1_SR,#6,2$  ; loop until tc
+	BSET	UART1_CR2,#2	; enable rx
         .endif  
 
         .else                   ; not HALF_DUPLEX
 	LD	A,(1,X)
-	ADDW	X,#2
-3$:	BTJF	UART1_SR,#7,3$ ;loop until tdre
-	LD	UART1_DR,A	;send A
+        INCW    X               ; ADDW   X,#2 
+        INCW    X
+3$:	BTJF	UART1_SR,#7,3$  ; loop until tdre
+	LD	UART1_DR,A	; send A
         .endif
 12$:
 	RET
@@ -703,7 +714,9 @@ EMIT:
 	.ascii	"doLit"
 	.endif
 DOLIT:
-	SUBW    X,#2
+	
+        DECW    X               ;SUBW	X,#2    
+        DECW    X
         LDW     Y,(1,SP)
 	LDW     Y,(Y)
 	LDW     (X),Y
@@ -744,7 +757,8 @@ NEX1:   LDW     (3,SP),Y
 	.endif
 QBRAN:
 	LDW     Y,X
-	ADDW    X,#2
+        INCW    X               ; ADDW   X,#2 
+        INCW    X
 	LDW     Y,(Y)
 	JREQ	BRAN
 	POPW	Y
@@ -767,15 +781,14 @@ BRAN:
 ;	EXECUTE ( ca -- )
 ;	Execute	word at ca.
 
-	.ifne	WORDS_LINKCOMP
 	.dw	LINK
 	LINK =	.
 	.db	7
 	.ascii	"EXECUTE"
-	.endif
 EXECU:
 	LDW     Y,X
-	ADDW    X,#2
+        INCW    X               ; ADDW   X,#2 
+        INCW    X
 	LDW	Y,(Y)
 	JP	(Y)
 
@@ -803,7 +816,8 @@ EXIT:
 	.endif
 DOVAR:
 	POPW	Y	;get return addr (pfa)
-	SUBW    X,#2
+        DECW    X               ;SUBW	X,#2    
+        DECW    X
 	LDW     (X),Y	;push on stack
 	RET	;go to RET of EXEC
 
@@ -832,10 +846,10 @@ STORE:
 	.db	1
 	.ascii	"@"
 AT:
-	LDW     Y,X	        ;Y = a
+	LDW     Y,X	        ; Y = a
 	LDW     Y,(Y)           
 	LDW     Y,(Y)
-	LDW     (X),Y           ;w = @Y
+	LDW     (X),Y           ; w = @Y
 	RET	
 
 ;	C!	( c b -- )
@@ -847,9 +861,9 @@ AT:
 	.ascii	"C!"
 CSTOR:
 	LDW     Y,X
-	LDW     Y,(Y)	;Y=b
-	LD      A,(3,X)	;D = c
-	LD	(Y),A	;store c at b
+	LDW     Y,(Y)	        ; Y=b
+	LD      A,(3,X)	        ; D = c
+	LD	(Y),A	        ; store c at b
 	ADDW    X,#4
 	RET	
 
@@ -861,7 +875,7 @@ CSTOR:
 	.db	2
 	.ascii	"C@"
 CAT:
-	LDW     Y,X	        ;Y=b
+	LDW     Y,X	        ; Y=b
 	LDW     Y,(Y)
 	LD      A,(Y)
 	LD      (1,X),A
@@ -877,8 +891,9 @@ CAT:
 	.db	3
 	.ascii	"rp@"
 RPAT:
-	LDW     Y,SP	        ;save return addr
-	SUBW    X,#2
+	LDW     Y,SP	        ; save return addr
+        DECW    X
+        DECW    X
 	LDW     (X),Y
 	RET	
         .endif
@@ -911,7 +926,8 @@ RFROM:
 	POPW	Y	        ;save return addr
 	LDW     YTEMP,Y
 	POPW	Y
-	SUBW    X,#2
+        DECW    X
+        DECW    X
 	LDW     (X),Y
 	JP      [YTEMP]
 
@@ -929,7 +945,8 @@ RAT:
 	LDW     YTEMP,Y
 	POPW	Y
 	PUSHW   Y
-	SUBW    X,#2
+        DECW    X
+        DECW    X
 	LDW     (X),Y
 	JP      [YTEMP]
 
@@ -946,7 +963,8 @@ TOR:
 	LDW     Y,X
 	LDW     Y,(Y)
 	PUSHW   Y	;restore return addr
-	ADDW    X,#2
+        INCW    X               ; ADDW   X,#2 
+        INCW    X
 	JP      [YTEMP]
 
 
@@ -958,7 +976,8 @@ TOR:
 	.db	4
 	.ascii	"DROP"
 DROP:
-	ADDW X,#2	
+        INCW    X               ; ADDW   X,#2 
+        INCW    X
 	RET	
 
 ;	DUP	( w -- w w )
@@ -970,7 +989,8 @@ DROP:
 	.ascii	"DUP"
 DUPP:
 	LDW     Y,X
-	SUBW    X,#2
+        DECW    X               ;SUBW	X,#2    
+        DECW    X
 	LDW     Y,(Y)
 	LDW     (X),Y
 	RET	
@@ -1001,7 +1021,8 @@ SWAPP:
 	.db	4
 	.ascii	"OVER"
 OVER:
-	SUBW    X,#2
+        DECW    X               ;SUBW	X,#2    
+        DECW    X
 	LDW     Y,X
 	LDW     Y,(4,Y)
 	LDW     (X),Y
@@ -1039,7 +1060,8 @@ ANDD:
 	AND	A,(3,X)
 LDADROP:
 	LD      (3,X),A
-	ADDW    X,#2
+        INCW    X               ; ADDW   X,#2 
+        INCW    X
 	RET
 
 ;	OR	( w w -- w )
@@ -1267,7 +1289,8 @@ LAST:
 ;      core only  ( a -- )
 ;      push Y to stack
 YSTOR:        
-	SUBW    X,#2
+        DECW    X               ;SUBW	X,#2    
+        DECW    X
 	LDW     (X),Y
 	RET
 
@@ -1381,7 +1404,7 @@ BGG:
 ; Common functions
 
 ;	?DUP	( w -- w w | 0 )
-;	Dup tos if its is not zero.
+;	Dup tos if its not zero.
 
 	.dw	LINK
 	
@@ -1392,7 +1415,8 @@ QDUP:
 	LDW     Y,X
 	LDW     Y,(Y)
 	JREQ	QDUP1
-	SUBW    X,#2
+        DECW    X               ;SUBW	X,#2    
+        DECW    X
 	LDW     (X),Y
 QDUP1:	RET
 
@@ -1441,14 +1465,8 @@ DDROP:
 	.db	4
 	.ascii	"2DUP"
 DDUP:
-	SUBW    X,#4
-	LDW     Y,X
-	LDW     Y,(6,Y)
-	LDW     (2,X),Y
-	LDW     Y,X
-	LDW     Y,(4,Y)
-	LDW     (X),Y
-	RET
+	CALL    OVER
+        JP      OVER
 
 ;	+	( w w -- sum )
 ;	Add top two items.
@@ -1462,7 +1480,8 @@ PLUS:
 	LDW     Y,X
 	LDW     Y,(Y)
 	LDW     YTEMP,Y
-	ADDW    X,#2
+        INCW    X               ; ADDW   X,#2 
+        INCW    X
 	LDW     Y,X
 	LDW     Y,(Y)
 	ADDW    Y,YTEMP
@@ -1535,7 +1554,8 @@ SUBB:
 	LDW     Y,X
 	LDW     Y,(Y)
 	LDW     YTEMP,Y
-	ADDW    X,#2
+        INCW    X               ; ADDW   X,#2 
+        INCW    X
 	LDW     Y,X
 	LDW     Y,(Y)
 	SUBW    Y,YTEMP
@@ -1571,7 +1591,8 @@ EQUAL:
 	LDW     Y,X	;D = n2
 	LDW     Y,(Y)
 	LDW     YTEMP,Y
-	ADDW    X,#2
+        INCW    X               ; ADDW   X,#2 
+        INCW    X
 	LDW     Y,X
 	LDW     Y,(Y)
 	CPW     Y,YTEMP	;if n2 <> n1
@@ -1596,7 +1617,8 @@ ULESS:
 	LDW     Y,X	;D = n2
 	LDW     Y,(Y)
 	LDW     YTEMP,Y
-	ADDW    X,#2
+        INCW    X               ; ADDW   X,#2 
+        INCW    X
 	LDW     Y,X
 	LDW     Y,(Y)
 	CPW     Y,YTEMP	;if n2 <> n1
@@ -1619,7 +1641,8 @@ LESS:
 	LDW     Y,X	;D = n2
 	LDW     Y,(Y)
 	LDW     YTEMP,Y
-	ADDW    X,#2
+        INCW    X               ; ADDW   X,#2 
+        INCW    X
 	LDW     Y,X
 	LDW     Y,(Y)
 	CPW     Y,YTEMP	;if n2 <> n1
@@ -1646,7 +1669,8 @@ MAX:
 	CPW     Y,YTEMP	;if n2 <> n1
 	JRSLT	MAX1
 	LDW     (2,X),Y
-MAX1:   ADDW    X,#2
+MAX1:   INCW    X               ; ADDW   X,#2 
+        INCW    X
 	RET	
 
 ;	MIN	( n n -- n )
@@ -1666,7 +1690,8 @@ MIN:
 	CPW     Y,YTEMP	;if n2 <> n1
 	JRSGT	MIN1
 	LDW     (2,X),Y
-MIN1:   ADDW    X,#2
+MIN1:   INCW    X               ; ADDW   X,#2 
+        INCW    X
 	RET	
 
 ;	WITHIN	( u ul uh -- t )
@@ -1708,7 +1733,8 @@ UMMOD:
 	CPW     X,YTEMP
 	JRULE   MMSM1   ; X is still on the R-stack
         POPW    X
-	ADDW    X,#2	; pop off 1 level
+        INCW    X               ; pop off 1 level
+        INCW    X               ; ADDW   X,#2 
 	LDW     Y,#0x0FFFF
 	LDW     (X),Y
 	CLRW    Y
@@ -1729,7 +1755,8 @@ MMSM4:
 	SRAW    X
 	LDW     YTEMP,X	; done, save remainder
         POPW    X
-	ADDW    X,#2	; drop
+        INCW    X               ; drop 
+        INCW    X               ; ADDW   X,#2 
 	LDW     (X),Y
 	LDW     Y,YTEMP	; save quotient
 	LDW     (2,X),Y
@@ -2062,7 +2089,8 @@ DEPTH:
 	SUBW    Y,YTEMP	;#bytes = SP0 - X
 	SRAW    Y	;D = #stack items
 	DECW    Y
-	SUBW    X,#2
+        DECW    X               ;SUBW	X,#2    
+        DECW    X
 	LDW     (X),Y	; if neg, underflow
 	RET
 
@@ -2209,11 +2237,13 @@ PAD:
 ;	@EXECUTE	( a -- )
 ;	Execute vector stored in address a.
 
+	.ifne	WORDS_LINKCOMP
 	.dw	LINK
 	
 	LINK =	.
 	.db	8
 	.ascii	"@EXECUTE"
+        .endif        
 ATEXE:
 	CALL	AT
 	CALL	QDUP	;?address or zero
@@ -2745,6 +2775,7 @@ CR:
 	.dw	LF
 	JP	EMIT
 
+
 ;	do$	( -- a )
 ;	Return	address of a compiled
 ;	string.
@@ -3060,7 +3091,7 @@ WORDD:
 ;	Parse a word from input stream
 ;	and copy it to name dictionary.
 
-	.ifne	WORDS_LINKINTER
+	.ifne	WORDS_LINKCOMP
 	.dw	LINK
 	
 	LINK =	.
@@ -3207,7 +3238,7 @@ NAMEQ:
 ;	^H	( bot eot cur -- bot eot cur )
 ;	Backup cursor by one character.
 
-	.ifne	WORDS_LINKINTER
+	.ifne	WORDS_LINKCHAR
 	.dw	LINK
 	
 	LINK =	.
@@ -3240,7 +3271,7 @@ BACK1:	RET
 ;	Accept and echo key stroke
 ;	and bump cursor.
 
-	.ifne	WORDS_LINKINTER
+	.ifne	WORDS_LINKCHAR
 	.dw	LINK
 	
 	LINK =	.
@@ -3260,7 +3291,7 @@ TAP:
 ;	Process a key stroke,
 ;	CR or backspace.
 
-	.ifne	WORDS_LINKINTER
+	.ifne	WORDS_LINKCHAR
 	.dw	LINK
 	
 	LINK =	.
@@ -3284,7 +3315,13 @@ KTAP:
 	CALL	BLANK
 	JP	TAP
 KTAP1:	JP	BKSP
-KTAP2:	CALL	DROP
+KTAP2:	
+        .ifne   HAS_XONXOFF
+       	;CALL	DOLIT
+	;.dw	XOFF
+	;CALL	EMIT
+        .endif
+        CALL	DROP
 	CALL	SWAPP
 	CALL	DROP
 	JP	DUPP
@@ -3293,7 +3330,7 @@ KTAP2:	CALL	DROP
 ;	Accept characters to input
 ;	buffer. Return with actual count.
 
-	.ifne	WORDS_LINKINTER
+	.ifne	WORDS_LINKCHAR
 	.dw	LINK
 	
 	LINK =	.
@@ -3328,7 +3365,7 @@ ACCP4:	CALL	DROP
 ;	Accept input stream to
 ;	terminal input buffer.
 
-	.ifne	WORDS_LINKINTER
+	.ifne	WORDS_LINKCHAR
 	.dw	LINK
 	
 	LINK =	.
@@ -3465,13 +3502,21 @@ INTERQ:
 	.endif
 DOTOK:
 	CALL	INTERQ
-	CALL	QBRAN
+	CALL	QBRAN                             ; TODO QBRAN
 	.dw	DOTO1
 HIOK:
 	CALL	DOTQP
 	.db	3
 	.ascii	" ok"
-DOTO1:	JP	CR
+DOTO1:	
+        .ifne   HAS_XONXOFF
+        CALL    CR 
+       	CALL	DOLIT
+	.dw	XON
+	JP	EMIT
+        .else
+        JP	CR
+        .endif
 
 ;	?STACK	( -- )
 ;	Abort if stack underflows.
@@ -3723,7 +3768,8 @@ NEXT:
 	.db	(1)
 	.ascii	"I"
 IGET:
-	SUBW    X,#2        
+        DECW    X               ;SUBW	X,#2    
+        DECW    X
 	LDW     Y,(3,SP)
         LDW     (X),Y
         RET
@@ -4521,14 +4567,19 @@ UNLOCK:
 LOCK:
         BRES    FLASH_IAPSR,#3
         RET
+         .endif
 
+        .ifne   WORDS_EXTRAMEM + HAS_CPNVM
+         
 ;       ULOCKF  ( -- )
 ;       Unlock Flash (STM8S)
 	.dw	LINK
         
+        .ifne   WORDS_EXTRAMEM
         LINK =  .
 	.db	(6)
 	.ascii	"ULOCKF"
+        .endif
 UNLOCK_FLASH:
         MOV     FLASH_PUKR,#0x56
         MOV     FLASH_PUKR,#0xAE
@@ -4538,15 +4589,17 @@ UNLOCK_FLASH:
 
 ;       LOCKF  ( -- )
 ;       Lock Flash (STM8S)
+        .ifne   WORDS_EXTRAMEM
 	.dw	LINK
         
         LINK =  .
 	.db	(5)
 	.ascii	"LOCKF"
+        .endif
 LOCK_FLASH:
         BRES    FLASH_IAPSR,#1
         RET
-         .endif
+        .endif
 
          
 ;-----------------------------------------------
@@ -4578,7 +4631,8 @@ BKEY:
         CLR     A
         .endif
         .endif
-        SUBW    X,#2
+        DECW    X               ;SUBW	X,#2    
+        DECW    X
         LD      (1,X),A
         CLR     (X)
         RET
@@ -4673,7 +4727,8 @@ PUT7SA:
         LDW     Y,LED7MSB
         RLWA    Y
         LDW     LED7MSB,Y
-        ADDW    X,#2
+        INCW    X               ; ADDW   X,#2 
+        INCW    X
         RET
         .endif
 
@@ -4688,7 +4743,8 @@ PUT7SA:
 OUTSTOR:
         LD      A,(1,X)
         LD      OUTPUTS,A
-        ADDW    X,#2
+        INCW    X               ; ADDW   X,#2 
+        INCW    X
         .ifne   BOARD_W1209
         RRC     A
         BCCM    PA_ODR,#3       ; W1209 relay
