@@ -1402,6 +1402,7 @@ BGG:
         .endif
 
 
+        .ifne   HAS_CPNVM
 ;	'PROMPT	( -- a)
 ;	Return address of PROMPT vector
 	
@@ -1448,6 +1449,7 @@ FILEE:
 	LDW     Y,#(PACEE)
         LDW     USRPROMPT,Y
         RET
+        .endif
 
 
 ; Common functions
