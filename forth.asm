@@ -319,10 +319,10 @@ COLD:
 
 	CALL	DOLIT
 	.dw	UZERO
-	CALL	DOLIT
-        .dw     USRRAMINIT
-	CALL	DOLIT
-	.dw	(ULAST-UZERO)
+	CALL	DOLITC
+        .db     USRRAMINIT
+	CALL	DOLITC
+	.db	(ULAST-UZERO)
 	CALL	CMOVE	        ; initialize user area
 
 	CALL	PRESE	        ; initialize data stack, TIB 
@@ -356,6 +356,7 @@ COLD:
         .endif
 TBOOT:
 	CALL	DOVAR
+        UBOOT = .
         .ifne   WORDS_BAREBONES
         .dw     HIOK
         .else
@@ -377,6 +378,8 @@ TBOOT:
         ULAST = .
 
         ; Second copy of USR setting for NVM reset
+        UDEFAULTS = .
+        .dw     HI              ; 'BOOT 
 	.dw	BASEE	        ; Background BASE
 	.dw	BASEE	        ; BASE
 	.dw	INTER	        ; 'EVAL
@@ -723,6 +726,18 @@ DOLIT:
 	POPW	Y
 	JP      (2,Y)
 
+;		( -- C )
+;	Push an inline literal character (8 bit).
+DOLITC:
+        DECW    X               ; LSB = literal 
+        LDW     Y,(1,SP)
+	LD      A,(Y)
+	LD      (X),A
+        DECW    X               ; MSB = 0
+        CLR     A
+	LD      (X),A
+	POPW	Y
+	JP      (1,Y)
 
 ;	next	( -- )
 ;	Code for single index loop.
@@ -2108,19 +2123,19 @@ TWOSL:
 	.ascii	">CHAR"
 	.endif
 TCHAR:
-	CALL	DOLIT
-	.dw	0x07F
+	CALL	DOLITC
+	.db	0x07F
 	CALL	ANDD
 	CALL	DUPP	;mask msb
-	CALL	DOLIT
-	.dw	127
+	CALL	DOLITC
+	.db	127
 	CALL	BLANK
 	CALL	WITHI	;check for printable
 	CALL	QBRAN
 	.dw	TCHA1
 	CALL	DROP
-	CALL	DOLIT
-	.dw	0x05F	; "_"	;replace non-printables
+	CALL	DOLITC
+	.db	0x05F	; "_"	;replace non-printables
 TCHA1:	RET
 
 ;	DEPTH	( -- n )
@@ -2274,14 +2289,14 @@ PAD:
         POP	A
         AND	A,#0x20
         JRNE    1$
-       	CALL	DOLIT              
-	.dw	(PADBG+1)       ; dedicated memory for PAD in background task
+       	CALL	DOLITC              
+	.db	(PADBG+1)       ; dedicated memory for PAD in background task
         RET     
 1$:
         .endif        
 	CALL	HERE            ; regular PAD with offset to HERE
-	CALL	DOLIT
-	.dw	PADOFFS
+	CALL	DOLITC
+	.db	PADOFFS
 	JP	PLUS
 
 ;	@EXECUTE	( a -- )
@@ -2395,16 +2410,16 @@ PACKS:
 	.ascii	"DIGIT"
         .endif
 DIGIT:
-	CALL	DOLIT
-	.dw	9
+	CALL	DOLITC
+	.db     9
 	CALL	OVER
 	CALL	LESS
-	CALL	DOLIT
-	.dw	7
+	CALL	DOLITC
+	.db	7
 	CALL	ANDD
 	CALL	PLUS
-	CALL	DOLIT
-	.dw	48	;'0'
+	CALL	DOLITC
+	.db	48	;'0'
 	JP	PLUS
 
 ;	EXTRACT ( n base -- n c )
@@ -2563,8 +2578,8 @@ STR:
 	.db	3
 	.ascii	"HEX"
 HEX:
-	CALL	DOLIT
-	.dw	16
+	CALL	DOLITC
+	.db	16
 	CALL	BASE
 	JP	STORE
 
@@ -2578,8 +2593,8 @@ HEX:
 	.db	7
 	.ascii	"DECIMAL"
 DECIM:
-	CALL	DOLIT
-	.dw	10
+	CALL	DOLITC
+	.db	10
 	CALL	BASE
 	JP	STORE
 
@@ -2598,21 +2613,21 @@ DECIM:
 	.endif
 DIGTQ:
 	CALL	TOR
-	CALL	DOLIT
-	.dw	48	; "0"
+	CALL	DOLITC
+	.db	48	; "0"
 	CALL	SUBB
-	CALL	DOLIT
-	.dw	9
+	CALL	DOLITC
+	.db	9
 	CALL	OVER
 	CALL	LESS
 	CALL	QBRAN
 	.dw	DGTQ1
-	CALL	DOLIT
-	.dw	7
+	CALL	DOLITC
+	.db	7
 	CALL	SUBB
 	CALL	DUPP
-	CALL	DOLIT
-	.dw	10
+	CALL	DOLITC
+	.db	10
 	CALL	LESS
 	CALL	ORR
 DGTQ1:	CALL	DUPP
@@ -2639,8 +2654,8 @@ NUMBQ:
 	CALL	COUNT
 	CALL	OVER
 	CALL	CAT
-	CALL	DOLIT
-	.dw	36	; "0x0"
+	CALL	DOLITC
+	.db	36	; "0x0"
 	CALL	EQUAL
 	CALL	QBRAN
 	.dw	NUMQ1
@@ -2651,8 +2666,8 @@ NUMBQ:
 	CALL	ONEM
 NUMQ1:	CALL	OVER
 	CALL	CAT
-	CALL	DOLIT
-	.dw	45	; "-"
+	CALL	DOLITC
+	.db	45	; "-"
 	CALL	EQUAL
 	CALL	TOR
 	CALL	SWAPP
@@ -2749,8 +2764,8 @@ NUFQ:
 	.dw	NUFQ1
 	CALL	DDROP
 	CALL	KEY
-	CALL	DOLIT
-	.dw	CRR
+	CALL	DOLITC
+	.db	CRR
 	JP	EQUAL
 NUFQ1:	RET
 
@@ -2817,12 +2832,12 @@ TYPE2:
 	.ascii	"CR"
 CR:
         .ifeq TERM_LINUX
-	CALL	DOLIT
-	.dw	CRR
+	CALL	DOLITC
+	.db	CRR
 	CALL	EMIT
         .endif
-	CALL	DOLIT
-	.dw	LF
+	CALL	DOLITC
+	.db	LF
 	JP	EMIT
 
 
@@ -2945,8 +2960,8 @@ UDOT:
 DOT:
 	CALL	BASE
 	CALL	AT
-	CALL	DOLIT
-	.dw	10
+	CALL	DOLITC
+	.db	10
 	CALL	XORR	;?decimal
 	CALL	QBRAN
 	.dw	DOT1
@@ -3085,8 +3100,8 @@ PARSE:
 	.db	(IMEDD+2)
 	.ascii	".("
 DOTPR:
-	CALL	DOLIT
-	.dw	41	; ")"
+	CALL	DOLITC
+	.db	41	; ")"
 	CALL	PARSE
 	JP	TYPES
 
@@ -3100,8 +3115,8 @@ DOTPR:
 	.db	(IMEDD+1)
 	.ascii	"("
 PAREN:
-	CALL	DOLIT
-	.dw	41	; ")"
+	CALL	DOLITC
+	.db	41	; ")"
 	CALL	PARSE
 	JP	DDROP
 
@@ -3167,8 +3182,8 @@ TOKEN:
         .endif
 NAMET:
 	CALL	COUNT
-	CALL	DOLIT
-	.dw	31
+	CALL	DOLITC
+	.db	31
 	CALL	ANDD
 	JP	PLUS
 
@@ -3305,15 +3320,15 @@ BKSP:
 	CALL	QBRAN
 	.dw	BACK1
         .ifeq   HALF_DUPLEX
-	CALL	DOLIT
-	.dw	BKSPP
+	CALL	DOLITC
+	.db	BKSPP
 	CALL	EMIT
         .endif
 	CALL	ONEM
 	CALL	BLANK
 	CALL	EMIT
-	CALL	DOLIT
-	.dw	BKSPP
+	CALL	DOLITC
+	.db	BKSPP
 	JP	EMIT
 BACK1:	RET
 
@@ -3350,14 +3365,14 @@ TAP:
 	.endif
 KTAP:
 	CALL	DUPP
-	CALL	DOLIT
-	.dw	CRR
+	CALL	DOLITC
+	.db	CRR
 	CALL	XORR
 	CALL	QBRAN
 	.dw	KTAP2
 
-	CALL	DOLIT
-	.dw	BKSPP
+	CALL	DOLITC
+	.db	BKSPP
 	CALL	XORR
 	CALL	QBRAN
 	.dw	KTAP1
@@ -3392,8 +3407,8 @@ ACCP1:	CALL	DDUP
 	CALL	KEY
 	CALL	DUPP
 	CALL	BLANK
-	CALL	DOLIT
-	.dw	127
+	CALL	DOLITC
+	.db	127
 	CALL	WITHI
 	CALL	QBRAN
 	.dw	ACCP2
@@ -3418,8 +3433,8 @@ ACCP4:	CALL	DROP
 	.endif
 QUERY:
 	CALL	TIB
-	CALL	DOLIT
-	.dw	TIBLENGTH                      
+	CALL	DOLITC
+	.db	TIBLENGTH                      
 	CALL	ACCEP                         
 	CALL	NTIB
 	CALL	STORE
@@ -3462,8 +3477,8 @@ ABORQ:
 ABOR1:	CALL	SPACE
 	CALL	COUNT
 	CALL	TYPES
-	CALL	DOLIT
-	.dw	63 ; "?"
+	CALL	DOLITC
+	.db	63 ; "?"
 	CALL	EMIT
 	CALL	CR
 	JP	ABORT	;pass error string
@@ -3757,8 +3772,8 @@ LITER:
 	.ascii	'$,"'
         .endif
 STRCQ:
-	CALL	DOLIT
-	.dw	34	; "
+	CALL	DOLITC
+	.db	34	; "
 	CALL	PARSE
 	CALL	HERECP
 	CALL	PACKS	;string to code dictionary
@@ -4115,11 +4130,11 @@ OVERT:
         CALL    QBRAN
         .dw     1$
         CALL    DUPP             
-        CALL    DOLIT
-        .dw     NVMCONTEXT
+        CALL    DOLITC
+        .db     NVMCONTEXT
         CALL    STORE           ; update NVMCONTEXT
-        CALL    DOLIT
-        .dw     CTOP            ; is there any vocabulary in RAM?
+        CALL    DOLITC
+        .db     CTOP            ; is there any vocabulary in RAM?
         CALL    DUPP
         CALL    AT
         CALL    QBRAN
@@ -4128,8 +4143,8 @@ OVERT:
 2$:
         CALL    DROP
 1$:
-        CALL    DOLIT
-        .dw     USRCONTEXT            
+        CALL    DOLITC
+        .db     USRCONTEXT            
         JP      STORE           ; or update USRCONTEXT
         .else
 	CALL	CNTXT
@@ -4174,8 +4189,8 @@ RBRAC:
 	.db	5
 	.ascii	"CALL,"
 JSRC:
-	CALL	DOLIT
-	.dw	CALLL	;CALL
+	CALL	DOLITC
+	.db	CALLL	        ; opcode CALL
 	CALL	CCOMMA
 	JP	COMMA
 
@@ -4297,16 +4312,16 @@ UTYP2:	CALL	DONXT
 	.endif
 DUMPP:
 	CALL	OVER
-	CALL	DOLIT
-	.dw	4
+	CALL	DOLITC
+	.db	4
 	CALL	UDOTR	;display address
 	CALL	SPACE
 	CALL	TOR	;start count down loop
 	JRA	PDUM2	;skip first pass
 PDUM1:	CALL	DUPP
 	CALL	CAT
-	CALL	DOLIT
-	.dw	3
+	CALL	DOLITC
+	.db	3
 	CALL	UDOTR	;display numeric data
 	CALL	ONEP	;increment address
 PDUM2:	CALL	DONXT
@@ -4327,13 +4342,13 @@ DUMP:
 	CALL	AT
 	CALL	TOR
 	CALL	HEX	;save radix, set hex
-	CALL	DOLIT
-	.dw	16
+	CALL	DOLITC
+	.db	16
 	CALL	SLASH	;change count to lines
 	CALL	TOR	;start count down loop
 DUMP1:	CALL	CR
-	CALL	DOLIT
-	.dw	16
+	CALL	DOLITC
+	.db	16
 	CALL	DDUP
 	CALL	DUMPP	;display numeric
 	CALL	ROT
@@ -4387,8 +4402,8 @@ DOTID:
 	CALL	QBRAN
 	.dw	DOTI1
 	CALL	COUNT
-	CALL	DOLIT
-	.dw	0x01F
+	CALL	DOLITC
+	.db	0x01F
 	CALL	ANDD	;mask lexicon bits
 	JP	UTYPE
 DOTI1:	CALL	DOTQP
@@ -4939,6 +4954,27 @@ RAMM:
         CALL    LOCK_FLASH
 1$:
         RET
+
+
+;       RESET  ( -- )
+;       Reset Flash dictionary and 'BOOT to defaults and restart
+	.dw	LINK
+        
+        LINK =  .
+	.db	(5)
+	.ascii	"RESET"
+RESETT:        
+	CALL    UNLOCK_FLASH
+        CALL	DOLIT
+	.dw     UDEFAULTS	
+	CALL	DOLIT
+        .dw     UBOOT
+	CALL	DOLIT
+	.dw	(ULAST-UBOOT)
+	CALL	CMOVE	        ; initialize user area
+	CALL    LOCK_FLASH
+        JP      COLD
+ 
 
         .endif
          
