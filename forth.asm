@@ -200,10 +200,8 @@
         TICKCNT =       0x52    ; 16 bit ticker (counts up)
         TICKCNTL =      0x53    ; ticker LSB
 
-        BGHLD    =      0x54    ; USRHLD  for background task (8 bit)
-
         .ifne   HAS_KEYS
-        KEYREPET =      0x55    ; board key repetition control (8 bit)
+        KEYREPET =      0x54    ; board key repetition control (8 bit)
         .endif
         
         BSPPSIZE  =     32      ; Size of data stack for background tasks
@@ -281,10 +279,8 @@
 	BASEE   =     10       ; default radix
         BKSPP   =      8       ; backspace
 	LF      =     10       ; line feed
+        PACE    =     11       ; pace character for host handshake (ASCII VT) 
 	CRR     =     13       ; carriage return
-        XON     =    '~'       ; resume transmission 
-        ; XON     =     17       ; resume transmission 
-        XOFF    =     19       ; pause transmission 
 	ERR     =     27       ; error escape
 	TIC     =     39       ; tick
 	CALLL   =     0xCD     ; CALL opcodes
@@ -504,18 +500,26 @@ _TIM2_UO_IRQHandler:
         INCW    X
         LDW     TICKCNT,X
 
-        LDW     Y,BGADDR        ; address of background routine
+        LDW     Y,BGADDR        ; address of background task
         TNZW    Y               ; 0: background operation off 
         JREQ    1$
 
         LDW     X,YTEMP         ; Save context 
         PUSHW   X
-        CALL    BGSWAPBASEHLD
+        CALL    BGSWAPBASE
+        
+        LDW     X,USRHLD
+        PUSHW   X
+        LDW     X,#(PADBG)      ; in background task, alway start with an empty PAD
+        LDW     USRHLD,X
         
         LDW     X,#(BSPP)       ; init data stack for background task to BSPP 
         CALL    (Y)
 
-        CALL    BGSWAPBASEHLD
+        POPW    X
+        LDW     USRHLD,X
+
+        CALL    BGSWAPBASE
         POPW    X
         LDW     YTEMP,X
 1$:
@@ -528,17 +532,11 @@ _TIM2_UO_IRQHandler:
 
         ; Helper routine for swapping USRBASE and USRHLD in background
         .ifne   HAS_BACKGROUND 
-BGSWAPBASEHLD:
+BGSWAPBASE:
         ; 8 bit since BASE is never going to be more than 80 = 128-ORD('0')
         LD      A,USRBASE+1
         MOV     USRBASE+1,BGBASE+1
         LD      BGBASE+1,A
-        
-
-        ; 8 bit since 32 chars are enough for 32 digits BASE 2
-        LD      A,USRHLD+1
-        MOV     USRHLD+1,BGHLD
-        LD      BGHLD,A
         RET
         .endif
 
@@ -1420,9 +1418,10 @@ TPROMPT:
 
 ;       ( -- ) EMIT pace character for handshake in FILE mode 
 PACEE:
-	LDW     Y,#11           ; ASCII VT (same as in eForth Overview)
+	LDW     Y,#PACE      ; pace character for host handshake 
         CALL    YSTOR
         JP      EMIT
+
 
 ;	HAND	( -- )
 ;	set PROMPT vector to interactive mode
