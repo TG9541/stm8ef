@@ -682,7 +682,7 @@ EMIT:
         INCW    X               ; ADDW   X,#2 
         INCW    X
         LD      TIM4TXREG,A
-        MOV    TIM4TCNT,#11     ; init next transfer 
+        MOV     TIM4TCNT,#11     ; init next transfer 
         BSET    TIM4_IER,#0     ; enabale TIM4 interrupt
          
         .else                   ; HALF_DUPLEX, not BOARD_W1209
