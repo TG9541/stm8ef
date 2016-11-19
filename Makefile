@@ -15,7 +15,7 @@ build:
 clean:
 	rm -rf out/*
 
-erease:
+defaults:
 	./stm8flash -c stlinkv2 -p stm8s103f3 -s opt -w tools/stm8s103FactoryDefaults.bin
 
 else
