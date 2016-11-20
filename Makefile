@@ -50,5 +50,5 @@ endif
 #out:
 #	${MKDIR_P} 
 
-.PHONY: all zip build 
+.PHONY: all zip build defaults
 
