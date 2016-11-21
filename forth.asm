@@ -3,11 +3,8 @@
 ;
 ; This is derived work based on 
 ; http://www.forth.org/svfig/kk/07-2010.html
-;
-; Attempts to contact the author over copyright have
-; not been successful so far. Early eForth publications 
-; indicate that the license is akin to CC BY-SA 2.5
-; (share, adapt, attribution, sharealike)
+; 
+; Refer to LICENSE.md for license information.
 ;
 ;--------------------------------------------------------
 ; Original author, and copyright:

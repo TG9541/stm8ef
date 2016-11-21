@@ -115,18 +115,8 @@ For creating a variant, simply create a copy of the base variant's folder (e.g. 
 
 ## Disclaimer, copyright
 
-This is a hobby project! Don't use this code for anything that requires any kind of correctness, support, dependability, or functional safety!
+Tl;dr: this is a hobby project! Don't use this code for anything that requires any kind of correctness, support, dependability. Different licenses may apply to the code in this GitHub repository, some of which may require you to make derived work publically available!
 
-Different licenses may apply to the code in this GitHub repository, some of which may require you to make derived work publically available!
-
-My contribution to the code is Copyright (c) 2016 TG9541
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-(MIT License)
+Please refer to LICENSE.md for details.
 
 [WG1]: https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets
