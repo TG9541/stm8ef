@@ -1,4 +1,4 @@
-;========================================================
+;========================================gg================
 ; STM8EF for STM8S003F3 (Value Line) devives
 ;
 ; This is derived work based on 
@@ -120,6 +120,7 @@
         
         HAS_BACKGROUND =  0     ; Background Forth task (TIM2 ticker)
         HAS_CPNVM    =    0     ; Can compile to Flash, always interpret to RAM 
+        HAS_DOES     =    0     ; DOES> extension
 
         WORDS_LINKCOMP =  0     ; Link comp. ext.: doLit next ?branch branch EXECUTE EXIT doVAR HERE $"| ."| [COMPILE] COMPILE LITERAL $," do$
         WORDS_LINKINTER = 0     ; Link interpreter core words: hi 'BOOT cp tmp >IN 'eval CONTEXT last parse PARSE WORD TOKEN NAME> SAME? find ABORT abort $INTERPRET INTER? .OK ?STACK EVAL PRESET QUIT ?UNIQUE $,n $COMPILE OVERT 
@@ -704,7 +705,7 @@ EMIT:
 
 
 ; The kernel
-;	doLIT	( -- w )
+;	doLit	( -- w )
 ;	Push an inline literal.
 
 	.ifne	WORDS_LINKCOMP
@@ -4244,18 +4245,30 @@ IMMED:
 	.ascii	"CREATE"
 CREAT:
         .ifne   HAS_CPNVM
-        CALL    RBRAC           ; make HERE return CP even in INTERPRETER mode
+        CALL    TEVAL
+        CALL    AT
+        CALL    TOR             ; save TEVAL
+        CALL    RBRAC           ; "]" make HERE return CP even in INTERPRETER mode
         .endif
+
 	CALL	TOKEN
 	CALL	SNAME
-	CALL	OVERT
+        CALL    OVERT
+
+        .ifne   HAS_CPNVM
+        CALL    RFROM
+        CALL    TEVAL           ; restore TEVAL
+        CALL    STORE           ; from here on ',', 'C,', '$,"' and 'ALLOT' write to CP
+        .endif
+
+        .ifne   HAS_DOES
+	CALL	COMPI
+        CALL    NOPP            ; Do nothing, placeholder for DOES
+        .endif
 	CALL	COMPI
 	CALL	DOVAR
-        .ifne   HAS_CPNVM
-        CALL    LBRAC           ; from here on ',', 'C,', '$,"' and 'ALLOT' write to CP
-        .endif
+NOPP:
 	RET
-
 
 ;	VARIABLE	( -- ; <string> )
 ;	Compile a new variable

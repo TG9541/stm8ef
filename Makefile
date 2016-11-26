@@ -16,7 +16,7 @@ clean:
 	rm -rf out/*
 
 defaults:
-	./stm8flash -c stlinkv2 -p stm8s103f3 -s opt -w tools/stm8s103FactoryDefaults.bin
+	stm8flash -c stlinkv2 -p stm8s103f3 -s opt -w tools/stm8s103FactoryDefaults.bin
 
 else
 
@@ -34,7 +34,7 @@ forth.rel: forth.asm $(FDEPS)
 	sdasstm8 -I./$(BOARD) -plosgffw out/$(BOARD)/forth.rel forth.asm 
 
 flash: main.ihx  
-	./stm8flash -c stlinkv2 -p stm8s103f3 -w out/$(BOARD)/$(BOARD).ihx
+	stm8flash -c stlinkv2 -p stm8s103f3 -w out/$(BOARD)/$(BOARD).ihx
 
 directories: out
 
