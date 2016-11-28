@@ -1,4 +1,4 @@
-;========================================gg================
+;========================================================
 ; STM8EF for STM8S003F3 (Value Line) devives
 ;
 ; This is derived work based on 
@@ -110,6 +110,7 @@
 
         HALF_DUPLEX  =    0     ; RS232 shared Rx/Tx line, bus style
         TERM_LINUX   =    1     ; LF terminates line 
+        CASEINSENSITIVE = 0     ; Case insensitive dictionary search
 
         HAS_TXDSIM   =    0     ; TxD SW simulation
         HAS_LED7SEG  =    0     ; 7-seg LED on board
@@ -122,8 +123,8 @@
         HAS_CPNVM    =    0     ; Can compile to Flash, always interpret to RAM 
         HAS_DOES     =    0     ; DOES> extension
 
-        WORDS_LINKCOMP =  0     ; Link comp. ext.: doLit next ?branch branch EXECUTE EXIT doVAR HERE $"| ."| [COMPILE] COMPILE LITERAL $," do$
-        WORDS_LINKINTER = 0     ; Link interpreter core words: hi 'BOOT cp tmp >IN 'eval CONTEXT last parse PARSE WORD TOKEN NAME> SAME? find ABORT abort $INTERPRET INTER? .OK ?STACK EVAL PRESET QUIT ?UNIQUE $,n $COMPILE OVERT 
+        WORDS_LINKCOMP =  0     ; Link comp. ext.: doLit donxt ?branch branch EXECUTE EXIT doVAR HERE $"| ."| [COMPILE] COMPILE LITERAL $," do$
+        WORDS_LINKINTER = 0     ; Link interpreter core words: hi 'BOOT cp tmp >IN 'eval CONTEXT last pars PARSE WORD TOKEN NAME> SAME? find ABORT aborq $INTERPRET INTER? .OK ?STACK EVAL PRESET QUIT ?UNIQUE $,n $COMPILE OVERT 
         WORDS_LINKCHAR =  0     ; Link char I/O core words: ACCEPT TAP kTAP QUERY #TIB hld TIB >CHAR COUNT DIGIT <# HOLD # #S SIGN #> str DIGIT? NUMBER? _TYPE 
         WORDS_LINKMISC =  0     ; Link core words of SEE DUMP WORDS 
 
@@ -743,8 +744,8 @@ DOLITC:
 	.ifne	WORDS_LINKCOMP
 	.dw	LINK
 	LINK =	.
-	.db	(COMPO+4)
-	.ascii	"next"
+	.db	(COMPO+5)
+	.ascii	"donxt"
 	.endif
 DONXT:
 	LDW     Y,(3,SP)
@@ -2990,8 +2991,8 @@ QUEST:
 	.dw	LINK
 	
 	LINK =	.
-	.db	5
-	.ascii	"parse"
+	.db	4
+	.ascii	"pars"
 	.endif
 PARS:
 	CALL	TEMP
@@ -3204,11 +3205,17 @@ SAME1:	CALL	OVER
 	CALL	RAT
 	CALL	PLUS
 	CALL	CAT
+        .ifne   CASEINSENSITIVE
+        CALLR   CTOLOWER
+        .endif
 	CALL	OVER
 	CALL	RAT
 	CALL	PLUS
 	CALL	CAT
-	CALL	SUBB
+        .ifne   CASEINSENSITIVE
+        CALLR   CTOLOWER
+        .endif
+        CALL	SUBB
 	CALL	QDUP
 	CALL	QBRAN
 	.dw	SAME2
@@ -3217,6 +3224,28 @@ SAME1:	CALL	OVER
 SAME2:	CALL	DONXT
 	.dw	SAME1
 	JP	ZERO
+
+        .ifne   CASEINSENSITIVE
+;	CLOW	( c -- c )
+;       convert char to lowercase
+
+	.ifne	WORDS_LINKINTER
+	.dw	LINK
+
+	LINK =	.
+	.db	4
+	.ascii	"CLOW"
+	.endif
+CTOLOWER:
+        LD      A,(1,X)
+        CP      A,#('a')
+        JRULT   1$
+        CP      A,#('z')
+        JRUGT   1$
+        AND     A,#0xDF
+        LD      (1,X),A
+1$:      RET
+        .endif
 
 ;	find	( a va -- ca na | a F )
 ;	Search vocabulary for string.
@@ -3249,7 +3278,13 @@ FIND1:	CALL	AT
 	CALL	DOLIT
 	.dw	MASKK
 	CALL	ANDD
-	CALL	RAT
+        .ifne   CASEINSENSITIVE
+        CALLR   CTOLOWER
+        .endif
+        CALL	RAT
+        .ifne   CASEINSENSITIVE
+        CALLR   CTOLOWER
+        .endif
 	CALL	XORR
 	CALL	QBRAN
 	.dw	FIND2
@@ -3464,9 +3499,8 @@ ABORT:
 	.dw	LINK
 	
 	LINK =	.
-	.db	(COMPO+6)
-	.ascii	"abort"
-	.db 	'"
+	.db	(COMPO+5)
+	.ascii	"aborq"
 	.endif
 ABORQ:
 	CALL	QBRAN
