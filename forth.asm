@@ -3742,7 +3742,8 @@ COMPI:
 	CALL	AT
 	CALL	JSRC	;compile subroutine
 	CALL	CELLP
-	JP	TOR
+	CALL	TOR       ; this was a JP, and it took a while to find what's wrong
+        RET
 
 ;	LITERAL ( w -- )
 ;	Compile tos to dictionary
@@ -4267,8 +4268,63 @@ CREAT:
         .endif
 	CALL	COMPI
 	CALL	DOVAR
+	RET
+
+
+        .ifne   HAS_DOES
+;	NOP	( -- )
+;	Placeholder, do nothing
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	3
+	.ascii	"NOP"
+
 NOPP:
 	RET
+
+
+;	DOES>	( -- )
+;	High level DOES> word. Executes at compile time
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	(IMEDD+5)
+	.ascii	"DOES>"
+DOESS: ;
+
+        CALL    COMPI
+        CALL    dodoes  ; 2 3 CALL does> 
+        CALL    COMPI
+        CALL    DOLIT   ; 2 3 CALL doLit
+
+        ; hint: use CALL LITER
+        CALL    HERE
+        CALL    DOLIT
+        .dw     6
+        CALL    PLUS
+        CALL    COMMA                  ; 2 2 (here + 6)
+
+        CALL    COMPI
+        CALL    COMMA                  ; 2 3 CALL COMMA
+        CALL    COMPI
+        CALL    EXIT                   ; 2 3 CALL EXIT
+        RET 
+
+;	does>	( -- )
+;	High level DOES> word. Executes at compile time
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	5
+	.ascii	"does>"
+dodoes:
+        RET
+
+        .endif 
 
 ;	VARIABLE	( -- ; <string> )
 ;	Compile a new variable
