@@ -10,6 +10,7 @@
         HAS_BACKGROUND =  1     ; Background Forth task (TIM2 ticker)
        
         HAS_CPNVM    =    1     ; Can compile to Flash, always interpret to RAM
+        HAS_DOES     =    1     ; DOES> extension
  
         WORDS_LINKCOMP =  0     ; Link compiler words.: doLit next ?branch branch EXECUTE EXIT doVAR HERE $"| ."| [COMPILE] COMPILE LIT
         WORDS_LINKINTER = 0     ; Link interpreter words: hi rp! cp tmp >IN 'eval CONTEXT last parse PARSE WORD TOKEN NAME> SAME? find

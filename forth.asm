@@ -1,4 +1,3 @@
-;========================================================
 ; STM8EF for STM8S003F3 (Value Line) devives
 ;
 ; This is derived work based on 
@@ -3206,14 +3205,14 @@ SAME1:	CALL	OVER
 	CALL	PLUS
 	CALL	CAT
         .ifne   CASEINSENSITIVE
-        CALLR   CTOLOWER
+        CALLR   CUPPER
         .endif
 	CALL	OVER
 	CALL	RAT
 	CALL	PLUS
 	CALL	CAT
         .ifne   CASEINSENSITIVE
-        CALLR   CTOLOWER
+        CALLR   CUPPER
         .endif
         CALL	SUBB
 	CALL	QDUP
@@ -3226,17 +3225,17 @@ SAME2:	CALL	DONXT
 	JP	ZERO
 
         .ifne   CASEINSENSITIVE
-;	CLOW	( c -- c )
-;       convert char to lowercase
+;	CUPPER	( c -- c )
+;       convert char to upper case
 
 	.ifne	WORDS_LINKINTER
 	.dw	LINK
 
 	LINK =	.
 	.db	4
-	.ascii	"CLOW"
+	.ascii	"CUPPER"
 	.endif
-CTOLOWER:
+CUPPER:
         LD      A,(1,X)
         CP      A,#('a')
         JRULT   1$
@@ -3279,11 +3278,11 @@ FIND1:	CALL	AT
 	.dw	MASKK
 	CALL	ANDD
         .ifne   CASEINSENSITIVE
-        CALLR   CTOLOWER
+        CALLR   CUPPER
         .endif
         CALL	RAT
         .ifne   CASEINSENSITIVE
-        CALLR   CTOLOWER
+        CALLR   CUPPER
         .endif
 	CALL	XORR
 	CALL	QBRAN
@@ -4296,68 +4295,68 @@ CREAT:
         CALL    STORE           ; from here on ',', 'C,', '$,"' and 'ALLOT' write to CP
         .endif
 
-        .ifne   HAS_DOES
-	CALL	COMPI
-        CALL    NOPP            ; Do nothing, placeholder for DOES
-        .endif
 	CALL	COMPI
 	CALL	DOVAR
 	RET
 
 
         .ifne   HAS_DOES
-;	NOP	( -- )
-;	Placeholder, do nothing
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"NOP"
-
-NOPP:
-	RET
-
-
-;	DOES>	( -- )
-;	High level DOES> word. Executes at compile time
+;	DOES> 	( -- )
+;	Define action of defining words
 
 	.dw	LINK
 	
 	LINK =	.
 	.db	(IMEDD+5)
 	.ascii	"DOES>"
-DOESS: ;
-
+DOESS:
         CALL    COMPI
-        CALL    dodoes  ; 2 3 CALL does> 
+        CALL    dodoes          ; 3 CALL does>
         CALL    COMPI
-        CALL    DOLIT   ; 2 3 CALL doLit
-
-        ; hint: use CALL LITER
-        CALL    HERE
-        CALL    DOLIT
-        .dw     6
+        CALL    DOLIT           ; 3 CALL doLit
+        CALL    HERE            ; hint: use CALL LITER
+        CALL    DOLITC
+        .db     8
         CALL    PLUS
-        CALL    COMMA                  ; 2 2 (here + 6)
-
+        CALL    COMMA           ; 2 (here + 6)
         CALL    COMPI
-        CALL    COMMA                  ; 2 3 CALL COMMA
+        CALL    COMMA           ; 3 CALL COMMA
         CALL    COMPI
-        CALL    EXIT                   ; 2 3 CALL EXIT
+        CALL    EXIT            ; 3 CALL EXIT
         RET 
 
-;	does>	( -- )
-;	High level DOES> word. Executes at compile time
+;	dodoes	( -- )
+;	link action to words created by defining words
 
+	.ifne	WORDS_LINKCOMP
 	.dw	LINK
 	
 	LINK =	.
-	.db	5
-	.ascii	"does>"
+	.db	6
+	.ascii	"dodoes"
+        .endif
 dodoes:
+        CALL    LAST
+        CALL    AT
+        CALL    NAMET                  ; ' ( 'last call nop )
+        CALL    DOLITC
+        .db     0xCC                   ; ' JP
+        CALL    OVER                   ; ' JP '
+        CALL    CSTOR                  ; ' \ CALL <- JP
+        CALL    HERE                   ; ' HERE
+        CALL    OVER                   ; ' HERE '
+        CALL    ONEP                   ; ' HERE ('+1)
+        CALL    STORE                  ; ' \ CALL DOVAR <- JP HERE
+        CALL    COMPI
+        CALL    DOLIT                  ; ' \ HERE <- DOLIT
+        CALL    DOLITC
+        .db     3                      ; ' 3
+        CALL    PLUS                   ; ('+3)
+        CALL    COMMA                  ; \ HERE <- DOLIT <-('+3)
+        CALL    COMPI
+        CALL    BRAN                   ; \ HERE <- DOLIT <- ('+3) <- branch
         RET
-
         .endif 
 
 ;	VARIABLE	( -- ; <string> )
