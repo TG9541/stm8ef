@@ -4315,7 +4315,7 @@ DOESS:
         CALL    dodoes          ; 3 CALL does>
         CALL    COMPI
         CALL    DOLIT           ; 3 CALL doLit
-        CALL    HERE            ; hint: use CALL LITER
+        CALL    HERECP          ; hint: use CALL LITER
         CALL    DOLITC
         .db     8
         CALL    PLUS
@@ -4337,6 +4337,13 @@ DOESS:
 	.ascii	"dodoes"
         .endif
 dodoes:
+        ;.ifne   HAS_CPNVM
+        ;CALL    TEVAL
+        ;CALL    AT
+        ;CALL    TOR             ; save TEVAL
+        ;CALL    RBRAC           ; "]" make HERE return CP even in INTERPRETER mode
+        ;.endif
+
         CALL    LAST
         CALL    AT
         CALL    NAMET                  ; ' ( 'last call nop )
@@ -4344,7 +4351,7 @@ dodoes:
         .db     0xCC                   ; ' JP
         CALL    OVER                   ; ' JP '
         CALL    CSTOR                  ; ' \ CALL <- JP
-        CALL    HERE                   ; ' HERE
+        CALL    HERECP                 ; ' HERE
         CALL    OVER                   ; ' HERE '
         CALL    ONEP                   ; ' HERE ('+1)
         CALL    STORE                  ; ' \ CALL DOVAR <- JP HERE
@@ -4356,6 +4363,11 @@ dodoes:
         CALL    COMMA                  ; \ HERE <- DOLIT <-('+3)
         CALL    COMPI
         CALL    BRAN                   ; \ HERE <- DOLIT <- ('+3) <- branch
+        ;.ifne   HAS_CPNVM
+        ;CALL    RFROM
+        ;CALL    TEVAL           ; restore TEVAL
+        ;CALL    STORE           ; from here on ',', 'C,', '$,"' and 'ALLOT' write to CP
+        ;.endif
         RET
         .endif 
 
