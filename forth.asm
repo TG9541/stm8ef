@@ -4312,14 +4312,12 @@ CREAT:
 	.ascii	"DOES>"
 DOESS:
         CALL    COMPI
-        CALL    dodoes          ; 3 CALL does>
-        CALL    COMPI
-        CALL    DOLIT           ; 3 CALL doLit
-        CALL    HERECP          ; hint: use CALL LITER
+        CALL    DODOES          ; 3 CALL dodoes>
+        CALL    HERECP
         CALL    DOLITC
-        .db     8
+        .db     11
         CALL    PLUS
-        CALL    COMMA           ; 2 (here + 6)
+        CALL    LITER           ; 3 CALL doLit + 2 (HERECP+11)
         CALL    COMPI
         CALL    COMMA           ; 3 CALL COMMA
         CALL    COMPI
@@ -4336,14 +4334,7 @@ DOESS:
 	.db	6
 	.ascii	"dodoes"
         .endif
-dodoes:
-        ;.ifne   HAS_CPNVM
-        ;CALL    TEVAL
-        ;CALL    AT
-        ;CALL    TOR             ; save TEVAL
-        ;CALL    RBRAC           ; "]" make HERE return CP even in INTERPRETER mode
-        ;.endif
-
+DODOES:
         CALL    LAST
         CALL    AT
         CALL    NAMET                  ; ' ( 'last call nop )
@@ -4363,11 +4354,6 @@ dodoes:
         CALL    COMMA                  ; \ HERE <- DOLIT <-('+3)
         CALL    COMPI
         CALL    BRAN                   ; \ HERE <- DOLIT <- ('+3) <- branch
-        ;.ifne   HAS_CPNVM
-        ;CALL    RFROM
-        ;CALL    TEVAL           ; restore TEVAL
-        ;CALL    STORE           ; from here on ',', 'C,', '$,"' and 'ALLOT' write to CP
-        ;.endif
         RET
         .endif 
 
