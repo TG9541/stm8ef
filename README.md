@@ -2,7 +2,7 @@
 
 This is a heavily refactored port of Dr. C.H. Ting's eForth for the *STM8S Discovery* to STM8S *Value Line* µCs boards and the [SDCC toolchain](http://sdcc.sourceforge.net/). Mixing C, Forth, and assembler is possible.
 
-The binary of the core interactive Forth system uses below 4700 bytes, including the overhead from SDCC, like C startup code, and interrupt tables. The binary size with a rich feature feature set, including *Compile to Flash* and *Background Task*, is below 5400 bytes!
+The binary of the core interactive Forth system uses below 4400 bytes, including the overhead from SDCC, like C startup code, and interrupt tables. The binary size with a rich feature feature set, including *Compile to Flash*, *Background Task*, and *CREATE-DOES>* is below 5000 bytes!
 
 Please refer to the [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) for more information! 
 
@@ -10,12 +10,24 @@ Please refer to the [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) for 
 
 New features:
 
-* compile Forth words to Flash
-* background tasks for concurrent `INPUT-PROCESS-OUTPUT` processing with a fixed cycle time (e.g. 5ms using TIM2) 
+* compile Forth to Non Volatile Memory (Flash IAP)
+* preemotive background tasks for concurrent `INPUT-PROCESS-OUTPUT` processing with a fixed cycle time (5ms using TIM2)
+* *CREATE-DOES>* pattern
+* configurable vocabulary subsets for binary size reduction
+* Extended vocabulary:
+  * STM8 ADC control: ADC! ADC@ 
+  * board keys, outputs, LEDs: OUT OUT!
+  * EEPROM, FLASH lock/unlock: LOCK ULOCK LOCKF ULOCKF
+  * native bit set/reset: BSR  
+  * inverted byte order 16bit register access: BSR 2C@ 2C! 
+  * compile to Flash memory: NVR RAM RESET 'BOOT
+  * ASCII file transfer: FILE HAND
+* STC with native BRANCH and EXIT
+* board support:
+  * W1209 LED display & half-duplex with SW TX 
+  * C0135 Relay-4 Board
+  * STM8S103F3 "$0.70" breakout board
 * support for [boards with 7Seg-LED UI](https://github.com/TG9541/stm8ef/wiki/eForth-Background-Task): in a background task, `123 .` goes to the 7Seg-LED display, and `?KEY` reads board keys
-* words for board keys, ADC, outputs/relays/leds
-* words for Flash, EEPROM, direct bit operations, inverted order 16bit memory access
-* constituting words of core compiler, interpreter, etc can be removed from dictionary to save ROM space and clean up the vocabulary
 
 Many changes to the original source are due to "board support" for Chinese made [STM8S based very low cost boards][WG1].
 
@@ -25,8 +37,8 @@ Canges that required refactoring the original code:
 * removal of hard STM8S105C6 dependencies (e.g. RAM layout, UART2)
 * flexible RAM layout, meaningful symbols for RAM locations
 * conditional code for different target boards with a subdirectory based configuration framework 
-* some bugfixes (e.g. SEE better for "Subroutine Threaded")
-* reduced binary size (core binary now below 4700 bytes, down from more than 5500 bytes) 
+* bugfixes (e.g. COMPILE)
+* major binary size optimization
 
 
 ## Support for STM8S Value Line µC 
@@ -54,10 +66,11 @@ There is currently no support for the STM8S Discovery, since I don't have STM8S1
 
 ### STM8S003F3 Core
 
-The plain STM8S003F3P6 eForth core as a starting point for new experiments:
+The plain STM8S003F3P6 eForth core as a starting point for configurations
 
 * 16MHz HSI, serial console
-* no special features (I/O words, background tasks)
+* Reduced feature set for minimal memory footprint (less than 4400 bytes)
+* Configured for the interactive use case, e.g. hardware testing, or as a debugging console
 
 More features can be selected from the list of options in `globalconf.inc`.
 
@@ -67,9 +80,16 @@ Run `make BOARD=CORE flash` for building and flashing.
 
 Cheap STM8S103F3P6-based breakout board with LED on port B5 (there are plenty of vendors on EBay or AliExpress, the price starts below $0.70 incl. shipping)
 
-* clock source internal 16 MHz RC oscillator `HSI`
-* LED on GPIO PB5
-* reset key
+* Binary size below 5300 bytes 
+* Selected feature set:
+  * compile to Flash 
+  * background task 
+  * CREATE-DOES>
+  * I/O words
+  * special STM8 memory access words (bit addressing, reversed access order) 
+  * EEPROM access
+  * Case insensitive vocabulary
+* Clock source internal 16 MHz RC oscillator `HSI`
 
 Run `make BOARD=MINDEV flash` for building and flashing.
 
@@ -77,6 +97,16 @@ Run `make BOARD=MINDEV flash` for building and flashing.
 
 STM8S003F3P6-based thermostat board with a 3 digit 7S-LED display, relay, and a 10k NTC sensor. 
 This very cheap board can be used easily for single input/single output control applications with a basic UI (e.g. timer, counter, dosing, monitoring).
+
+* Binary size below 5300 bytes
+* Selected feature set:
+  * compile to Flash 
+  * background task 
+  * CREATE-DOES>
+  * I/O words
+  * EEPROM access
+  * Case insensitive vocabulary
+* Clock source internal 16 MHz RC oscillator `HSI`
 
 Run `make BOARD=W1209 flash` for building and flashing.
 
@@ -105,11 +135,21 @@ The board, sometimes labelled C0135 or "Relay Board-4" is a low cost PLC I/O exp
 * 1 LED on PD4, 
 * 1 key on PA3, 
 * RS485 (PB5 enable - PD5 TX, PD6 RX on headers)
-* 8MHz crystal (I use the 16 MHz HSI) 
+* 8MHz crystal (or 16 MHz HSI) 
+
+* Binary size below 5300 bytes 
+* Selected feature set:
+  * compile to Flash 
+  * background task 
+  * CREATE-DOES>
+  * I/O words
+  * EEPROM access
+  * Case insensitive vocabulary
+* Clock source internal 16 MHz RC oscillator `HSI`
 
 Run `make BOARD=C0135 flash` for building and flashing.
 
-### Steps for creating a new board variant
+## Steps for creating a new board variant
 
 For creating a variant, simply create a copy of the base variant's folder (e.g. CORE). By running `make BOARD=<folderName> flash` it can be compiled, and programmed to the target.
 

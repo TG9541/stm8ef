@@ -1,4 +1,4 @@
-; STM8EF for STM8S003F3 (Value Line) devives
+; STM8EF for STM8S003F3 (Value Line) devices
 ;
 ; This is derived work based on 
 ; http://www.forth.org/svfig/kk/07-2010.html
@@ -25,7 +25,7 @@
 ; The latest version of this code is available at
 ; https://github.com/TG9541/stm8ef
 ;
-; Changes and code refactoring due to the following:
+; Non-functional changes and code refactoring:
 ; * SDCC tool chain "ASxxxx V2.0" syntax
 ; * STM8S105C6 dependencies removed (e.g. UART2)
 ; * support for different target boards
@@ -38,11 +38,17 @@
 ;       - W1209 LED display & half-duplex with SW TX 
 ;       - C0135 Relay-4 Board
 ;       - STM8S103F3 "$0.70" breakout board
-; * simple concurrent operation with fixed cycle time (TIM2)
-; * words for board keys, outputs, LEDs
-; * words for EEPROM, bit operations, inv. order 16bit acc.
-; * preemptive background operation
-; * compile to Flash memory
+; * preemptive background operation with fixed cycle time
+; * configurable startup & default constants: 'BOOT
+; * configurable vocabulary subsets for binary size reduction
+; * pattern CREATE-DOES>
+; * native BRANCH and EXIT
+; * words for STM8 ADC control: ADC! ADC@ 
+; * words for board keys, outputs, LEDs: OUT OUT!
+; * words for EEPROM, FLASH lock/unlock: LOCK ULOCK LOCKF ULOCKF
+; * words for bit operations, inv. order word access: BSR 2C@ 2C! 
+; * words for compile to Flash memory: NVR RAM RESET
+; * words for ASCII file transfer: FILE HAND
 ;
 ; Docs for the SDCC integrated assembler are scarce, and
 ; hence SDCC was used to create a template for this file:
@@ -109,8 +115,6 @@
 
         HALF_DUPLEX  =    0     ; RS232 shared Rx/Tx line, bus style
         TERM_LINUX   =    1     ; LF terminates line 
-        CASEINSENSITIVE = 0     ; Case insensitive dictionary search
-        SPEEDOVERSIZE   = 0     ; No size optimization in ROT
 
         HAS_TXDSIM   =    0     ; TxD SW simulation
         HAS_LED7SEG  =    0     ; 7-seg LED on board
@@ -123,17 +127,22 @@
         HAS_CPNVM    =    0     ; Can compile to Flash, always interpret to RAM 
         HAS_DOES     =    0     ; DOES> extension
 
-        WORDS_LINKCOMP =  0     ; Link comp. ext.: doLit donxt ?branch branch EXECUTE EXIT doVAR HERE $"| ."| [COMPILE] COMPILE LITERAL $," do$
-        WORDS_LINKINTER = 0     ; Link interpreter core words: hi 'BOOT cp tmp >IN 'eval CONTEXT last pars PARSE WORD TOKEN NAME> SAME? find ABORT aborq $INTERPRET INTER? .OK ?STACK EVAL PRESET QUIT ?UNIQUE $,n $COMPILE OVERT 
-        WORDS_LINKCHAR =  0     ; Link char I/O core words: ACCEPT TAP kTAP QUERY #TIB hld TIB >CHAR COUNT DIGIT <# HOLD # #S SIGN #> str DIGIT? NUMBER? _TYPE 
-        WORDS_LINKMISC =  0     ; Link core words of SEE DUMP WORDS 
+        CASEINSENSITIVE = 0     ; Case insensitive dictionary search
+        SPEEDOVERSIZE   = 0     ; Speed-over-size in core words ROT - = < 
+        BAREBONES       = 0     ; Remove or unlink some more: hi HERE .R U.R SPACES        
 
-        WORDS_BAREBONES  = 0    ; Remove convenience words: hi 
+        WORDS_LINKCOMP =  0     ; Link words for compiler extensions: doLit donxt ?branch branch EXECUTE EXIT doVAR [COMPILE] COMPILE $,"
+        WORDS_LINKCOMPC = 0     ; Link composing words of compiler: cp last do$ OVERT $"| ."| $,n NVM? dodoes 
+        WORDS_LINKINTER = 0     ; Link interpreter core words: hi 'BOOT tmp >IN 'eval CONTEXT pars PARSE WORD TOKEN NAME> SAME? find ABORT aborq $INTERPRET INTER? .OK ?STACK EVAL PRESET QUIT ?UNIQUE $COMPILE
+        WORDS_LINKCHAR =  0     ; Link char I/O core words: ACCEPT TAP kTAP QUERY #TIB hld TIB >CHAR COUNT DIGIT <# HOLD # #S SIGN #> str DIGIT? NUMBER? _TYPE 
+        WORDS_LINKMISC =  0     ; Link composing words of SEE DUMP WORDS NVM 
+
         WORDS_EXTRASTACK = 0    ; Link/include stack core words: rp@ rp! sp! sp@ DEPTH 
         WORDS_EXTRADEBUG = 0    ; Extra debug words: SEE
-        WORDS_EXTRACORE = 0     ; Extra core words: =0
-        WORDS_EXTRAMEM =  0     ; Extra memory words: BSR 2C@ 2C! LOCK ULOCK LOCKF ULOCKF
-        WORDS_HWREG  =    0     ; Peripheral Register words
+        WORDS_EXTRACORE  = 0    ; Extra core words: =0 I
+        WORDS_EXTRAMEM   = 0    ; Extra memory words: BSR 2C@ 2C!
+        WORDS_EXTRAEEPR  = 0    ; Extra EEPROM lock/unlock words: LOCK ULOCK 
+        WORDS_HWREG      = 0    ; Peripheral Register words
 
         ;*************************************************
         ;******  2) Hardware/board type selection  ******
@@ -265,7 +274,7 @@
         ;************************************
 
 	VER     =     2         ; Version major release version
-	EXT     =     1         ; Version minor extension
+	EXT     =     2         ; Version minor extension
 
 	TRUEE   =     0xFFFF    ; true flag
 	COMPO   =     0x40      ; lexicon compile only bit
@@ -283,9 +292,9 @@
 	ERR     =     27        ; error escape
 	TIC     =     39        ; tick
 
-	OC_CALL =     0xCD      ; CALL opcode
-	OC_JP   =     0xCC      ; JP opcode
-        OC_RET  =     0x81      ; RET opcode
+        EXIT_OPC =    0x81      ; RET opcode
+	BRAN_OPC =    0xCC      ; JP opcode
+	CALL_OPC =    0xCD      ; CALL opcode
 
 
         ;***********************
@@ -359,11 +368,7 @@ COLD:
 TBOOT:
 	CALL	DOVAR
         UBOOT = .
-        .ifne   WORDS_BAREBONES
-        .dw     HIOK
-        .else
 	.dw	HI	        ;application to boot
-        .endif
 
         ; COLD start initiates these variables.
         UZERO = .
@@ -394,7 +399,7 @@ TBOOT:
         .endif
 
 
-        .ifeq   WORDS_BAREBONES
+        .ifeq   BAREBONES
 ;	hi	( -- )
 ;	Display sign-on message.
 
@@ -731,7 +736,7 @@ DOLIT:
 	JP      (2,Y)
 
 ;	PUSHLIT	( -- C )
-;	Subroutine for DOLITC and CLCOMMA
+;	Subroutine for DOLITC and CCOMMALIT
 PUSHLIT:
         LDW     Y,(3,SP)
         DECW    X               ; LSB = literal 
@@ -750,9 +755,9 @@ CSKIPRET:
         POPW	Y
 	JP      (1,Y)
 
-;       CLCOMMA ( -- )
+;       CCOMMALIT ( -- )
 ;	Compile inline literall byte into code dictionary.
-CLCOMMA:
+CCOMMALIT:
         CALLR   PUSHLIT
 	CALL    CCOMMA
 	JRA     CSKIPRET     
@@ -944,6 +949,18 @@ PUSHJPYTEMP:
 	LDW     (X),Y
 	JP      [YTEMP]
 
+        .ifne   WORDS_EXTRACORE
+;	I	( -- n )
+;	Get inner FOR - NEXT index value
+	.dw	LINK
+
+	LINK =	.
+	.db	(1)
+	.ascii	"I"
+IGET:
+        JRA     RAT
+        .endif
+
 ;	R@	( -- w )
 ;	Copy top of return stack to stack (or the FOR - NEXT index value).
 
@@ -1127,8 +1144,21 @@ LDADROP:
 	.ascii	"-"
 
 SUBB:
-        CALL    NEGAT
-        JRA     PLUS
+        .ifne   SPEEDOVERSIZE
+	LDW     Y,X
+	LDW     Y,(Y)
+	LDW     YTEMP,Y
+        INCW    X
+        INCW    X
+	LDW     Y,X
+	LDW     Y,(Y)
+	SUBW    Y,YTEMP
+	LDW     (X),Y
+	RET                     ; 18 cy
+        .else
+        CALL    NEGAT           ; (15 cy)
+        JRA     PLUS            ; 25 cy (15+10) 
+        .endif
  
 ;	UM+	( u u -- udsum )
 ;	Add two unsigned single
@@ -1197,7 +1227,7 @@ CNTXT:
 ;	CP	( -- a )
 ;	Point to top of dictionary.
 
-        .ifne   WORDS_LINKINTER
+        .ifne   WORDS_LINKCOMPC
 	.dw	LINK
 	
 	LINK =	.
@@ -1310,7 +1340,7 @@ HLD:
 ;	LAST	( -- a )
 ;	Point to last name in dictionary.
 
-	.ifne	WORDS_LINKINTER
+	.ifne	WORDS_LINKCOMPC
 	.dw	LINK
 	
 	LINK =	.
@@ -1653,8 +1683,25 @@ ABSS:
 	.db	1
 	.ascii	"="
 EQUAL:
+        .ifne   SPEEDOVERSIZE
+	LD      A,#0x0FF	;true
+	LDW     Y,X	;D = n2
+	LDW     Y,(Y)
+	LDW     YTEMP,Y
+	INCW    X
+        INCW    X
+	LDW     Y,X
+	LDW     Y,(Y)
+	CPW     Y,YTEMP	;if n2 <> n1
+	JREQ	EQ1
+	CLR     A
+EQ1:    LD      (X),A
+	LD      (1,X),A
+        RET                            ; 21 cy
+        .else
         CALL    XORR
-        JRA     ZEQUAL
+        JRA     ZEQUAL                 ; 31 cy= (18+13) 
+        .endif
         
         .ifne   WORDS_EXTRACORE
 ;	0=	( n -- t )
@@ -1684,18 +1731,11 @@ ZEQUAL:
 	.db	2
 	.ascii	"U<"
 ULESS:
-	LD      A,#0x0FF	;true
-	LDW     Y,X	;D = n2
-	LDW     Y,(Y)
-	LDW     YTEMP,Y
-        INCW    X               ; ADDW   X,#2 
-        INCW    X
-	LDW     Y,X
-	LDW     Y,(Y)
-	CPW     Y,YTEMP	;if n2 <> n1
-	JRULT	ULES1
 	CLR     A
-ULES1:  LD      (X),A
+        CALLR   YYTEMPCMP
+	JRUGE	1$
+	CPL     A
+1$:     LD      (X),A
 	LD      (1,X),A
 	RET	
 
@@ -1708,8 +1748,37 @@ ULES1:  LD      (X),A
 	.db	1
 	.ascii	"<"
 LESS:
-        CALL    SUBB
-        JP      ZLESS
+        .ifne   SPEEDOVERSIZE
+	CLR     A
+	LDW     Y,X
+	LDW     Y,(Y)
+	LDW     YTEMP,Y
+	ADDW    X,#2
+	LDW     Y,X
+	LDW     Y,(Y)
+	CPW     Y,YTEMP	
+	JRSGE	1$
+	CPL     A
+1$:     LD      (X),A
+	LD      (1,X),A
+	RET                      ; 23 cy	
+        .else
+        CALL    SUBB             ; (29cy) 
+        JP      ZLESS            ; 41 cy (12+29)
+        .endif
+
+;       YYTEMPCMP       ( n n -- n )
+;       Load (TOS) to YTEMP and (TOS-1) to Y, DROP, CMP to STM8 flags
+YYTEMPCMP:        
+	LDW     Y,X
+	LDW     Y,(Y)
+	LDW     YTEMP,Y
+        INCW    X
+        INCW    X
+	LDW     Y,X
+	LDW     Y,(Y)
+	CPW     Y,YTEMP
+        RET
 
 ;	MAX	( n n -- n )
 ;	Return greater of two top items.
@@ -1720,17 +1789,13 @@ LESS:
 	.db	3
 	.ascii	"MAX"
 MAX:
-	LDW     Y,X	;D = n2
-	LDW     Y,(2,Y)
-	LDW     YTEMP,Y
-	LDW     Y,X
-	LDW     Y,(Y)
-	CPW     Y,YTEMP	;if n2 <> n1
-	JRSLT	MAX1
-	LDW     (2,X),Y
-MAX1:   INCW    X               ; ADDW   X,#2 
-        INCW    X
-	RET	
+        CALLR   YYTEMPCMP
+	JRSGT	MMEXIT
+YTEMPTOS:
+        LDW     Y,YTEMP
+	LDW     (X),Y
+MMEXIT: 
+        RET
 
 ;	MIN	( n n -- n )
 ;	Return smaller of top two items.
@@ -1741,17 +1806,9 @@ MAX1:   INCW    X               ; ADDW   X,#2
 	.db	3
 	.ascii	"MIN"
 MIN:
-	LDW     Y,X	;D = n2
-	LDW     Y,(2,Y)
-	LDW     YTEMP,Y
-	LDW     Y,X
-	LDW     Y,(Y)
-	CPW     Y,YTEMP	;if n2 <> n1
-	JRSGT	MIN1
-	LDW     (2,X),Y
-MIN1:   INCW    X               ; ADDW   X,#2 
-        INCW    X
-	RET	
+        CALLR   YYTEMPCMP
+	JRSLT	MMEXIT
+        JRA     YTEMPTOS
 
 ;	WITHIN	( u ul uh -- t )
 ;	Return true if u is within
@@ -2239,7 +2296,7 @@ COUNT:
 ;	HERE	( -- a )
 ;	Return	top of	code dictionary.
 
-	.ifne	WORDS_LINKCOMP
+	.ifeq	BAREBONES
 	.dw	LINK
 	
 	LINK =	.
@@ -2778,6 +2835,7 @@ SPACE:
 ;	SPACES	( +n -- )
 ;	Send n spaces to output device.
 
+        .ifeq   BAREBONES
 	.dw	LINK
 	
 	LINK =	.
@@ -2786,6 +2844,9 @@ SPACE:
 SPACS:
 	CALL	ZERO
 	CALL	MAX
+        .else
+SPACS:
+        .endif
 	CALL	TOR
 	JRA	CHAR2
 CHAR1:	CALL	SPACE
@@ -2837,7 +2898,7 @@ CR:
 ;	Return	address of a compiled
 ;	string.
 
-	.ifne	WORDS_LINKCOMP
+	.ifne	WORDS_LINKCOMPC
 	.dw	LINK
 	
 	LINK =	.
@@ -2859,7 +2920,7 @@ DOSTR:
 ;	Run time routine compiled by $".
 ;	Return address of a compiled string.
 
-	.ifne	WORDS_LINKCOMP
+	.ifne	WORDS_LINKCOMPC
 	.dw	LINK
 	
 	LINK =	.
@@ -2874,7 +2935,7 @@ STRQP:
 ;	Run time routine of ." .
 ;	Output a compiled string.
 
-	.ifne	WORDS_LINKCOMP
+	.ifne	WORDS_LINKCOMPC
 	.dw	LINK
 	
 	LINK =	.
@@ -2886,6 +2947,7 @@ DOTQP:
 	CALL	COUNT
 	JP	TYPES
 
+        .ifeq   BAREBONES
 ;	.R	( n +n -- )
 ;	Display an integer in a field
 ;	of n columns, right justified.
@@ -2899,6 +2961,7 @@ DOTR:
 	CALL	TOR
 	CALL	STR
         JRA     RFROMTYPES
+        .endif
 
 ;	U.R	( u +n -- )
 ;	Display an unsigned integer
@@ -3590,7 +3653,10 @@ DOTOK:
 	CALL	INTERQ
 	CALL	QBRAN                             ; TODO QBRAN
 	.dw	DOTO1
-HIOK:
+
+        .ifne   BAREBONES
+HI:
+        .endif
 	CALL	DOTQP
 	.db	3
 	.ascii	" ok"
@@ -3767,9 +3833,9 @@ COMPI:
 	CALL	ONEP
 	CALL	DUPP
 	CALL	AT
-	CALL	JSRC	;compile subroutine
+	CALL	JSRC	        ; compile subroutine
 	CALL	CELLP
-	CALL	TOR       ; this was a JP, and it took a while to find what's wrong
+	CALL	TOR       ; this was a JP - a serious bug that took a while to find
         RET
 
 ;	LITERAL ( w -- )
@@ -3874,9 +3940,7 @@ UNTIL:
 	.db	(IMEDD+5)
 	.ascii	"AGAIN"
 AGAIN:
-	CALL    CLCOMMA
-        .db     OC_JP
-        JP	COMMA
+	JRA     BRANCOMMA
 
 ;	IF	( -- A )
 ;	Begin a conditional branch.
@@ -3932,11 +3996,13 @@ ELSEE:
 	.ascii	"AHEAD"
         .endif
 AHEAD:
-	CALL    CLCOMMA
-        .db     OC_JP
 	CALL	HERE
 	CALL	ZERO
-	JP	COMMA
+BRANCOMMA:
+	CALL    CCOMMALIT
+        .db     BRAN_OPC
+        JP	COMMA
+
 
 ;	WHILE	( a -- A a )
 ;	Conditional branch out of a BEGIN-WHILE-REPEAT loop.
@@ -3959,9 +4025,7 @@ WHILE:
 	.db	(IMEDD+6)
 	.ascii	"REPEAT"
 REPEA:
-	CALL    CLCOMMA
-        .db     OC_JP
-	CALL	COMMA
+	CALLR   BRANCOMMA
 	CALL	HERE
 	CALL	SWAPP
 	JP	STORE
@@ -4052,7 +4116,7 @@ UNIQ1:	JP	DROP
 ;	Build a new dictionary name
 ;	using string at na.
 
-	.ifne	WORDS_LINKINTER
+	.ifne	WORDS_LINKCOMPC
 	.dw	LINK
 	
 	LINK =	.
@@ -4115,7 +4179,7 @@ SCOM2:	CALL	NUMBQ	;try to convert to number
 ;	OVERT	( -- )
 ;	Link a new word into vocabulary.
 
-	.ifne	WORDS_LINKINTER
+	.ifne	WORDS_LINKCOMPC
 	.dw	LINK
 	
 	LINK =	.
@@ -4162,8 +4226,8 @@ OVERT:
 	.db	(IMEDD+COMPO+1)
 	.ascii	";"
 SEMIS:
-        CALL    CLCOMMA
-        .db     OC_RET
+        CALL    CCOMMALIT
+        .db     EXIT_OPC
 	CALL	LBRAC
 	JP	OVERT
 
@@ -4191,8 +4255,8 @@ RBRAC:
 	.db	5
 	.ascii	"CALL,"
 JSRC:
-	CALL	CLCOMMA
-	.db	OC_CALL	        ; opcode CALL
+	CALL	CCOMMALIT
+	.db	CALL_OPC	 ; opcode CALL
 	JP	COMMA
 
 ;	:	( -- ; <string> )
@@ -4289,14 +4353,14 @@ DOESS:
         CALL    LITER           ; 3 CALL doLit + 2 (HERECP+9)
         CALL    COMPI
         CALL    COMMA           ; 3 CALL COMMA
-        CALL    CLCOMMA
-        .db     OC_RET          ; 1 RET (EXIT)
+        CALL    CCOMMALIT
+        .db     EXIT_OPC        ; 1 RET (EXIT)
         RET 
 
 ;	dodoes	( -- )
 ;	link action to words created by defining words
 
-	.ifne	WORDS_LINKCOMP
+	.ifne	WORDS_LINKCOMPC
 	.dw	LINK
 	
 	LINK =	.
@@ -4308,7 +4372,7 @@ DODOES:
         CALL    AT
         CALL    NAMET                  ; ' ( 'last call nop )
         CALL    DOLITC
-        .db     OC_JP                  ; ' JP
+        .db     BRAN_OPC               ; ' JP
         CALL    OVER                   ; ' JP '
         CALL    CSTOR                  ; ' \ CALL <- JP
         CALL    HERECP                 ; ' HERE
@@ -4321,13 +4385,12 @@ DODOES:
         .db     3                      ; ' 3
         CALL    PLUS                   ; ('+3)
         CALL    COMMA                  ; \ HERE <- DOLIT <-('+3)
-        CALL    CLCOMMA
-        .db     OC_JP
-        ;CALL    COMPI
-        ;CALL    BRAN                   ; \ HERE <- DOLIT <- ('+3) <- branch
+        CALL    CCOMMALIT
+        .db     BRAN_OPC               ; \ HERE <- DOLIT <- ('+3) <- branch
         RET
         .endif 
 
+        .ifeq   BAREBONES
 ;	VARIABLE	( -- ; <string> )
 ;	Compile a new variable
 ;	initialized to 0.
@@ -4341,6 +4404,7 @@ VARIA:
 	CALL	CREAT
 	CALL	ZERO
 	JP	COMMA
+        .endif
 
 ; Tools
 
@@ -4637,8 +4701,10 @@ DCAT:
         LD      (3,X),A
         CALL    DROP
         RET
+        .endif
 
 
+        .ifne   WORDS_EXTRAEEPR
 ;       ULOCK  ( -- )
 ;       Unlock EEPROM (STM8S)
 	.dw	LINK
@@ -4646,7 +4712,7 @@ DCAT:
         LINK =  .
 	.db	(5)
 	.ascii	"ULOCK"
-UNLOCK:
+ULOCK:
         MOV     FLASH_DUKR,#0xAE
         MOV     FLASH_DUKR,#0x56
 1$:     BTJF    FLASH_IAPSR,#3,1$    ; PM0051 4.1 requires polling bit3=1 before writing
@@ -4663,15 +4729,15 @@ UNLOCK:
 LOCK:
         BRES    FLASH_IAPSR,#3
         RET
-         .endif
+        .endif
 
-        .ifne   WORDS_EXTRAMEM + HAS_CPNVM
          
+        .ifne   HAS_CPNVM 
 ;       ULOCKF  ( -- )
 ;       Unlock Flash (STM8S)
+        .ifne   WORDS_LINKMISC
 	.dw	LINK
         
-        .ifne   WORDS_EXTRAMEM
         LINK =  .
 	.db	(6)
 	.ascii	"ULOCKF"
@@ -4685,7 +4751,7 @@ UNLOCK_FLASH:
 
 ;       LOCKF  ( -- )
 ;       Lock Flash (STM8S)
-        .ifne   WORDS_EXTRAMEM
+        .ifne   WORDS_LINKMISC
 	.dw	LINK
         
         LINK =  .
@@ -4920,7 +4986,7 @@ ADCAT:
 ;	NVM?	( -- F )
 ;	Test if CP points doesn't point to RAM
 
-        .ifne   WORDS_LINKCOMP
+        .ifne   WORDS_LINKCOMPC
 	.dw	LINK
 	
 	LINK =	.
