@@ -98,8 +98,10 @@ Run `make BOARD=MINDEV flash` for building and flashing.
 STM8S003F3P6-based thermostat board with a 3 digit 7S-LED display, relay, and a 10k NTC sensor. 
 This very cheap board can be used easily for single input/single output control applications with a basic UI (e.g. timer, counter, dosing, monitoring).
 
-* Binary size below 5300 bytes
+* Binary size about 5600 bytes
 * Selected feature set:
+  * 7S-LED display and board keys
+  * Half-duplex serial interface through sensor header
   * compile to Flash 
   * background task 
   * CREATE-DOES>
