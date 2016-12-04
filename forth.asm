@@ -3940,8 +3940,10 @@ UNTIL:
 	.db	(IMEDD+5)
 	.ascii	"AGAIN"
 AGAIN:
-	JRA     BRANCOMMA
-
+	CALL    CCOMMALIT
+        .db     BRAN_OPC
+        JP	COMMA	
+        
 ;	IF	( -- A )
 ;	Begin a conditional branch.
 
@@ -3996,12 +3998,12 @@ ELSEE:
 	.ascii	"AHEAD"
         .endif
 AHEAD:
-	CALL	HERE
-	CALL	ZERO
-BRANCOMMA:
 	CALL    CCOMMALIT
         .db     BRAN_OPC
+	CALL	HERE
+	CALL	ZERO
         JP	COMMA
+
 
 
 ;	WHILE	( a -- A a )
@@ -4025,7 +4027,7 @@ WHILE:
 	.db	(IMEDD+6)
 	.ascii	"REPEAT"
 REPEA:
-	CALLR   BRANCOMMA
+	CALLR   AGAIN
 	CALL	HERE
 	CALL	SWAPP
 	JP	STORE
