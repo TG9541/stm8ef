@@ -110,6 +110,7 @@
         HALF_DUPLEX  =    0     ; RS232 shared Rx/Tx line, bus style
         TERM_LINUX   =    1     ; LF terminates line 
         CASEINSENSITIVE = 0     ; Case insensitive dictionary search
+        SPEEDOVERSIZE   = 0     ; No size optimization in ROT
 
         HAS_TXDSIM   =    0     ; TxD SW simulation
         HAS_LED7SEG  =    0     ; 7-seg LED on board
@@ -128,7 +129,7 @@
         WORDS_LINKMISC =  0     ; Link core words of SEE DUMP WORDS 
 
         WORDS_BAREBONES  = 0    ; Remove convenience words: hi 
-        WORDS_EXTRASTACK = 0    ; Link/include stack core words: rp@ rp! R@ sp! sp@ DEPTH 
+        WORDS_EXTRASTACK = 0    ; Link/include stack core words: rp@ rp! sp! sp@ DEPTH 
         WORDS_EXTRADEBUG = 0    ; Extra debug words: SEE
         WORDS_EXTRACORE = 0     ; Extra core words: =0
         WORDS_EXTRAMEM =  0     ; Extra memory words: BSR 2C@ 2C! LOCK ULOCK LOCKF ULOCKF
@@ -256,32 +257,35 @@
         USRHLD  =    UPP+22     ; hold a pointer of output string
         USRNTIB =    UPP+24     ; count in terminal input buffer 
         USR_IN  =    UPP+26     ; hold parsing pointer
-        USRTEMP =    UPP+28     ; temporary storage (VARIABLE tmp)
-        YTEMP	=    UPP+30	; scratchpad (usually for Y)
+        USRTEMP =    UPP+28     ; temporary storage for interpreter (VARIABLE tmp)
+        YTEMP	=    UPP+30	; extra working register for core words
 
         ;************************************
 	;******  6) General Constants  ******
         ;************************************
 
-	VER     =     2        ; Version major release version
-	EXT     =     1        ; Version minor extension
+	VER     =     2         ; Version major release version
+	EXT     =     1         ; Version minor extension
 
-	TRUEE   =     0xFFFF   ; true flag
-	COMPO   =     0x40     ; lexicon compile only bit
-	IMEDD   =     0x80     ; lexicon immediate bit
-	MASKK   =     0x1F7F   ; lexicon bit mask
+	TRUEE   =     0xFFFF    ; true flag
+	COMPO   =     0x40      ; lexicon compile only bit
+	IMEDD   =     0x80      ; lexicon immediate bit
+	MASKK   =     0x1F7F    ; lexicon bit mask
 
-        TIBLENGTH =   80       ; size of TIB (starting at TIBOFFS)
-        PADOFFS =     80       ; offset text buffer above dictionary 
-	CELLL   =      2       ; size of a cell
-	BASEE   =     10       ; default radix
-        BKSPP   =      8       ; backspace
-	LF      =     10       ; line feed
-        PACE    =     11       ; pace character for host handshake (ASCII VT) 
-	CRR     =     13       ; carriage return
-	ERR     =     27       ; error escape
-	TIC     =     39       ; tick
-	CALLL   =     0xCD     ; CALL opcodes
+        TIBLENGTH =   80        ; size of TIB (starting at TIBOFFS)
+        PADOFFS =     80        ; offset text buffer above dictionary 
+	CELLL   =      2        ; size of a cell
+	BASEE   =     10        ; default radix
+        BKSPP   =      8        ; backspace
+	LF      =     10        ; line feed
+        PACE    =     11        ; pace character for host handshake (ASCII VT) 
+	CRR     =     13        ; carriage return
+	ERR     =     27        ; error escape
+	TIC     =     39        ; tick
+
+	OC_CALL =     0xCD      ; CALL opcode
+	OC_JP   =     0xCC      ; JP opcode
+        OC_RET  =     0x81      ; RET opcode
 
 
         ;***********************
@@ -486,7 +490,18 @@ TIM4_END:
         .endif
 
 
-        ; TIM2 interrupt handler for background task 
+;       Background helper routine for swapping USRBASE
+        .ifne   HAS_BACKGROUND 
+BGSWAP:
+        ; 8 bit since BASE is never going to be more than 80 = 128-ORD('0')
+        LD      A,USRBASE+1
+        MOV     USRBASE+1,BGBASE+1
+        LD      BGBASE+1,A
+        RET
+        .endif
+
+
+;       TIM2 interrupt handler for background task 
 _TIM2_UO_IRQHandler:
         .ifne   (HAS_LED7SEG + HAS_BACKGROUND)
         ; BSET    PA_ODR,#3     ; pin debug
@@ -507,7 +522,7 @@ _TIM2_UO_IRQHandler:
 
         LDW     X,YTEMP         ; Save context 
         PUSHW   X
-        CALL    BGSWAPBASE
+        CALLR   BGSWAP
         
         LDW     X,USRHLD
         PUSHW   X
@@ -520,7 +535,7 @@ _TIM2_UO_IRQHandler:
         POPW    X
         LDW     USRHLD,X
 
-        CALL    BGSWAPBASE
+        CALLR   BGSWAP
         POPW    X
         LDW     YTEMP,X
 1$:
@@ -531,19 +546,8 @@ _TIM2_UO_IRQHandler:
         .endif
 
 
-        ; Helper routine for swapping USRBASE and USRHLD in background
-        .ifne   HAS_BACKGROUND 
-BGSWAPBASE:
-        ; 8 bit since BASE is never going to be more than 80 = 128-ORD('0')
-        LD      A,USRBASE+1
-        MOV     USRBASE+1,BGBASE+1
-        LD      BGBASE+1,A
-        RET
-        .endif
-
-
         .ifne   HAS_LED7SEG
-        ; W1209 multiplexed 7-seg LED display
+;       Multiplexed 7-seg LED display
 LED_MPX:        
         LD      A,TICKCNTL
         AND	A,#3        
@@ -592,6 +596,8 @@ LED_MPX:
         RRC     A
         BCCM    PD_ODR,#2       ; P
 4$:        
+        .else
+        ; implement board LED port mapping 
         .endif
         RET
 
@@ -724,18 +730,32 @@ DOLIT:
 	POPW	Y
 	JP      (2,Y)
 
-;		( -- C )
-;	Push an inline literal character (8 bit).
-DOLITC:
+;	PUSHLIT	( -- C )
+;	Subroutine for DOLITC and CLCOMMA
+PUSHLIT:
+        LDW     Y,(3,SP)
         DECW    X               ; LSB = literal 
-        LDW     Y,(1,SP)
 	LD      A,(Y)
 	LD      (X),A
         DECW    X               ; MSB = 0
         CLR     A
 	LD      (X),A
-	POPW	Y
+        RET
+
+;	DOLITC	( -- C )
+;	Push an inline literal character (8 bit).
+DOLITC:
+        CALLR   PUSHLIT
+CSKIPRET:
+        POPW	Y
 	JP      (1,Y)
+
+;       CLCOMMA ( -- )
+;	Compile inline literall byte into code dictionary.
+CLCOMMA:
+        CALLR   PUSHLIT
+	CALL    CCOMMA
+	JRA     CSKIPRET     
 
 ;	next	( -- )
 ;	Code for single index loop.
@@ -755,9 +775,7 @@ DONXT:
 	POP	A
 	JP      (2,Y)
 NEX1:   LDW     (3,SP),Y
-	POPW	Y
-	LDW     Y,(Y)
-	JP      (Y)
+        JRA     BRAN
 
 ;	?branch ( f -- )
 ;	Branch if flag is zero.
@@ -788,6 +806,7 @@ QBRAN:
 	.endif
 BRAN:
 	POPW	Y
+YJPIND:
 	LDW     Y,(Y)
 	JP	(Y)
 
@@ -802,8 +821,7 @@ EXECU:
 	LDW     Y,X
         INCW    X               ; ADDW   X,#2 
         INCW    X
-	LDW	Y,(Y)
-	JP	(Y)
+        JRA     YJPIND
 
 ;	EXIT	( -- )
 ;	Terminate a colon definition.
@@ -818,22 +836,6 @@ EXIT:
 	POPW	Y
 	RET
 
-;	doVAR	( -- a )
-;	Code for VARIABLE and CREATE.
-
-	.ifne	WORDS_LINKCOMP
-	.dw	LINK
-	LINK =	.
-	.db	(COMPO+5)
-	.ascii	"doVar"
-	.endif
-DOVAR:
-	POPW	Y	;get return addr (pfa)
-        DECW    X               ;SUBW	X,#2    
-        DECW    X
-	LDW     (X),Y	;push on stack
-	RET	;go to RET of EXEC
-
 ;	!	( w a -- )
 ;	Pop data stack to memory.
 
@@ -843,12 +845,12 @@ DOVAR:
 	.ascii	"!"
 STORE:
 	LDW     Y,X
-	LDW     Y,(Y)	        ;Y=a
+	LDW     Y,(Y)	        ; Y=a
 	LDW     YTEMP,Y
 	LDW     Y,X
 	LDW     Y,(2,Y)
 	LDW     [YTEMP],Y
-	ADDW    X,#4            ;store w at a
+	ADDW    X,#4            ; store w at a
 	RET	
 
 ;	@	( a -- w )
@@ -905,10 +907,7 @@ CAT:
 	.ascii	"rp@"
 RPAT:
 	LDW     Y,SP	        ; save return addr
-        DECW    X
-        DECW    X
-	LDW     (X),Y
-	RET	
+        JP      YSTOR
         .endif
 
 ;	RP!	( a -- )
@@ -936,32 +935,25 @@ RPSTO:
 	.db	(COMPO+2)
 	.ascii	"R>"
 RFROM:
-	POPW	Y	        ;save return addr
+	POPW	Y	        ; save return addr
 	LDW     YTEMP,Y
 	POPW	Y
+PUSHJPYTEMP:
         DECW    X
         DECW    X
 	LDW     (X),Y
 	JP      [YTEMP]
 
 ;	R@	( -- w )
-;	Copy top of return stack to stack.
+;	Copy top of return stack to stack (or the FOR - NEXT index value).
 
-        .ifne   WORDS_EXTRASTACK
 	.dw	LINK
 	LINK =	.
 	.db	2
 	.ascii	"R@"
-        .endif
 RAT:
-	POPW	Y
-	LDW     YTEMP,Y
-	POPW	Y
-	PUSHW   Y
-        DECW    X
-        DECW    X
-	LDW     (X),Y
-	JP      [YTEMP]
+	LDW     Y,(3,SP)
+        JP      YSTOR
 
 ;	>R	( w -- )
 ;	Push data stack to return stack.
@@ -971,11 +963,11 @@ RAT:
 	.db	(COMPO+2)
 	.ascii	">R"
 TOR:
-	POPW	Y	;save return addr
+	POPW	Y	        ; save return addr
 	LDW     YTEMP,Y
 	LDW     Y,X
 	LDW     Y,(Y)
-	PUSHW   Y	;restore return addr
+	PUSHW   Y	        ; restore return addr
         INCW    X               ; ADDW   X,#2 
         INCW    X
 	JP      [YTEMP]
@@ -1002,7 +994,7 @@ DROP:
 	.ascii	"DUP"
 DUPP:
 	LDW     Y,X
-        DECW    X               ;SUBW	X,#2    
+        DECW    X               ; SUBW	X,#2    
         DECW    X
 	LDW     Y,(Y)
 	LDW     (X),Y
@@ -1034,7 +1026,7 @@ SWAPP:
 	.db	4
 	.ascii	"OVER"
 OVER:
-        DECW    X               ;SUBW	X,#2    
+        DECW    X               ; SUBW	X,#2    
         DECW    X
 	LDW     Y,X
 	LDW     Y,(4,Y)
@@ -1053,29 +1045,10 @@ ZLESS:
 	LDW     Y,X
 	LDW     Y,(Y)
 	JRMI	ZL1
-	CLR     A	;false
+	CLR     A	        ; false
 ZL1:    LD      (X),A
 	LD      (1,X),A
 	RET	
-
-;	AND	( w w -- w )
-;	Bitwise AND.
-
-	.dw	LINK
-	LINK =	.
-	.db	3
-	.ascii	"AND"
-ANDD:
-	LD	A,(X)	;D=w
-	AND	A,(2,X)
-	LD      (2,X),A
-	LD      A,(1,X)
-	AND	A,(3,X)
-LDADROP:
-	LD      (3,X),A
-        INCW    X               ; ADDW   X,#2 
-        INCW    X
-	RET
 
 ;	OR	( w w -- w )
 ;	Bitwise inclusive OR.
@@ -1086,13 +1059,12 @@ LDADROP:
 	.db	2
 	.ascii	"OR"
 ORR:
-	LD	A,(X)	;D=w
-	OR      A,(2,X)
-	LD      (2,X),A
-	LD      A,(1,X)
-	OR      A,(3,X)
+	LD	A,(1,X)	        ; D=w
+	OR	A,(3,X)
+	LD      (3,X),A
+	LD      A,(X)
+	OR	A,(2,X)
         JRA     LDADROP
-
 
 ;	XOR	( w w -- w )
 ;	Bitwise exclusive OR.
@@ -1102,13 +1074,62 @@ ORR:
 	.db	3
 	.ascii	"XOR"
 XORR:
-	LD	A,(X)	;D=w
-	XOR     A,(2,X)
-	LD      (2,X),A
-	LD      A,(1,X)
-	XOR     A,(3,X)
+	LD	A,(1,X)	        ; D=w
+	XOR	A,(3,X)
+	LD      (3,X),A
+	LD      A,(X)
+	XOR	A,(2,X)
         JRA     LDADROP
 
+;	AND	( w w -- w )
+;	Bitwise AND.
+
+	.dw	LINK
+	LINK =	.
+	.db	3
+	.ascii	"AND"
+ANDD:
+	LD	A,(1,X)	        ; D=w
+	AND	A,(3,X)
+	LD      (3,X),A
+	LD      A,(X)
+	AND	A,(2,X)
+        JRA     LDADROP
+
+;	+	( w w -- sum )
+;	Add top two items.
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	1
+	.ascii	"+"
+
+PLUS:
+	LD	A,(1,X)	;D=w
+	ADD     A,(3,X)
+	LD      (3,X),A
+	LD      A,(X)
+	ADC     A,(2,X)
+LDADROP:
+	LD      (2,X),A
+        INCW    X               ; ADDW   X,#2 
+        INCW    X
+	RET
+
+;	-	( n1 n2 -- n1-n2 )
+;	Subtraction.
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	1
+	.ascii	"-"
+
+SUBB:
+        CALL    NEGAT
+        JRA     PLUS
+ 
 ;	UM+	( u u -- udsum )
 ;	Add two unsigned single
 ;	and return a double sum.
@@ -1298,14 +1319,28 @@ HLD:
         .endif
 LAST:
 	LDW     Y,#(RAMBASE+USRLAST)
+        JRA     YSTOR
 
-;      core only  ( a -- )
-;      push Y to stack
+;	doVAR	( -- a )
+;	Code for VARIABLE and CREATE.
+
+	.ifne	WORDS_LINKCOMP
+	.dw	LINK
+	LINK =	.
+	.db	(COMPO+5)
+	.ascii	"doVar"
+	.endif
+DOVAR:
+	POPW	Y	        ; get return addr (pfa)
+        ; fall through
+
+;       YSTOR core only  ( -- n )
+;       push Y to stack
 YSTOR:        
-        DECW    X               ;SUBW	X,#2    
+        DECW    X               ; SUBW	X,#2    
         DECW    X
-	LDW     (X),Y
-	RET
+	LDW     (X),Y	        ; push on stack
+	RET	                ; go to RET of EXEC
 
 ;	TIB	( -- a )
 ;	Return address of terminal input buffer.
@@ -1431,8 +1466,8 @@ TPROMPT:
 
 ;       ( -- ) EMIT pace character for handshake in FILE mode 
 PACEE:
-	LDW     Y,#PACE      ; pace character for host handshake 
-        CALL    YSTOR
+        CALL    DOLITC
+	.db     PACE      ; pace character for host handshake 
         JP      EMIT
 
 
@@ -1492,6 +1527,7 @@ QDUP1:	RET
 	.db	3
 	.ascii	"ROT"
 ROT:
+        .ifne   SPEEDOVERSIZE
 	LDW     Y,X
 	LDW     Y,(4,Y)
         PUSHW   Y
@@ -1506,6 +1542,12 @@ ROT:
         POPW    Y
 	LDW     (X),Y
 	RET
+        .else
+        CALL    TOR
+        CALL    SWAPP
+        CALL    RFROM
+        JP      SWAPP
+        .endif
 
 ;	2DROP	( w w -- )
 ;	Discard two items on stack.
@@ -1531,25 +1573,6 @@ DDUP:
 	CALL    OVER
         JP      OVER
 
-;	+	( w w -- sum )
-;	Add top two items.
-
-	.dw	LINK
-	
-	LINK =	.
-	.db	1
-	.ascii	"+"
-PLUS:
-	LDW     Y,X
-	LDW     Y,(Y)
-	LDW     YTEMP,Y
-        INCW    X               ; ADDW   X,#2 
-        INCW    X
-	LDW     Y,X
-	LDW     Y,(Y)
-	ADDW    Y,YTEMP
-	LDW     (X),Y
-	RET
 
 ;	NOT	( w -- w )
 ;	One's complement of tos.
@@ -1567,7 +1590,7 @@ INVER:
 	RET
 
 ;	NEGATE	( n -- -n )
-;	Two's complement of tos.
+;	Two's complement of TOS.
 
 	.dw	LINK
 	
@@ -1605,26 +1628,6 @@ DNEGA:
 DN1:    LDW     (X),Y
 	RET
 
-;	-	( n1 n2 -- n1-n2 )
-;	Subtraction.
-
-	.dw	LINK
-	
-	LINK =	.
-	.db	1
-	.ascii	"-"
-SUBB:
-	LDW     Y,X
-	LDW     Y,(Y)
-	LDW     YTEMP,Y
-        INCW    X               ; ADDW   X,#2 
-        INCW    X
-	LDW     Y,X
-	LDW     Y,(Y)
-	SUBW    Y,YTEMP
-	LDW     (X),Y
-	RET
-
 ;	ABS	( n -- n )
 ;	Return	absolute value of n.
 
@@ -1650,23 +1653,28 @@ ABSS:
 	.db	1
 	.ascii	"="
 EQUAL:
-	LD      A,#0x0FF	;true
-	LDW     Y,X	;D = n2
-	LDW     Y,(Y)
-	LDW     YTEMP,Y
-        INCW    X               ; ADDW   X,#2 
-        INCW    X
-	LDW     Y,X
-	LDW     Y,(Y)
-	CPW     Y,YTEMP	;if n2 <> n1
-	JREQ	EQ1
-	CLR     A
-EQ1:    LD      (X),A
-	LD      (1,X),A
-	RET	
+        CALL    XORR
+        JRA     ZEQUAL
         
-
-
+        .ifne   WORDS_EXTRACORE
+;	0=	( n -- t )
+;	Return true if n is equal to 0
+	.dw	LINK
+	
+        LINK =	.
+	.db	(2)
+	.ascii	"0="
+        .endif
+ZEQUAL:
+	LDW     Y,X
+        LDW     Y,(Y)
+        JREQ    1$
+        CLRW    Y
+        JRT     2$        
+1$:     CPLW    Y
+2$:     LDW     (X),Y
+        RET
+        
 ;	U<	( u u -- t )
 ;	Unsigned compare of top two items.
 
@@ -1700,20 +1708,8 @@ ULES1:  LD      (X),A
 	.db	1
 	.ascii	"<"
 LESS:
-	LD      A,#0x0FF	;true
-	LDW     Y,X	;D = n2
-	LDW     Y,(Y)
-	LDW     YTEMP,Y
-        INCW    X               ; ADDW   X,#2 
-        INCW    X
-	LDW     Y,X
-	LDW     Y,(Y)
-	CPW     Y,YTEMP	;if n2 <> n1
-	JRSLT	LT1
-	CLR     A
-LT1:    LD      (X),A
-	LD      (1,X),A
-	RET	
+        CALL    SUBB
+        JP      ZLESS
 
 ;	MAX	( n n -- n )
 ;	Return greater of two top items.
@@ -2325,8 +2321,7 @@ EXE1:	RET	;do nothing if zero
 	.ascii	"CMOVE"
 CMOVE:
 	CALL	TOR
-	CALL	BRAN
-	.dw	CMOV2
+        JRA     CMOV2
 CMOV1:	CALL	TOR
 	CALL	DUPP
 	CALL	CAT
@@ -2352,8 +2347,7 @@ FILL:
 	CALL	SWAPP
 	CALL	TOR
 	CALL	SWAPP
-	CALL	BRAN
-	.dw	FILL2
+        JRA     FILL2
 FILL1:	CALL	DDUP
 	CALL	CSTOR
 	CALL	ONEP
@@ -2904,11 +2898,7 @@ DOTQP:
 DOTR:
 	CALL	TOR
 	CALL	STR
-	CALL	RFROM
-	CALL	OVER
-	CALL	SUBB
-	CALL	SPACS
-	JP	TYPES
+        JRA     RFROMTYPES
 
 ;	U.R	( u +n -- )
 ;	Display an unsigned integer
@@ -2921,9 +2911,8 @@ DOTR:
 	.ascii	"U.R"
 UDOTR:
 	CALL	TOR
-	CALL	BDIGS
-	CALL	DIGS
-	CALL	EDIGS
+	CALLR   BDEDIGS
+RFROMTYPES:        
 	CALL	RFROM
 	CALL	OVER
 	CALL	SUBB
@@ -2940,11 +2929,15 @@ UDOTR:
 	.db	2
 	.ascii	"U."
 UDOT:
+	CALLR   BDEDIGS
+        CALL	SPACE
+	JP	TYPES
+
+;       UDOT helper routine
+BDEDIGS:
 	CALL	BDIGS
 	CALL	DIGS
-	CALL	EDIGS
-	CALL	SPACE
-	JP	TYPES
+	JP	EDIGS
 
 ;	.	( w -- )
 ;	Display an integer in free
@@ -2980,7 +2973,15 @@ QUEST:
 	CALL	AT
 	JP	DOT
 
+
 ; Parsing
+
+;       parse helper routine
+TEMPATBLEQ:        
+	CALL	TEMP
+	CALL	AT
+	CALL	BLANK
+	JP	EQUAL
 
 ;	parse	( b u c -- b u delta ; <string> )
 ;	Scan string delimited by c.
@@ -3002,10 +3003,7 @@ PARS:
 	CALL	QBRAN
 	.dw	PARS8
 	CALL	ONEM
-	CALL	TEMP
-	CALL	AT
-	CALL	BLANK
-	CALL	EQUAL
+        CALLR   TEMPATBLEQ
 	CALL	QBRAN
 	.dw	PARS3
 	CALL	TOR
@@ -3033,10 +3031,7 @@ PARS4:	CALL	TEMP
 	CALL	OVER
 	CALL	CAT
 	CALL	SUBB	;scan for delimiter
-	CALL	TEMP
-	CALL	AT
-	CALL	BLANK
-	CALL	EQUAL
+        CALLR   TEMPATBLEQ
 	CALL	QBRAN
 	.dw	PARS5
 	CALL	ZLESS
@@ -3061,6 +3056,8 @@ PARS7:	CALL	OVER
 PARS8:	CALL	OVER
 	CALL	RFROM
 	JP	SUBB
+
+
 
 ;	PARSE	( c -- b u ; <string> )
 ;	Scan input stream and return
@@ -3295,8 +3292,7 @@ FIND2:	CALL	CELLP
 	CALL	TEMP
 	CALL	AT
 	CALL	SAMEQ
-FIND3:	CALL	BRAN
-	.dw	FIND4
+FIND3:	JRA	FIND4
 FIND6:	CALL	RFROM
 	CALL	DROP
 	CALL	SWAPP
@@ -3637,8 +3633,7 @@ EVAL1:	CALL	TOKEN
 	CALL	TEVAL
 	CALL	ATEXE
 	CALL	QSTAC	        ; evaluate input, check stack
-	CALL	BRAN
-	.dw	EVAL1
+	JRA     EVAL1
 EVAL2:	CALL	DROP
 	JP	[USRPROMPT]     ; DOTOK or PACE
 
@@ -3726,8 +3721,7 @@ COMMA:
 	JP	STORE
 
 ;	C,	( c -- )
-;	Compile a byte into
-;	code dictionary.
+;	Compile a byte into code dictionary.
 
 	.dw	LINK
 	
@@ -3809,6 +3803,7 @@ STRCQ:
 	CALL	PARSE
 	CALL	HERECP
 	CALL	PACKS	;string to code dictionary
+CNTPCPPSTORE:
 	CALL	COUNT
 	CALL	PLUS	;calculate aligned end of string
 	CALL	CPP
@@ -3842,20 +3837,6 @@ NEXT:
 	CALL	COMPI
 	CALL	DONXT
 	JP	COMMA
-
-;	I	( -- n )
-;	Get inner FOR - NEXT index value
-	.dw	LINK
-
-	LINK =	.
-	.db	(1)
-	.ascii	"I"
-IGET:
-        DECW    X               ;SUBW	X,#2    
-        DECW    X
-	LDW     Y,(3,SP)
-        LDW     (X),Y
-        RET
 
 ;	BEGIN	( -- a )
 ;	Start an infinite or
@@ -3893,9 +3874,9 @@ UNTIL:
 	.db	(IMEDD+5)
 	.ascii	"AGAIN"
 AGAIN:
-	CALL	COMPI
-	CALL	BRAN
-	JP	COMMA
+	CALL    CLCOMMA
+        .db     OC_JP
+        JP	COMMA
 
 ;	IF	( -- A )
 ;	Begin a conditional branch.
@@ -3934,12 +3915,8 @@ THENN:
 	.db	(IMEDD+4)
 	.ascii	"ELSE"
 ELSEE:
-	CALL	COMPI
-	CALL	BRAN
-	CALL	HERE
-	CALL	ZERO
-	CALL	COMMA
-	CALL	SWAPP
+	CALLR   AHEAD
+        CALL	SWAPP
 	CALL	HERE
 	CALL	SWAPP
 	JP	STORE
@@ -3955,8 +3932,8 @@ ELSEE:
 	.ascii	"AHEAD"
         .endif
 AHEAD:
-	CALL	COMPI
-	CALL	BRAN
+	CALL    CLCOMMA
+        .db     OC_JP
 	CALL	HERE
 	CALL	ZERO
 	JP	COMMA
@@ -3970,11 +3947,7 @@ AHEAD:
 	.db	(IMEDD+5)
 	.ascii	"WHILE"
 WHILE:
-	CALL	COMPI
-	CALL	QBRAN
-	CALL	HERE
-	CALL	ZERO
-	CALL	COMMA
+        CALL    IFF
 	JP	SWAPP
 
 ;	REPEAT	( A a -- )
@@ -3986,8 +3959,8 @@ WHILE:
 	.db	(IMEDD+6)
 	.ascii	"REPEAT"
 REPEA:
-	CALL	COMPI
-	CALL	BRAN
+	CALL    CLCOMMA
+        .db     OC_JP
 	CALL	COMMA
 	CALL	HERE
 	CALL	SWAPP
@@ -4093,11 +4066,8 @@ SNAME:
 	.dw	PNAM1
 	CALL	UNIQU	;?redefinition
 	CALL	DUPP
-	CALL	COUNT
-	CALL	PLUS
-	CALL	CPP
-	CALL	STORE
-	CALL	DUPP
+        CALL    CNTPCPPSTORE
+        CALL	DUPP
 	CALL	LAST
 	CALL	STORE	;save na for vocabulary link
 	CALL	CELLM	;link address
@@ -4192,8 +4162,8 @@ OVERT:
 	.db	(IMEDD+COMPO+1)
 	.ascii	";"
 SEMIS:
-	CALL	COMPI
-	CALL	EXIT
+        CALL    CLCOMMA
+        .db     OC_RET
 	CALL	LBRAC
 	JP	OVERT
 
@@ -4221,9 +4191,8 @@ RBRAC:
 	.db	5
 	.ascii	"CALL,"
 JSRC:
-	CALL	DOLITC
-	.db	CALLL	        ; opcode CALL
-	CALL	CCOMMA
+	CALL	CLCOMMA
+	.db	OC_CALL	        ; opcode CALL
 	JP	COMMA
 
 ;	:	( -- ; <string> )
@@ -4315,13 +4284,13 @@ DOESS:
         CALL    DODOES          ; 3 CALL dodoes>
         CALL    HERECP
         CALL    DOLITC
-        .db     11
+        .db     9
         CALL    PLUS
-        CALL    LITER           ; 3 CALL doLit + 2 (HERECP+11)
+        CALL    LITER           ; 3 CALL doLit + 2 (HERECP+9)
         CALL    COMPI
         CALL    COMMA           ; 3 CALL COMMA
-        CALL    COMPI
-        CALL    EXIT            ; 3 CALL EXIT
+        CALL    CLCOMMA
+        .db     OC_RET          ; 1 RET (EXIT)
         RET 
 
 ;	dodoes	( -- )
@@ -4339,7 +4308,7 @@ DODOES:
         CALL    AT
         CALL    NAMET                  ; ' ( 'last call nop )
         CALL    DOLITC
-        .db     0xCC                   ; ' JP
+        .db     OC_JP                  ; ' JP
         CALL    OVER                   ; ' JP '
         CALL    CSTOR                  ; ' \ CALL <- JP
         CALL    HERECP                 ; ' HERE
@@ -4352,8 +4321,10 @@ DODOES:
         .db     3                      ; ' 3
         CALL    PLUS                   ; ('+3)
         CALL    COMMA                  ; \ HERE <- DOLIT <-('+3)
-        CALL    COMPI
-        CALL    BRAN                   ; \ HERE <- DOLIT <- ('+3) <- branch
+        CALL    CLCOMMA
+        .db     OC_JP
+        ;CALL    COMPI
+        ;CALL    BRAN                   ; \ HERE <- DOLIT <- ('+3) <- branch
         RET
         .endif 
 
@@ -4594,36 +4565,13 @@ WORS1:	CALL	AT
 	CALL	SPACE
 	CALL	DOTID	;display a name
 	CALL	CELLM
-	CALL	BRAN
-	.dw	WORS1
+        JRA     WORS1
 	CALL	DROP
 WORS2:	RET
 
 	
 ;	
 ;===============================================================
-
-; tg9541 additions
-
-
-        .ifne   WORDS_EXTRACORE
-;	0=	( n -- t )
-;	Return true if n is equal to 0
-	.dw	LINK
-	
-        LINK =	.
-	.db	(2)
-	.ascii	"0="
-ZEQS:
-	LDW     Y,X
-        LDW     Y,(Y)
-        JREQ    1$
-        CLRW    Y
-        JRT     2$        
-1$:     CPLW    Y
-2$:     LDW     (X),Y
-        RET
-        .endif
 
         .ifne   WORDS_EXTRAMEM
 ;	BSR ( t a b -- )

@@ -25,7 +25,7 @@
         WORDS_LINKCHAR =  0     ; Link char I/O words: #TIB hld TIB >CHAR COUNT DIGIT <# HOLD # #S SIGN #> str DIGIT? NUMBER? _TYPE 
         WORDS_LINKMISC =  0     ; Link base words of SEE DUMP WORDS 
 
-        WORDS_EXTRASTACK = 1    ; Link/include stack core words: rp@ rp! R@ sp! sp@ DEPTH 
+        WORDS_EXTRASTACK = 0    ; Link/include stack core words: rp@ rp! sp! sp@ DEPTH 
         WORDS_EXTRADEBUG = 0    ; Extra debug words: SEE
         WORDS_EXTRACORE =  1    ; Extra core words: I =0
         WORDS_EXTRAMEM =   0    ; Extra memory words: BSR 2C@ 2C! LCK ULCK
