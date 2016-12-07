@@ -1,17 +1,18 @@
 # STM8S eForth (stm8ef)
 
-This is a heavily refactored port of Dr. C.H. Ting's eForth for the *STM8S Discovery* to STM8S *Value Line* µCs boards and the [SDCC toolchain](http://sdcc.sourceforge.net/). Mixing C, Forth, and assembler is possible.
+This is an extended and refactored version of [Dr. C.H. Ting's eForth for the *STM8S Discovery*](http://www.forth.org/svfig/kk/07-2010.html) that turns STM8S *Value Line* µCs boards into an interactive Forth development environment. The [SDCC toolchain](http://sdcc.sourceforge.net/) is used for building the eForth core, which makes mixing Forth, assembly, and C possible.
 
-The binary of the core interactive Forth system uses below 4400 bytes, including the overhead from SDCC, like C startup code, and interrupt tables. The binary size with a rich feature feature set, including *Compile to Flash*, *Background Task*, and *CREATE-DOES>* is below 5000 bytes!
+The binary of an interactive eForth system uses below 4400 bytes, including the overhead from SDCC (C startup code and interrupt table). With a rich feature feature set (*Compile to Flash*, *Background Task*, and *CREATE-DOES>*) the binary size is below 5000 bytes.
 
 Please refer to the [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) for more information! 
 
 ## Overview
 
-New features:
+Features:
 
-* compile Forth to Non Volatile Memory (Flash IAP)
-* preemotive background tasks for concurrent `INPUT-PROCESS-OUTPUT` processing with a fixed cycle time (5ms using TIM2)
+* compile Forth to NVM (Non Volatile Memory with Flash IAP)
+* autostart feature for embedded applications
+* preemptive background tasks, e.g. for `INPUT-PROCESS-OUTPUT` proces with fixed cycle time (default 5ms)
 * *CREATE-DOES>* pattern
 * configurable vocabulary subsets for binary size reduction
 * Extended vocabulary:
@@ -19,17 +20,17 @@ New features:
   * board keys, outputs, LEDs: OUT OUT!
   * EEPROM, FLASH lock/unlock: LOCK ULOCK LOCKF ULOCKF
   * native bit set/reset: BSR  
-  * inverted byte order 16bit register access: BSR 2C@ 2C! 
-  * compile to Flash memory: NVR RAM RESET 'BOOT
+  * inverted byte order 16bit register access: 2C@ 2C! 
+  * compile to Flash memory: NVR RAM RESET
+  * autostart applications: 'BOOT
   * ASCII file transfer: FILE HAND
-* STC with native BRANCH and EXIT
-* board support:
+* Subroutine Threaded Code (STC) with native BRANCH and EXIT
+* board supporti for Chinese made [STM8S based very low cost boards][WG1]:
   * W1209 LED display & half-duplex with SW TX 
   * C0135 Relay-4 Board
   * STM8S103F3 "$0.70" breakout board
 * support for [boards with 7Seg-LED UI](https://github.com/TG9541/stm8ef/wiki/eForth-Background-Task): in a background task, `123 .` goes to the 7Seg-LED display, and `?KEY` reads board keys
 
-Many changes to the original source are due to "board support" for Chinese made [STM8S based very low cost boards][WG1].
 
 Canges that required refactoring the original code:
 
@@ -62,7 +63,7 @@ There is board suport for some easily available "Chinese gadgets". For details, 
 * `BOARD_W1209` W1209 low cost thermostat with LED display and half-duplex RS232 through sensor header (9600 baud) 
 * `BOARD_C0135` C0135 "Relay-4 Board" (can be used as a *Nano PLC*)
 
-There is currently no support for the STM8S Discovery, since I don't have STM8S105C6T6 based boards for testing.
+Currently, there is no support for the STM8S Discovery, since I don't have any STM8S105C6T6 based boards for testing.
 
 ### STM8S003F3 Core
 

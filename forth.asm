@@ -858,7 +858,7 @@ STORE:
 	ADDW    X,#4            ; store w at a
 	RET	
 
-;	@	( a -- w )
+
 ;	Push memory location to stack.
 
 	.dw	LINK
@@ -887,7 +887,7 @@ CSTOR:
 	ADDW    X,#4
 	RET	
 
-;	C@	( b -- c )
+;	C@	( b -- c )      ; C@ sets Z and N
 ;	Push byte in memory to	stack.
 
 	.dw	LINK
@@ -898,8 +898,8 @@ CAT:
 	LDW     Y,X	        ; Y=b
 	LDW     Y,(Y)
 	LD      A,(Y)
-	LD      (1,X),A
 	CLR     (X)
+	LD      (1,X),A
 	RET	
 
         .ifne   WORDS_EXTRASTACK
@@ -2174,20 +2174,15 @@ TWOSL:
 	.ascii	">CHAR"
 	.endif
 TCHAR:
-	CALL	DOLITC
-	.db	0x07F
-	CALL	ANDD
-	CALL	DUPP	;mask msb
-	CALL	DOLITC
-	.db	127
-	CALL	BLANK
-	CALL	WITHI	;check for printable
-	CALL	QBRAN
-	.dw	TCHA1
-	CALL	DROP
-	CALL	DOLITC
-	.db	0x05F	; "_"	;replace non-printables
-TCHA1:	RET
+        LD      A,(1,X)
+        AND     A,#0x7F
+        CP      A,#0x7F
+        JREQ    1$
+        CP      A,#(' ')
+        JRUGE   2$
+1$:     LD      A,#('_')
+2$:     LD      (1,X),A
+        RET
 
 ;	DEPTH	( -- n )
 ;	Return	depth of data stack.
@@ -2361,12 +2356,11 @@ PAD:
 	.ascii	"@EXECUTE"
         .endif        
 ATEXE:
-	CALL	AT
-	CALL	QDUP	;?address or zero
-	CALL	QBRAN
-	.dw	EXE1
-	CALL	EXECU	;execute if non-zero
-EXE1:	RET	;do nothing if zero
+	CALL	AT              ; @ sets Z and N
+        JRNE    1$
+        JP      DROP
+1$:	JP	EXECU	        ; execute if non-zero
+
 
 ;	CMOVE	( b1 b2 u -- )
 ;	Copy u bytes from b1 to b2.
@@ -4370,9 +4364,9 @@ DOESS:
 	.ascii	"dodoes"
         .endif
 DODOES:
-        CALL    LAST
+        CALL    LAST                   ; ( link field of current word )
         CALL    AT
-        CALL    NAMET                  ; ' ( 'last call nop )
+        CALL    NAMET                  ; ' ( 'last  )
         CALL    DOLITC
         .db     BRAN_OPC               ; ' JP
         CALL    OVER                   ; ' JP '
@@ -4622,18 +4616,16 @@ SEE4:	CALL	NUFQ	;user control
 	.ascii	"WORDS"
 WORDS:
 	CALL	CR
-	CALL	CNTXT	;only in context
-WORS1:	CALL	AT
-	CALL	QDUP	;?at end of list
-	CALL	QBRAN
-	.dw	WORS2
+	CALL	CNTXT	        ; only in context
+WORS1:	CALL	AT              ; @ sets Z and N
+        JREQ    1$              ; ?at end of list
 	CALL	DUPP
 	CALL	SPACE
-	CALL	DOTID	;display a name
+	CALL	DOTID	        ; display a name
 	CALL	CELLM
         JRA     WORS1
-	CALL	DROP
-WORS2:	RET
+1$:	CALL	DROP
+	RET
 
 	
 ;	
