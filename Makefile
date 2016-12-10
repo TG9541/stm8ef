@@ -4,7 +4,7 @@ ifeq ($(BOARD),)
 all: zip 
 
 zip: build
-	find out/ -name "*.ihx" -print | zip out/stm8ef -@
+	find out/ -name "*.ihx" -print | zip out/stm8ef-bin -@
 
 build:
 	make BOARD=CORE

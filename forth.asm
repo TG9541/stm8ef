@@ -1447,7 +1447,7 @@ ONE:
 	.db	2
 	.ascii	"-1"
 MONE:
-	LDW     Y,#0x0FFFF
+	LDW     Y,#0xFFFF
         JRA     YSTOR
 
         .ifne   HAS_BACKGROUND
@@ -1851,7 +1851,7 @@ UMMOD:
         POPW    X
         INCW    X               ; pop off 1 level
         INCW    X               ; ADDW   X,#2 
-	LDW     Y,#0x0FFFF
+	LDW     Y,#0xFFFF
 	LDW     (X),Y
 	CLRW    Y
 	LDW     (2,X),Y
@@ -2567,8 +2567,8 @@ SIGN:
 	CALL	ZLESS
 	CALL	QBRAN
 	.dw	SIGN1
-	CALL	DOLIT
-	.dw	45	;"-"
+	CALL	DOLITC
+	.db	45	;"-"
 	JP	HOLD
 SIGN1:	RET
 
@@ -3342,8 +3342,7 @@ FIND1:	CALL	AT
 	CALL	QBRAN
 	.dw	FIND2
 	CALL	CELLP
-	CALL	DOLIT
-	.dw	0x0FFFF
+        CALL    MONE                   ; 0xFFFF
 	JRA	FIND3
 FIND2:	CALL	CELLP
 	CALL	TEMP
@@ -5074,8 +5073,8 @@ RESETT:
 	.dw     UDEFAULTS	
 	CALL	DOLIT
         .dw     UBOOT
-	CALL	DOLIT
-	.dw	(ULAST-UBOOT)
+	CALL	DOLITC
+	.db	(ULAST-UBOOT)
 	CALL	CMOVE	        ; initialize user area
 	CALL    LOCK_FLASH
         JP      COLD
