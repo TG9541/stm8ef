@@ -20,6 +20,7 @@
         HAS_BACKGROUND   = 1    ; Background Forth task (TIM2 ticker)
         HAS_CPNVM        = 1    ; Can compile to Flash, always interpret to RAM 
         HAS_DOES         = 1    ; CREATE-DOES> extension
+        HAS_DOLOOP       = 1    ; DO .. LOOP extension: DO LEAVE LOOP +LOOP
 
         CASEINSENSITIVE  = 1    ; Case insensitive dictionary search
         SPEEDOVERSIZE    = 0    ; Speed-over-size in core words: ROT - = < 
