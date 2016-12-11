@@ -762,6 +762,30 @@ CCOMMALIT:
 	CALL    CCOMMA
 	JRA     CSKIPRET     
 
+        ;	(loop)	( -- )
+        ;	Code for single index loop.
+
+        .ifne	WORDS_LINKCOMP
+        .dw	LINK
+        LINK =	.
+	.db	(COMPO+5)
+        .ascii	"(loop)"
+        .endif
+DOLOOP:
+	LDW	Y,(5,SP)
+        LDW	YTEMP,Y
+	LDW	Y,(3,SP)
+        INCW	Y
+        CPW	Y,YTEMP
+        JRSLT	1$
+        POPW	Y
+        ADDW	SP,#4
+	JP	(2,Y)
+1$:
+        LDW	(3,SP),Y
+        JRA	BRAN
+
+
 ;	next	( -- )
 ;	Code for single index loop.
 
@@ -3896,6 +3920,37 @@ NEXT:
 	CALL	COMPI
 	CALL	DONXT
 	JP	COMMA
+
+;	DO	( -- a )
+;	Start a DO LOOP loop
+;	structure in a colon definition.
+
+        .dw	LINK
+
+        LINK =	.
+        .db	(IMEDD+2)
+        .ascii	"DO"
+DOO:
+	CALL	COMPI
+	CALL	SWAPP
+	CALL	COMPI
+	CALL	TOR
+	JRA	FOR
+
+
+;	LOOP	( a -- )
+;	Terminate a DO-LOOP loop.
+
+	.dw	LINK
+
+	LINK =	.
+	.db	(IMEDD+4)
+	.ascii	"LOOP"
+LOOP:
+        CALL	COMPI
+        CALL	DOLOOP
+        JP	COMMA
+
 
 ;	BEGIN	( -- a )
 ;	Start an infinite or
