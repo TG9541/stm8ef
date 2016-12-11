@@ -126,6 +126,7 @@
         HAS_BACKGROUND =  0     ; Background Forth task (TIM2 ticker)
         HAS_CPNVM    =    0     ; Can compile to Flash, always interpret to RAM 
         HAS_DOES     =    0     ; DOES> extension
+        HAS_DOLOOP   =    0     ; DO .. LOOP extension: DO LEAVE LOOP +LOOP
 
         CASEINSENSITIVE = 0     ; Case insensitive dictionary search
         SPEEDOVERSIZE   = 0     ; Speed-over-size in core words ROT - = < 
@@ -762,29 +763,42 @@ CCOMMALIT:
 	CALL    CCOMMA
 	JRA     CSKIPRET     
 
-        ;	(loop)	( -- )
-        ;	Code for single index loop.
+        .ifne   HAS_DOLOOP 
+        ;	(+loop)	( +n -- )
+        ;	Add n to index R@ and test for lower than limit (R-CELL)@.
 
         .ifne	WORDS_LINKCOMP
         .dw	LINK
         LINK =	.
-	.db	(COMPO+5)
-        .ascii	"(loop)"
+	.db	(COMPO+8)
+        .ascii	"(+loop)"
         .endif
-DOLOOP:
+DOPLOOP:
 	LDW	Y,(5,SP)
         LDW	YTEMP,Y
-	LDW	Y,(3,SP)
-        INCW	Y
+        LDW     Y,X
+        LDW     Y,(Y)
+        INCW    X
+        INCW    X
+	ADDW	Y,(3,SP)
         CPW	Y,YTEMP
-        JRSLT	1$
-        POPW	Y
-        ADDW	SP,#4
-	JP	(2,Y)
-1$:
+        JRSGE	LEAVE
         LDW	(3,SP),Y
         JRA	BRAN
 
+;	LEAVE	( -- )
+;	Leave a DO .. LOOP/+LOOP loop.
+
+	.dw	LINK
+
+	LINK =	.
+	.db	(COMPO+5)
+	.ascii	"LEAVE"
+LEAVE:
+        POPW	Y
+        ADDW	SP,#4
+	JP	(2,Y)
+        .endif
 
 ;	next	( -- )
 ;	Code for single index loop.
@@ -3921,6 +3935,7 @@ NEXT:
 	CALL	DONXT
 	JP	COMMA
 
+        .ifne   HAS_DOLOOP 
 ;	DO	( -- a )
 ;	Start a DO LOOP loop
 ;	structure in a colon definition.
@@ -3937,7 +3952,6 @@ DOO:
 	CALL	TOR
 	JRA	FOR
 
-
 ;	LOOP	( a -- )
 ;	Terminate a DO-LOOP loop.
 
@@ -3948,9 +3962,22 @@ DOO:
 	.ascii	"LOOP"
 LOOP:
         CALL	COMPI
-        CALL	DOLOOP
-        JP	COMMA
+        CALL    ONE
+        JRA     PLOOP
 
+;	+LOOP	( a +n -- )
+;	Terminate a DO - +LOOP loop.
+
+	.dw	LINK
+
+	LINK =	.
+	.db	(IMEDD+5)
+	.ascii	"+LOOP"
+PLOOP:        
+        CALL	COMPI
+        CALL	DOPLOOP
+        JP	COMMA
+        .endif
 
 ;	BEGIN	( -- a )
 ;	Start an infinite or
