@@ -41,7 +41,8 @@
 ; * preemptive background operation with fixed cycle time
 ; * configurable startup & default constants: 'BOOT
 ; * configurable vocabulary subsets for binary size reduction
-; * pattern CREATE-DOES>
+; * CREATE-DOES> for defining words
+; * New loop structure words: DO LEAVE LOOP +LOOP
 ; * native BRANCH and EXIT
 ; * words for STM8 ADC control: ADC! ADC@ 
 ; * words for board keys, outputs, LEDs: OUT OUT!
@@ -879,7 +880,7 @@ EXIT:
 	POPW	Y
 	RET
 
-;	!	( w a -- )
+;	!	( w a -- )      ( TOS STM8: -- Y,Z,N )
 ;	Pop data stack to memory.
 
 	.dw	LINK
@@ -894,9 +895,10 @@ STORE:
 	LDW     Y,(2,Y)
 	LDW     [YTEMP],Y
 	ADDW    X,#4            ; store w at a
-	RET	
+        JRA     YTOS
 
 
+;	@	( a -- w )      ( TOS STM8: -- Y,Z,N )
 ;	Push memory location to stack.
 
 	.dw	LINK
@@ -925,8 +927,9 @@ CSTOR:
 	ADDW    X,#4
 	RET	
 
-;	C@	( b -- c )      ; C@ sets Z and N
-;	Push byte in memory to	stack.
+;	C@	( b -- c )      ( TOS STM8: -- A,Z,N )
+;	Push byte in memory to stack.
+;       STM8: Z,N
 
 	.dw	LINK
 	LINK =	.
@@ -941,7 +944,7 @@ CAT:
 	RET	
 
         .ifne   WORDS_EXTRASTACK
-;	RP@	( -- a )
+;	RP@	( -- a )     ( TOS STM8: -- Y,Z,N )
 ;	Push current RP to data stack.
 
 	.dw	LINK
@@ -950,7 +953,7 @@ CAT:
 	.ascii	"rp@"
 RPAT:
 	LDW     Y,SP	        ; save return addr
-        JP      YSTOR
+        JRA     YSTOR
         .endif
 
 ;	RP!	( a -- )
@@ -988,8 +991,8 @@ PUSHJPYTEMP:
 	JP      [YTEMP]
 
         .ifne   WORDS_EXTRACORE
-;	I	( -- n )
-;	Get inner FOR - NEXT index value
+;	I	( -- n )     ( TOS STM8: -- Y,Z,N )
+;	Get inner FOR-NEXT or DO-LOOP index value
 	.dw	LINK
 
 	LINK =	.
@@ -999,7 +1002,28 @@ IGET:
         JRA     RAT
         .endif
 
-;	R@	( -- w )
+;	doVAR	( -- a )     ( TOS STM8: -- Y,Z,N )
+;	Code for VARIABLE and CREATE.
+
+	.ifne	WORDS_LINKCOMP
+	.dw	LINK
+	LINK =	.
+	.db	(COMPO+5)
+	.ascii	"doVar"
+	.endif
+DOVAR:
+	POPW	Y	        ; get return addr (pfa)
+        ; fall through
+
+;       YSTOR core ( -- n )     ( TOS STM8: -- Y,Z,N )
+;       push Y to stack
+YSTOR:        
+        DECW    X               ; SUBW	X,#2    
+        DECW    X
+	LDW     (X),Y	        ; push on stack
+	RET	                ; go to RET of EXEC
+
+;	R@	( -- w )        ( TOS STM8: -- Y,Z,N )
 ;	Copy top of return stack to stack (or the FOR - NEXT index value).
 
 	.dw	LINK
@@ -1008,9 +1032,9 @@ IGET:
 	.ascii	"R@"
 RAT:
 	LDW     Y,(3,SP)
-        JP      YSTOR
+        JRA     YSTOR
 
-;	>R	( w -- )
+;	>R	( w -- )      ( TOS STM8: -- Y,Z,N )
 ;	Push data stack to return stack.
 
 	.dw	LINK
@@ -1028,7 +1052,20 @@ TOR:
 	JP      [YTEMP]
 
 
-;	DROP	( w -- )
+;	SP@	( -- a )        ( TOS STM8: -- Y,Z,N )
+;	Push current stack pointer.
+
+        .ifne   WORDS_EXTRASTACK
+	.dw	LINK
+	LINK =	.
+	.db	3
+	.ascii	"sp@"
+        .endif
+SPAT:
+	LDW     Y,X
+        JRA      YSTOR
+
+;	DROP	( w -- )        ( TOS STM8: -- Y,Z,N )
 ;	Discard top stack item.
 
 	.dw	LINK
@@ -1038,9 +1075,12 @@ TOR:
 DROP:
         INCW    X               ; ADDW   X,#2 
         INCW    X
+YTOS:
+        LDW     Y,X
+        LDW     Y,(Y)
 	RET	
 
-;	DUP	( w -- w w )
+;	DUP	( w -- w w )    ( TOS STM8: -- Y,Z,N )
 ;	Duplicate top stack item.
 
 	.dw	LINK
@@ -1049,13 +1089,10 @@ DROP:
 	.ascii	"DUP"
 DUPP:
 	LDW     Y,X
-        DECW    X               ; SUBW	X,#2    
-        DECW    X
 	LDW     Y,(Y)
-	LDW     (X),Y
-	RET	
+        JRA     YSTOR
 
-;	SWAP  	( w1 w2 -- w2 w1 )
+;	SWAP ( w1 w2 -- w2 w1 ) ( TOS STM8: -- Y,Z,N )
 ;	Exchange top two stack items.
 
 	.dw	LINK
@@ -1064,16 +1101,17 @@ DUPP:
 	.ascii	"SWAP"
 SWAPP:
 	LDW     Y,X
-	LDW     Y,(Y)
+	LDW     Y,(2,Y)
         PUSHW   Y
 	LDW     Y,X
-	LDW     Y,(2,Y)
-	LDW     (X),Y
-        POPW    Y
+	LDW     Y,(Y)
 	LDW     (2,X),Y
+        POPW    Y
+	LDW     (X),Y
 	RET	
 
-;	OVER	( w1 w2 -- w1 w2 w1 )
+
+;	OVER	( w1 w2 -- w1 w2 w1 ) ( TOS STM8: -- Y,Z,N )
 ;	Copy second stack item to top.
 
 	.dw	LINK
@@ -1081,14 +1119,11 @@ SWAPP:
 	.db	4
 	.ascii	"OVER"
 OVER:
-        DECW    X               ; SUBW	X,#2    
-        DECW    X
 	LDW     Y,X
-	LDW     Y,(4,Y)
-	LDW     (X),Y
-	RET	
+	LDW     Y,(2,Y)
+        JRA     YSTOR
 
-;	0<	( n -- t )
+;	0<	( n -- t ) ( TOS STM8: -- A,Z )
 ;	Return true if n is negative.
 
 	.dw	LINK
@@ -1096,62 +1131,16 @@ OVER:
 	.db	2
 	.ascii	"0<"
 ZLESS:
-	LD      A,#0x0FF
+	CLR     A
 	LDW     Y,X
 	LDW     Y,(Y)
-	JRMI	ZL1
-	CLR     A	        ; false
+	JRPL	ZL1
+	CPL     A	        ; true
 ZL1:    LD      (X),A
 	LD      (1,X),A
 	RET	
 
-;	OR	( w w -- w )
-;	Bitwise inclusive OR.
-
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"OR"
-ORR:
-	LD	A,(1,X)	        ; D=w
-	OR	A,(3,X)
-	LD      (3,X),A
-	LD      A,(X)
-	OR	A,(2,X)
-        JRA     LDADROP
-
-;	XOR	( w w -- w )
-;	Bitwise exclusive OR.
-
-	.dw	LINK
-	LINK =	.
-	.db	3
-	.ascii	"XOR"
-XORR:
-	LD	A,(1,X)	        ; D=w
-	XOR	A,(3,X)
-	LD      (3,X),A
-	LD      A,(X)
-	XOR	A,(2,X)
-        JRA     LDADROP
-
-;	AND	( w w -- w )
-;	Bitwise AND.
-
-	.dw	LINK
-	LINK =	.
-	.db	3
-	.ascii	"AND"
-ANDD:
-	LD	A,(1,X)	        ; D=w
-	AND	A,(3,X)
-	LD      (3,X),A
-	LD      A,(X)
-	AND	A,(2,X)
-        JRA     LDADROP
-
-;	+	( w w -- sum )
+;	+	( w w -- sum ) ( TOS STM8: -- Y,Z,N )
 ;	Add top two items.
 
 	.dw	LINK
@@ -1168,11 +1157,55 @@ PLUS:
 	ADC     A,(2,X)
 LDADROP:
 	LD      (2,X),A
-        INCW    X               ; ADDW   X,#2 
-        INCW    X
-	RET
+        JRA     DROP
 
-;	-	( n1 n2 -- n1-n2 )
+;	XOR	( w w -- w )    ( TOS STM8: -- Y,Z,N )
+;	Bitwise exclusive OR.
+
+	.dw	LINK
+	LINK =	.
+	.db	3
+	.ascii	"XOR"
+XORR:
+	LD	A,(1,X)	        ; D=w
+	XOR	A,(3,X)
+	LD      (3,X),A
+	LD      A,(X)
+	XOR	A,(2,X)
+        JRA     LDADROP
+
+;	AND	( w w -- w )    ( TOS STM8: -- Y,Z,N )
+;	Bitwise AND.
+
+	.dw	LINK
+	LINK =	.
+	.db	3
+	.ascii	"AND"
+ANDD:
+	LD	A,(1,X)	        ; D=w
+	AND	A,(3,X)
+	LD      (3,X),A
+	LD      A,(X)
+	AND	A,(2,X)
+        JRA     LDADROP
+
+;	OR	( w w -- w )    ( TOS STM8: -- Y,Z,N )
+;	Bitwise inclusive OR.
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	2
+	.ascii	"OR"
+ORR:
+	LD	A,(1,X)	        ; D=w
+	OR	A,(3,X)
+	LD      (3,X),A
+	LD      A,(X)
+	OR	A,(2,X)
+        JRA     LDADROP
+
+;	-   ( n1 n2 -- n1-n2 )  ( TOS STM8: -- Y,Z,N )
 ;	Subtraction.
 
 	.dw	LINK
@@ -1235,7 +1268,7 @@ SPSTO:
 	RET	
 
 
-;	CONTEXT ( -- a )
+;	CONTEXT ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;	Start vocabulary search.
 
 	.ifne	WORDS_LINKINTER
@@ -1254,15 +1287,15 @@ CNTXT:
         CALL    NVMQ
         CALL    QBRAN
         .dw     1$
-        LDW     Y,#(RAMBASE+NVMCONTEXT)
-        JRA     YSTOR
+        LD      A,#(RAMBASE+NVMCONTEXT)
+        JRA     ASTOR
 1$:
         .endif
-	LDW     Y,#(RAMBASE+USRCONTEXT)
-        JRA     YSTOR
+	LD      A,#(RAMBASE+USRCONTEXT)
+        JRA     ASTOR
 
 
-;	CP	( -- a )
+;	CP	( -- a )     ( TOS STM8: -- Y,Z,N )
 ;	Point to top of dictionary.
 
         .ifne   WORDS_LINKCOMPC
@@ -1273,25 +1306,12 @@ CNTXT:
 	.ascii	"cp"
         .endif
 CPP:
-	LDW     Y,#(RAMBASE+USRCP)
-        JRA     YSTOR
-
-;	SP@	( -- a )
-;	Push current stack pointer.
-
-        .ifne   WORDS_EXTRASTACK
-	.dw	LINK
-	LINK =	.
-	.db	3
-	.ascii	"sp@"
-        .endif
-SPAT:
-	LDW     Y,X
-        JRA     YSTOR
+	LD      A,#(RAMBASE+USRCP)
+        JRA     ASTOR
 
 ; System and user variables
 
-;	BASE	( -- a )
+;	BASE	( -- a )     ( TOS STM8: -- Y,Z,N )
 ;	Radix base for numeric I/O.
 
 	.dw	LINK
@@ -1299,10 +1319,10 @@ SPAT:
 	.db	4
 	.ascii	"BASE"
 BASE:
-	LDW     Y,#(RAMBASE+USRBASE)
-        JRA     YSTOR
+	LD      A,#(RAMBASE+USRBASE)
+        JRA     ASTOR
 
-;	tmp	( -- a )
+;	tmp	( -- a )     ( TOS STM8: -- Y,Z,N )
 ;	A temporary storage.
 
 	.ifne	WORDS_LINKINTER
@@ -1313,10 +1333,10 @@ BASE:
 	.ascii	"tmp"
 	.endif
 TEMP:
-	LDW     Y,#(RAMBASE+USRTEMP)
-        JRA     YSTOR
+	LD      A,#(RAMBASE+USRTEMP)
+        JRA     ASTOR
 
-;	>IN	( -- a )
+;	>IN	( -- a )     ( TOS STM8: -- Y,Z,N )
 ;	Hold parsing pointer.
 
 	.ifne	WORDS_LINKINTER
@@ -1327,10 +1347,10 @@ TEMP:
 	.ascii	">IN"
         .endif
 INN:
-	LDW     Y,#(RAMBASE+USR_IN)
-        JRA     YSTOR
+	LD      A,#(RAMBASE+USR_IN)
+        JRA     ASTOR
 
-;	#TIB	( -- a )
+;	#TIB	( -- a )     ( TOS STM8: -- Y,Z,N )
 ;	Count in terminal input buffer.
 
 	.ifne	WORDS_LINKCHAR
@@ -1341,10 +1361,10 @@ INN:
 	.ascii	"#TIB"
 	.endif
 NTIB:
-	LDW     Y,#(RAMBASE+USRNTIB)
-        JRA     YSTOR
+	LD      A,#(RAMBASE+USRNTIB)
+        JRA     ASTOR
 
-;	'eval	( -- a )
+;	'eval	( -- a )     ( TOS STM8: -- Y,Z,N )
 ;	Execution vector of EVAL.
 
 	.ifne	WORDS_LINKINTER
@@ -1355,11 +1375,11 @@ NTIB:
 	.ascii	"'eval"
 	.endif
 TEVAL:
-	LDW     Y,#(RAMBASE+USREVAL)
-        JRA     YSTOR
+	LD      A,#(RAMBASE+USREVAL)
+        JRA     ASTOR
 
 
-;	HLD	( -- a )
+;	HLD	( -- a )     ( TOS STM8: -- Y,Z,N )
 ;	Hold a pointer of output string.
 
 	.ifne	WORDS_LINKCHAR
@@ -1370,12 +1390,12 @@ TEVAL:
 	.ascii	"hld"
 	.endif
 HLD:
-	LDW     Y,#(RAMBASE+USRHLD)
-        JRA     YSTOR
+	LD      A,#(RAMBASE+USRHLD)
+        JRA     ASTOR
 
 
 
-;	LAST	( -- a )
+;	LAST	( -- a )        ( TOS STM8: -- Y,Z,N )
 ;	Point to last name in dictionary.
 
 	.ifne	WORDS_LINKCOMPC
@@ -1386,31 +1406,21 @@ HLD:
 	.ascii	"last"
         .endif
 LAST:
-	LDW     Y,#(RAMBASE+USRLAST)
-        JRA     YSTOR
+	LD      A,#(RAMBASE+USRLAST)
 
-;	doVAR	( -- a )
-;	Code for VARIABLE and CREATE.
-
-	.ifne	WORDS_LINKCOMP
-	.dw	LINK
-	LINK =	.
-	.db	(COMPO+5)
-	.ascii	"doVar"
-	.endif
-DOVAR:
-	POPW	Y	        ; get return addr (pfa)
-        ; fall through
-
-;       YSTOR core only  ( -- n )
-;       push Y to stack
-YSTOR:        
-        DECW    X               ; SUBW	X,#2    
+;       ASTOR core ( -- n )     ( TOS STM8: -- Y,Z,N )
+;       push A to stack
+ASTOR:
         DECW    X
-	LDW     (X),Y	        ; push on stack
-	RET	                ; go to RET of EXEC
+        LD      (X),A
+        DECW    X
+        CLR     (X)
+        LDW     Y,X
+        LDW     Y,(Y)
+        RET
 
-;	TIB	( -- a )
+
+;	TIB	( -- a )     ( TOS STM8: -- Y,Z,N )
 ;	Return address of terminal input buffer.
 
 	.ifne	WORDS_LINKCHAR
@@ -1422,10 +1432,10 @@ YSTOR:
         .endif
 TIB:
 	LDW     Y,#(TIBB)
-        JRA     YSTOR
+        JP      YSTOR
 
         .ifne   HAS_OUTPUTS
-;	OUT	( -- a )
+;	OUT	( -- a )     ( TOS STM8: -- Y,Z,N )
 ;	Return address of OUTPUTS register
 
 	.dw	LINK
@@ -1434,13 +1444,13 @@ TIB:
 	.db	3
 	.ascii	"OUT"
 OUTA:
-	LDW     Y,#(OUTPUTS)
-        JRA     YSTOR
+	LD      A,#(OUTPUTS)
+        JRA     ASTOR
         .endif
 
 ; Constants
 
-;	BL	( -- 32 )
+;	BL	( -- 32 )     ( TOS STM8: -- Y,Z,N )
 ;	Return 32, blank character.
 
 	.dw	LINK
@@ -1449,10 +1459,10 @@ OUTA:
 	.db	2
 	.ascii	"BL"
 BLANK:
-	LDW     Y,#32
-        JRA     YSTOR
+	LD      A,#32
+        JRA     ASTOR
 
-;	0	( -- 0)
+;	0	( -- 0)     ( TOS STM8: -- Y,Z,N )
 ;	Return 0.
 
 	.dw	LINK
@@ -1461,10 +1471,10 @@ BLANK:
 	.db	1
 	.ascii	"0"
 ZERO:
-	CLRW    Y
-        JRA     YSTOR
+	CLR     A
+        JRA     ASTOR
 
-;	1	( -- 1)
+;	1	( -- 1)     ( TOS STM8: -- Y,Z,N )
 ;	Return 1.
 
 	.dw	LINK
@@ -1473,10 +1483,10 @@ ZERO:
 	.db	1
 	.ascii	"1"
 ONE:
-	LDW     Y,#1
-        JRA     YSTOR
+	LD      A,#1
+        JRA     ASTOR
 
-;	-1	( -- -1)
+;	-1	( -- -1)     ( TOS STM8: -- Y,Z,N )
 ;	Return -1
 
 	.dw	LINK
@@ -1485,11 +1495,11 @@ ONE:
 	.db	2
 	.ascii	"-1"
 MONE:
-	LDW     Y,#0xFFFF
-        JRA     YSTOR
+        CALLR   ZERO	
+        JP      INVER
 
         .ifne   HAS_BACKGROUND
-;	TIM	( -- T)
+;	TIM	( -- T)     ( TOS STM8: -- Y,Z,N )
 ;	Return TICKCNT as timer
 	
         .dw	LINK
@@ -1499,10 +1509,10 @@ MONE:
 	.ascii	"TIM"
 TIMM:
 	LDW     Y,TICKCNT
-        JRA     YSTOR
+        JP      YSTOR
 
 
-;	BG	( -- a)
+;	BG	( -- a)     ( TOS STM8: -- Y,Z,N )
 ;	Return address of BGADDR vector
 	
         .dw	LINK
@@ -1511,13 +1521,13 @@ TIMM:
 	.db	2
 	.ascii	"BG"
 BGG:
-	LDW     Y,#(BGADDR)
-        JRA     YSTOR
+	LD      A,#(BGADDR)
+        JRA     ASTOR
         .endif
 
 
         .ifne   HAS_CPNVM
-;	'PROMPT	( -- a)
+;	'PROMPT	( -- a)     ( TOS STM8: -- Y,Z,N )
 ;	Return address of PROMPT vector
 	
 	.ifne	WORDS_LINKINTER
@@ -1527,8 +1537,8 @@ BGG:
 	.db	7
 	.ascii	"'PROMPT"
 TPROMPT:
-	LDW     Y,#(USRPROMPT)
-        JRA     YSTOR
+	LD      A,#(USRPROMPT)
+        JRA     ASTOR
         .endif
 
 
@@ -1642,8 +1652,8 @@ DDUP:
         JP      OVER
 
 
-;	NOT	( w -- w )
-;	One's complement of tos.
+;	NOT	( w -- w )     ( TOS STM8: -- Y,Z,N )
+;	One's complement of TOS.
 
 	.dw	LINK
 	
@@ -1657,7 +1667,7 @@ INVER:
 	LDW     (X),Y
 	RET
 
-;	NEGATE	( n -- -n )
+;	NEGATE	( n -- -n )     ( TOS STM8: -- Y,Z,N )
 ;	Two's complement of TOS.
 
 	.dw	LINK
@@ -1672,7 +1682,7 @@ NEGAT:
 	LDW     (X),Y
 	RET
 
-;	DNEGATE ( d -- -d )
+;	DNEGATE ( d -- -d )     ( TOS STM8: -- Y,Z,N )
 ;	Two's complement of top double.
 
 	.dw	LINK
@@ -1696,7 +1706,7 @@ DNEGA:
 DN1:    LDW     (X),Y
 	RET
 
-;	ABS	( n -- n )
+;	ABS	( n -- n )      ( TOS STM8: -- Y,Z,N )
 ;	Return	absolute value of n.
 
 	.dw	LINK
@@ -1712,7 +1722,7 @@ ABSS:
 	LDW     (X),Y
 1$:     RET
 
-;	=	( w w -- t )
+;	=	( w w -- t )    ( TOS STM8: -- Y,Z,N )
 ;	Return true if top two are equal.
 
 	.dw	LINK
@@ -1735,14 +1745,16 @@ EQUAL:
 	CLR     A
 EQ1:    LD      (X),A
 	LD      (1,X),A
-        RET                            ; 21 cy
+        LDW     Y,X
+        LDW     Y,(Y)
+        RET                            ; 24 cy
         .else
         CALL    XORR
         JRA     ZEQUAL                 ; 31 cy= (18+13) 
         .endif
         
         .ifne   WORDS_EXTRACORE
-;	0=	( n -- t )
+;	0=	( n -- t        ( TOS STM8: -- Y,Z,N ))
 ;	Return true if n is equal to 0
 	.dw	LINK
 	
@@ -1760,7 +1772,7 @@ ZEQUAL:
 2$:     LDW     (X),Y
         RET
         
-;	U<	( u u -- t )
+;	U<	( u u -- t )    ( TOS STM8: -- Y,Z,N )
 ;	Unsigned compare of top two items.
 
 	.dw	LINK
@@ -1770,11 +1782,13 @@ ZEQUAL:
 	.ascii	"U<"
 ULESS:
 	CLR     A
-        CALLR   YYTEMPCMP
+        CALLR   YTEMPCMP
 	JRUGE	1$
 	CPL     A
 1$:     LD      (X),A
 	LD      (1,X),A
+        LDW     Y,X
+        LDW     Y,(Y)
 	RET	
 
 ;	<	( n1 n2 -- t )
@@ -1799,15 +1813,17 @@ LESS:
 	CPL     A
 1$:     LD      (X),A
 	LD      (1,X),A
-	RET                      ; 23 cy	
+        LDW     Y,X
+        LDW     Y,(Y)
+	RET                      ; 26 cy	
         .else
         CALL    SUBB             ; (29cy) 
         JP      ZLESS            ; 41 cy (12+29)
         .endif
 
-;       YYTEMPCMP       ( n n -- n )
+;       YTEMPCMP       ( n n -- n )      ( TOS STM8: -- Y,Z,N )
 ;       Load (TOS) to YTEMP and (TOS-1) to Y, DROP, CMP to STM8 flags
-YYTEMPCMP:        
+YTEMPCMP:        
 	LDW     Y,X
 	LDW     Y,(Y)
 	LDW     YTEMP,Y
@@ -1818,7 +1834,7 @@ YYTEMPCMP:
 	CPW     Y,YTEMP
         RET
 
-;	MAX	( n n -- n )
+;	MAX	( n n -- n )    ( TOS STM8: -- Y,Z,N )
 ;	Return greater of two top items.
 
 	.dw	LINK
@@ -1827,7 +1843,7 @@ YYTEMPCMP:
 	.db	3
 	.ascii	"MAX"
 MAX:
-        CALLR   YYTEMPCMP
+        CALLR   YTEMPCMP
 	JRSGT	MMEXIT
 YTEMPTOS:
         LDW     Y,YTEMP
@@ -1835,7 +1851,7 @@ YTEMPTOS:
 MMEXIT: 
         RET
 
-;	MIN	( n n -- n )
+;	MIN	( n n -- n )    ( TOS STM8: -- Y,Z,N )
 ;	Return smaller of top two items.
 
 	.dw	LINK
@@ -1844,11 +1860,11 @@ MMEXIT:
 	.db	3
 	.ascii	"MIN"
 MIN:
-        CALLR   YYTEMPCMP
+        CALLR   YTEMPCMP
 	JRSLT	MMEXIT
         JRA     YTEMPTOS
 
-;	WITHIN	( u ul uh -- t )
+;	WITHIN ( u ul uh -- t ) ( TOS STM8: -- Y,Z,N )
 ;	Return true if u is within
 ;	range of ul and uh. ( ul <= u < uh )
 
@@ -1967,7 +1983,7 @@ SLMOD:
 	CALL	SWAPP
 	JP	MSMOD
 
-;	MOD	( n n -- r )
+;	MOD	( n n -- r )    ( TOS STM8: -- Y,Z,N )	
 ;	Signed divide. Return mod only.
 
 	.dw	LINK
@@ -1979,7 +1995,7 @@ MODD:
 	CALL	SLMOD
 	JP	DROP
 
-;	/	( n n -- q )
+;	/	( n n -- q )    ( TOS STM8: -- Y,Z,N )
 ;	Signed divide. Return quotient only.
 
 	.dw	LINK
@@ -2045,7 +2061,7 @@ UMSTA:	                        ; stack have 4 bytes u1=a,b u2=c,d
         ADDW    SP,#6   ; drop temp storage
         RET
 
-;	*	( n n -- n )
+;	*	( n n -- n )    ( TOS STM8: -- Y,Z,N )
 ;	Signed multiply. Return single product.
 
 	.dw	LINK
@@ -2095,7 +2111,7 @@ SSMOD:
 	CALL	RFROM
 	JP	MSMOD
 
-;	*/	( n1 n2 n3 -- q )
+;	*/	( n1 n2 n3 -- q )    ( TOS STM8: -- Y,Z,N )
 ;	Multiply n1 by n2, then divide
 ;	by n3. Return quotient only.
 
@@ -2111,7 +2127,7 @@ STASL:
 
 ; Miscellaneous
 
-;	2+	( a -- a )
+;	2+	( a -- a )      ( TOS STM8: -- Y,Z,N )
 ;	Add 2 to tos.
 
 	.dw	LINK
@@ -2126,7 +2142,7 @@ CELLP:
 	LDW     (X),Y
 	RET
 
-;	2-	( a -- a )
+;	2-	( a -- a )      ( TOS STM8: -- Y,Z,N )
 ;	Subtract 2 from tos.
 
 	.dw	LINK
@@ -2141,7 +2157,7 @@ CELLM:
 	LDW     (X),Y
 	RET
 
-;	2*	( n -- n )
+;	2*	( n -- n )      ( TOS STM8: -- Y,Z,N )
 ;	Multiply tos by 2.
 
 	.dw	LINK
@@ -2156,7 +2172,7 @@ CELLS:
 	LDW     (X),Y
 	RET
 
-;	1+	( n -- n )
+;	1+	( n -- n )      ( TOS STM8: -- Y,Z,N )
 ;	Add 1 to tos.
 
 	.dw	LINK
@@ -2171,7 +2187,7 @@ ONEP:
 	LDW     (X),Y
 	RET
 
-;	1-	( n -- n )
+;	1-	( n -- n )      ( TOS STM8: -- Y,Z,N )
 ;	Subtract 1 from tos.
 
 	.dw	LINK
@@ -2186,7 +2202,7 @@ ONEM:
 	LDW     (X),Y
 	RET
 
-;	2/	( n -- n )
+;	2/	( n -- n )      ( TOS STM8: -- Y,Z,N )
 ;	Multiply tos by 2.
 
 	.dw	LINK
@@ -2201,7 +2217,7 @@ TWOSL:
 	LDW     (X),Y
 	RET
 
-;	>CHAR	( c -- c )
+;	>CHAR	( c -- c )      ( TOS STM8: -- A,Z,N )
 ;	Filter non-printing characters.
 
 	.ifne	WORDS_LINKCHAR
@@ -2222,7 +2238,7 @@ TCHAR:
 2$:     LD      (1,X),A
         RET
 
-;	DEPTH	( -- n )
+;	DEPTH	( -- n )      ( TOS STM8: -- Y,Z,N )
 ;	Return	depth of data stack.
 
 	.ifne   WORDS_EXTRASTACK
@@ -2243,7 +2259,7 @@ DEPTH:
 	LDW     (X),Y	; if neg, underflow
 	RET
 
-;	PICK	( ... +n -- ... w )
+;	PICK	( ... +n -- ... w )      ( TOS STM8: -- Y,Z,N )
 ;	Copy	nth stack item to tos.
 
 	.dw	LINK
@@ -2263,7 +2279,7 @@ PICK:
 
 ; Memory access
 
-;	+!	( n a -- )
+;	+!	( n a -- )      ( TOS STM8: -- Y,Z,N )
 ;	Add n tor contents at address a.
 
 	.dw	LINK
@@ -2279,7 +2295,7 @@ PSTOR:
 	CALL	SWAPP
 	JP	STORE
 
-;	2!	( d a -- )
+;	2!	( d a -- )      ( TOS STM8: -- Y,Z,N )
 ;	Store double integer to address a.
 
 	.dw	LINK
@@ -2309,7 +2325,7 @@ DAT:
 	CALL	SWAPP
 	JP	AT
 
-;	COUNT	( b -- b +n )
+;	COUNT	( b -- b +n )      ( TOS STM8: -- A,Z,N )
 ;	Return count byte of a string
 ;	and add 1 to byte address.
 
@@ -2326,7 +2342,7 @@ COUNT:
 	CALL	SWAPP
 	JP	CAT
 
-;	HERE	( -- a )
+;	HERE	( -- a )      ( TOS STM8: -- A,Z,N )
 ;	Return	top of	code dictionary.
 
 	.ifeq	BAREBONES
@@ -2354,7 +2370,7 @@ HERECP:
         CALL	CPP
         JP	AT
 
-;	PAD	( -- a )
+;	PAD	( -- a )  ( TOS STM8: invalid )
 ;	Return address of text buffer
 ;	above code dictionary.
 
@@ -2383,7 +2399,7 @@ PAD:
 	.db	PADOFFS
 	JP	PLUS
 
-;	@EXECUTE	( a -- )
+;	@EXECUTE	( a -- )  ( TOS STM8: undefined )
 ;	Execute vector stored in address a.
 
 	.ifne	WORDS_LINKCOMP
@@ -2480,7 +2496,7 @@ PACKS:
 
 ; Numeric output, single precision
 
-;	DIGIT	( u -- c )
+;	DIGIT	( u -- c )      ( TOS STM8: -- Y,Z,N )
 ;	Convert digit u to a character.
 
 	.ifne	WORDS_LINKCHAR
@@ -2503,7 +2519,7 @@ DIGIT:
 	.db	48	;'0'
 	JP	PLUS
 
-;	EXTRACT ( n base -- n c )
+;	EXTRACT ( n base -- n c )   ( TOS STM8: -- Y,Z,N )
 ;	Extract least significant digit from n.
 
 	.ifne	WORDS_LINKCHAR
@@ -2520,7 +2536,7 @@ EXTRC:
 	CALL	SWAPP
 	JP	DIGIT
 
-;	<#	( -- )
+;	<#	( -- )   ( TOS STM8: -- Y,Z,N )
 ;	Initiate	numeric output process.
 
 	.ifne	WORDS_LINKCHAR
@@ -2535,7 +2551,7 @@ BDIGS:
 	CALL	HLD
 	JP	STORE
 
-;	HOLD	( c -- )
+;	HOLD	( c -- )    ( TOS STM8: -- Y,Z,N )
 ;	Insert a character into output string.
 
 	.ifne	WORDS_LINKCHAR
@@ -2546,15 +2562,15 @@ BDIGS:
 	.ascii	"HOLD"
         .endif
 HOLD:
-	CALL	HLD
-	CALL	AT
-	CALL	ONEM
-	CALL	DUPP
-	CALL	HLD
-	CALL	STORE
-	JP	CSTOR
+        LDW     Y,USRHLD
+        DECW    Y
+        LDW     USRHLD,Y
+        LD      A,(1,X)
+        LD      (Y),A
+        JP      DROP
 
-;	#	( u -- u )
+
+;	#	( u -- u )    ( TOS STM8: -- Y,Z,N )
 ;	Extract one digit from u and
 ;	append digit to output string.
 
@@ -2569,7 +2585,7 @@ DIG:
 	CALL	BASE
 	CALL	AT
 	CALL	EXTRC
-	JP	HOLD
+	JRA	HOLD
 
 ;	#S	( u -- 0 )
 ;	Convert u until all digits
@@ -2583,12 +2599,9 @@ DIG:
 	.ascii	"#S"
         .endif
 DIGS:
-DIGS1:	CALL	DIG
-	CALL	DUPP
-	CALL	QBRAN
-	.dw	DIGS2
-	JRA	DIGS1
-DIGS2:	RET
+DIGS1:	CALLR	DIG
+        JRNE    DIGS1
+        RET
 
 ;	SIGN	( n -- )
 ;	Add a minus sign to
@@ -2607,7 +2620,7 @@ SIGN:
 	.dw	SIGN1
 	CALL	DOLITC
 	.db	45	;"-"
-	JP	HOLD
+	JRA	HOLD
 SIGN1:	RET
 
 ;	#>	( w -- b u )

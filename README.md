@@ -13,23 +13,24 @@ Features:
 * compile Forth to NVM (Non Volatile Memory with Flash IAP)
 * autostart feature for embedded applications
 * preemptive background tasks, e.g. for `INPUT-PROCESS-OUTPUT` proces with fixed cycle time (default 5ms)
-* *CREATE-DOES>* pattern
 * configurable vocabulary subsets for binary size reduction
+* Subroutine Threaded Code (STC) with native BRANCH and EXIT
 * Extended vocabulary:
-  * STM8 ADC control: ADC! ADC@ 
+  * *CREATE-DOES>* for defining words
+  * Loop structure words: DO LEAVE LOOP +LOOP
+  * STM8 ADC control: ADC! ADC@
   * board keys, outputs, LEDs: OUT OUT!
   * EEPROM, FLASH lock/unlock: LOCK ULOCK LOCKF ULOCKF
-  * native bit set/reset: BSR  
-  * inverted byte order 16bit register access: 2C@ 2C! 
+  * native bit set/reset: BSR
+  * inverted byte order 16bit register access: 2C@ 2C!
   * compile to Flash memory: NVR RAM RESET
   * autostart applications: 'BOOT
   * ASCII file transfer: FILE HAND
-* Subroutine Threaded Code (STC) with native BRANCH and EXIT
-* board supporti for Chinese made [STM8S based very low cost boards][WG1]:
-  * W1209 LED display & half-duplex with SW TX 
+* board support for Chinese made [STM8S based very low cost boards][WG1]:
+  * W1209 LED display & half-duplex with SW TX
   * C0135 Relay-4 Board
   * STM8S103F3 "$0.70" breakout board
-* support for [boards with 7Seg-LED UI](https://github.com/TG9541/stm8ef/wiki/eForth-Background-Task): in a background task, `123 .` goes to the 7Seg-LED display, and `?KEY` reads board keys
+  * support for [boards with 7Seg-LED UI](https://github.com/TG9541/stm8ef/wiki/eForth-Background-Task): in a background task, `123 .` goes to the 7Seg-LED display, and `?KEY` reads board keys
 
 
 Canges that required refactoring the original code:
