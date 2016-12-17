@@ -679,8 +679,7 @@ EMIT:
         POP	A
         AND	A,#0x20
         JRNE    11$  
-	CALL	EMIT7S	        ; display on 7-seg
-        JRA     12$
+	JP	EMIT7S	        ; display on 7-seg
         .endif
 11$:
         .ifne   HALF_DUPLEX
@@ -1292,14 +1291,10 @@ SPSTO:
         .endif
 CNTXT:
         .ifne  HAS_CPNVM
-        CALL    INTERQ
-        CALL    INVER
-        CALL    QBRAN
-        .dw     1$
+        CALL    COMPIQ
+        JREQ    1$
         CALL    NVMQ
-        JREQ    1$           ; state entry action?
-        ;CALL    QBRAN
-        ;.dw     1$
+        JREQ    1$
         LD      A,#(RAMBASE+NVMCONTEXT)
         JRA     ASTOR
 1$:
@@ -2371,17 +2366,15 @@ HERE:
 
         .ifne  HAS_CPNVM
         CALL    NVMQ            
-        JREQ    HERECP           ; state entry action?
-        ;CALL    QBRAN           ; NVM: CP points to NVM, NVMCP points to RAM
-        ;.dw     HERECP
-        CALL    INTERQ         
-        CALL    QBRAN
-        .dw     HERECP
+        JREQ    1$              ; NVM: CP points to NVM, NVMCP points to RAM
+        CALL    COMPIQ         
+        JRNE    1$
 
         CALL    DOLIT
         .dw     NVMCP        ; 'eval in Interpreter mode: HERE returns pointer to RAM 
         JP	AT
         .endif
+1$:
 HERECP: 
         CALL	CPP
         JP	AT
@@ -3681,23 +3674,11 @@ LBRAC:
 	JP	STORE
 
 
-;	INTER?	( -- F )
 ;	Test if 'EVAL points to $INTERPRETER
-
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	6
-	.ascii	"INTER?"
-	.endif
-INTERQ:
-	CALL	DOLIT
-	.dw     INTER	
-	CALL	TEVAL
-	CALL	AT
-	JP	EQUAL
-
+COMPIQ:
+        LDW     Y,USREVAL
+	CPW     Y,#(INTER)
+        RET
 
 ;	.OK	( -- )
 ;	Display 'ok' while interpreting.
@@ -3710,9 +3691,8 @@ INTERQ:
 	.ascii	".OK"
 	.endif
 DOTOK:
-	CALLR	INTERQ
-	CALL	QBRAN                             ; TODO QBRAN
-	.dw	DOTO1
+	CALLR	COMPIQ
+	JRNE    DOTO1
 
         .ifne   BAREBONES
 HI:
@@ -5087,23 +5067,11 @@ ADCAT:
 
         .ifne  HAS_CPNVM
 
-;	NVM?	( -- F )
 ;	Test if CP points doesn't point to RAM
-
-        ;.ifne   WORDS_LINKCOMPC
-	;.dw	LINK
-	
-	;LINK =	.
-	;.db	4
-	;.ascii	"NVM?"
-        ;.endif
 NVMQ:
 	LD      A,USRCP
         AND     A,#0xF8
         RET
-        ;CALL	CPP
-        ;CALL    AT
-        ;; fall through
 
 ;       return 0 if address is in RAM
 NVMADRQ:
@@ -5131,10 +5099,6 @@ SWAPCP:
 NVMM:        
         CALL    NVMQ
         JRNE    1$           ; state entry action?
-        ;; in NVM mode only link words in NVM
-        ; CALL    INVER
-        ;CALL    QBRAN           ; state entry action?
-        ;.dw     1$
         ; in NVM mode only link words in NVM
         MOV     USRLAST,NVMCONTEXT
         MOV     USRLAST+1,NVMCONTEXT+1
@@ -5153,9 +5117,7 @@ NVMM:
 	.ascii	"RAM"
 RAMM:        
         CALL    NVMQ
-        JREQ    1$           ; state entry action?
-        ;CALL    QBRAN
-        ;.dw     1$
+        JREQ    1$
         CALL    SWAPCP          ; Switch back to mode RAM
 
         MOV     COLDNVMCP,NVMCP ; Store NCM pointers for init in COLD 
