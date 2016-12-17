@@ -2799,8 +2799,7 @@ NUMQ2:	CALL	DUPP
 	CALL	DONXT
 	.dw	NUMQ2
 	CALL	RAT
-	CALL	SWAPP
-	CALL	DROP
+	CALL	NIP
 	CALL	QBRAN
 	.dw	NUMQ3
 	CALL	NEGAT
@@ -2905,26 +2904,6 @@ CHAR2:	CALL	DONXT
 	.dw	CHAR1
 	RET
 
-;	TYPE	( b u -- )
-;	Output u characters from b.
-
-	.dw	LINK
-	
-	LINK =	.
-	.db	4
-	.ascii	"TYPE"
-TYPES:
-	CALL	TOR
-	JRA	TYPE2
-TYPE1:	CALL	DUPP
-	CALL	CAT
-	CALL	[USREMIT]
-	CALL	ONEP
-TYPE2:	
-        CALL	DONXT
-	.dw	TYPE1
-	JP	DROP
-
 ;	CR	( -- )
 ;	Output a carriage return
 ;	and a line feed.
@@ -2996,7 +2975,7 @@ STRQP:
 DOTQP:
 	CALL	DOSTR
 	CALL	COUNT
-	JP	TYPES
+	JRA	TYPES
 
         .ifeq   BAREBONES
 ;	.R	( n +n -- )
@@ -3031,7 +3010,29 @@ RFROMTYPES:
 	CALL	OVER
 	CALL	SUBB
 	CALL	SPACS
-	JP	TYPES
+	JRA	TYPES
+
+;	TYPE	( b u -- )
+;	Output u characters from b.
+
+        .ifeq   BAREBONES
+	.dw	LINK
+	
+	LINK =	.
+	.db	4
+	.ascii	"TYPE"
+        .endif
+TYPES:
+	CALL	TOR
+	JRA	TYPE2
+TYPE1:	CALL	DUPP
+	CALL	CAT
+	CALL	[USREMIT]
+	CALL	ONEP
+TYPE2:	
+        CALL	DONXT
+	.dw	TYPE1
+	JP	DROP
 
 ;	U.	( u -- )
 ;	Display an unsigned integer
@@ -3045,7 +3046,7 @@ RFROMTYPES:
 UDOT:
 	CALLR   BDEDIGS
         CALL	SPACE
-	JP	TYPES
+	JRA	TYPES
 
 ;       UDOT helper routine
 BDEDIGS:
@@ -3063,17 +3064,13 @@ BDEDIGS:
 	.db	1
 	.ascii	"."
 DOT:
-	CALL	BASE
-	CALL	AT
-	CALL	DOLITC
-	.db	10
-	CALL	XORR	;?decimal
-	CALL	QBRAN
-	.dw	DOT1
+        LD      A,USRBASE+1
+	XOR     A,#10
+        JREQ    1$
 	JP	UDOT
-DOT1:	CALL	STR
+1$:	CALL	STR
 	CALL	SPACE
-	JP	TYPES
+	JRA	TYPES
 
 ;	?	( a -- )
 ;	Display contents in memory cell.
@@ -3085,10 +3082,20 @@ DOT1:	CALL	STR
 	.ascii	"?"
 QUEST:
 	CALL	AT
-	JP	DOT
+	JRA     DOT
 
 
 ; Parsing
+
+;       YFLAGS  ( n -- )       ( TOS STM8: -- Y,Z,N ) 
+;       Drop TOS to CPU Y and Flags
+
+YFLAGS:
+        LDW     Y,X
+        INCW    X
+        INCW    X
+        LDW     Y,(Y)
+        RET
 
 ;       parse helper routine
 TEMPATBLEQ:        
@@ -3113,9 +3120,11 @@ PARS:
 	CALL	STORE
 	CALL	OVER
 	CALL	TOR
-	CALL	DUPP
-	CALL	QBRAN
-	.dw	PARS8
+        JRNE    1$
+        CALL	OVER
+	CALL	RFROM
+	JP	SUBB
+1$:
 	CALL	ONEM
         CALLR   TEMPATBLEQ
 	CALL	QBRAN
@@ -3125,10 +3134,8 @@ PARS1:	CALL	BLANK
 	CALL	OVER
 	CALL	CAT	;skip leading blanks ONLY
 	CALL	SUBB
-	CALL	ZLESS
-	CALL	INVER
-	CALL	QBRAN
-	.dw	PARS2
+	CALLR   YFLAGS
+        JRMI    PARS2    
 	CALL	ONEP
 	CALL	DONXT
 	.dw	PARS1
@@ -3165,9 +3172,6 @@ PARS6:	CALL	RFROM
 PARS7:	CALL	OVER
 	CALL	SUBB
 	CALL	RFROM
-	CALL	RFROM
-	JP	SUBB
-PARS8:	CALL	OVER
 	CALL	RFROM
 	JP	SUBB
 
@@ -3357,6 +3361,20 @@ CUPPER:
 1$:      RET
         .endif
 
+;	NAME?	( a -- ca na | a F )
+;	Search vocabularies for a string.
+
+        .ifne   WORDS_LINKINTER
+	.dw	LINK
+	
+	LINK =	.
+	.db	5
+	.ascii	"NAME?"
+        .endif
+NAMEQ:
+	CALL	CNTXT
+	JRA	FIND
+
 ;	find	( a va -- ca na | a F )
 ;	Search vocabulary for string.
 ;	Return ca and na if succeeded.
@@ -3380,9 +3398,7 @@ FIND:
 	CALL	CELLP
 	CALL	SWAPP
 FIND1:	CALL	AT
-	CALL	DUPP
-	CALL	QBRAN
-	.dw	FIND6
+	JREQ    FIND6
 	CALL	DUPP
 	CALL	AT
 	CALL	DOLIT
@@ -3418,26 +3434,11 @@ FIND4:	CALL	QBRAN
 	JRA	FIND1
 FIND5:	CALL	RFROM
 	CALL	DROP
-	CALL	SWAPP
-	CALL	DROP
+	CALL	NIP
 	CALL	CELLM
 	CALL	DUPP
 	CALL	NAMET
 	JP	SWAPP
-
-;	NAME?	( a -- ca na | a F )
-;	Search vocabularies for a string.
-
-        .ifne   WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"NAME?"
-        .endif
-NAMEQ:
-	CALL	CNTXT
-	JP	FIND
 
 ; Terminal response
 
@@ -3505,14 +3506,14 @@ TAP:
 	.ascii	"kTAP"
 	.endif
 KTAP:
-	CALL	DUPP
-	CALL	DOLITC
-	.db	CRR
-	CALL	XORR
-	CALL	QBRAN
-	.dw	KTAP2
+        LD      A,(1,X)
+        CP     A,#CRR
+        JREQ    KTAP2
 
-	CALL	DOLITC
+	;CALL    YFLAGS
+        ;CPW     Y,#BKSPP
+        ;JREQ    KTAP1
+        CALL	DOLITC
 	.db	BKSPP
 	CALL	XORR
 	CALL	QBRAN
@@ -3522,8 +3523,7 @@ KTAP:
 	JP	TAP
 KTAP1:	JP	BKSP
 KTAP2:	CALL	DROP
-	CALL	SWAPP
-	CALL	DROP
+	CALL	NIP
 	JP	DUPP
 
 ;	accept	( b u -- b u )
@@ -4651,8 +4651,7 @@ TNAM2:	CALL	AT
 	.dw	TNAM3
 	CALL	CELLM	;continue with next word
 	JRA	TNAM2
-TNAM3:	CALL	SWAPP
-	JP	DROP
+TNAM3:	JP	NIP
 TNAM4:	CALL	DDROP
 	JP	ZERO
 
