@@ -880,24 +880,6 @@ EXIT:
 	POPW	Y
 	RET
 
-;	!	( w a -- )      ( TOS STM8: -- Y,Z,N )
-;	Pop data stack to memory.
-
-	.dw	LINK
-	LINK =	.
-	.db	1
-	.ascii	"!"
-STORE:
-	LDW     Y,X
-	LDW     Y,(Y)	        ; Y=a
-	LDW     YTEMP,Y
-	LDW     Y,X
-	LDW     Y,(2,Y)
-	LDW     [YTEMP],Y
-	ADDW    X,#4            ; store w at a
-        JRA     YTOS
-
-
 ;	@	( a -- w )      ( TOS STM8: -- Y,Z,N )
 ;	Push memory location to stack.
 
@@ -912,20 +894,22 @@ AT:
 	LDW     (X),Y           ; w = @Y
 	RET	
 
-;	C!	( c b -- )
-;	Pop	data stack to byte memory.
+;	!	( w a -- )      ( TOS STM8: -- Y,Z,N )
+;	Pop data stack to memory.
 
 	.dw	LINK
 	LINK =	.
-	.db	2
-	.ascii	"C!"
-CSTOR:
+	.db	1
+	.ascii	"!"
+STORE:
 	LDW     Y,X
-	LDW     Y,(Y)	        ; Y=b
-	LD      A,(3,X)	        ; D = c
-	LD	(Y),A	        ; store c at b
-	ADDW    X,#4
-	RET	
+	LDW     Y,(Y)	        ; Y=a
+	LDW     YTEMP,Y
+	LDW     Y,X
+	LDW     Y,(2,Y)
+	LDW     [YTEMP],Y
+        JRA     DDROP
+
 
 ;	C@	( b -- c )      ( TOS STM8: -- A,Z,N )
 ;	Push byte in memory to stack.
@@ -942,6 +926,20 @@ CAT:
 	CLR     (X)
 	LD      (1,X),A
 	RET	
+
+;	C!	( c b -- )
+;	Pop	data stack to byte memory.
+
+	.dw	LINK
+	LINK =	.
+	.db	2
+	.ascii	"C!"
+CSTOR:
+	LDW     Y,X
+	LDW     Y,(Y)	        ; Y=b
+	LD      A,(3,X)	        ; D = c
+	LD	(Y),A	        ; store c at b
+	JRA     DDROP
 
         .ifne   WORDS_EXTRASTACK
 ;	RP@	( -- a )     ( TOS STM8: -- Y,Z,N )
@@ -973,7 +971,7 @@ RPSTO:
 	LDW     SP,Y
 	JP      [YTEMP]
 
-;	R>	( -- w )
+;	R>	( -- w )     ( TOS STM8: -- Y,Z,N )
 ;	Pop return stack to data stack.
 
 	.dw	LINK
@@ -1023,6 +1021,34 @@ YSTOR:
 	LDW     (X),Y	        ; push on stack
 	RET	                ; go to RET of EXEC
 
+;	DROP	( w -- )        ( TOS STM8: -- Y,Z,N )
+;	Discard top stack item.
+
+	.dw	LINK
+	LINK =	.
+	.db	4
+	.ascii	"DROP"
+DROP:
+        INCW    X               ; ADDW   X,#2 
+        INCW    X
+YTOS:
+        LDW     Y,X
+        LDW     Y,(Y)
+	RET	
+
+;	2DROP	( w w -- )
+;	Discard two items on stack.
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	5
+	.ascii	"2DROP"
+DDROP:
+	INCW    X
+        INCW    X
+        JRA     DROP
+
 ;	R@	( -- w )        ( TOS STM8: -- Y,Z,N )
 ;	Copy top of return stack to stack (or the FOR - NEXT index value).
 
@@ -1047,9 +1073,9 @@ TOR:
 	LDW     Y,X
 	LDW     Y,(Y)
 	PUSHW   Y	        ; restore return addr
-        INCW    X               ; ADDW   X,#2 
-        INCW    X
-	JP      [YTEMP]
+        LDW     Y,YTEMP
+        PUSHW   Y
+        JRA     DROP
 
 
 ;	SP@	( -- a )        ( TOS STM8: -- Y,Z,N )
@@ -1065,20 +1091,6 @@ SPAT:
 	LDW     Y,X
         JRA      YSTOR
 
-;	DROP	( w -- )        ( TOS STM8: -- Y,Z,N )
-;	Discard top stack item.
-
-	.dw	LINK
-	LINK =	.
-	.db	4
-	.ascii	"DROP"
-DROP:
-        INCW    X               ; ADDW   X,#2 
-        INCW    X
-YTOS:
-        LDW     Y,X
-        LDW     Y,(Y)
-	RET	
 
 ;	DUP	( w -- w w )    ( TOS STM8: -- Y,Z,N )
 ;	Duplicate top stack item.
@@ -1122,23 +1134,6 @@ OVER:
 	LDW     Y,X
 	LDW     Y,(2,Y)
         JRA     YSTOR
-
-;	0<	( n -- t ) ( TOS STM8: -- A,Z )
-;	Return true if n is negative.
-
-	.dw	LINK
-	LINK =	.
-	.db	2
-	.ascii	"0<"
-ZLESS:
-	CLR     A
-	LDW     Y,X
-	LDW     Y,(Y)
-	JRPL	ZL1
-	CPL     A	        ; true
-ZL1:    LD      (X),A
-	LD      (1,X),A
-	RET	
 
 ;	+	( w w -- sum ) ( TOS STM8: -- Y,Z,N )
 ;	Add top two items.
@@ -1204,6 +1199,23 @@ ORR:
 	LD      A,(X)
 	OR	A,(2,X)
         JRA     LDADROP
+
+;	0<	( n -- t ) ( TOS STM8: -- A,Z )
+;	Return true if n is negative.
+
+	.dw	LINK
+	LINK =	.
+	.db	2
+	.ascii	"0<"
+ZLESS:
+	CLR     A
+	LDW     Y,X
+	LDW     Y,(Y)
+	JRPL	ZL1
+	CPL     A	        ; true
+ZL1:    LD      (X),A
+	LD      (1,X),A
+	RET	
 
 ;	-   ( n1 n2 -- n1-n2 )  ( TOS STM8: -- Y,Z,N )
 ;	Subtraction.
@@ -1596,7 +1608,7 @@ QDUP:
 	LDW     (X),Y
 QDUP1:	RET
 
-;	ROT	( w1 w2 w3 -- w2 w3 w1 )
+;	ROT	( w1 w2 w3 -- w2 w3 w1 ) ( TOS STM8: -- Y,Z,N )
 ;	Rot 3rd item to top.
 
 	.dw	LINK
@@ -1627,18 +1639,6 @@ ROT:
         JP      SWAPP
         .endif
 
-;	2DROP	( w w -- )
-;	Discard two items on stack.
-
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"2DROP"
-DDROP:
-	ADDW    X,#4
-	RET
-
 ;	2DUP	( w1 w2 -- w1 w2 w1 w2 )
 ;	Duplicate top two items.
 
@@ -1648,7 +1648,8 @@ DDROP:
 	.db	4
 	.ascii	"2DUP"
 DDUP:
-	CALL    OVER
+	CALLR    1$
+1$:        
         JP      OVER
 
 
@@ -1805,7 +1806,8 @@ LESS:
 	LDW     Y,X
 	LDW     Y,(Y)
 	LDW     YTEMP,Y
-	ADDW    X,#2
+        INCW    X
+        INCW    X
 	LDW     Y,X
 	LDW     Y,(Y)
 	CPW     Y,YTEMP	
@@ -2288,12 +2290,24 @@ PICK:
 	.db	2
 	.ascii	"+!"
 PSTOR:
+        .ifne   SPEEDOVERSIZE
+        LDW     Y,X
+        LDW     Y,(2,Y)
+        LDW     YTEMP,Y
+        LDW     Y,X
+        LDW     Y,(Y)
+        LDW     Y,(Y)
+        ADDW    Y,YTEMP
+        LDW     (2,X),Y
+        JP      STORE
+        .else 
 	CALL	SWAPP
 	CALL	OVER
 	CALL	AT
 	CALL	PLUS
 	CALL	SWAPP
 	JP	STORE
+        .endif 
 
 ;	2!	( d a -- )      ( TOS STM8: -- Y,Z,N )
 ;	Store double integer to address a.
@@ -3694,7 +3708,7 @@ INTERQ:
 	.ascii	".OK"
 	.endif
 DOTOK:
-	CALL	INTERQ
+	CALLR	INTERQ
 	CALL	QBRAN                             ; TODO QBRAN
 	.dw	DOTO1
 
@@ -4745,7 +4759,7 @@ BRSS:
         JRNE    1$              ; b!=0: BSET
         INC     A               ; b==0: BRES
 1$:     LD      (1,X),A
-        LD      A,#0x81         ; Opcode RET
+        LD      A,#EXIT_OPC     ; Opcode RET
         LD      (4,X),A
         LDW     Y,X
         CALL    (Y)             ; call code to avoid "use after free"
