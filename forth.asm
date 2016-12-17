@@ -129,6 +129,7 @@
         HAS_DOES     =    0     ; DOES> extension
         HAS_DOLOOP   =    0     ; DO .. LOOP extension: DO LEAVE LOOP +LOOP
 
+        BCKGRND_EMIT = DROP     ; "NUL" background EMIT vector
         CASEINSENSITIVE = 0     ; Case insensitive dictionary search
         SPEEDOVERSIZE   = 0     ; Speed-over-size in core words ROT - = < 
         BAREBONES       = 0     ; Remove or unlink some more: hi HERE .R U.R SPACES        
@@ -251,9 +252,9 @@
         ; Core variables (same order as 'BOOT initializer block)
 
         ; TODO: refactor into BGPP, UPP and UPP0 
-        USRRAMINIT = BGBASE
+        USRRAMINIT = USREMIT
 
-        BGBASE  =    UPP+0      ; USRBASE replacement for background task 
+        USREMIT  =   UPP+0      ; excection vector of inner EMIT
         USRBASE =    UPP+2      ; radix base for numeric I/O
         USREVAL =    UPP+4      ; execution vector of EVAL 
         USRPROMPT =  UPP+6      ; point to prompt word (default .OK)
@@ -374,7 +375,7 @@ TBOOT:
 
         ; COLD start initiates these variables.
         UZERO = .
-	.dw	BASEE	        ; Background BASE
+	.dw	EMIT	        ; EMIT char 
 	.dw	BASEE	        ; BASE
 	.dw	INTER	        ; 'EVAL
         .dw     DOTOK           ; 'PROMPT 
@@ -389,7 +390,7 @@ TBOOT:
         ; Second copy of USR setting for NVM reset
         UDEFAULTS = .
         .dw     HI              ; 'BOOT 
-	.dw	BASEE	        ; Background BASE
+	.dw	EMIT	        ; EMIT char
 	.dw	BASEE	        ; BASE
 	.dw	INTER	        ; 'EVAL
         .dw     DOTOK           ; 'PROMPT 
@@ -497,17 +498,6 @@ TIM4_END:
         .endif
 
 
-;       Background helper routine for swapping USRBASE
-        .ifne   HAS_BACKGROUND 
-BGSWAP:
-        ; 8 bit since BASE is never going to be more than 80 = 128-ORD('0')
-        LD      A,USRBASE+1
-        MOV     USRBASE+1,BGBASE+1
-        LD      BGBASE+1,A
-        RET
-        .endif
-
-
 ;       TIM2 interrupt handler for background task 
 _TIM2_UO_IRQHandler:
         .ifne   (HAS_LED7SEG + HAS_BACKGROUND)
@@ -529,7 +519,15 @@ _TIM2_UO_IRQHandler:
 
         LDW     X,YTEMP         ; Save context 
         PUSHW   X
-        CALLR   BGSWAP
+
+        
+        PUSH    USRBASE+1     ; 8bit since BASE should be < 36
+        MOV     USRBASE+1,#10
+
+        LDW     X,USREMIT       ; save EMIT exection vector
+        PUSHW   X
+        LDW     X,#(BCKGRND_EMIT)
+        LDW     USREMIT,X
         
         LDW     X,USRHLD
         PUSHW   X
@@ -542,7 +540,11 @@ _TIM2_UO_IRQHandler:
         POPW    X
         LDW     USRHLD,X
 
-        CALLR   BGSWAP
+        POPW   X
+        LDW     USREMIT,X
+        
+        POP     USRBASE+1
+
         POPW    X
         LDW     YTEMP,X
 1$:
@@ -674,14 +676,6 @@ INCH:
 	.db	4
 	.ascii	"EMIT"
 EMIT:
-        .ifne (HAS_LED7SEG * HAS_BACKGROUND) 
-        PUSH	CC
-        POP	A
-        AND	A,#0x20
-        JRNE    11$  
-	JP	EMIT7S	        ; display on 7-seg
-        .endif
-11$:
         .ifne   HALF_DUPLEX
 	BRES	UART1_CR2,#2	; disable rx
 
@@ -712,7 +706,6 @@ EMIT:
 3$:	BTJF	UART1_SR,#7,3$  ; loop until tdre
 	LD	UART1_DR,A	; send A
         .endif
-12$:
 	RET
 
 
@@ -1423,6 +1416,7 @@ ASTOR:
         LD      (X),A
         DECW    X
         CLR     (X)
+
         LDW     Y,X
         LDW     Y,(Y)
         RET
@@ -1503,8 +1497,8 @@ ONE:
 	.db	2
 	.ascii	"-1"
 MONE:
-        CALLR   ZERO	
-        JP      INVER
+        CALLR   ONE
+        JRA     NEGAT
 
         .ifne   HAS_BACKGROUND
 ;	TIM	( -- T)     ( TOS STM8: -- Y,Z,N )
@@ -1554,7 +1548,7 @@ TPROMPT:
 PACEE:
         CALL    DOLITC
 	.db     PACE      ; pace character for host handshake 
-        JP      EMIT
+        JP      [USREMIT]
 
 
 ;	HAND	( -- )
@@ -1587,7 +1581,37 @@ FILEE:
 
 ; Common functions
 
-;	?DUP	( w -- w w | 0 )
+;	NOT	( w -- w )     ( TOS STM8: -- Y,Z,N )
+;	One's complement of TOS.
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	3
+	.ascii	"NOT"
+INVER:
+	LDW     Y,X
+	LDW     Y,(Y)
+	CPLW    Y
+	LDW     (X),Y
+	RET
+
+;	NEGATE	( n -- -n )     ( TOS STM8: -- Y,Z,N )
+;	Two's complement of TOS.
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	6
+	.ascii	"NEGATE"
+NEGAT:
+	LDW     Y,X
+	LDW     Y,(Y)
+	NEGW    Y
+	LDW     (X),Y
+	RET
+
+;	?DUP	( w -- w w | 0 )   ( TOS STM8: -- Y,Z,N )
 ;	Dup tos if its not zero.
 
 	.dw	LINK
@@ -1599,7 +1623,7 @@ QDUP:
 	LDW     Y,X
 	LDW     Y,(Y)
 	JREQ	QDUP1
-        DECW    X               ; SUBW	X,#2    
+        DECW    X
         DECW    X
 	LDW     (X),Y
 QDUP1:	RET
@@ -1647,37 +1671,6 @@ DDUP:
 	CALLR    1$
 1$:        
         JP      OVER
-
-
-;	NOT	( w -- w )     ( TOS STM8: -- Y,Z,N )
-;	One's complement of TOS.
-
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"NOT"
-INVER:
-	LDW     Y,X
-	LDW     Y,(Y)
-	CPLW    Y
-	LDW     (X),Y
-	RET
-
-;	NEGATE	( n -- -n )     ( TOS STM8: -- Y,Z,N )
-;	Two's complement of TOS.
-
-	.dw	LINK
-	
-	LINK =	.
-	.db	6
-	.ascii	"NEGATE"
-NEGAT:
-	LDW     Y,X
-	LDW     Y,(Y)
-	NEGW    Y
-	LDW     (X),Y
-	RET
 
 ;	DNEGATE ( d -- -d )     ( TOS STM8: -- Y,Z,N )
 ;	Two's complement of top double.
@@ -2003,6 +1996,11 @@ MODD:
 	.ascii	"/"
 SLASH:
 	CALL	SLMOD
+        ; fall through
+
+;       NIP     ( n1 n2 -- n1 ) 
+
+NIP:
 	CALL	SWAPP
 	JP	DROP
 
@@ -2120,8 +2118,7 @@ SSMOD:
 	.ascii	"*/"
 STASL:
 	CALL	SSMOD
-	CALL	SWAPP
-	JP	DROP
+	JP	NIP
 
 ; Miscellaneous
 
@@ -2884,7 +2881,7 @@ NUFQ1:	RET
 SPACE:
 
 	CALL	BLANK
-	JP	EMIT
+	JP	[USREMIT]
 
 ;	SPACES	( +n -- )
 ;	Send n spaces to output device.
@@ -2921,7 +2918,7 @@ TYPES:
 	JRA	TYPE2
 TYPE1:	CALL	DUPP
 	CALL	CAT
-	CALL	EMIT
+	CALL	[USREMIT]
 	CALL	ONEP
 TYPE2:	
         CALL	DONXT
@@ -2941,11 +2938,11 @@ CR:
         .ifeq TERM_LINUX
 	CALL	DOLITC
 	.db	CRR
-	CALL	EMIT
+	CALL	[USREMIT]
         .endif
 	CALL	DOLITC
 	.db	LF
-	JP	EMIT
+	JP	[USREMIT]
 
 
 ;	do$	( -- a )
@@ -3466,14 +3463,14 @@ BKSP:
         .ifeq   HALF_DUPLEX
 	CALL	DOLITC
 	.db	BKSPP
-	CALL	EMIT
+	CALL	[USREMIT]
         .endif
 	CALL	ONEM
 	CALL	BLANK
-	CALL	EMIT
+	CALL	[USREMIT]
 	CALL	DOLITC
 	.db	BKSPP
-	JP	EMIT
+	JP	[USREMIT]
 BACK1:	RET
 
 ;	TAP	( bot eot cur c -- bot eot cur )
@@ -3490,7 +3487,7 @@ BACK1:	RET
 TAP:
         .ifeq   HALF_DUPLEX
 	CALL	DUPP
-	CALL	EMIT
+	CALL	[USREMIT]
         .endif
 	CALL	OVER
 	CALL	CSTOR
@@ -3622,7 +3619,7 @@ ABOR1:	CALL	SPACE
 	CALL	TYPES
 	CALL	DOLITC
 	.db	63 ; "?"
-	CALL	EMIT
+	CALL	[USREMIT]
 	CALL	CR
 	JP	ABORT	;pass error string
 ABOR2:	CALL	DOSTR
@@ -4511,7 +4508,7 @@ UTYPE:
 UTYP1:	CALL	DUPP
 	CALL	CAT
 	CALL	TCHAR
-	CALL	EMIT	;display only printable
+	CALL	[USREMIT]	;display only printable
 	CALL	ONEP	;increment address
 UTYP2:	CALL	DONXT
 	.dw	UTYP1	;loop till done
@@ -4902,14 +4899,13 @@ PAT7SAZ:
         .db     0x76, 0x6E, 0x6D       ; X,Y,Z
 
 ;       E7S  ( c -- )
-;       Convert char to 7-seg LED pattern, and put to W1209 display buffer
+;       Convert char to 7-seg LED pattern, and insert it in display buffer
 	.dw	LINK
         
         LINK =  .
 	.db	(3)
 	.ascii	"E7S"
 EMIT7S: 
-
         LD      A,(1,X)         ; c to A
 
         CP      A,#32
@@ -4957,7 +4953,7 @@ E7END:
 
 
 ;       P7S  ( c -- )
-;       Insert 7-seg pattern at left side of W1209 LED display buffer, rotate buffer left
+;       Insert 7-seg pattern at left side of LED display buffer, rotate buffer left
 	.dw	LINK
         
         LINK =  .
@@ -5160,6 +5156,8 @@ RESETT:
  
 
         .endif
+
+       
          
 ;===============================================================
 	LASTN	=	LINK	;last name defined
