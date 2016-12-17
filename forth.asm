@@ -1297,8 +1297,9 @@ CNTXT:
         CALL    QBRAN
         .dw     1$
         CALL    NVMQ
-        CALL    QBRAN
-        .dw     1$
+        JREQ    1$           ; state entry action?
+        ;CALL    QBRAN
+        ;.dw     1$
         LD      A,#(RAMBASE+NVMCONTEXT)
         JRA     ASTOR
 1$:
@@ -2370,8 +2371,9 @@ HERE:
 
         .ifne  HAS_CPNVM
         CALL    NVMQ            
-        CALL    QBRAN           ; NVM: CP points to NVM, NVMCP points to RAM
-        .dw     HERECP
+        JREQ    HERECP           ; state entry action?
+        ;CALL    QBRAN           ; NVM: CP points to NVM, NVMCP points to RAM
+        ;.dw     HERECP
         CALL    INTERQ         
         CALL    QBRAN
         .dw     HERECP
@@ -5088,17 +5090,20 @@ ADCAT:
 ;	NVM?	( -- F )
 ;	Test if CP points doesn't point to RAM
 
-        .ifne   WORDS_LINKCOMPC
-	.dw	LINK
+        ;.ifne   WORDS_LINKCOMPC
+	;.dw	LINK
 	
-	LINK =	.
-	.db	4
-	.ascii	"NVM?"
-        .endif
+	;LINK =	.
+	;.db	4
+	;.ascii	"NVM?"
+        ;.endif
 NVMQ:
-	CALL	CPP
-        CALL    AT
-        ; fall through
+	LD      A,USRCP
+        AND     A,#0xF8
+        RET
+        ;CALL	CPP
+        ;CALL    AT
+        ;; fall through
 
 ;       return 0 if address is in RAM
 NVMADRQ:
@@ -5125,9 +5130,11 @@ SWAPCP:
 	.ascii	"NVM"
 NVMM:        
         CALL    NVMQ
-        CALL    INVER
-        CALL    QBRAN           ; state entry action?
-        .dw     1$
+        JRNE    1$           ; state entry action?
+        ;; in NVM mode only link words in NVM
+        ; CALL    INVER
+        ;CALL    QBRAN           ; state entry action?
+        ;.dw     1$
         ; in NVM mode only link words in NVM
         MOV     USRLAST,NVMCONTEXT
         MOV     USRLAST+1,NVMCONTEXT+1
@@ -5146,8 +5153,9 @@ NVMM:
 	.ascii	"RAM"
 RAMM:        
         CALL    NVMQ
-        CALL    QBRAN
-        .dw     1$
+        JREQ    1$           ; state entry action?
+        ;CALL    QBRAN
+        ;.dw     1$
         CALL    SWAPCP          ; Switch back to mode RAM
 
         MOV     COLDNVMCP,NVMCP ; Store NCM pointers for init in COLD 
