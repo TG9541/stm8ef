@@ -2734,76 +2734,55 @@ DGTQ1:	CALL	DUPP
 	.endif
 NUMBQ:
 	PUSH    USRBASE+1
-        ;PUSH    #0                     ; Dummy
-        PUSH    #0                     ; Sign and Skip flag
+        PUSH    #0                     ; sign flag
 
 	CALL	ZERO
 	CALL	OVER
 	CALL	COUNT
+NUMQ0:
 	CALL	OVER
 	CALL	CAT
-
-        CP      A,#('$')
-        JRNE    NUMQ1
-	CALL	HEX
-        POP     A
-        PUSH    #1                     ; Skip flag (skip)
-
-NUMQ1:	
-
-        CP      A,#('%')
-        JRNE    11$
-        MOV     USRBASE+1,#2
-        POP     A
-        PUSH    #1                     ; Skip flag (skip)
-11$:
-
-        ; CALL	OVER
-	; CALL	CAT
-	; CALL	DOLITC
-	; .db	'-'; 45	; "-"
-	; LD      A,(1,X)
         CALL    AFLAGS
 
-        CP      A,#('-')
-        JRNE    1$
-        POP     A
-        PUSH    #0x80                   ; Skip flag (sign, skip)
+        CP      A,#('$')
+        JRNE    1$ 
+	CALL	HEX
+        JRA     NUMQSKIP
 1$:
+        .ifeq   BAREBONES
+        CP      A,#('%')
+        JRNE    2$
+        MOV     USRBASE+1,#2
+        JRA     NUMQSKIP
+2$:        
+        .endif
+        CP      A,#('-')
+        JRNE    NUMQ1
+        POP     A
+        PUSH    #0x80                   ; flag ?sign
 
-	;CALL	EQUAL
-	;CALL	TOR
-	;CALL	SWAPP
-	;CALL	RAT
-	;CALL	SUBB
-	;CALL	SWAPP
-	;CALL	RAT
-	;CALL	PLUS
-
-        LD      A,(1,SP)               ; Test SignSkip flags 
-        JREQ    2$
-        ;POP     A
-        ;AND     A,#0xFE
-        ;PUSH    A
+NUMQSKIP:	
 	CALL	SWAPP
 	CALL	ONEP
 	CALL	SWAPP
 	CALL	ONEM
-2$:        
+        JRA     NUMQ0
+
+NUMQ1:
 
 	CALL	QDUP
 	CALL	QBRAN
 	.dw	NUMQ6
 	CALL	ONEM  
-	CALL	TOR                              ; FOR
+	CALL	TOR             ; FOR
 NUMQ2:	CALL	DUPP
 	CALL	TOR
 	CALL	CAT
 	CALL	BASE
 	CALL	AT
 	CALL	DIGTQ
-	CALL	QBRAN                            ;   WHILE ( no digit -> LEAVE )
-	.dw	NUMQ4
+	CALL	QBRAN           ; WHILE ( no digit -> LEAVE )
+	.dw	NUMLEAVE
 
 	CALL	SWAPP
 	CALL	BASE
@@ -2813,39 +2792,30 @@ NUMQ2:	CALL	DUPP
 	CALL	RFROM
 	CALL	ONEP
 
-	CALL	DONXT                            ; NEXT 
+	CALL	DONXT
 	.dw	NUMQ2
 
-	;CALL	RAT                              ;   ( normal FOR .. NEXT termination )
-	;CALL	NIP
-        CALL    DROP
+        CALL    DROP            ; drop b 
 
-        LD      A,(1,SP)               ; Test SignSkip flags 
-        JRPL    NUMQ3
-	;CALL	QBRAN                            ;   IF ( ?sign )
-	;.dw	NUMQ3
+        LD      A,(1,SP)        ; test sign flag 
+        JRPL    NUMPLUS
 	CALL	NEGAT                            
-NUMQ3:                                           ;   THEN 	
+NUMPLUS:
         CALL	SWAPP                            
 	JRA	NUMQ5                             
-NUMQ4:                                           ; ELSE ( LEAVE clean-up )	
-        ADDW    SP,#4
-        ;CALL	RFROM                            
-	;CALL	RFROM
-	;CALL	DDROP
-	
-        CALL	DDROP
+NUMLEAVE:                       ; LEAVE ( clean-up FOR .. NEXT )	
+        ADDW    SP,#4           ; RFROM,RFROM,DDROP
+        CALL	DDROP             
 	CALL	ZERO
-NUMQ5:	                                         ; THEN ( FOR .. LEAVE .. NEXT )
+        ; fall through
+NUMQ5:
         CALL	DUPP                             
-
+        ; fall through
 NUMQ6:	
-        POP     A                      ; sign
+        POP     A               ; sign flag
         CALL    DROP
-        ;CALL	RFROM
-	;CALL	DDROP
-        
-        POP     USRBASE+1
+
+        POP     USRBASE+1       ; restore BASE
         RET
 
 
