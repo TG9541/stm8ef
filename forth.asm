@@ -621,8 +621,6 @@ LED_MPX:
 	.db	4
 	.ascii	"?KEY"
 QKEY:
-        CLRW    Y               ; flag: no char
-
         .ifne   (HAS_BACKGROUND * HAS_KEYS)
         ; Foreground: char from RxD, background: char from BKEY 
         PUSH    CC
@@ -630,14 +628,11 @@ QKEY:
         AND     A,#0x20
         JRNE    SERKEY
         CALL    BKEY
-        LD      A,(1,X)
-        INCW    X               ; ADDW   X,#2 
-        INCW    X
-        TNZ     A
+        CALL    AFLAGS
         JRNE    KEYPRESS     
         ; Bit7: flag press + 100*5ms hold before repetition
         MOV     KEYREPET,#(0x80 + 100)
-        JRA     INCH
+        JRA     NOKEY
 KEYPRESS:
         ADD     A,#0x40         ; bit values 1,2,4 to 'A','B','D'
         BTJF    KEYREPET,#7,KEYHOLD
@@ -645,27 +640,19 @@ KEYPRESS:
         JRA     ATOKEY
 KEYHOLD:        
         DEC     KEYREPET
-        JRNE    INCH 
+        JRNE    NOKEY 
         MOV     KEYREPET,#30    ; repetition time: n*5ms 
         JRA     ATOKEY
         .endif
 
 SERKEY:
-	BTJF    UART1_SR,#5,INCH ;check status
+	BTJF    UART1_SR,#5,NOKEY ;check status
 	LD	A,UART1_DR	; get char in A
 ATOKEY:
-	
-        DECW    X               ; push char
-        DECW    X               ;SUBW	X,#2             
-	LD	(1,X),A         
-	CLR	(X)
-        DECW    Y               ; flag: char
-        ; fall through
-INCH:   
-        DECW    X               ; push flag
-        DECW    X               ;SUBW	X,#2 
-	LDW	(X),Y           
-	RET
+        CALL    ASTOR           ; push A
+        JP      ONE             ; push flag 
+NOKEY:   
+        JP      ZERO            ; push flag 
 
 
 ;	TX!	( c -- )
@@ -2746,49 +2733,78 @@ DGTQ1:	CALL	DUPP
 	.ascii	"NUMBER?"
 	.endif
 NUMBQ:
-	CALL	BASE
-	CALL	AT
-	CALL	TOR
+	PUSH    USRBASE+1
+        ;PUSH    #0                     ; Dummy
+        PUSH    #0                     ; Sign and Skip flag
+
 	CALL	ZERO
 	CALL	OVER
 	CALL	COUNT
 	CALL	OVER
 	CALL	CAT
-	CALL	DOLITC
-	.db	36	; "0x0"
-	CALL	EQUAL
-	CALL	QBRAN
-	.dw	NUMQ1
+
+        CP      A,#('$')
+        JRNE    NUMQ1
 	CALL	HEX
+        POP     A
+        PUSH    #1                     ; Skip flag (skip)
+
+NUMQ1:	
+
+        CP      A,#('%')
+        JRNE    11$
+        MOV     USRBASE+1,#2
+        POP     A
+        PUSH    #1                     ; Skip flag (skip)
+11$:
+
+        ; CALL	OVER
+	; CALL	CAT
+	; CALL	DOLITC
+	; .db	'-'; 45	; "-"
+	; LD      A,(1,X)
+        CALL    AFLAGS
+
+        CP      A,#('-')
+        JRNE    1$
+        POP     A
+        PUSH    #0x80                   ; Skip flag (sign, skip)
+1$:
+
+	;CALL	EQUAL
+	;CALL	TOR
+	;CALL	SWAPP
+	;CALL	RAT
+	;CALL	SUBB
+	;CALL	SWAPP
+	;CALL	RAT
+	;CALL	PLUS
+
+        LD      A,(1,SP)               ; Test SignSkip flags 
+        JREQ    2$
+        ;POP     A
+        ;AND     A,#0xFE
+        ;PUSH    A
 	CALL	SWAPP
 	CALL	ONEP
 	CALL	SWAPP
 	CALL	ONEM
-NUMQ1:	CALL	OVER
-	CALL	CAT
-	CALL	DOLITC
-	.db	45	; "-"
-	CALL	EQUAL
-	CALL	TOR
-	CALL	SWAPP
-	CALL	RAT
-	CALL	SUBB
-	CALL	SWAPP
-	CALL	RAT
-	CALL	PLUS
+2$:        
+
 	CALL	QDUP
 	CALL	QBRAN
 	.dw	NUMQ6
-	CALL	ONEM
-	CALL	TOR
+	CALL	ONEM  
+	CALL	TOR                              ; FOR
 NUMQ2:	CALL	DUPP
 	CALL	TOR
 	CALL	CAT
 	CALL	BASE
 	CALL	AT
 	CALL	DIGTQ
-	CALL	QBRAN
+	CALL	QBRAN                            ;   WHILE ( no digit -> LEAVE )
 	.dw	NUMQ4
+
 	CALL	SWAPP
 	CALL	BASE
 	CALL	AT
@@ -2796,26 +2812,42 @@ NUMQ2:	CALL	DUPP
 	CALL	PLUS
 	CALL	RFROM
 	CALL	ONEP
-	CALL	DONXT
+
+	CALL	DONXT                            ; NEXT 
 	.dw	NUMQ2
-	CALL	RAT
-	CALL	NIP
-	CALL	QBRAN
-	.dw	NUMQ3
-	CALL	NEGAT
-NUMQ3:	CALL	SWAPP
-	JRA	NUMQ5
-NUMQ4:	CALL	RFROM
-	CALL	RFROM
-	CALL	DDROP
-	CALL	DDROP
+
+	;CALL	RAT                              ;   ( normal FOR .. NEXT termination )
+	;CALL	NIP
+        CALL    DROP
+
+        LD      A,(1,SP)               ; Test SignSkip flags 
+        JRPL    NUMQ3
+	;CALL	QBRAN                            ;   IF ( ?sign )
+	;.dw	NUMQ3
+	CALL	NEGAT                            
+NUMQ3:                                           ;   THEN 	
+        CALL	SWAPP                            
+	JRA	NUMQ5                             
+NUMQ4:                                           ; ELSE ( LEAVE clean-up )	
+        ADDW    SP,#4
+        ;CALL	RFROM                            
+	;CALL	RFROM
+	;CALL	DDROP
+	
+        CALL	DDROP
 	CALL	ZERO
-NUMQ5:	CALL	DUPP
-NUMQ6:	CALL	RFROM
-	CALL	DDROP
-	CALL	RFROM
-	CALL	BASE
-	JP	STORE
+NUMQ5:	                                         ; THEN ( FOR .. LEAVE .. NEXT )
+        CALL	DUPP                             
+
+NUMQ6:	
+        POP     A                      ; sign
+        CALL    DROP
+        ;CALL	RFROM
+	;CALL	DDROP
+        
+        POP     USRBASE+1
+        RET
+
 
 ; Basic I/O
 
@@ -3088,13 +3120,23 @@ QUEST:
 ; Parsing
 
 ;       YFLAGS  ( n -- )       ( TOS STM8: -- Y,Z,N ) 
-;       Drop TOS to CPU Y and Flags
+;       Consume TOS to CPU Y and Flags
 
 YFLAGS:
         LDW     Y,X
         INCW    X
         INCW    X
         LDW     Y,(Y)
+        RET
+
+;       AFLAGS  ( c -- )       ( TOS STM8: -- A,Z,N ) 
+;       Consume TOS to CPU A and Flags
+
+AFLAGS:
+        INCW    X
+        LD      A,(X)
+        INCW    X
+        TNZ     A
         RET
 
 ;       parse helper routine
