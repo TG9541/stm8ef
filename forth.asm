@@ -2755,6 +2755,12 @@ NUMQ0:
         MOV     USRBASE+1,#2
         JRA     NUMQSKIP
 2$:        
+        CP      A,#('&')
+        JRNE    3$
+        MOV     USRBASE+1,#10
+	CALL	DECIM
+        JRA     NUMQSKIP
+3$:
         .endif
         CP      A,#('-')
         JRNE    NUMQ1
@@ -2766,10 +2772,9 @@ NUMQSKIP:
 	CALL	ONEP
 	CALL	SWAPP
 	CALL	ONEM
-        JRA     NUMQ0
+        JRNE    NUMQ0            ; check for more modifiers
 
 NUMQ1:
-
 	CALL	QDUP
 	CALL	QBRAN
 	.dw	NUMQ6
@@ -2795,7 +2800,7 @@ NUMQ2:	CALL	DUPP
 	CALL	DONXT
 	.dw	NUMQ2
 
-        CALL    DROP            ; drop b 
+        CALLR   NUMDROP         ; drop b
 
         LD      A,(1,SP)        ; test sign flag 
         JRPL    NUMPLUS
@@ -2813,10 +2818,9 @@ NUMQ5:
         ; fall through
 NUMQ6:	
         POP     A               ; sign flag
-        CALL    DROP
-
         POP     USRBASE+1       ; restore BASE
-        RET
+NUMDROP:
+        JP      DROP
 
 
 ; Basic I/O

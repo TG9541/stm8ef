@@ -35,7 +35,7 @@
 
         WORDS_EXTRASTACK = 0    ; Link/include stack core words: rp@ rp! sp! sp@ DEPTH 
         WORDS_EXTRADEBUG = 0    ; Extra debug words: SEE
-        WORDS_EXTRACORE  = 0    ; Extra core words: =0 I
+        WORDS_EXTRACORE  = 1    ; Extra core words: =0 I
         WORDS_EXTRAMEM   = 0    ; Extra memory words: BSR 2C@ 2C!
         WORDS_EXTRAEEPR  = 1    ; Extra EEPROM lock/unlock words: LOCK ULOCK  
         WORDS_HWREG      = 0    ; Peripheral Register words
