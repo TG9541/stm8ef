@@ -23,6 +23,8 @@
         HAS_DOLOOP       = 1    ; DO .. LOOP extension: DO LEAVE LOOP +LOOP
 
         BCKGRND_EMIT = EMIT7S   ; LED7SEG for background EMIT
+        BCKGRND_QKEY = QKEYB    ; ?KEYB for background ?KEY
+
         CASEINSENSITIVE  = 1    ; Case insensitive dictionary search
         SPEEDOVERSIZE    = 0    ; Speed-over-size in core words: ROT - = < 
         BAREBONES        = 0    ; Remove or unlink some more: hi HERE .R U.R SPACES VARIABLE

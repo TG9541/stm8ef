@@ -130,6 +130,8 @@
         HAS_DOLOOP   =    0     ; DO .. LOOP extension: DO LEAVE LOOP +LOOP
 
         BCKGRND_EMIT = DROP     ; "NUL" background EMIT vector
+        BCKGRND_QKEY = ZERO     ; "NUL" background QKEY vector
+
         CASEINSENSITIVE = 0     ; Case insensitive dictionary search
         SPEEDOVERSIZE   = 0     ; Speed-over-size in core words ROT - = < 
         BAREBONES       = 0     ; Remove or unlink some more: hi HERE .R U.R SPACES        
@@ -254,13 +256,14 @@
         ; TODO: refactor into BGPP, UPP and UPP0 
         USRRAMINIT = USREMIT
 
-        USREMIT  =   UPP+0      ; excection vector of inner EMIT
-        USRBASE =    UPP+2      ; radix base for numeric I/O
-        USREVAL =    UPP+4      ; execution vector of EVAL 
-        USRPROMPT =  UPP+6      ; point to prompt word (default .OK)
-        USRCP   =    UPP+8      ; point to top of dictionary
-        USRLAST =    UPP+10     ; currently last name in dictionary (init: to LASTN)
-        NVMCP   =    UPP+12     ; point to top of dictionary in Non Volatile Memory 
+        USREMIT  =   UPP+0      ; excection vector of EMIT
+        USRQKEY =    UPP+2      ; excection vector of QKEY
+        USRBASE =    UPP+4      ; radix base for numeric I/O
+        USREVAL =    UPP+6      ; execution vector of EVAL
+        USRPROMPT =  UPP+8      ; point to prompt word (default .OK)
+        USRCP   =    UPP+10     ; point to top of dictionary
+        USRLAST =    UPP+12     ; currently last name in dictionary (init: to LASTN)
+        NVMCP   =    UPP+14     ; point to top of dictionary in Non Volatile Memory 
 
         ; Null initialized core variables (growing down)
 
@@ -375,7 +378,8 @@ TBOOT:
 
         ; COLD start initiates these variables.
         UZERO = .
-	.dw	EMIT	        ; EMIT char 
+	.dw	TXSTOR	        ; EMIT vector
+        .dw     QRX             ; ?KEY vector
 	.dw	BASEE	        ; BASE
 	.dw	INTER	        ; 'EVAL
         .dw     DOTOK           ; 'PROMPT 
@@ -390,7 +394,8 @@ TBOOT:
         ; Second copy of USR setting for NVM reset
         UDEFAULTS = .
         .dw     HI              ; 'BOOT 
-	.dw	EMIT	        ; EMIT char
+	.dw	TXSTOR	        ; EMIT vector
+        .dw     QRX             ; ?KEY vector
 	.dw	BASEE	        ; BASE
 	.dw	INTER	        ; 'EVAL
         .dw     DOTOK           ; 'PROMPT 
@@ -529,6 +534,11 @@ _TIM2_UO_IRQHandler:
         LDW     X,#(BCKGRND_EMIT)
         LDW     USREMIT,X
         
+        LDW     X,USRQKEY       ; save QKEY exection vector
+        PUSHW   X
+        LDW     X,#(BCKGRND_QKEY)
+        LDW     USRQKEY,X
+
         LDW     X,USRHLD
         PUSHW   X
         LDW     X,#(PADBG)      ; in background task, alway start with an empty PAD
@@ -540,7 +550,10 @@ _TIM2_UO_IRQHandler:
         POPW    X
         LDW     USRHLD,X
 
-        POPW   X
+        POPW    X
+        LDW     USRQKEY,X
+
+        POPW    X
         LDW     USREMIT,X
         
         POP     USRBASE+1
@@ -614,48 +627,36 @@ LED_MPX:
 
 ; ==============================================
 
-;	?RX	( -- c T | F )
-;	Return input byte and true, or false.
+;	?KEY	( -- c T | F )  ( TOS STM8: -- Y,Z,N )
+;	Return input char and true, or false.
 	.dw	LINK
 	LINK =	.
 	.db	4
 	.ascii	"?KEY"
 QKEY:
-        .ifne   (HAS_BACKGROUND * HAS_KEYS)
-        ; Foreground: char from RxD, background: char from BKEY 
-        PUSH    CC
-        POP     A
-        AND     A,#0x20
-        JRNE    SERKEY
-        CALL    BKEY
-        CALL    AFLAGS
-        JRNE    KEYPRESS     
-        ; Bit7: flag press + 100*5ms hold before repetition
-        MOV     KEYREPET,#(0x80 + 100)
-        JRA     NOKEY
-KEYPRESS:
-        ADD     A,#0x40         ; bit values 1,2,4 to 'A','B','D'
-        BTJF    KEYREPET,#7,KEYHOLD
-        BRES    KEYREPET,#7
-        JRA     ATOKEY
-KEYHOLD:        
-        DEC     KEYREPET
-        JRNE    NOKEY 
-        MOV     KEYREPET,#30    ; repetition time: n*5ms 
-        JRA     ATOKEY
-        .endif
+        .ifeq   BAREBONES
+        JP      [USRQKEY]
 
-SERKEY:
-	BTJF    UART1_SR,#5,NOKEY ;check status
+
+;	?RX	( -- c T | F )  ( TOS STM8: -- Y,Z,N )
+;	Return serial interface input char from and true, or false.
+	.dw	LINK
+	LINK =	.
+	.db	3
+	.ascii	"?RX"
+        .endif
+QRX:
+        CLR     A               ; A: flag false
+	BTJF    UART1_SR,#5,QRXSTOR
 	LD	A,UART1_DR	; get char in A
 ATOKEY:
-        CALL    ASTOR           ; push A
-        JP      ONE             ; push flag 
-NOKEY:   
-        JP      ZERO            ; push flag 
+        CALLR   QRXSTOR         ; push char
+        JP      ONE             ; flag true
+QRXSTOR:
+        JP      ASTOR           ; push char or flag false
 
 
-;	TX!	( c -- )
+;	EMIT	( c -- )
 ;	Send character c to output device.
 
 	.dw	LINK
@@ -663,6 +664,18 @@ NOKEY:
 	.db	4
 	.ascii	"EMIT"
 EMIT:
+        .ifeq   BAREBONES
+        JP      [USREMIT]
+
+;	TX!	( c -- )
+;	Send character c to the serial interface.
+
+	.dw	LINK
+	LINK =	.
+	.db	3
+	.ascii	"TX!"
+        .endif
+TXSTOR:
         .ifne   HALF_DUPLEX
 	BRES	UART1_CR2,#2	; disable rx
 
@@ -2835,7 +2848,7 @@ NUMDROP:
 	.db	3
 	.ascii	"KEY"
 KEY:
-KEY1:	CALL	QKEY
+KEY1:	CALL	[USRQKEY]
 	CALL	QBRAN
 	.dw	KEY1
 	RET
@@ -2863,7 +2876,7 @@ NUFQ:
         JRNE    1$
         .endif
         .endif
-	CALL	QKEY
+	CALL	[USRQKEY]
 	CALL	DUPP
 	CALL	QBRAN
 	.dw	NUFQ1
@@ -4862,7 +4875,35 @@ LOCK_FLASH:
          
 ;-----------------------------------------------
         .ifne   HAS_KEYS
-;       BKEY  ( -- n )
+
+;	?KEYB	( -- c T | F )  ( TOS STM8: -- Y,Z,N )
+;	Return keyboard char and true, or false if no key pressed.
+	.dw	LINK
+	LINK =	.
+	.db	5
+	.ascii	"?KEYB"
+QKEYB:
+        CALLR   BKEY
+        CALL    AFLAGS
+        JRNE    KEYBPRESS
+        ; Bit7: flag press + 100*5ms hold before repetition
+        MOV     KEYREPET,#(0x80 + 100)
+        JRA     NOKEYB
+KEYBPRESS:
+        ADD     A,#0x40         ; bit values 1,2,4 to 'A','B','D'
+        BTJF    KEYREPET,#7,KEYBHOLD
+        BRES    KEYREPET,#7
+        JRA     ATOKEYB
+KEYBHOLD:
+        DEC     KEYREPET
+        JRNE    NOKEYB
+        MOV     KEYREPET,#30    ; repetition time: n*5ms
+ATOKEYB:
+        JP      ATOKEY          ; push char and flag true
+NOKEYB:
+        JP      ZERO            ; push flag false
+
+;       BKEY  ( -- n )     ( TOS STM8: -- A,Z,N )
 ;       Read board key state as a bitfield
 	.dw	LINK
         
@@ -4889,12 +4930,9 @@ BKEY:
         CLR     A
         .endif
         .endif
-        DECW    X               ;SUBW	X,#2    
-        DECW    X
-        LD      (1,X),A
-        CLR     (X)
-        RET
-        .endif
+        JP      ASTOR
+       .endif
+
 
         .ifne   HAS_LED7SEG
 
