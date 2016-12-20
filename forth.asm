@@ -763,7 +763,7 @@ CCOMMALIT:
         .ifne	WORDS_LINKCOMP
         .dw	LINK
         LINK =	.
-	.db	(COMPO+8)
+	.db	(COMPO+7)
         .ascii	"(+loop)"
         .endif
 DOPLOOP:
@@ -813,6 +813,12 @@ DONXT:
 NEX1:   LDW     (3,SP),Y
         JRA     BRAN
 
+;       QDQBRAN     ( n -- n )
+;       QDUP QBRANCH phrase
+QDQBRAN:
+        CALL    QDUP
+        JRA     QBRAN
+
 ;	?branch ( f -- )
 ;	Branch if flag is zero.
 
@@ -824,7 +830,7 @@ NEX1:   LDW     (3,SP),Y
 	.endif
 QBRAN:
 	LDW     Y,X
-        INCW    X               ; ADDW   X,#2 
+        INCW    X
         INCW    X
 	LDW     Y,(Y)
 	JREQ	BRAN
@@ -855,7 +861,7 @@ YJPIND:
 	.ascii	"EXECUTE"
 EXECU:
 	LDW     Y,X
-        INCW    X               ; ADDW   X,#2 
+        INCW    X
         INCW    X
         JRA     YJPIND
 
@@ -1113,7 +1119,6 @@ SWAPP:
         POPW    Y
 	LDW     (X),Y
 	RET	
-
 
 ;	OVER	( w1 w2 -- w1 w2 w1 ) ( TOS STM8: -- Y,Z,N )
 ;	Copy second stack item to top.
@@ -1438,15 +1443,9 @@ LAST:
 ;       ASTOR core ( -- n )     ( TOS STM8: -- Y,Z,N )
 ;       push A to stack
 ASTOR:
-        DECW    X
-        LD      (X),A
-        DECW    X
-        CLR     (X)
-
-        LDW     Y,X
-        LDW     Y,(Y)
-        RET
-
+        CLRW    Y
+        LD      YL,A
+        JP      YSTOR
 
 ;	TIB	( -- a )     ( TOS STM8: -- Y,Z,N )
 ;	Return address of terminal input buffer.
@@ -1739,11 +1738,10 @@ ULESS:
         CALLR   YTEMPCMP
 	JRUGE	1$
 	CPL     A
-1$:     LD      (X),A
-	LD      (1,X),A
-        LDW     Y,X
-        LDW     Y,(Y)
-	RET	
+1$:     LD      YL,A
+        LD      YH,A
+        LDW     (X),Y
+        RET
 
 ;	<	( n1 n2 -- t )
 ;	Signed compare of top two items.
@@ -1908,11 +1906,8 @@ MSMOD:
 	CALL	DNEGA
 	CALL	RFROM
 MMOD1:	CALL	TOR
-	CALL	DUPP
-	CALL	ZLESS
-	CALL	QBRAN
-	.dw	MMOD2
-	CALL	RAT
+	JRPL    MMOD2
+        CALL	RAT
 	CALL	PLUS
 MMOD2:	CALL	RFROM
 	CALL	UMMOD
@@ -2095,11 +2090,6 @@ STASL:
 	.db	2
 	.ascii	"2+"
 CELLP:
-;	LDW     Y,X
-;	LDW     Y,(Y)
-;	ADDW    Y,#2
-;	LDW     (X),Y
-;	RET
         CALLR   DOXCODE
 	INCW    X
 	INCW    X
@@ -2115,11 +2105,6 @@ CELLP:
 	.db	2
 	.ascii	"2-"
 CELLM:
-;	LDW     Y,X
-;	LDW     Y,(Y)
-;	SUBW    Y,#2
-;	LDW     (X),Y
-;	RET
         CALLR   DOXCODE
 	DECW    X
 	DECW    X
@@ -2134,11 +2119,6 @@ CELLM:
 	.db	2
 	.ascii	"2*"
 CELLS:
-;	LDW     Y,X
-;	LDW     Y,(Y)
-;	SLAW    Y
-;	LDW     (X),Y
-;	RET
         CALLR   DOXCODE
 	SLAW    X
         RET
@@ -2152,11 +2132,6 @@ CELLS:
 	.db	2
 	.ascii	"1+"
 ONEP:
-;	LDW     Y,X
-;	LDW     Y,(Y)
-;	INCW    Y
-;	LDW     (X),Y
-;	RET
         CALLR   DOXCODE
 	INCW    X
         RET
@@ -2170,11 +2145,6 @@ ONEP:
 	.db	2
 	.ascii	"1-"
 ONEM:
-	;LDW     Y,X
-	;LDW     Y,(Y)
-	;DECW    Y
-	;LDW     (X),Y
-	;RET
         CALLR   DOXCODE
 	DECW    X
         RET
@@ -2188,12 +2158,6 @@ ONEM:
 	.db	2
 	.ascii	"2/"
 TWOSL:
-;	LDW     Y,X
-;	LDW     Y,(Y)
-;	SRAW    Y
-;	LDW     (X),Y
-;	RET
-
         CALLR   DOXCODE
 	SRAW    X
         RET
@@ -2221,11 +2185,6 @@ DOXCODE:
 	.db	3
 	.ascii	"NOT"
 INVER:
-;	LDW     Y,X
-;	LDW     Y,(Y)
-;	CPLW    Y
-;	LDW     (X),Y
-;	RET
         CALLR   DOXCODE
 	CPLW    X
         RET
@@ -2239,10 +2198,6 @@ INVER:
 	.db	6
 	.ascii	"NEGATE"
 NEGAT:
-;        CALLR   INVER
-;        INCW    Y
-;	LDW     (X),Y
-;	RET
         CALLR   DOXCODE
 	NEGW    X
         RET
@@ -2255,13 +2210,7 @@ NEGAT:
 	LINK =	.
 	.db	3
 	.ascii	"ABS"
-ABSS:                                  ; TODO DOXCODE
-;	LDW     Y,X
-;	LDW     Y,(Y)
-;	JRPL	1$	;positive?
-;	NEGW	Y	;else negate 
-;	LDW     (X),Y
-;1$:     RET
+ABSS:
         CALLR   DOXCODE
 	JRPL	1$	;positive?
 	NEGW	X	;else negate 
@@ -2277,14 +2226,6 @@ ABSS:                                  ; TODO DOXCODE
 	.ascii	"0="
         .endif
 ZEQUAL:
-;	LDW     Y,X                           ; TODO DOXCODE
-;        LDW     Y,(Y)
-;        JREQ    1$
-;        CLRW    Y
-;        JRA     2$        
-;1$:     CPLW    Y
-;2$:     LDW     (X),Y
-;        RET
         CALLR   DOXCODE
 	JREQ	1$	
         CLRW    X               
@@ -2301,14 +2242,6 @@ ZEQUAL:
 	.db	4
 	.ascii	"PICK"
 PICK:
-	;LDW     Y,X	;D = n1
-	;LDW     Y,(Y)
-	;SLAW    Y
-	;LDW     YTEMP,X
-	;ADDW    Y,YTEMP
-	;LDW     Y,(Y)
-	;LDW     (X),Y
-	;RET
         CALLR   DOXCODE
         SLAW    X
         ADDW    X,YTEMP
@@ -2347,20 +2280,17 @@ TCHAR:
 	.ascii	"DEPTH"
         .endif
 DEPTH:
-	LDW     Y,#SPP  ;save data stack ptr	
+	LDW     Y,#SPP          ;save data stack ptr
 	LDW     YTEMP,X
-	SUBW    Y,YTEMP	;#bytes = SP0 - X
-	SRAW    Y	;D = #stack items
-	DECW    Y
-        DECW    X               ;SUBW	X,#2    
-        DECW    X
-	LDW     (X),Y	; if neg, underflow
-	RET
+	SUBW    Y,YTEMP	        ;#bytes = SP0 - X
+	SRAW    Y	        ;D = #stack items
+	DECW    Y               ; if neg, underflow
+        JP      YSTOR
 
 ; Memory access
 
 ;	+!	( n a -- )      ( TOS STM8: -- Y,Z,N )
-;	Add n tor contents at address a.
+;	Add n to contents at address a.
 
 	.dw	LINK
 	
@@ -2485,7 +2415,7 @@ PAD:
         RET     
 1$:
         .endif        
-	CALL	HERE            ; regular PAD with offset to HERE
+	CALLR	HERE            ; regular PAD with offset to HERE
 	CALL	DOLITC
 	.db	PADOFFS
 	JP	PLUS
@@ -2561,7 +2491,7 @@ FILL2:	CALL	DONXT
 	.ascii	"ERASE"
 ERASE:
 	CALL	ZERO
-	JP	FILL
+	JRA	FILL
 
 ;	PACK$	( b u a -- a )
 ;	Build a counted string with
@@ -2576,10 +2506,10 @@ ERASE:
         .endif
 PACKS:
 	CALL	DUPP
-	CALL	TOR	;strings only on cell boundary
+	CALL	TOR	        ; strings only on cell boundary
 	CALL	DDUP
 	CALL	CSTOR
-	CALL	ONEP ;save count
+	CALL	ONEP            ; save count
 	CALL	SWAPP
 	CALL	CMOVE
 	CALL	RFROM
@@ -2598,17 +2528,6 @@ PACKS:
 	.ascii	"DIGIT"
         .endif
 DIGIT:
-;	CALL	DOLITC
-;	.db     9
-;	CALL	OVER
-;	CALL	LESS
-;	CALL	DOLITC
-;	.db	7
-;	CALL	ANDD
-;	CALL	PLUS
-;	CALL	DOLITC
-;	.db	48	;'0'
-;	JP	PLUS
         LD      A,(1,X)
         CP      A,#10
         JRMI    1$
@@ -2714,13 +2633,12 @@ DIGS1:	CALLR	DIG
 	.ascii	"SIGN"
         .endif
 SIGN:
-	CALL	ZLESS
-	CALL	QBRAN
-	.dw	SIGN1
-	CALL	DOLITC
-	.db	45	;"-"
-	JRA	HOLD
-SIGN1:	RET
+        TNZ     (X)
+        JRPL    SIGN1
+        LD      A,#('-')
+        LD      (1,X),A
+        JRA     HOLD
+SIGN1:	JP      DROP
 
 ;	#>	( w -- b u )
 ;	Prepare output string.
@@ -2733,9 +2651,8 @@ SIGN1:	RET
 	.ascii	"#>"
         .endif
 EDIGS:
-	CALL	DROP
-	CALL	HLD
-	CALL	AT
+        LDW     Y,USRHLD
+        LDW     (X),Y
 	CALL	PAD
 	CALL	OVER
 	JP	SUBB
@@ -2758,8 +2675,8 @@ STR:
 	CALL	BDIGS
 	CALL	DIGS
 	CALL	RFROM
-	CALL	SIGN
-	JP	EDIGS
+	CALLR	SIGN
+	JRA	EDIGS
 
 ;	HEX	( -- )
 ;	Use radix 16 as base for
@@ -2771,10 +2688,8 @@ STR:
 	.db	3
 	.ascii	"HEX"
 HEX:
-	CALL	DOLITC
-	.db	16
-	CALL	BASE
-	JP	STORE
+        LD      A,#16
+        JRA     BASESET
 
 ;	DECIMAL ( -- )
 ;	Use radix 10 as base
@@ -2786,10 +2701,11 @@ HEX:
 	.db	7
 	.ascii	"DECIMAL"
 DECIM:
-	CALL	DOLITC
-	.db	10
-	CALL	BASE
-	JP	STORE
+        LD      A,#10
+BASESET:
+        LD      USRBASE+1,A
+        CLR     USRBASE
+        RET
 
 ; Numeric input, single precision
 
@@ -2881,8 +2797,7 @@ NUMQSKIP:
         JRNE    NUMQ0            ; check for more modifiers
 
 NUMQ1:
-	CALL	QDUP
-	CALL	QBRAN
+	CALL	QDQBRAN
 	.dw	NUMQ6
 	CALL	ONEM  
 	CALL	TOR             ; FOR
@@ -3452,8 +3367,7 @@ SAME1:	CALL	OVER
         CALLR   CUPPER
         .endif
         CALL	SUBB
-	CALL	QDUP
-	CALL	QBRAN
+	CALL	QDQBRAN
 	.dw	SAME2
 	CALL	RFROM
 	JP	DROP
@@ -3762,18 +3676,17 @@ ABOR2:	CALL	DOSTR
 	.endif
 INTER:
 	CALL	NAMEQ
-	CALL	QDUP	;?defined
-	CALL	QBRAN
+	CALL	QDQBRAN         ; ?defined
 	.dw	INTE1
 	CALL	AT
 	CALL	DOLIT
-	.dw	0x04000	; COMPO*256
-	CALL	ANDD	;?compile only lexicon bits
+	.dw	0x04000	        ; COMPO*256
+	CALL	ANDD	        ; ?compile only lexicon bits
 	CALL	ABORQ
 	.db	13
 	.ascii	" compile only"
 	JP	EXECU
-INTE1:	CALL	NUMBQ	;convert a number
+INTE1:	CALL	NUMBQ	        ; convert a number
 	CALL	QBRAN
 	.dw	ABOR1
 	RET
@@ -3787,16 +3700,14 @@ INTE1:	CALL	NUMBQ	;convert a number
 	.db	(IMEDD+1)
 	.ascii	"["
 LBRAC:
-	CALL	DOLIT
-	.dw	INTER
-	CALL	TEVAL
-	JP	STORE
-
+        LDW     Y,#INTER
+        LDW     USREVAL,Y
+        RET
 
 ;	Test if 'EVAL points to $INTERPRETER
 COMPIQ:
         LDW     Y,USREVAL
-	CPW     Y,#(INTER)
+	CPW     Y,#INTER
         RET
 
 ;	.OK	( -- )
@@ -3851,15 +3762,14 @@ QSTAC:
 	.endif
 EVAL:
 EVAL1:	CALL	TOKEN
-	CALL	DUPP
-	CALL	CAT	        ; ?input stream empty
-	CALL	QBRAN
-	.dw	EVAL2
-	CALL	TEVAL
-	CALL	ATEXE
-	CALL	QSTAC	        ; evaluate input, check stack
+        LD      A,(Y)
+        JREQ    EVAL2
+	CALL    [USREVAL]
+        CALLR	QSTAC	        ; evaluate input, check stack
 	JRA     EVAL1
-EVAL2:	CALL	DROP
+EVAL2:	
+        INCW    X
+        INCW    X
 	JP	[USRPROMPT]     ; DOTOK or PACE
 
 ;	PRESET	( -- )
@@ -4365,12 +4275,12 @@ PNAM1:	CALL	STRQP
 	.endif
 SCOMP:
 	CALL	NAMEQ
-	CALL	QDUP	;?defined
-	CALL	QBRAN
+	CALL	QDQBRAN	        ; ?defined
+	;CALL	QBRAN
 	.dw	SCOM2
 	CALL	AT
 	CALL	DOLIT
-	.dw	0x08000	;	IMEDD*256
+	.dw	0x08000	        ; IMEDD*256
 	CALL	ANDD	;?immediate
 	CALL	QBRAN
 	.dw	SCOM1
@@ -4392,18 +4302,16 @@ SCOM2:	CALL	NUMBQ	;try to convert to number
 	.ascii	"OVERT"
 	.endif
 OVERT:
+        .ifne   HAS_CPNVM
 	CALL	LAST
 	CALL	AT
+        
+        LD      A,YH
+        AND     A,#0xF8         ; does USRLAST point to NVM?
+        JREQ    1$
 
-        .ifne   HAS_CPNVM
-        CALL    DUPP
-        CALL    NVMADRQ         ; does USRLAST point to NVM?
-        CALL    QBRAN
-        .dw     1$
-        CALL    DUPP             
-        CALL    DOLITC
-        .db     NVMCONTEXT
-        CALL    STORE           ; update NVMCONTEXT
+        LDW     NVMCONTEXT,Y    ; update NVMCONTEXT
+
         CALL    DOLITC
         .db     CTOP            ; is there any vocabulary in RAM?
         CALL    DUPP
@@ -4417,9 +4325,12 @@ OVERT:
         CALL    DOLITC
         .db     USRCONTEXT            
         JP      STORE           ; or update USRCONTEXT
+        
         .else
-	CALL	CNTXT
-	JP	STORE
+
+        LDW     Y,USRLAST
+        LDW     USRCONTEXT,Y
+        RET 
         .endif
 
 ;	;	( -- )
@@ -4446,10 +4357,9 @@ SEMIS:
 	.db	1
 	.ascii	"]"
 RBRAC:
-	CALL	DOLIT
-	.dw	SCOMP
-	CALL	TEVAL
-	JP	STORE
+        LDW     Y,#SCOMP
+        LDW     USREVAL,Y
+        RET
 
 ;	CALL,	( ca -- )
 ;	Compile a subroutine call.
@@ -4735,8 +4645,7 @@ DOTS2:	CALL	DONXT
 	.ascii	".ID"
         .endif
 DOTID:
-	CALL	QDUP	;if zero no name
-	CALL	QBRAN
+	CALL	QDQBRAN	;if zero no name
 	.dw	DOTI1
 	CALL	COUNT
 	CALL	DOLITC
@@ -4798,8 +4707,8 @@ SEE1:
 	CALL	QBRAN
 	.dw	SEE2
 	CALL	TNAME	;?is it a name
-SEE2:	CALL	QDUP	;name address or zero
-	CALL	QBRAN
+SEE2:	CALL	QDQBRAN	;name address or zero
+	;CALL	QBRAN
 	.dw	SEE3
 	CALL	SPACE
 	CALL	DOTID	;display name
@@ -4890,16 +4799,13 @@ DCSTOR:
 	.db	(3)
 	.ascii	"2C@"
 DCAT:        
-        CALL    DUPP
-        CALL    CAT
-        CALL    SWAPP
-        CALL    ONEP
-        CALL    CAT
-        LD      A,(3,X)
-        LD      (2,X),A
-        LD      A,(1,X)
-        LD      (3,X),A
-        JP      DROP
+        CALL    DOXCODE
+        LDW     Y,X
+        LD      A,(X)
+        LD      XH,A
+        LD      A,(1,Y)
+        LD      XL,A
+        RET
         .endif
 
 
@@ -5214,10 +5120,10 @@ NVMQ:
 
 ;       NVMADR? ( a -- f )
 ;       return 0 if address is in RAM
-NVMADRQ:
-	CALL	DOLIT
-	.dw	0xf800
-        JP      ANDD
+;NVMADRQ:
+;	CALL	DOLIT
+;	.dw	0xf800
+;        JP      ANDD
 
 
 ;       Helper routine: swap USRCP and NVMCP
