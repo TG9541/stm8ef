@@ -1028,7 +1028,7 @@ YTOS:
         LDW     Y,(Y)
 	RET	
 
-;	2DROP	( w w -- )
+;	2DROP	( w w -- )       ( TOS STM8: -- Y,Z,N )
 ;	Discard two items on stack.
 
 	.dw	LINK
@@ -1394,6 +1394,32 @@ HLD:
 	LD      A,#(RAMBASE+USRHLD)
         JRA     ASTOR
 
+;	'EMIT	( -- a )     ( TOS STM8: -- A,Z,N )
+;	
+        .ifeq   BAREBONES
+	.dw	LINK
+	
+	LINK =	.
+	.db	5
+	.ascii	"'EMIT"
+	.endif
+TEMIT:
+	LD      A,#(USREMIT)
+        JRA     ASTOR
+
+
+;	'?KEY	( -- a )     ( TOS STM8: -- A,Z,N )
+;	
+        .ifeq   BAREBONES
+	.dw	LINK
+	
+	LINK =	.
+	.db	5
+	.ascii	"'?KEY"
+	.endif
+TQKEY:
+	LD      A,#(USRQKEY)
+        JRA     ASTOR
 
 
 ;	LAST	( -- a )        ( TOS STM8: -- Y,Z,N )
@@ -1497,8 +1523,9 @@ ONE:
 	.db	2
 	.ascii	"-1"
 MONE:
-        CALLR   ONE
-        JRA     NEGAT
+        LDW     Y,#0xFFFF
+AYSTOR:
+        JP      YSTOR
 
         .ifne   HAS_BACKGROUND
 ;	TIM	( -- T)     ( TOS STM8: -- Y,Z,N )
@@ -1511,7 +1538,7 @@ MONE:
 	.ascii	"TIM"
 TIMM:
 	LDW     Y,TICKCNT
-        JP      YSTOR
+        JRA     AYSTOR
 
 
 ;	BG	( -- a)     ( TOS STM8: -- Y,Z,N )
@@ -1581,35 +1608,6 @@ FILEE:
 
 ; Common functions
 
-;	NOT	( w -- w )     ( TOS STM8: -- Y,Z,N )
-;	One's complement of TOS.
-
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"NOT"
-INVER:
-	LDW     Y,X
-	LDW     Y,(Y)
-	CPLW    Y
-	LDW     (X),Y
-	RET
-
-;	NEGATE	( n -- -n )     ( TOS STM8: -- Y,Z,N )
-;	Two's complement of TOS.
-
-	.dw	LINK
-	
-	LINK =	.
-	.db	6
-	.ascii	"NEGATE"
-NEGAT:
-	LDW     Y,X
-	LDW     Y,(Y)
-	NEGW    Y
-	LDW     (X),Y
-	RET
 
 ;	?DUP	( w -- w w | 0 )   ( TOS STM8: -- Y,Z,N )
 ;	Dup tos if its not zero.
@@ -1696,22 +1694,6 @@ DNEGA:
 DN1:    LDW     (X),Y
 	RET
 
-;	ABS	( n -- n )      ( TOS STM8: -- Y,Z,N )
-;	Return	absolute value of n.
-
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"ABS"
-ABSS:
-	LDW     Y,X
-	LDW     Y,(Y)
-	JRPL	1$	;positive?
-	NEGW	Y	;else negate 
-	LDW     (X),Y
-1$:     RET
-
 ;	=	( w w -- t )    ( TOS STM8: -- Y,Z,N )
 ;	Return true if top two are equal.
 
@@ -1740,28 +1722,10 @@ EQ1:    LD      (X),A
         RET                            ; 24 cy
         .else
         CALL    XORR
-        JRA     ZEQUAL                 ; 31 cy= (18+13) 
+        JP      ZEQUAL                 ; 31 cy= (18+13) 
         .endif
         
-        .ifne   WORDS_EXTRACORE
-;	0=	( n -- t        ( TOS STM8: -- Y,Z,N ))
-;	Return true if n is equal to 0
-	.dw	LINK
-	
-        LINK =	.
-	.db	(2)
-	.ascii	"0="
-        .endif
-ZEQUAL:
-	LDW     Y,X
-        LDW     Y,(Y)
-        JREQ    1$
-        CLRW    Y
-        JRT     2$        
-1$:     CPLW    Y
-2$:     LDW     (X),Y
-        RET
-        
+       
 ;	U<	( u u -- t )    ( TOS STM8: -- Y,Z,N )
 ;	Unsigned compare of top two items.
 
@@ -2131,11 +2095,16 @@ STASL:
 	.db	2
 	.ascii	"2+"
 CELLP:
-	LDW     Y,X
-	LDW     Y,(Y)
-	ADDW    Y,#2
-	LDW     (X),Y
-	RET
+;	LDW     Y,X
+;	LDW     Y,(Y)
+;	ADDW    Y,#2
+;	LDW     (X),Y
+;	RET
+        CALLR   DOXCODE
+	INCW    X
+	INCW    X
+        RET
+
 
 ;	2-	( a -- a )      ( TOS STM8: -- Y,Z,N )
 ;	Subtract 2 from tos.
@@ -2146,11 +2115,15 @@ CELLP:
 	.db	2
 	.ascii	"2-"
 CELLM:
-	LDW     Y,X
-	LDW     Y,(Y)
-	SUBW    Y,#2
-	LDW     (X),Y
-	RET
+;	LDW     Y,X
+;	LDW     Y,(Y)
+;	SUBW    Y,#2
+;	LDW     (X),Y
+;	RET
+        CALLR   DOXCODE
+	DECW    X
+	DECW    X
+        RET
 
 ;	2*	( n -- n )      ( TOS STM8: -- Y,Z,N )
 ;	Multiply tos by 2.
@@ -2161,11 +2134,14 @@ CELLM:
 	.db	2
 	.ascii	"2*"
 CELLS:
-	LDW     Y,X
-	LDW     Y,(Y)
-	SLAW    Y
-	LDW     (X),Y
-	RET
+;	LDW     Y,X
+;	LDW     Y,(Y)
+;	SLAW    Y
+;	LDW     (X),Y
+;	RET
+        CALLR   DOXCODE
+	SLAW    X
+        RET
 
 ;	1+	( n -- n )      ( TOS STM8: -- Y,Z,N )
 ;	Add 1 to tos.
@@ -2176,11 +2152,14 @@ CELLS:
 	.db	2
 	.ascii	"1+"
 ONEP:
-	LDW     Y,X
-	LDW     Y,(Y)
-	INCW    Y
-	LDW     (X),Y
-	RET
+;	LDW     Y,X
+;	LDW     Y,(Y)
+;	INCW    Y
+;	LDW     (X),Y
+;	RET
+        CALLR   DOXCODE
+	INCW    X
+        RET
 
 ;	1-	( n -- n )      ( TOS STM8: -- Y,Z,N )
 ;	Subtract 1 from tos.
@@ -2191,11 +2170,14 @@ ONEP:
 	.db	2
 	.ascii	"1-"
 ONEM:
-	LDW     Y,X
-	LDW     Y,(Y)
-	DECW    Y
-	LDW     (X),Y
-	RET
+	;LDW     Y,X
+	;LDW     Y,(Y)
+	;DECW    Y
+	;LDW     (X),Y
+	;RET
+        CALLR   DOXCODE
+	DECW    X
+        RET
 
 ;	2/	( n -- n )      ( TOS STM8: -- Y,Z,N )
 ;	Multiply tos by 2.
@@ -2206,13 +2188,134 @@ ONEM:
 	.db	2
 	.ascii	"2/"
 TWOSL:
-	LDW     Y,X
-	LDW     Y,(Y)
-	SRAW    Y
-	LDW     (X),Y
-	RET
+;	LDW     Y,X
+;	LDW     Y,(Y)
+;	SRAW    Y
+;	LDW     (X),Y
+;	RET
 
-;	>CHAR	( c -- c )      ( TOS STM8: -- A,Z,N )
+        CALLR   DOXCODE
+	SRAW    X
+        RET
+
+;       DOXCODE   ( n -- n )   ( TOS STM8: -- Y,Z,N )
+;       A call to DOXCODE precedes a code for a primitive word
+;       In the sequence: X=TOS, YTEMP=SP. TOS=X after RET
+;       Caution: no other Forth may be called
+DOXCODE:
+        POPW    Y
+        LDW     YTEMP,X
+        LDW     X,(X)
+        CALL    (Y)
+        EXGW    X,Y
+        LDW     X,YTEMP
+        LDW     (X),Y
+        RET
+
+;	NOT	( w -- w )     ( TOS STM8: -- Y,Z,N )
+;	One's complement of TOS.
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	3
+	.ascii	"NOT"
+INVER:
+;	LDW     Y,X
+;	LDW     Y,(Y)
+;	CPLW    Y
+;	LDW     (X),Y
+;	RET
+        CALLR   DOXCODE
+	CPLW    X
+        RET
+
+;	NEGATE	( n -- -n )     ( TOS STM8: -- Y,Z,N )
+;	Two's complement of TOS.
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	6
+	.ascii	"NEGATE"
+NEGAT:
+;        CALLR   INVER
+;        INCW    Y
+;	LDW     (X),Y
+;	RET
+        CALLR   DOXCODE
+	NEGW    X
+        RET
+
+;	ABS	( n -- n )      ( TOS STM8: -- Y,Z,N )
+;	Return	absolute value of n.
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	3
+	.ascii	"ABS"
+ABSS:                                  ; TODO DOXCODE
+;	LDW     Y,X
+;	LDW     Y,(Y)
+;	JRPL	1$	;positive?
+;	NEGW	Y	;else negate 
+;	LDW     (X),Y
+;1$:     RET
+        CALLR   DOXCODE
+	JRPL	1$	;positive?
+	NEGW	X	;else negate 
+1$:     RET
+
+        .ifne   WORDS_EXTRACORE
+;	0=	( n -- t )      ( TOS STM8: -- Y,Z,N ))
+;	Return true if n is equal to 0
+	.dw	LINK
+	
+        LINK =	.
+	.db	(2)
+	.ascii	"0="
+        .endif
+ZEQUAL:
+;	LDW     Y,X                           ; TODO DOXCODE
+;        LDW     Y,(Y)
+;        JREQ    1$
+;        CLRW    Y
+;        JRA     2$        
+;1$:     CPLW    Y
+;2$:     LDW     (X),Y
+;        RET
+        CALLR   DOXCODE
+	JREQ	1$	
+        CLRW    X               
+        JRA     2$        
+1$:     CPLW	X	        ;else -1 
+2$:     RET
+
+;	PICK	( ... +n -- ... w )      ( TOS STM8: -- Y,Z,N )
+;	Copy	nth stack item to tos.
+
+	.dw	LINK
+	
+	LINK =	.
+	.db	4
+	.ascii	"PICK"
+PICK:
+	;LDW     Y,X	;D = n1
+	;LDW     Y,(Y)
+	;SLAW    Y
+	;LDW     YTEMP,X
+	;ADDW    Y,YTEMP
+	;LDW     Y,(Y)
+	;LDW     (X),Y
+	;RET
+        CALLR   DOXCODE
+        SLAW    X
+        ADDW    X,YTEMP
+        LDW     X,(X)
+        RET
+
+ ;	>CHAR	( c -- c )      ( TOS STM8: -- A,Z,N )
 ;	Filter non-printing characters.
 
 	.ifne	WORDS_LINKCHAR
@@ -2252,24 +2355,6 @@ DEPTH:
         DECW    X               ;SUBW	X,#2    
         DECW    X
 	LDW     (X),Y	; if neg, underflow
-	RET
-
-;	PICK	( ... +n -- ... w )      ( TOS STM8: -- Y,Z,N )
-;	Copy	nth stack item to tos.
-
-	.dw	LINK
-	
-	LINK =	.
-	.db	4
-	.ascii	"PICK"
-PICK:
-	LDW     Y,X	;D = n1
-	LDW     Y,(Y)
-	SLAW    Y
-	LDW     YTEMP,X
-	ADDW    Y,YTEMP
-	LDW     Y,(Y)
-	LDW     (X),Y
 	RET
 
 ; Memory access
@@ -2513,17 +2598,25 @@ PACKS:
 	.ascii	"DIGIT"
         .endif
 DIGIT:
-	CALL	DOLITC
-	.db     9
-	CALL	OVER
-	CALL	LESS
-	CALL	DOLITC
-	.db	7
-	CALL	ANDD
-	CALL	PLUS
-	CALL	DOLITC
-	.db	48	;'0'
-	JP	PLUS
+;	CALL	DOLITC
+;	.db     9
+;	CALL	OVER
+;	CALL	LESS
+;	CALL	DOLITC
+;	.db	7
+;	CALL	ANDD
+;	CALL	PLUS
+;	CALL	DOLITC
+;	.db	48	;'0'
+;	JP	PLUS
+        LD      A,(1,X)
+        CP      A,#10
+        JRMI    1$
+        ADD     A,#7
+1$:     ADD     A,#48
+        LD      (1,X),A
+        RET
+         
 
 ;	EXTRACT ( n base -- n c )   ( TOS STM8: -- Y,Z,N )
 ;	Extract least significant digit from n.
@@ -4739,8 +4832,7 @@ WORS1:	CALL	AT              ; @ sets Z and N
 	CALL	DOTID	        ; display a name
 	CALL	CELLM
         JRA     WORS1
-1$:	CALL	DROP
-	RET
+1$:	JP	DROP
 
 	
 ;	
@@ -4787,8 +4879,7 @@ DCSTOR:
         LD      (3,X),A
         CALL    CSTOR
         CALL    ONEP
-        CALL    CSTOR
-        RET
+        JP      CSTOR
 
 
 ;       2C@  ( a -- n )
@@ -4808,8 +4899,7 @@ DCAT:
         LD      (2,X),A
         LD      A,(1,X)
         LD      (3,X),A
-        CALL    DROP
-        RET
+        JP      DROP
         .endif
 
 
@@ -5122,6 +5212,7 @@ NVMQ:
         AND     A,#0xF8
         RET
 
+;       NVMADR? ( a -- f )
 ;       return 0 if address is in RAM
 NVMADRQ:
 	CALL	DOLIT
@@ -5146,12 +5237,12 @@ SWAPCP:
 	.db	(3)
 	.ascii	"NVM"
 NVMM:        
-        CALL    NVMQ
+        CALLR    NVMQ
         JRNE    1$           ; state entry action?
         ; in NVM mode only link words in NVM
         MOV     USRLAST,NVMCONTEXT
         MOV     USRLAST+1,NVMCONTEXT+1
-        CALL    SWAPCP
+        CALLR    SWAPCP
         CALL    UNLOCK_FLASH
 1$:
         RET
@@ -5165,22 +5256,15 @@ NVMM:
 	.db	(3)
 	.ascii	"RAM"
 RAMM:        
-        CALL    NVMQ
+        CALLR    NVMQ
         JREQ    1$
-        CALL    SWAPCP          ; Switch back to mode RAM
+        CALLR    SWAPCP          ; Switch back to mode RAM
 
         MOV     COLDNVMCP,NVMCP ; Store NCM pointers for init in COLD 
         MOV     COLDNVMCP+1,NVMCP+1
         MOV     COLDCONTEXT,NVMCONTEXT
         MOV     COLDCONTEXT+1,NVMCONTEXT+1
 
-        CALL    CNTXT           ; Does USRCONTEXT point to word in RAM?
-        CALL    NVMADRQ                 
-        CALL    QBRAN
-        .dw     2$
-        MOV     USRCONTEXT,NVMCONTEXT
-        MOV     USRCONTEXT+1,NVMCONTEXT+1
-2$:
         MOV     USRLAST,USRCONTEXT
         MOV     USRLAST+1,USRCONTEXT+1
         CALL    LOCK_FLASH
