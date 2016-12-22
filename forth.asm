@@ -1,4 +1,4 @@
-; STM8EF for STM8S003F3 (Value Line) devices
+; STM8EF for STM8S003F3 (Value pine) devices
 ;
 ; This is derived work based on 
 ; http://www.forth.org/svfig/kk/07-2010.html
@@ -134,19 +134,19 @@
 
         CASEINSENSITIVE = 0     ; Case insensitive dictionary search
         SPEEDOVERSIZE   = 0     ; Speed-over-size in core words ROT - = < 
-        BAREBONES       = 0     ; Remove or unlink some more: hi HERE .R U.R SPACES        
+        BAREBONES       = 0     ; Remove or unlink some more: hi HERE .R U.R SPACES @EXECUTE AHEAD CALL, EXIT COMPILE [COMPILE]
 
-        WORDS_LINKCOMP =  0     ; Link words for compiler extensions: doLit donxt ?branch branch EXECUTE EXIT doVAR [COMPILE] COMPILE $,"
-        WORDS_LINKCOMPC = 0     ; Link composing words of compiler: cp last do$ OVERT $"| ."| $,n NVM? dodoes 
-        WORDS_LINKINTER = 0     ; Link interpreter core words: hi 'BOOT tmp >IN 'eval CONTEXT pars PARSE WORD TOKEN NAME> SAME? find ABORT aborq $INTERPRET INTER? .OK ?STACK EVAL PRESET QUIT ?UNIQUE $COMPILE
-        WORDS_LINKCHAR =  0     ; Link char I/O core words: ACCEPT TAP kTAP QUERY #TIB hld TIB >CHAR COUNT DIGIT <# HOLD # #S SIGN #> str DIGIT? NUMBER? _TYPE 
-        WORDS_LINKMISC =  0     ; Link composing words of SEE DUMP WORDS NVM 
+        WORDS_LINKINTER = 0     ; Link interpreter words: ACCEPT QUERY TAP kTAP hi 'BOOT tmp >IN 'TIB #TIB eval CONTEXT pars PARSE NUMBER? DIGIT? WORD TOKEN NAME> SAME? find ABORT aborq $INTERPRET INTER? .OK ?STACK EVAL PRESET QUIT $COMPILE
+        WORDS_LINKCOMP  = 0     ; Link compiler words: cp last OVERT $"| ."| $,n 
+        WORDS_LINKRUNTI = 0     ; Link runtime words: doLit do$ doVAR donxt dodoes ?branch branch 
+        WORDS_LINKCHAR =  0     ; Link char out words: DIGIT <# # #S SIGN #> str hld HOLD 
+        WORDS_LINKMISC =  0     ; Link composing words of SEE DUMP WORDS: >CHAR _TYPE dm+ .ID >NAME  
 
         WORDS_EXTRASTACK = 0    ; Link/include stack core words: rp@ rp! sp! sp@ DEPTH 
         WORDS_EXTRADEBUG = 0    ; Extra debug words: SEE
         WORDS_EXTRACORE  = 0    ; Extra core words: =0 I
         WORDS_EXTRAMEM   = 0    ; Extra memory words: BSR 2C@ 2C!
-        WORDS_EXTRAEEPR  = 0    ; Extra EEPROM lock/unlock words: LOCK ULOCK 
+        WORDS_EXTRAEEPR  = 0    ; Extra EEPROM lock/unlock words: LOCK ULOCK ULOCKF LOCKF 
         WORDS_HWREG      = 0    ; Peripheral Register words
 
         ;*************************************************
@@ -713,7 +713,7 @@ TXSTOR:
 ;	doLit	( -- w )
 ;	Push an inline literal.
 
-	.ifne	WORDS_LINKCOMP
+	.ifne	WORDS_LINKRUNTI
 	.dw	LINK
 	LINK =	.
 	.db	(COMPO+5)
@@ -760,7 +760,7 @@ CCOMMALIT:
         ;	(+loop)	( +n -- )
         ;	Add n to index R@ and test for lower than limit (R-CELL)@.
 
-        .ifne	WORDS_LINKCOMP
+        .ifne	WORDS_LINKRUNTI
         .dw	LINK
         LINK =	.
 	.db	(COMPO+7)
@@ -796,7 +796,7 @@ LEAVE:
 ;	next	( -- )
 ;	Code for single index loop.
 
-	.ifne	WORDS_LINKCOMP
+	.ifne	WORDS_LINKRUNTI
 	.dw	LINK
 	LINK =	.
 	.db	(COMPO+5)
@@ -822,7 +822,7 @@ QDQBRAN:
 ;	?branch ( f -- )
 ;	Branch if flag is zero.
 
-	.ifne	WORDS_LINKCOMP
+	.ifne	WORDS_LINKRUNTI
 	.dw	LINK
 	LINK =	.
 	.db	(COMPO+7)
@@ -840,7 +840,7 @@ QBRAN:
 ;	branch	( -- )
 ;	Branch to an inline address.
 
-	.ifne	WORDS_LINKCOMP
+	.ifne	WORDS_LINKRUNTI
 	.dw	LINK
 	LINK =	.
 	.db	(COMPO+6)
@@ -851,6 +851,7 @@ BRAN:
 YJPIND:
 	LDW     Y,(Y)
 	JP	(Y)
+
 
 ;	EXECUTE ( ca -- )
 ;	Execute	word at ca.
@@ -868,7 +869,7 @@ EXECU:
 ;	EXIT	( -- )
 ;	Terminate a colon definition.
 
-	.ifne	WORDS_LINKCOMP
+        .ifeq   BAREBONES
 	.dw	LINK
 	LINK =	.
 	.db	4
@@ -1001,7 +1002,7 @@ IGET:
 ;	doVAR	( -- a )     ( TOS STM8: -- Y,Z,N )
 ;	Code for VARIABLE and CREATE.
 
-	.ifne	WORDS_LINKCOMP
+	.ifne	WORDS_LINKRUNTI
 	.dw	LINK
 	LINK =	.
 	.db	(COMPO+5)
@@ -1304,7 +1305,7 @@ CNTXT:
 ;	CP	( -- a )     ( TOS STM8: -- Y,Z,N )
 ;	Point to top of dictionary.
 
-        .ifne   WORDS_LINKCOMPC
+        .ifne   WORDS_LINKCOMP
 	.dw	LINK
 	
 	LINK =	.
@@ -1359,7 +1360,7 @@ INN:
 ;	#TIB	( -- a )     ( TOS STM8: -- Y,Z,N )
 ;	Count in terminal input buffer.
 
-	.ifne	WORDS_LINKCHAR
+	.ifne	WORDS_LINKINTER
 	.dw	LINK
 	
 	LINK =	.
@@ -1430,7 +1431,7 @@ TQKEY:
 ;	LAST	( -- a )        ( TOS STM8: -- Y,Z,N )
 ;	Point to last name in dictionary.
 
-	.ifne	WORDS_LINKCOMPC
+	.ifne	WORDS_LINKCOMP
 	.dw	LINK
 	
 	LINK =	.
@@ -1450,7 +1451,7 @@ ASTOR:
 ;	TIB	( -- a )     ( TOS STM8: -- Y,Z,N )
 ;	Return address of terminal input buffer.
 
-	.ifne	WORDS_LINKCHAR
+	.ifne	WORDS_LINKINTER
 	.dw	LINK
 	
 	LINK =	.
@@ -2251,7 +2252,7 @@ PICK:
  ;	>CHAR	( c -- c )      ( TOS STM8: -- A,Z,N )
 ;	Filter non-printing characters.
 
-	.ifne	WORDS_LINKCHAR
+	.ifne	WORDS_LINKMISC
 	.dw	LINK
 	
 	LINK =	.
@@ -2351,13 +2352,11 @@ DAT:
 ;	Return count byte of a string
 ;	and add 1 to byte address.
 
-	.ifne	WORDS_LINKCHAR
 	.dw	LINK
 	
 	LINK =	.
 	.db	5
 	.ascii	"COUNT"
-        .endif
 COUNT:
 	CALL	DUPP
 	CALL	ONEP
@@ -2423,7 +2422,7 @@ PAD:
 ;	@EXECUTE	( a -- )  ( TOS STM8: undefined )
 ;	Execute vector stored in address a.
 
-	.ifne	WORDS_LINKCOMP
+	.ifeq	BAREBONES
 	.dw	LINK
 	
 	LINK =	.
@@ -2555,7 +2554,7 @@ EXTRC:
 	JP	DIGIT
 
 ;	<#	( -- )   ( TOS STM8: -- Y,Z,N )
-;	Initiate	numeric output process.
+;	Initiate numeric output process.
 
 	.ifne	WORDS_LINKCHAR
 	.dw	LINK
@@ -2713,7 +2712,7 @@ BASESET:
 ;	Convert a character to its numeric
 ;	value. A flag indicates success.
 
-	.ifne	WORDS_LINKCHAR
+	.ifne	WORDS_LINKINTER
 	.dw	LINK
 	
 	LINK =	.
@@ -2747,7 +2746,7 @@ DGTQ1:	CALL	DUPP
 ;	Convert a number string to
 ;	integer. Push a flag on tos.
 
-	.ifne	WORDS_LINKCHAR
+	.ifne	WORDS_LINKINTER
 	.dw	LINK
 	
 	LINK =	.
@@ -2955,7 +2954,7 @@ CR:
 ;	Return	address of a compiled
 ;	string.
 
-	.ifne	WORDS_LINKCOMPC
+	.ifne	WORDS_LINKRUNTI
 	.dw	LINK
 	
 	LINK =	.
@@ -2977,7 +2976,7 @@ DOSTR:
 ;	Run time routine compiled by $".
 ;	Return address of a compiled string.
 
-	.ifne	WORDS_LINKCOMPC
+	.ifne	WORDS_LINKRUNTI
 	.dw	LINK
 	
 	LINK =	.
@@ -2992,7 +2991,7 @@ STRQP:
 ;	Run time routine of ." .
 ;	Output a compiled string.
 
-	.ifne	WORDS_LINKCOMPC
+	.ifne	WORDS_LINKRUNTI
 	.dw	LINK
 	
 	LINK =	.
@@ -3042,13 +3041,11 @@ RFROMTYPES:
 ;	TYPE	( b u -- )
 ;	Output u characters from b.
 
-        .ifeq   BAREBONES
 	.dw	LINK
 	
 	LINK =	.
 	.db	4
 	.ascii	"TYPE"
-        .endif
 TYPES:
 	CALL	TOR
 	JRA	TYPE2
@@ -3278,12 +3275,11 @@ PAREN:
 	
 	LINK =	.
 	.db	(IMEDD+1)
-	.ascii	"\\"
+	.ascii	"\"
 BKSLA:
-	CALL	NTIB
-	CALL	AT
-	CALL	INN
-	JP	STORE
+        LDW     Y,USRNTIB
+        LDW     USR_IN,Y
+        RET
 
 ;	WORD	( c -- a ; <string> )
 ;	Parse a word from input stream
@@ -3306,7 +3302,7 @@ WORDD:
 ;	Parse a word from input stream
 ;	and copy it to name dictionary.
 
-	.ifne	WORDS_LINKCOMP
+	.ifne	WORDS_LINKINTER
 	.dw	LINK
 	
 	LINK =	.
@@ -3481,7 +3477,7 @@ FIND5:	CALL	RFROM
 ;	^H	( bot eot cur -- bot eot cur )
 ;	Backup cursor by one character.
 
-	.ifne	WORDS_LINKCHAR
+	.ifne	WORDS_LINKINTER
 	.dw	LINK
 	
 	LINK =	.
@@ -3514,7 +3510,7 @@ BACK1:	RET
 ;	Accept and echo key stroke
 ;	and bump cursor.
 
-	.ifne	WORDS_LINKCHAR
+	.ifne	WORDS_LINKINTER
 	.dw	LINK
 	
 	LINK =	.
@@ -3534,7 +3530,7 @@ TAP:
 ;	Process a key stroke,
 ;	CR or backspace.
 
-	.ifne	WORDS_LINKCHAR
+	.ifne	WORDS_LINKINTER
 	.dw	LINK
 	
 	LINK =	.
@@ -3566,7 +3562,7 @@ KTAP2:	CALL	DROP
 ;	Accept characters to input
 ;	buffer. Return with actual count.
 
-	.ifne	WORDS_LINKCHAR
+	.ifne	WORDS_LINKINTER
 	.dw	LINK
 	
 	LINK =	.
@@ -3601,7 +3597,7 @@ ACCP4:	CALL	DROP
 ;	Accept input stream to
 ;	terminal input buffer.
 
-	.ifne	WORDS_LINKCHAR
+	.ifne	WORDS_LINKINTER
 	.dw	LINK
 	
 	LINK =	.
@@ -3751,7 +3747,7 @@ QSTAC:
 	RET
 
 ;	EVAL	( -- )
-;	Interpret	input stream.
+;	Interpret input stream.
 
 	.ifne	WORDS_LINKINTER
 	.dw	LINK
@@ -3784,8 +3780,8 @@ EVAL2:
 	.ascii	"PRESET"
 	.endif
 PRESE:
-        CLRW    Y
-        LDW     RAMBASE+USRNTIB,Y
+        CLR     USRNTIB
+        CLR     USRNTIB+1
 	LDW	X,#SPP          ; initialize data stack
         RET
 
@@ -3806,7 +3802,7 @@ QUIT:
 	CALL	RPSTO	;reset return stack pointer
 QUIT1:	CALL	LBRAC	;start interpretation
 QUIT2:	CALL	QUERY	;get input
-	CALL	EVAL
+        CALLR	EVAL
 	JRA	QUIT2	;continue till error
 
 ; The compiler
@@ -3875,7 +3871,7 @@ CCOMMA:
 ;	Compile next immediate
 ;	word into code dictionary.
 
-	.ifne	WORDS_LINKCOMP
+        .ifeq   BAREBONES
 	.dw	LINK
 	
 	LINK =	.
@@ -3890,7 +3886,7 @@ BCOMP:
 ;	Compile next jsr in
 ;	colon list to code dictionary.
 
-	.ifne	WORDS_LINKCOMP
+        .ifeq   BAREBONES
 	.dw	LINK
 	
 	LINK =	.
@@ -3925,13 +3921,11 @@ LITER:
 ;	Compile a literal string
 ;	up to next " .
 
-	.ifne	WORDS_LINKCOMP
 	.dw	LINK
 	
 	LINK =	.
 	.db	3
 	.ascii	'$,"'
-        .endif
 STRCQ:
 	CALL	DOLITC
 	.db	34	; "
@@ -4103,7 +4097,7 @@ ELSEE:
 ;	AHEAD	( -- A )
 ;	Compile a forward branch instruction.
 
-	.ifne	WORDS_LINKCOMP
+	.ifeq	BAREBONES
 	.dw	LINK
 	
 	LINK =	.
@@ -4176,7 +4170,7 @@ ABRTQ:
 ;	$"	( -- ; <string> )
 ;	Compile an inline string literal.
 
-	.ifne	WORDS_LINKCOMP
+	.ifne	WORDS_LINKCHAR
 	.dw	LINK
 	
 	LINK =	.
@@ -4207,7 +4201,7 @@ DOTQ:
 ;	Display a warning message
 ;	if word already exists.
 
-	.ifne	WORDS_LINKINTER
+	.ifne	WORDS_LINKCOMP
 	.dw	LINK
 	
 	LINK =	.
@@ -4231,7 +4225,7 @@ UNIQ1:	JP	DROP
 ;	Build a new dictionary name
 ;	using string at na.
 
-	.ifne	WORDS_LINKCOMPC
+	.ifne	WORDS_LINKCOMP
 	.dw	LINK
 	
 	LINK =	.
@@ -4266,7 +4260,7 @@ PNAM1:	CALL	STRQP
 ;	Compile next word to
 ;	dictionary as a token or literal.
 
-	.ifne	WORDS_LINKINTER
+	.ifne	WORDS_LINKCOMP
 	.dw	LINK
 	
 	LINK =	.
@@ -4294,7 +4288,7 @@ SCOM2:	CALL	NUMBQ	;try to convert to number
 ;	OVERT	( -- )
 ;	Link a new word into vocabulary.
 
-	.ifne	WORDS_LINKCOMPC
+	.ifne	WORDS_LINKCOMP
 	.dw	LINK
 	
 	LINK =	.
@@ -4364,11 +4358,13 @@ RBRAC:
 ;	CALL,	( ca -- )
 ;	Compile a subroutine call.
 
+        .ifeq   BAREBONES
 	.dw	LINK
 	
 	LINK =	.
 	.db	5
 	.ascii	"CALL,"
+        .endif
 JSRC:
 	CALL	CCOMMALIT
 	.db	CALL_OPC	 ; opcode CALL
@@ -4475,7 +4471,7 @@ DOESS:
 ;	dodoes	( -- )
 ;	link action to words created by defining words
 
-	.ifne	WORDS_LINKCOMPC
+	.ifne	WORDS_LINKRUNTI
 	.dw	LINK
 	
 	LINK =	.
@@ -4505,7 +4501,6 @@ DODOES:
         RET
         .endif 
 
-        .ifeq   BAREBONES
 ;	VARIABLE	( -- ; <string> )
 ;	Compile a new variable
 ;	initialized to 0.
@@ -4519,7 +4514,6 @@ VARIA:
 	CALL	CREAT
 	CALL	ZERO
 	JP	COMMA
-        .endif
 
 ; Tools
 
@@ -4527,7 +4521,7 @@ VARIA:
 ;	Display a string. Filter
 ;	non-printing characters.
 
-	.ifne	WORDS_LINKCHAR
+	.ifne	WORDS_LINKMISC
 	.dw	LINK
 	
 	LINK =	.
@@ -4837,10 +4831,10 @@ LOCK:
         .endif
 
          
-        .ifne   HAS_CPNVM 
+        .ifne   (HAS_CPNVM + WORDS_EXTRAEEPR)
 ;       ULOCKF  ( -- )
 ;       Unlock Flash (STM8S)
-        .ifne   WORDS_LINKMISC
+        .ifne   WORDS_EXTRAEEPR
 	.dw	LINK
         
         LINK =  .
@@ -4856,7 +4850,7 @@ UNLOCK_FLASH:
 
 ;       LOCKF  ( -- )
 ;       Lock Flash (STM8S)
-        .ifne   WORDS_LINKMISC
+        .ifne   WORDS_EXTRAEEPR
 	.dw	LINK
         
         LINK =  .
@@ -4868,7 +4862,6 @@ LOCK_FLASH:
         RET
         .endif
 
-         
 ;-----------------------------------------------
         .ifne   HAS_KEYS
 
@@ -5023,6 +5016,8 @@ PUT7SA:
         RET
         .endif
 
+;-----------------------------------------------
+
         .ifne   HAS_OUTPUTS
 ;       OUT!  ( c -- )
 ;       Put c to board outputs, storing a copy in OUTPUTS  
@@ -5100,12 +5095,6 @@ ADCAT:
         LDW     Y,ADC_DRH       ; read ADC
         LDW     (X),Y
         RET
-        .endif
-
-
-
-        .ifne WORDS_HWREG * (STM8S003F3 + STM8S103F3)
-          .include "hwregs8s003.inc"
         .endif
 
 ;===============================================================
@@ -5201,6 +5190,12 @@ RESETT:
         .endif
 
        
+
+
+        .ifne WORDS_HWREG * (STM8S003F3 + STM8S103F3)
+          .include "hwregs8s003.inc"
+        .endif
+
          
 ;===============================================================
 	LASTN	=	LINK	;last name defined
