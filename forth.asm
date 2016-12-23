@@ -58,73 +58,73 @@
 ; Version 3.6.0 #9615 (Linux)
 ;--------------------------------------------------------
 
-	.module forth
-	.optsdcc -mstm8
-	
+        .module forth
+        .optsdcc -mstm8
+        
 ;--------------------------------------------------------
 ; Public variables in this module
 ;--------------------------------------------------------
 
         .globl _TIM2_UO_IRQHandler
-	.globl _TIM4_IRQHandler
-	.globl _forth
+        .globl _TIM4_IRQHandler
+        .globl _forth
 
 ;--------------------------------------------------------
 ; ram data
 ;--------------------------------------------------------
-	.area DATA
+        .area DATA
 
 ;--------------------------------------------------------
 ; ram data
 ;--------------------------------------------------------
-	.area INITIALIZED
+        .area INITIALIZED
 ;--------------------------------------------------------
 ; absolute external ram data
 ;--------------------------------------------------------
-	.area DABS (ABS)
+        .area DABS (ABS)
 ;--------------------------------------------------------
 ; global & static initialisations
 ;--------------------------------------------------------
-	.area HOME
-	.area GSINIT
-	.area GSFINAL
-	.area GSINIT
+        .area HOME
+        .area GSINIT
+        .area GSFINAL
+        .area GSINIT
 ;--------------------------------------------------------
 ; Home
 ;--------------------------------------------------------
-	.area HOME
-	.area HOME
+        .area HOME
+        .area HOME
 ;--------------------------------------------------------
 ; code
 ;--------------------------------------------------------
-	.area CODE
+        .area CODE
 
         ;************************************
-	;******  1) General Constants  ******
+        ;******  1) General Constants  ******
         ;************************************
 
-	VER     =     2         ; Version major release version
-	EXT     =     2         ; Version minor extension
+        VER     =     2         ; Version major release version
+        EXT     =     2         ; Version minor extension
 
-	TRUEE   =     0xFFFF    ; true flag
-	COMPO   =     0x40      ; lexicon compile only bit
-	IMEDD   =     0x80      ; lexicon immediate bit
-	MASKK   =     0x1F7F    ; lexicon bit mask
+        TRUEE   =     0xFFFF    ; true flag
+        COMPO   =     0x40      ; lexicon compile only bit
+        IMEDD   =     0x80      ; lexicon immediate bit
+        MASKK   =     0x1F7F    ; lexicon bit mask
 
         TIBLENGTH =   80        ; size of TIB (starting at TIBOFFS)
         PADOFFS =     80        ; offset text buffer above dictionary 
-	CELLL   =      2        ; size of a cell
-	BASEE   =     10        ; default radix
+        CELLL   =      2        ; size of a cell
+        BASEE   =     10        ; default radix
         BKSPP   =      8        ; backspace
-	LF      =     10        ; line feed
+        LF      =     10        ; line feed
         PACE    =     11        ; pace character for host handshake (ASCII VT) 
-	CRR     =     13        ; carriage return
-	ERR     =     27        ; error escape
-	TIC     =     39        ; tick
+        CRR     =     13        ; carriage return
+        ERR     =     27        ; error escape
+        TIC     =     39        ; tick
 
         EXIT_OPC =    0x81      ; RET opcode
-	BRAN_OPC =    0xCC      ; JP opcode
-	CALL_OPC =    0xCD      ; CALL opcode
+        BRAN_OPC =    0xCC      ; JP opcode
+        CALL_OPC =    0xCD      ; CALL opcode
 
 
         ;**********************************
@@ -192,8 +192,8 @@
         ;**********************************************
         ; Define memory location for device dependent features here
 
-	;******  STM8S memory addresses ******
-	RAMBASE =	0x0000	; STM8S RAM start
+        ;******  STM8S memory addresses ******
+        RAMBASE =       0x0000  ; STM8S RAM start
         EEPROMBASE =    0x4000  ; STM8S EEPROM start
 
         .ifne   STM8S003F3
@@ -206,7 +206,7 @@
 
         .ifne   (STM8S003F3 + STM8S103F3)
         ;******  STM8SF103 Memory Layout ******
-        RAMEND =        0x03FF	; system (return) stack, growing down
+        RAMEND =        0x03FF  ; system (return) stack, growing down
 
         FORTHRAM =      0x0020  ; Start of RAM controlled by Forth
         UPPLOC  =       0x0060  ; UPP (user/system area) location for 1K RAM
@@ -216,7 +216,7 @@
         
         FLASHEND =      0x9FFF  ; 8K devices 
        
-	;******  STM8SF103 Registers  ******
+        ;******  STM8SF103 Registers  ******
         .include        "stm8s003f3.inc"
         .endif
 
@@ -233,7 +233,7 @@
 
 
         
-	;******  Background task variables  ******
+        ;******  Background task variables  ******
         .ifne   HAS_BACKGROUND
         PADBG     =     0x4F    ; PAD in background task growing down from here 
 
@@ -251,7 +251,7 @@
         BSPPSIZE  =     0       ;  no background, no extra data stack
         .endif
 
-	;******  Board variables  ******
+        ;******  Board variables  ******
         .ifne   HAS_TXDSIM
         TIM4TCNT =      0x58    ; TIM4 TX interrupt counter
         TIM4TXREG  =    0x59    ; TIM4 char for TX
@@ -268,16 +268,16 @@
         .endif
 
         ;**************************************************
-	;******  6) General User & System Variables  ******
+        ;******  6) General User & System Variables  ******
         ;**************************************************
 
         UPP   = UPPLOC          ; offset user area
         CTOP  = CTOPLOC         ; dictionary start, growing up
                                 ; note: PAD is inbetween CTOP and SPP
-	SPP   = SPPLOC-BSPPSIZE	; data stack, growing down (with SPP-1 first)
+        SPP   = SPPLOC-BSPPSIZE ; data stack, growing down (with SPP-1 first)
         BSPP  = SPPLOC          ; Background data stack, grouwing down
         TIBB  = SPPLOC          ; Term. Input Buf. TIBLENGTH between SPPLOC and RPP
-	RPP   = RPPLOC          ; return stack, growing down
+        RPP   = RPPLOC          ; return stack, growing down
         
         ; Core variables (same order as 'BOOT initializer block)
 
@@ -300,22 +300,22 @@
         USRNTIB =    UPP+24     ; count in terminal input buffer 
         USR_IN  =    UPP+26     ; hold parsing pointer
         USRTEMP =    UPP+28     ; temporary storage for interpreter (VARIABLE tmp)
-        YTEMP	=    UPP+30	; extra working register for core words
+        YTEMP   =    UPP+30     ; extra working register for core words
 
         ;***********************
-	;******  7) Code  ******
+        ;******  7) Code  ******
         ;***********************
 
 ;       Main entry points and COLD start data
 
-;	COLD	( -- )
-;	The hilevel cold start sequence.
+;       COLD    ( -- )
+;       The hilevel cold start sequence.
 
-	.dw	0
-	
-	LINK =	.
-	.db	4
-	.ascii	"COLD"
+        .dw     0
+        
+        LINK =  .
+        .db     4
+        .ascii  "COLD"
 _forth:                         ; SDCC entry 
         ; Note: no return to main.c possible unless RAMEND equals SP, 
         ; and RPP init skipped
@@ -324,23 +324,23 @@ COLD:
         SIM                     ; disable interrupts 
         
         LDW     X,#(RAMEND-FORTHRAM) 
-1$:	CLR     (FORTHRAM,X)                    
-	DECW    X
-	JRPL    1$
+1$:     CLR     (FORTHRAM,X)                    
+        DECW    X
+        JRPL    1$
 
-	LDW	X,#RPP	        ; initialize return stack
-	LDW	SP,X
-	LDW	X,#SPP          ; Pre-initialize data stack
+        LDW     X,#RPP          ; initialize return stack
+        LDW     SP,X
+        LDW     X,#SPP          ; Pre-initialize data stack
 
-	CALL	DOLIT
-	.dw	UZERO
-	CALL	DOLITC
+        CALL    DOLIT
+        .dw     UZERO
+        CALL    DOLITC
         .db     USRRAMINIT
-	CALL	DOLITC
-	.db	(ULAST-UZERO)
-	CALL	CMOVE	        ; initialize user area
+        CALL    DOLITC
+        .db     (ULAST-UZERO)
+        CALL    CMOVE           ; initialize user area
 
-	CALL	PRESE	        ; initialize data stack, TIB 
+        CALL    PRESE           ; initialize data stack, TIB 
 
          ; Board I/O initialization
         .include "boardinit.inc"
@@ -353,37 +353,37 @@ COLD:
         ; Hardware initialization complete
         RIM                     ; enable interrupts 
 
- 	CALL	TBOOT
-	CALL	ATEXE	        ; application boot
-        CALL	OVERT           ; initialize CONTEXT from USRLAST 
-	JP	QUIT	        ; start interpretation
+        CALL    TBOOT
+        CALL    ATEXE           ; application boot
+        CALL    OVERT           ; initialize CONTEXT from USRLAST 
+        JP      QUIT            ; start interpretation
 
 
-;	'BOOT	( -- a )
-;	The application startup vector and NVM USR setting array 
+;       'BOOT   ( -- a )
+;       The application startup vector and NVM USR setting array 
 
         .ifne   (WORDS_LINKINTER + HAS_CPNVM)
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"'BOOT"
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "'BOOT"
         .endif
 TBOOT:
-	CALL	DOVAR
+        CALL    DOVAR
         UBOOT = .
-	.dw	HI	        ;application to boot
+        .dw     HI              ;application to boot
 
         ; COLD start initiates these variables.
         UZERO = .
-	.dw	TXSTOR	        ; EMIT vector
+        .dw     TXSTOR          ; EMIT vector
         .dw     QRX             ; ?KEY vector
-	.dw	BASEE	        ; BASE
-	.dw	INTER	        ; 'EVAL
+        .dw     BASEE           ; BASE
+        .dw     INTER           ; 'EVAL
         .dw     DOTOK           ; 'PROMPT 
-	.dw	CTOP	        ; CP in RAM
+        .dw     CTOP            ; CP in RAM
         COLDCONTEXT = .
-	.dw	LASTN	        ; USRLAST 
+        .dw     LASTN           ; USRLAST 
         .ifne   HAS_CPNVM
         COLDNVMCP = .
         .dw     END_SDCC_FLASH  ; CP in NVM
@@ -392,13 +392,13 @@ TBOOT:
         ; Second copy of USR setting for NVM reset
         UDEFAULTS = .
         .dw     HI              ; 'BOOT 
-	.dw	TXSTOR	        ; EMIT vector
+        .dw     TXSTOR          ; EMIT vector
         .dw     QRX             ; ?KEY vector
-	.dw	BASEE	        ; BASE
-	.dw	INTER	        ; 'EVAL
+        .dw     BASEE           ; BASE
+        .dw     INTER           ; 'EVAL
         .dw     DOTOK           ; 'PROMPT 
-	.dw	CTOP	        ; CP in RAM
-	.dw	LASTN	        ; CONTEXT pointer
+        .dw     CTOP            ; CP in RAM
+        .dw     LASTN           ; CONTEXT pointer
         .dw     END_SDCC_FLASH  ; CP in NVM
         .else
         ULAST = .
@@ -406,15 +406,15 @@ TBOOT:
 
 
         .ifeq   BAREBONES
-;	hi	( -- )
-;	Display sign-on message.
+;       hi      ( -- )
+;       Display sign-on message.
 
         .ifne   (WORDS_LINKINTER + HAS_CPNVM)
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"hi"
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "hi"
         .endif
 HI:
         .ifne   HAS_LED7SEG
@@ -422,16 +422,16 @@ HI:
         MOV     LED7LSB,  #0x78 ; 7S LEDs ..t.
         MOV     LED7LSB+1,#0x74 ; 7S LEDs ...h
         .endif
-	
-        CALL	CR
-	CALL	DOTQP	        ; initialize I/O
-	.db	15
-	.ascii	"stm8eForth v"
-	.db	(VER+'0')
-	.ascii	"."
-	.db	(EXT+'0')       ;version
+        
+        CALL    CR
+        CALL    DOTQP           ; initialize I/O
+        .db     15
+        .ascii  "stm8eForth v"
+        .db     (VER+'0')
+        .ascii  "."
+        .db     (EXT+'0')       ;version
 
-	JP	CR
+        JP      CR
         .endif
 
 
@@ -463,7 +463,7 @@ TIM4_START:
         JRNE    TIM4_STOP
 
         ; configure PD_6 from RX to GPIO 
-        BRES	UART1_CR2,#2	; disable RX
+        BRES    UART1_CR2,#2    ; disable RX
         BSET    PD_DDR,#PDTX    ; set PD_6 to output
 
         RCF                     ; start bit, set PD_6 low 
@@ -492,7 +492,7 @@ TIM4_DEC:
 
         ; TIM4TCNT == 0
         BRES    PD_DDR,#PDTX    ; set PD_6 to input
-        BSET	UART1_CR2,#2	; re-enable RX
+        BSET    UART1_CR2,#2    ; re-enable RX
         ; fall through
 
 TIM4_END:             
@@ -568,28 +568,28 @@ _TIM2_UO_IRQHandler:
 
 ; ==============================================
 
-;	?KEY	( -- c T | F )  ( TOS STM8: -- Y,Z,N )
-;	Return input char and true, or false.
-	.dw	LINK
-	LINK =	.
-	.db	4
-	.ascii	"?KEY"
+;       ?KEY    ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
+;       Return input char and true, or false.
+        .dw     LINK
+        LINK =  .
+        .db     4
+        .ascii  "?KEY"
 QKEY:
         .ifeq   BAREBONES
         JP      [USRQKEY]
 
 
-;	?RX	( -- c T | F )  ( TOS STM8: -- Y,Z,N )
-;	Return serial interface input char from and true, or false.
-	.dw	LINK
-	LINK =	.
-	.db	3
-	.ascii	"?RX"
+;       ?RX     ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
+;       Return serial interface input char from and true, or false.
+        .dw     LINK
+        LINK =  .
+        .db     3
+        .ascii  "?RX"
         .endif
 QRX:
         CLR     A               ; A: flag false
-	BTJF    UART1_SR,#5,QRXSTOR
-	LD	A,UART1_DR	; get char in A
+        BTJF    UART1_SR,#5,QRXSTOR
+        LD      A,UART1_DR      ; get char in A
 ATOKEY:
         CALLR   QRXSTOR         ; push char
         JP      ONE             ; flag true
@@ -597,33 +597,33 @@ QRXSTOR:
         JP      ASTOR           ; push char or flag false
 
 
-;	EMIT	( c -- )
-;	Send character c to output device.
+;       EMIT    ( c -- )
+;       Send character c to output device.
 
-	.dw	LINK
-	LINK =	.
-	.db	4
-	.ascii	"EMIT"
+        .dw     LINK
+        LINK =  .
+        .db     4
+        .ascii  "EMIT"
 EMIT:
         .ifeq   BAREBONES
         JP      [USREMIT]
 
-;	TX!	( c -- )
-;	Send character c to the serial interface.
+;       TX!     ( c -- )
+;       Send character c to the serial interface.
 
-	.dw	LINK
-	LINK =	.
-	.db	3
-	.ascii	"TX!"
+        .dw     LINK
+        LINK =  .
+        .db     3
+        .ascii  "TX!"
         .endif
 TXSTOR:
         .ifne   HALF_DUPLEX
-	BRES	UART1_CR2,#2	; disable rx
+        BRES    UART1_CR2,#2    ; disable rx
 
         .ifne   BOARD_W1209
 
 1$:     BTJT    TIM4_IER,#0,1$  ; wait for end of TX
- 	LD      A,(1,X)
+        LD      A,(1,X)
         INCW    X               ; ADDW   X,#2 
         INCW    X
         LD      TIM4TXREG,A
@@ -631,127 +631,127 @@ TXSTOR:
         BSET    TIM4_IER,#0     ; enabale TIM4 interrupt
          
         .else                   ; HALF_DUPLEX, not BOARD_W1209
-	LD	A,(1,X)
+        LD      A,(1,X)
         INCW    X               ; ADDW   X,#2 
         INCW    X
-1$:	BTJF	UART1_SR,#7,1$  ; loop until tdre
-	LD	UART1_DR,A	; send A
-2$:	BTJF	UART1_SR,#6,2$  ; loop until tc
-	BSET	UART1_CR2,#2	; enable rx
+1$:     BTJF    UART1_SR,#7,1$  ; loop until tdre
+        LD      UART1_DR,A      ; send A
+2$:     BTJF    UART1_SR,#6,2$  ; loop until tc
+        BSET    UART1_CR2,#2    ; enable rx
         .endif  
 
         .else                   ; not HALF_DUPLEX
-	LD	A,(1,X)
+        LD      A,(1,X)
         INCW    X               ; ADDW   X,#2 
         INCW    X
-3$:	BTJF	UART1_SR,#7,3$  ; loop until tdre
-	LD	UART1_DR,A	; send A
+3$:     BTJF    UART1_SR,#7,3$  ; loop until tdre
+        LD      UART1_DR,A      ; send A
         .endif
-	RET
+        RET
 
 
 ; The kernel
-;	doLit	( -- w )
-;	Push an inline literal.
+;       doLit   ( -- w )
+;       Push an inline literal.
 
-	.ifne	WORDS_LINKRUNTI
-	.dw	LINK
-	LINK =	.
-	.db	(COMPO+5)
-	.ascii	"doLit"
-	.endif
+        .ifne   WORDS_LINKRUNTI
+        .dw     LINK
+        LINK =  .
+        .db     (COMPO+5)
+        .ascii  "doLit"
+        .endif
 DOLIT:
-	
-        DECW    X               ;SUBW	X,#2    
+        
+        DECW    X               ;SUBW   X,#2    
         DECW    X
         LDW     Y,(1,SP)
-	LDW     Y,(Y)
-	LDW     (X),Y
-	POPW	Y
-	JP      (2,Y)
+        LDW     Y,(Y)
+        LDW     (X),Y
+        POPW    Y
+        JP      (2,Y)
 
-;	PUSHLIT	( -- C )
-;	Subroutine for DOLITC and CCOMMALIT
+;       PUSHLIT ( -- C )
+;       Subroutine for DOLITC and CCOMMALIT
 PUSHLIT:
         LDW     Y,(3,SP)
         DECW    X               ; LSB = literal 
-	LD      A,(Y)
-	LD      (X),A
+        LD      A,(Y)
+        LD      (X),A
         DECW    X               ; MSB = 0
         CLR     A
-	LD      (X),A
+        LD      (X),A
         RET
 
-;	DOLITC	( -- C )
-;	Push an inline literal character (8 bit).
+;       DOLITC  ( -- C )
+;       Push an inline literal character (8 bit).
 DOLITC:
         CALLR   PUSHLIT
 CSKIPRET:
-        POPW	Y
-	JP      (1,Y)
+        POPW    Y
+        JP      (1,Y)
 
 ;       CCOMMALIT ( -- )
-;	Compile inline literall byte into code dictionary.
+;       Compile inline literall byte into code dictionary.
 CCOMMALIT:
         CALLR   PUSHLIT
-	CALL    CCOMMA
-	JRA     CSKIPRET     
+        CALL    CCOMMA
+        JRA     CSKIPRET     
 
 
         .ifne   HAS_DOLOOP 
-        ;	(+loop)	( +n -- )
-        ;	Add n to index R@ and test for lower than limit (R-CELL)@.
+        ;       (+loop) ( +n -- )
+        ;       Add n to index R@ and test for lower than limit (R-CELL)@.
 
-        .ifne	WORDS_LINKRUNTI
-        .dw	LINK
-        LINK =	.
-	.db	(COMPO+7)
-        .ascii	"(+loop)"
+        .ifne   WORDS_LINKRUNTI
+        .dw     LINK
+        LINK =  .
+        .db     (COMPO+7)
+        .ascii  "(+loop)"
         .endif
 DOPLOOP:
-	LDW	Y,(5,SP)
-        LDW	YTEMP,Y
+        LDW     Y,(5,SP)
+        LDW     YTEMP,Y
         LDW     Y,X
         LDW     Y,(Y)
         INCW    X
         INCW    X
-	ADDW	Y,(3,SP)
-        CPW	Y,YTEMP
-        JRSGE	LEAVE
-        LDW	(3,SP),Y
-        JRA	BRAN
+        ADDW    Y,(3,SP)
+        CPW     Y,YTEMP
+        JRSGE   LEAVE
+        LDW     (3,SP),Y
+        JRA     BRAN
 
-;	LEAVE	( -- )
-;	Leave a DO .. LOOP/+LOOP loop.
+;       LEAVE   ( -- )
+;       Leave a DO .. LOOP/+LOOP loop.
 
-	.dw	LINK
+        .dw     LINK
 
-	LINK =	.
-	.db	(COMPO+5)
-	.ascii	"LEAVE"
+        LINK =  .
+        .db     (COMPO+5)
+        .ascii  "LEAVE"
 LEAVE:
-        POPW	Y
-        ADDW	SP,#4
-	JP	(2,Y)
+        POPW    Y
+        ADDW    SP,#4
+        JP      (2,Y)
         .endif
 
-;	next	( -- )
-;	Code for single index loop.
+;       next    ( -- )
+;       Code for single index loop.
 
-	.ifne	WORDS_LINKRUNTI
-	.dw	LINK
-	LINK =	.
-	.db	(COMPO+5)
-	.ascii	"donxt"
-	.endif
+        .ifne   WORDS_LINKRUNTI
+        .dw     LINK
+        LINK =  .
+        .db     (COMPO+5)
+        .ascii  "donxt"
+        .endif
 DONXT:
-	LDW     Y,(3,SP)
-	DECW    Y
-	JRPL    NEX1
-	POPW	Y
-	POP	A
-	POP	A
-	JP      (2,Y)
+        LDW     Y,(3,SP)
+        DECW    Y
+        JRPL    NEX1
+        POPW    Y
+        POP     A
+        POP     A
+        JP      (2,Y)
 NEX1:   LDW     (3,SP),Y
         JRA     BRAN
 
@@ -762,474 +762,474 @@ QDQBRAN:
         CALL    QDUP
         JRA     QBRAN
 
-;	?branch ( f -- )
-;	Branch if flag is zero.
+;       ?branch ( f -- )
+;       Branch if flag is zero.
 
-	.ifne	WORDS_LINKRUNTI
-	.dw	LINK
-	LINK =	.
-	.db	(COMPO+7)
-	.ascii	"?branch"
-	.endif
+        .ifne   WORDS_LINKRUNTI
+        .dw     LINK
+        LINK =  .
+        .db     (COMPO+7)
+        .ascii  "?branch"
+        .endif
 QBRAN:
-	LDW     Y,X
+        LDW     Y,X
         INCW    X
         INCW    X
-	LDW     Y,(Y)
-	JREQ	BRAN
-	POPW	Y
-	JP      (2,Y)
-	
-;	branch	( -- )
-;	Branch to an inline address.
+        LDW     Y,(Y)
+        JREQ    BRAN
+        POPW    Y
+        JP      (2,Y)
+        
+;       branch  ( -- )
+;       Branch to an inline address.
 
-	.ifne	WORDS_LINKRUNTI
-	.dw	LINK
-	LINK =	.
-	.db	(COMPO+6)
-	.ascii	"branch"
-	.endif
+        .ifne   WORDS_LINKRUNTI
+        .dw     LINK
+        LINK =  .
+        .db     (COMPO+6)
+        .ascii  "branch"
+        .endif
 BRAN:
-	POPW	Y
+        POPW    Y
 YJPIND:
-	LDW     Y,(Y)
-	JP	(Y)
+        LDW     Y,(Y)
+        JP      (Y)
 
 
-;	EXECUTE ( ca -- )
-;	Execute	word at ca.
+;       EXECUTE ( ca -- )
+;       Execute word at ca.
 
-	.dw	LINK
-	LINK =	.
-	.db	7
-	.ascii	"EXECUTE"
+        .dw     LINK
+        LINK =  .
+        .db     7
+        .ascii  "EXECUTE"
 EXECU:
-	LDW     Y,X
+        LDW     Y,X
         INCW    X
         INCW    X
         JRA     YJPIND
 
-;	EXIT	( -- )
-;	Terminate a colon definition.
+;       EXIT    ( -- )
+;       Terminate a colon definition.
 
         .ifeq   BAREBONES
-	.dw	LINK
-	LINK =	.
-	.db	4
-	.ascii	"EXIT"
-	.endif
+        .dw     LINK
+        LINK =  .
+        .db     4
+        .ascii  "EXIT"
+        .endif
 EXIT:
-	POPW	Y
-	RET
+        POPW    Y
+        RET
 
-;	@	( a -- w )      ( TOS STM8: -- Y,Z,N )
-;	Push memory location to stack.
+;       @       ( a -- w )      ( TOS STM8: -- Y,Z,N )
+;       Push memory location to stack.
 
-	.dw	LINK
-	LINK =	.
-	.db	1
-	.ascii	"@"
+        .dw     LINK
+        LINK =  .
+        .db     1
+        .ascii  "@"
 AT:
-	LDW     Y,X	        ; Y = a
-	LDW     Y,(Y)           
-	LDW     Y,(Y)
-	LDW     (X),Y           ; w = @Y
-	RET	
+        LDW     Y,X             ; Y = a
+        LDW     Y,(Y)           
+        LDW     Y,(Y)
+        LDW     (X),Y           ; w = @Y
+        RET     
 
-;	!	( w a -- )      ( TOS STM8: -- Y,Z,N )
-;	Pop data stack to memory.
+;       !       ( w a -- )      ( TOS STM8: -- Y,Z,N )
+;       Pop data stack to memory.
 
-	.dw	LINK
-	LINK =	.
-	.db	1
-	.ascii	"!"
+        .dw     LINK
+        LINK =  .
+        .db     1
+        .ascii  "!"
 STORE:
-	LDW     Y,X
-	LDW     Y,(Y)	        ; Y=a
-	LDW     YTEMP,Y
-	LDW     Y,X
-	LDW     Y,(2,Y)
-	LDW     [YTEMP],Y
+        LDW     Y,X
+        LDW     Y,(Y)           ; Y=a
+        LDW     YTEMP,Y
+        LDW     Y,X
+        LDW     Y,(2,Y)
+        LDW     [YTEMP],Y
         JRA     DDROP
 
 
-;	C@	( b -- c )      ( TOS STM8: -- A,Z,N )
-;	Push byte in memory to stack.
+;       C@      ( b -- c )      ( TOS STM8: -- A,Z,N )
+;       Push byte in memory to stack.
 ;       STM8: Z,N
 
-	.dw	LINK
-	LINK =	.
-	.db	2
-	.ascii	"C@"
+        .dw     LINK
+        LINK =  .
+        .db     2
+        .ascii  "C@"
 CAT:
-	LDW     Y,X	        ; Y=b
-	LDW     Y,(Y)
-	LD      A,(Y)
-	CLR     (X)
-	LD      (1,X),A
-	RET	
+        LDW     Y,X             ; Y=b
+        LDW     Y,(Y)
+        LD      A,(Y)
+        CLR     (X)
+        LD      (1,X),A
+        RET     
 
-;	C!	( c b -- )
-;	Pop	data stack to byte memory.
+;       C!      ( c b -- )
+;       Pop     data stack to byte memory.
 
-	.dw	LINK
-	LINK =	.
-	.db	2
-	.ascii	"C!"
+        .dw     LINK
+        LINK =  .
+        .db     2
+        .ascii  "C!"
 CSTOR:
-	LDW     Y,X
-	LDW     Y,(Y)	        ; Y=b
-	LD      A,(3,X)	        ; D = c
-	LD	(Y),A	        ; store c at b
-	JRA     DDROP
+        LDW     Y,X
+        LDW     Y,(Y)           ; Y=b
+        LD      A,(3,X)         ; D = c
+        LD      (Y),A           ; store c at b
+        JRA     DDROP
 
         .ifne   WORDS_EXTRASTACK
-;	RP@	( -- a )     ( TOS STM8: -- Y,Z,N )
-;	Push current RP to data stack.
+;       RP@     ( -- a )     ( TOS STM8: -- Y,Z,N )
+;       Push current RP to data stack.
 
-	.dw	LINK
-	LINK =	.
-	.db	3
-	.ascii	"rp@"
+        .dw     LINK
+        LINK =  .
+        .db     3
+        .ascii  "rp@"
 RPAT:
-	LDW     Y,SP	        ; save return addr
+        LDW     Y,SP            ; save return addr
         JRA     YSTOR
         .endif
 
-;	RP!	( a -- )
-;	Set return stack pointer.
+;       RP!     ( a -- )
+;       Set return stack pointer.
 
-	.ifne   (WORDS_LINKINTER + WORDS_EXTRASTACK)
-        .dw	LINK
-	LINK =	.
-	.db	(COMPO+3)
-	.ascii	"rp!"
+        .ifne   (WORDS_LINKINTER + WORDS_EXTRASTACK)
+        .dw     LINK
+        LINK =  .
+        .db     (COMPO+3)
+        .ascii  "rp!"
         .endif
 RPSTO:
-	POPW	Y
-	LDW     YTEMP,Y
-	LDW     Y,X
-	LDW     Y,(Y)
-	LDW     SP,Y
-	JP      [YTEMP]
+        POPW    Y
+        LDW     YTEMP,Y
+        LDW     Y,X
+        LDW     Y,(Y)
+        LDW     SP,Y
+        JP      [YTEMP]
 
-;	R>	( -- w )     ( TOS STM8: -- Y,Z,N )
-;	Pop return stack to data stack.
+;       R>      ( -- w )     ( TOS STM8: -- Y,Z,N )
+;       Pop return stack to data stack.
 
-	.dw	LINK
-	LINK =	.
-	.db	(COMPO+2)
-	.ascii	"R>"
+        .dw     LINK
+        LINK =  .
+        .db     (COMPO+2)
+        .ascii  "R>"
 RFROM:
-	POPW	Y	        ; save return addr
-	LDW     YTEMP,Y
-	POPW	Y
+        POPW    Y               ; save return addr
+        LDW     YTEMP,Y
+        POPW    Y
 PUSHJPYTEMP:
         DECW    X
         DECW    X
-	LDW     (X),Y
-	JP      [YTEMP]
+        LDW     (X),Y
+        JP      [YTEMP]
 
         .ifne   WORDS_EXTRACORE
-;	I	( -- n )     ( TOS STM8: -- Y,Z,N )
-;	Get inner FOR-NEXT or DO-LOOP index value
-	.dw	LINK
+;       I       ( -- n )     ( TOS STM8: -- Y,Z,N )
+;       Get inner FOR-NEXT or DO-LOOP index value
+        .dw     LINK
 
-	LINK =	.
-	.db	(1)
-	.ascii	"I"
+        LINK =  .
+        .db     (1)
+        .ascii  "I"
 IGET:
         JRA     RAT
         .endif
 
-;	doVAR	( -- a )     ( TOS STM8: -- Y,Z,N )
-;	Code for VARIABLE and CREATE.
+;       doVAR   ( -- a )     ( TOS STM8: -- Y,Z,N )
+;       Code for VARIABLE and CREATE.
 
-	.ifne	WORDS_LINKRUNTI
-	.dw	LINK
-	LINK =	.
-	.db	(COMPO+5)
-	.ascii	"doVar"
-	.endif
+        .ifne   WORDS_LINKRUNTI
+        .dw     LINK
+        LINK =  .
+        .db     (COMPO+5)
+        .ascii  "doVar"
+        .endif
 DOVAR:
-	POPW	Y	        ; get return addr (pfa)
+        POPW    Y               ; get return addr (pfa)
         ; fall through
 
 ;       YSTOR core ( -- n )     ( TOS STM8: -- Y,Z,N )
 ;       push Y to stack
 YSTOR:        
-        DECW    X               ; SUBW	X,#2    
+        DECW    X               ; SUBW  X,#2    
         DECW    X
-	LDW     (X),Y	        ; push on stack
-	RET	                ; go to RET of EXEC
+        LDW     (X),Y           ; push on stack
+        RET                     ; go to RET of EXEC
 
-;	DROP	( w -- )        ( TOS STM8: -- Y,Z,N )
-;	Discard top stack item.
+;       DROP    ( w -- )        ( TOS STM8: -- Y,Z,N )
+;       Discard top stack item.
 
-	.dw	LINK
-	LINK =	.
-	.db	4
-	.ascii	"DROP"
+        .dw     LINK
+        LINK =  .
+        .db     4
+        .ascii  "DROP"
 DROP:
         INCW    X               ; ADDW   X,#2 
         INCW    X
 YTOS:
         LDW     Y,X
         LDW     Y,(Y)
-	RET	
+        RET     
 
-;	2DROP	( w w -- )       ( TOS STM8: -- Y,Z,N )
-;	Discard two items on stack.
+;       2DROP   ( w w -- )       ( TOS STM8: -- Y,Z,N )
+;       Discard two items on stack.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"2DROP"
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "2DROP"
 DDROP:
-	INCW    X
+        INCW    X
         INCW    X
         JRA     DROP
 
-;	R@	( -- w )        ( TOS STM8: -- Y,Z,N )
-;	Copy top of return stack to stack (or the FOR - NEXT index value).
+;       R@      ( -- w )        ( TOS STM8: -- Y,Z,N )
+;       Copy top of return stack to stack (or the FOR - NEXT index value).
 
-	.dw	LINK
-	LINK =	.
-	.db	2
-	.ascii	"R@"
+        .dw     LINK
+        LINK =  .
+        .db     2
+        .ascii  "R@"
 RAT:
-	LDW     Y,(3,SP)
+        LDW     Y,(3,SP)
         JRA     YSTOR
 
-;	>R	( w -- )      ( TOS STM8: -- Y,Z,N )
-;	Push data stack to return stack.
+;       >R      ( w -- )      ( TOS STM8: -- Y,Z,N )
+;       Push data stack to return stack.
 
-	.dw	LINK
-	LINK =	.
-	.db	(COMPO+2)
-	.ascii	">R"
+        .dw     LINK
+        LINK =  .
+        .db     (COMPO+2)
+        .ascii  ">R"
 TOR:
-	POPW	Y	        ; save return addr
-	LDW     YTEMP,Y
-	LDW     Y,X
-	LDW     Y,(Y)
-	PUSHW   Y	        ; restore return addr
+        POPW    Y               ; save return addr
+        LDW     YTEMP,Y
+        LDW     Y,X
+        LDW     Y,(Y)
+        PUSHW   Y               ; restore return addr
         LDW     Y,YTEMP
         PUSHW   Y
         JRA     DROP
 
 
-;	SP@	( -- a )        ( TOS STM8: -- Y,Z,N )
-;	Push current stack pointer.
+;       SP@     ( -- a )        ( TOS STM8: -- Y,Z,N )
+;       Push current stack pointer.
 
         .ifne   WORDS_EXTRASTACK
-	.dw	LINK
-	LINK =	.
-	.db	3
-	.ascii	"sp@"
+        .dw     LINK
+        LINK =  .
+        .db     3
+        .ascii  "sp@"
         .endif
 SPAT:
-	LDW     Y,X
+        LDW     Y,X
         JRA     YSTOR
 
 
-;	DUP	( w -- w w )    ( TOS STM8: -- Y,Z,N )
-;	Duplicate top stack item.
+;       DUP     ( w -- w w )    ( TOS STM8: -- Y,Z,N )
+;       Duplicate top stack item.
 
-	.dw	LINK
-	LINK =	.
-	.db	3
-	.ascii	"DUP"
+        .dw     LINK
+        LINK =  .
+        .db     3
+        .ascii  "DUP"
 DUPP:
-	LDW     Y,X
-	LDW     Y,(Y)
+        LDW     Y,X
+        LDW     Y,(Y)
         JRA     YSTOR
 
-;	SWAP ( w1 w2 -- w2 w1 ) ( TOS STM8: -- Y,Z,N )
-;	Exchange top two stack items.
+;       SWAP ( w1 w2 -- w2 w1 ) ( TOS STM8: -- Y,Z,N )
+;       Exchange top two stack items.
 
-	.dw	LINK
-	LINK =	.
-	.db	4
-	.ascii	"SWAP"
+        .dw     LINK
+        LINK =  .
+        .db     4
+        .ascii  "SWAP"
 SWAPP:
-	LDW     Y,X
-	LDW     Y,(2,Y)
+        LDW     Y,X
+        LDW     Y,(2,Y)
         PUSHW   Y
-	LDW     Y,X
-	LDW     Y,(Y)
-	LDW     (2,X),Y
+        LDW     Y,X
+        LDW     Y,(Y)
+        LDW     (2,X),Y
         POPW    Y
-	LDW     (X),Y
-	RET	
+        LDW     (X),Y
+        RET     
 
-;	OVER	( w1 w2 -- w1 w2 w1 ) ( TOS STM8: -- Y,Z,N )
-;	Copy second stack item to top.
+;       OVER    ( w1 w2 -- w1 w2 w1 ) ( TOS STM8: -- Y,Z,N )
+;       Copy second stack item to top.
 
-	.dw	LINK
-	LINK =	.
-	.db	4
-	.ascii	"OVER"
+        .dw     LINK
+        LINK =  .
+        .db     4
+        .ascii  "OVER"
 OVER:
-	LDW     Y,X
-	LDW     Y,(2,Y)
+        LDW     Y,X
+        LDW     Y,(2,Y)
         JRA     YSTOR
 
-;	+	( w w -- sum ) ( TOS STM8: -- Y,Z,N )
-;	Add top two items.
+;       +       ( w w -- sum ) ( TOS STM8: -- Y,Z,N )
+;       Add top two items.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	1
-	.ascii	"+"
+        .dw     LINK
+        
+        LINK =  .
+        .db     1
+        .ascii  "+"
 
 PLUS:
-	LD	A,(1,X)	;D=w
-	ADD     A,(3,X)
-	LD      (3,X),A
-	LD      A,(X)
-	ADC     A,(2,X)
+        LD      A,(1,X) ;D=w
+        ADD     A,(3,X)
+        LD      (3,X),A
+        LD      A,(X)
+        ADC     A,(2,X)
 LDADROP:
-	LD      (2,X),A
+        LD      (2,X),A
         JRA     DROP
 
-;	XOR	( w w -- w )    ( TOS STM8: -- Y,Z,N )
-;	Bitwise exclusive OR.
+;       XOR     ( w w -- w )    ( TOS STM8: -- Y,Z,N )
+;       Bitwise exclusive OR.
 
-	.dw	LINK
-	LINK =	.
-	.db	3
-	.ascii	"XOR"
+        .dw     LINK
+        LINK =  .
+        .db     3
+        .ascii  "XOR"
 XORR:
-	LD	A,(1,X)	        ; D=w
-	XOR	A,(3,X)
-	LD      (3,X),A
-	LD      A,(X)
-	XOR	A,(2,X)
+        LD      A,(1,X)         ; D=w
+        XOR     A,(3,X)
+        LD      (3,X),A
+        LD      A,(X)
+        XOR     A,(2,X)
         JRA     LDADROP
 
-;	AND	( w w -- w )    ( TOS STM8: -- Y,Z,N )
-;	Bitwise AND.
+;       AND     ( w w -- w )    ( TOS STM8: -- Y,Z,N )
+;       Bitwise AND.
 
-	.dw	LINK
-	LINK =	.
-	.db	3
-	.ascii	"AND"
+        .dw     LINK
+        LINK =  .
+        .db     3
+        .ascii  "AND"
 ANDD:
-	LD	A,(1,X)	        ; D=w
-	AND	A,(3,X)
-	LD      (3,X),A
-	LD      A,(X)
-	AND	A,(2,X)
+        LD      A,(1,X)         ; D=w
+        AND     A,(3,X)
+        LD      (3,X),A
+        LD      A,(X)
+        AND     A,(2,X)
         JRA     LDADROP
 
-;	OR	( w w -- w )    ( TOS STM8: -- immediate Y,Z,N )
-;	Bitwise inclusive OR.
+;       OR      ( w w -- w )    ( TOS STM8: -- immediate Y,Z,N )
+;       Bitwise inclusive OR.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"OR"
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "OR"
 ORR:
-	LD	A,(1,X)	        ; D=w
-	OR	A,(3,X)
-	LD      (3,X),A
-	LD      A,(X)
-	OR	A,(2,X)
+        LD      A,(1,X)         ; D=w
+        OR      A,(3,X)
+        LD      (3,X),A
+        LD      A,(X)
+        OR      A,(2,X)
         JRA     LDADROP
 
-;	0<	( n -- t ) ( TOS STM8: -- A,Z )
-;	Return true if n is negative.
+;       0<      ( n -- t ) ( TOS STM8: -- A,Z )
+;       Return true if n is negative.
 
-	.dw	LINK
-	LINK =	.
-	.db	2
-	.ascii	"0<"
+        .dw     LINK
+        LINK =  .
+        .db     2
+        .ascii  "0<"
 ZLESS:
-	CLR     A
-	LDW     Y,X
-	LDW     Y,(Y)
-	JRPL	ZL1
-	CPL     A	        ; true
+        CLR     A
+        LDW     Y,X
+        LDW     Y,(Y)
+        JRPL    ZL1
+        CPL     A               ; true
 ZL1:    LD      (X),A
-	LD      (1,X),A
-	RET	
+        LD      (1,X),A
+        RET     
 
-;	-   ( n1 n2 -- n1-n2 )  ( TOS STM8: -- Y,Z,N )
-;	Subtraction.
+;       -   ( n1 n2 -- n1-n2 )  ( TOS STM8: -- Y,Z,N )
+;       Subtraction.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	1
-	.ascii	"-"
+        .dw     LINK
+        
+        LINK =  .
+        .db     1
+        .ascii  "-"
 
 SUBB:
         .ifne   SPEEDOVERSIZE
-	LDW     Y,X
-	LDW     Y,(Y)
-	LDW     YTEMP,Y
+        LDW     Y,X
+        LDW     Y,(Y)
+        LDW     YTEMP,Y
         INCW    X
         INCW    X
-	LDW     Y,X
-	LDW     Y,(Y)
-	SUBW    Y,YTEMP
-	LDW     (X),Y
-	RET                     ; 18 cy
+        LDW     Y,X
+        LDW     Y,(Y)
+        SUBW    Y,YTEMP
+        LDW     (X),Y
+        RET                     ; 18 cy
         .else
         CALL    NEGAT           ; (15 cy)
         JRA     PLUS            ; 25 cy (15+10) 
         .endif
  
-;	UM+	( u u -- udsum )
-;	Add two unsigned single
-;	and return a double sum.
+;       UM+     ( u u -- udsum )
+;       Add two unsigned single
+;       and return a double sum.
 
-	.dw	LINK
-	LINK =	.
-	.db	3
-	.ascii	"UM+"
+        .dw     LINK
+        LINK =  .
+        .db     3
+        .ascii  "UM+"
 UPLUS:
-	LD      A,#1
-	LDW     Y,X
-	LDW     Y,(2,Y)
-	LDW     YTEMP,Y
-	LDW     Y,X
-	LDW     Y,(Y)
-	ADDW    Y,YTEMP
-	LDW     (2,X),Y
-	JRC	UPL1
-	CLR     A
+        LD      A,#1
+        LDW     Y,X
+        LDW     Y,(2,Y)
+        LDW     YTEMP,Y
+        LDW     Y,X
+        LDW     Y,(Y)
+        ADDW    Y,YTEMP
+        LDW     (2,X),Y
+        JRC     UPL1
+        CLR     A
 UPL1:   LD      (1,X),A
-	CLR     (X)
-	RET
+        CLR     (X)
+        RET
 
-;	SP!	( a -- )
-;	Set data stack pointer.
+;       SP!     ( a -- )
+;       Set data stack pointer.
 
         .ifne   WORDS_EXTRASTACK
-	.dw	LINK
-	LINK =	.
-	.db	3
-	.ascii	"sp!"
+        .dw     LINK
+        LINK =  .
+        .db     3
+        .ascii  "sp!"
         .endif
 SPSTO:
-	LDW	X,(X)	;X = a
-	RET	
+        LDW     X,(X)   ;X = a
+        RET     
 
 
-;	CONTEXT ( -- a )     ( TOS STM8: -- Y,Z,N )
-;	Start vocabulary search.
+;       CONTEXT ( -- a )     ( TOS STM8: -- Y,Z,N )
+;       Start vocabulary search.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	7
-	.ascii	"CONTEXT"
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     7
+        .ascii  "CONTEXT"
         .endif
 CNTXT:
         .ifne  HAS_CPNVM
@@ -1241,148 +1241,148 @@ CNTXT:
         JRA     ASTOR
 1$:
         .endif
-	LD      A,#(RAMBASE+USRCONTEXT)
+        LD      A,#(RAMBASE+USRCONTEXT)
         JRA     ASTOR
 
 
-;	CP	( -- a )     ( TOS STM8: -- Y,Z,N )
-;	Point to top of dictionary.
+;       CP      ( -- a )     ( TOS STM8: -- Y,Z,N )
+;       Point to top of dictionary.
 
         .ifne   WORDS_LINKCOMP
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"cp"
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "cp"
         .endif
 CPP:
-	LD      A,#(RAMBASE+USRCP)
+        LD      A,#(RAMBASE+USRCP)
         JRA     ASTOR
 
 ; System and user variables
 
-;	BASE	( -- a )     ( TOS STM8: -- Y,Z,N )
-;	Radix base for numeric I/O.
+;       BASE    ( -- a )     ( TOS STM8: -- Y,Z,N )
+;       Radix base for numeric I/O.
 
-	.dw	LINK
-	LINK =	.
-	.db	4
-	.ascii	"BASE"
+        .dw     LINK
+        LINK =  .
+        .db     4
+        .ascii  "BASE"
 BASE:
-	LD      A,#(RAMBASE+USRBASE)
+        LD      A,#(RAMBASE+USRBASE)
         JRA     ASTOR
 
-;	tmp	( -- a )     ( TOS STM8: -- Y,Z,N )
-;	A temporary storage.
+;       tmp     ( -- a )     ( TOS STM8: -- Y,Z,N )
+;       A temporary storage.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"tmp"
-	.endif
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  "tmp"
+        .endif
 TEMP:
-	LD      A,#(RAMBASE+USRTEMP)
+        LD      A,#(RAMBASE+USRTEMP)
         JRA     ASTOR
 
-;	>IN	( -- a )     ( TOS STM8: -- Y,Z,N )
-;	Hold parsing pointer.
+;       >IN     ( -- a )     ( TOS STM8: -- Y,Z,N )
+;       Hold parsing pointer.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	">IN"
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  ">IN"
         .endif
 INN:
-	LD      A,#(RAMBASE+USR_IN)
+        LD      A,#(RAMBASE+USR_IN)
         JRA     ASTOR
 
-;	#TIB	( -- a )     ( TOS STM8: -- Y,Z,N )
-;	Count in terminal input buffer.
+;       #TIB    ( -- a )     ( TOS STM8: -- Y,Z,N )
+;       Count in terminal input buffer.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	4
-	.ascii	"#TIB"
-	.endif
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     4
+        .ascii  "#TIB"
+        .endif
 NTIB:
-	LD      A,#(RAMBASE+USRNTIB)
+        LD      A,#(RAMBASE+USRNTIB)
         JRA     ASTOR
 
-;	'eval	( -- a )     ( TOS STM8: -- Y,Z,N )
-;	Execution vector of EVAL.
+;       'eval   ( -- a )     ( TOS STM8: -- Y,Z,N )
+;       Execution vector of EVAL.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"'eval"
-	.endif
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "'eval"
+        .endif
 TEVAL:
-	LD      A,#(RAMBASE+USREVAL)
+        LD      A,#(RAMBASE+USREVAL)
         JRA     ASTOR
 
 
-;	HLD	( -- a )     ( TOS STM8: -- Y,Z,N )
-;	Hold a pointer of output string.
+;       HLD     ( -- a )     ( TOS STM8: -- Y,Z,N )
+;       Hold a pointer of output string.
 
-	.ifne	WORDS_LINKCHAR
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"hld"
-	.endif
+        .ifne   WORDS_LINKCHAR
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  "hld"
+        .endif
 HLD:
-	LD      A,#(RAMBASE+USRHLD)
+        LD      A,#(RAMBASE+USRHLD)
         JRA     ASTOR
 
-;	'EMIT	( -- a )     ( TOS STM8: -- A,Z,N )
-;	
+;       'EMIT   ( -- a )     ( TOS STM8: -- A,Z,N )
+;       
         .ifeq   BAREBONES
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"'EMIT"
-	.endif
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "'EMIT"
+        .endif
 TEMIT:
-	LD      A,#(USREMIT)
+        LD      A,#(USREMIT)
         JRA     ASTOR
 
 
-;	'?KEY	( -- a )     ( TOS STM8: -- A,Z,N )
-;	
+;       '?KEY   ( -- a )     ( TOS STM8: -- A,Z,N )
+;       
         .ifeq   BAREBONES
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"'?KEY"
-	.endif
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "'?KEY"
+        .endif
 TQKEY:
-	LD      A,#(USRQKEY)
+        LD      A,#(USRQKEY)
         JRA     ASTOR
 
 
-;	LAST	( -- a )        ( TOS STM8: -- Y,Z,N )
-;	Point to last name in dictionary.
+;       LAST    ( -- a )        ( TOS STM8: -- Y,Z,N )
+;       Point to last name in dictionary.
 
-	.ifne	WORDS_LINKCOMP
-	.dw	LINK
-	
-	LINK =	.
-	.db	4
-	.ascii	"last"
+        .ifne   WORDS_LINKCOMP
+        .dw     LINK
+        
+        LINK =  .
+        .db     4
+        .ascii  "last"
         .endif
 LAST:
-	LD      A,#(RAMBASE+USRLAST)
+        LD      A,#(RAMBASE+USRLAST)
 
 ;       ASTOR core ( -- n )     ( TOS STM8: -- Y,Z,N )
 ;       push A to stack
@@ -1391,125 +1391,125 @@ ASTOR:
         LD      YL,A
         JP      YSTOR
 
-;	TIB	( -- a )     ( TOS STM8: -- Y,Z,N )
-;	Return address of terminal input buffer.
+;       TIB     ( -- a )     ( TOS STM8: -- Y,Z,N )
+;       Return address of terminal input buffer.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"TIB"
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  "TIB"
         .endif
 TIB:
-	LDW     Y,#(TIBB)
+        LDW     Y,#(TIBB)
         JP      YSTOR
 
         .ifne   HAS_OUTPUTS
-;	OUT	( -- a )     ( TOS STM8: -- Y,Z,N )
-;	Return address of OUTPUTS register
+;       OUT     ( -- a )     ( TOS STM8: -- Y,Z,N )
+;       Return address of OUTPUTS register
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"OUT"
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  "OUT"
 OUTA:
-	LD      A,#(OUTPUTS)
+        LD      A,#(OUTPUTS)
         JRA     ASTOR
         .endif
 
 ; Constants
 
-;	BL	( -- 32 )     ( TOS STM8: -- Y,Z,N )
-;	Return 32, blank character.
+;       BL      ( -- 32 )     ( TOS STM8: -- Y,Z,N )
+;       Return 32, blank character.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"BL"
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "BL"
 BLANK:
-	LD      A,#32
+        LD      A,#32
         JRA     ASTOR
 
-;	0	( -- 0)     ( TOS STM8: -- Y,Z,N )
-;	Return 0.
+;       0       ( -- 0)     ( TOS STM8: -- Y,Z,N )
+;       Return 0.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	1
-	.ascii	"0"
+        .dw     LINK
+        
+        LINK =  .
+        .db     1
+        .ascii  "0"
 ZERO:
-	CLR     A
+        CLR     A
         JRA     ASTOR
 
-;	1	( -- 1)     ( TOS STM8: -- Y,Z,N )
-;	Return 1.
+;       1       ( -- 1)     ( TOS STM8: -- Y,Z,N )
+;       Return 1.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	1
-	.ascii	"1"
+        .dw     LINK
+        
+        LINK =  .
+        .db     1
+        .ascii  "1"
 ONE:
-	LD      A,#1
+        LD      A,#1
         JRA     ASTOR
 
-;	-1	( -- -1)     ( TOS STM8: -- Y,Z,N )
-;	Return -1
+;       -1      ( -- -1)     ( TOS STM8: -- Y,Z,N )
+;       Return -1
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"-1"
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "-1"
 MONE:
         LDW     Y,#0xFFFF
 AYSTOR:
         JP      YSTOR
 
         .ifne   HAS_BACKGROUND
-;	TIM	( -- T)     ( TOS STM8: -- Y,Z,N )
-;	Return TICKCNT as timer
-	
-        .dw	LINK
+;       TIM     ( -- T)     ( TOS STM8: -- Y,Z,N )
+;       Return TICKCNT as timer
+        
+        .dw     LINK
 
-	LINK =	.
-	.db	3
-	.ascii	"TIM"
+        LINK =  .
+        .db     3
+        .ascii  "TIM"
 TIMM:
-	LDW     Y,TICKCNT
+        LDW     Y,TICKCNT
         JRA     AYSTOR
 
 
-;	BG	( -- a)     ( TOS STM8: -- Y,Z,N )
-;	Return address of BGADDR vector
-	
-        .dw	LINK
+;       BG      ( -- a)     ( TOS STM8: -- Y,Z,N )
+;       Return address of BGADDR vector
+        
+        .dw     LINK
 
-	LINK =	.
-	.db	2
-	.ascii	"BG"
+        LINK =  .
+        .db     2
+        .ascii  "BG"
 BGG:
-	LD      A,#(BGADDR)
+        LD      A,#(BGADDR)
         JRA     ASTOR
         .endif
 
 
         .ifne   HAS_CPNVM
-;	'PROMPT	( -- a)     ( TOS STM8: -- Y,Z,N )
-;	Return address of PROMPT vector
-	
-	.ifne	WORDS_LINKINTER
-        .dw	LINK
+;       'PROMPT ( -- a)     ( TOS STM8: -- Y,Z,N )
+;       Return address of PROMPT vector
+        
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
 
-	LINK =	.
-	.db	7
-	.ascii	"'PROMPT"
+        LINK =  .
+        .db     7
+        .ascii  "'PROMPT"
 TPROMPT:
-	LD      A,#(USRPROMPT)
+        LD      A,#(USRPROMPT)
         JRA     ASTOR
         .endif
 
@@ -1517,33 +1517,33 @@ TPROMPT:
 ;       ( -- ) EMIT pace character for handshake in FILE mode 
 PACEE:
         CALL    DOLITC
-	.db     PACE      ; pace character for host handshake 
+        .db     PACE      ; pace character for host handshake 
         JP      [USREMIT]
 
 
-;	HAND	( -- )
-;	set PROMPT vector to interactive mode
-	
-        .dw	LINK
+;       HAND    ( -- )
+;       set PROMPT vector to interactive mode
+        
+        .dw     LINK
 
-	LINK =	.
-	.db	4
-	.ascii	"HAND"
+        LINK =  .
+        .db     4
+        .ascii  "HAND"
 HANDD:
-	LDW     Y,#(DOTOK)
+        LDW     Y,#(DOTOK)
         LDW     USRPROMPT,Y
         RET
 
-;	FILE	( -- )
-;	set PROMPT vector to file transfer mode
-	
-        .dw	LINK
+;       FILE    ( -- )
+;       set PROMPT vector to file transfer mode
+        
+        .dw     LINK
 
-	LINK =	.
-	.db	4
-	.ascii	"FILE"
+        LINK =  .
+        .db     4
+        .ascii  "FILE"
 FILEE:
-	LDW     Y,#(PACEE)
+        LDW     Y,#(PACEE)
         LDW     USRPROMPT,Y
         RET
         .endif
@@ -1552,47 +1552,47 @@ FILEE:
 ; Common functions
 
 
-;	?DUP	( w -- w w | 0 )   ( TOS STM8: -- Y,Z,N )
-;	Dup tos if its not zero.
+;       ?DUP    ( w -- w w | 0 )   ( TOS STM8: -- Y,Z,N )
+;       Dup tos if its not zero.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	4
-	.ascii	"?DUP"
+        .dw     LINK
+        
+        LINK =  .
+        .db     4
+        .ascii  "?DUP"
 QDUP:
-	LDW     Y,X
-	LDW     Y,(Y)
-	JREQ	QDUP1
+        LDW     Y,X
+        LDW     Y,(Y)
+        JREQ    QDUP1
         DECW    X
         DECW    X
-	LDW     (X),Y
-QDUP1:	RET
+        LDW     (X),Y
+QDUP1:  RET
 
-;	ROT	( w1 w2 w3 -- w2 w3 w1 ) ( TOS STM8: -- Y,Z,N )
-;	Rot 3rd item to top.
+;       ROT     ( w1 w2 w3 -- w2 w3 w1 ) ( TOS STM8: -- Y,Z,N )
+;       Rot 3rd item to top.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"ROT"
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  "ROT"
 ROT:
         .ifne   SPEEDOVERSIZE
-	LDW     Y,X
-	LDW     Y,(4,Y)
-        PUSHW   Y
-	LDW     Y,X
-	LDW     Y,(2,Y)
-	PUSHW   Y
         LDW     Y,X
-	LDW     Y,(Y)
-	LDW     (2,X),Y
+        LDW     Y,(4,Y)
+        PUSHW   Y
+        LDW     Y,X
+        LDW     Y,(2,Y)
+        PUSHW   Y
+        LDW     Y,X
+        LDW     Y,(Y)
+        LDW     (2,X),Y
         POPW    Y 
-	LDW     (4,X),Y
+        LDW     (4,X),Y
         POPW    Y
-	LDW     (X),Y
-	RET
+        LDW     (X),Y
+        RET
         .else
         CALL    TOR
         CALLR   1$
@@ -1600,66 +1600,66 @@ ROT:
 1$:     JP      SWAPP
         .endif
 
-;	2DUP	( w1 w2 -- w1 w2 w1 w2 )
-;	Duplicate top two items.
+;       2DUP    ( w1 w2 -- w1 w2 w1 w2 )
+;       Duplicate top two items.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	4
-	.ascii	"2DUP"
+        .dw     LINK
+        
+        LINK =  .
+        .db     4
+        .ascii  "2DUP"
 DDUP:
-	CALLR    1$
+        CALLR    1$
 1$:        
         JP      OVER
 
-;	DNEGATE ( d -- -d )     ( TOS STM8: -- Y,Z,N )
-;	Two's complement of top double.
+;       DNEGATE ( d -- -d )     ( TOS STM8: -- Y,Z,N )
+;       Two's complement of top double.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	7
-	.ascii	"DNEGATE"
+        .dw     LINK
+        
+        LINK =  .
+        .db     7
+        .ascii  "DNEGATE"
 DNEGA:
-	LDW     Y,X
-	LDW     Y,(Y)
-	CPLW    Y	
+        LDW     Y,X
+        LDW     Y,(Y)
+        CPLW    Y       
         PUSHW   Y
-	LDW     Y,X
-	LDW     Y,(2,Y)
-	CPLW    Y
-	INCW    Y
-	LDW     (2,X),Y
-	POPW    Y
-	JRNC    DN1 
-	INCW    Y
+        LDW     Y,X
+        LDW     Y,(2,Y)
+        CPLW    Y
+        INCW    Y
+        LDW     (2,X),Y
+        POPW    Y
+        JRNC    DN1 
+        INCW    Y
 DN1:    LDW     (X),Y
-	RET
+        RET
 
-;	=	( w w -- t )    ( TOS STM8: -- Y,Z,N )
-;	Return true if top two are equal.
+;       =       ( w w -- t )    ( TOS STM8: -- Y,Z,N )
+;       Return true if top two are equal.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	1
-	.ascii	"="
+        .dw     LINK
+        
+        LINK =  .
+        .db     1
+        .ascii  "="
 EQUAL:
         .ifne   SPEEDOVERSIZE
-	LD      A,#0x0FF	;true
-	LDW     Y,X	;D = n2
-	LDW     Y,(Y)
-	LDW     YTEMP,Y
-	INCW    X
+        LD      A,#0x0FF        ;true
+        LDW     Y,X     ;D = n2
+        LDW     Y,(Y)
+        LDW     YTEMP,Y
         INCW    X
-	LDW     Y,X
-	LDW     Y,(Y)
-	CPW     Y,YTEMP	;if n2 <> n1
-	JREQ	EQ1
-	CLR     A
+        INCW    X
+        LDW     Y,X
+        LDW     Y,(Y)
+        CPW     Y,YTEMP ;if n2 <> n1
+        JREQ    EQ1
+        CLR     A
 EQ1:    LD      (X),A
-	LD      (1,X),A
+        LD      (1,X),A
         LDW     Y,X
         LDW     Y,(Y)
         RET                            ; 24 cy
@@ -1669,50 +1669,50 @@ EQ1:    LD      (X),A
         .endif
         
        
-;	U<	( u u -- t )    ( TOS STM8: -- Y,Z,N )
-;	Unsigned compare of top two items.
+;       U<      ( u u -- t )    ( TOS STM8: -- Y,Z,N )
+;       Unsigned compare of top two items.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"U<"
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "U<"
 ULESS:
-	CLR     A
+        CLR     A
         CALLR   YTEMPCMP
-	JRUGE	1$
-	CPL     A
+        JRUGE   1$
+        CPL     A
 1$:     LD      YL,A
         LD      YH,A
         LDW     (X),Y
         RET
 
-;	<	( n1 n2 -- t )
-;	Signed compare of top two items.
+;       <       ( n1 n2 -- t )
+;       Signed compare of top two items.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	1
-	.ascii	"<"
+        .dw     LINK
+        
+        LINK =  .
+        .db     1
+        .ascii  "<"
 LESS:
         .ifne   SPEEDOVERSIZE
-	CLR     A
-	LDW     Y,X
-	LDW     Y,(Y)
-	LDW     YTEMP,Y
-        INCW    X
-        INCW    X
-	LDW     Y,X
-	LDW     Y,(Y)
-	CPW     Y,YTEMP	
-	JRSGE	1$
-	CPL     A
-1$:     LD      (X),A
-	LD      (1,X),A
+        CLR     A
         LDW     Y,X
         LDW     Y,(Y)
-	RET                      ; 26 cy	
+        LDW     YTEMP,Y
+        INCW    X
+        INCW    X
+        LDW     Y,X
+        LDW     Y,(Y)
+        CPW     Y,YTEMP 
+        JRSGE   1$
+        CPL     A
+1$:     LD      (X),A
+        LD      (1,X),A
+        LDW     Y,X
+        LDW     Y,(Y)
+        RET                      ; 26 cy        
         .else
         CALL    SUBB             ; (29cy) 
         JP      ZLESS            ; 41 cy (12+29)
@@ -1721,389 +1721,389 @@ LESS:
 ;       YTEMPCMP       ( n n -- n )      ( TOS STM8: -- Y,Z,N )
 ;       Load (TOS) to YTEMP and (TOS-1) to Y, DROP, CMP to STM8 flags
 YTEMPCMP:        
-	LDW     Y,X
-	LDW     Y,(Y)
-	LDW     YTEMP,Y
+        LDW     Y,X
+        LDW     Y,(Y)
+        LDW     YTEMP,Y
         INCW    X
         INCW    X
-	LDW     Y,X
-	LDW     Y,(Y)
-	CPW     Y,YTEMP
+        LDW     Y,X
+        LDW     Y,(Y)
+        CPW     Y,YTEMP
         RET
 
-;	MAX	( n n -- n )    ( TOS STM8: -- Y,Z,N )
-;	Return greater of two top items.
+;       MAX     ( n n -- n )    ( TOS STM8: -- Y,Z,N )
+;       Return greater of two top items.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"MAX"
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  "MAX"
 MAX:
         CALLR   YTEMPCMP
-	JRSGT	MMEXIT
+        JRSGT   MMEXIT
 YTEMPTOS:
         LDW     Y,YTEMP
-	LDW     (X),Y
+        LDW     (X),Y
 MMEXIT: 
         RET
 
-;	MIN	( n n -- n )    ( TOS STM8: -- Y,Z,N )
-;	Return smaller of top two items.
+;       MIN     ( n n -- n )    ( TOS STM8: -- Y,Z,N )
+;       Return smaller of top two items.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"MIN"
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  "MIN"
 MIN:
         CALLR   YTEMPCMP
-	JRSLT	MMEXIT
+        JRSLT   MMEXIT
         JRA     YTEMPTOS
 
-;	WITHIN ( u ul uh -- t ) ( TOS STM8: -- Y,Z,N )
-;	Return true if u is within
-;	range of ul and uh. ( ul <= u < uh )
+;       WITHIN ( u ul uh -- t ) ( TOS STM8: -- Y,Z,N )
+;       Return true if u is within
+;       range of ul and uh. ( ul <= u < uh )
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	6
-	.ascii	"WITHIN"
+        .dw     LINK
+        
+        LINK =  .
+        .db     6
+        .ascii  "WITHIN"
 WITHI:
-	CALL	OVER
-	CALL	SUBB
-	CALL	TOR
-	CALL	SUBB
-	CALL	RFROM
-	JP	ULESS
+        CALL    OVER
+        CALL    SUBB
+        CALL    TOR
+        CALL    SUBB
+        CALL    RFROM
+        JP      ULESS
 
 ; Divide
 
-;	UM/MOD	( udl udh un -- ur uq )
-;	Unsigned divide of a double by a
-;	single. Return mod and quotient.
+;       UM/MOD  ( udl udh un -- ur uq )
+;       Unsigned divide of a double by a
+;       single. Return mod and quotient.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	6
-	.ascii	"UM/MOD"
+        .dw     LINK
+        
+        LINK =  .
+        .db     6
+        .ascii  "UM/MOD"
 UMMOD:
-	PUSHW   X	; save stack pointer
-        LDW     X,(X)	; un
-	LDW     YTEMP,X ; save un
+        PUSHW   X       ; save stack pointer
+        LDW     X,(X)   ; un
+        LDW     YTEMP,X ; save un
         LDW     Y,(1,SP); X stack pointer
-	LDW     Y,(4,Y) ; Y=udl
+        LDW     Y,(4,Y) ; Y=udl
         LDW     X,(1,SP); X
-	LDW     X,(2,X)	; X=udh
-	CPW     X,YTEMP
-	JRULE   MMSM1   ; X is still on the R-stack
+        LDW     X,(2,X) ; X=udh
+        CPW     X,YTEMP
+        JRULE   MMSM1   ; X is still on the R-stack
         POPW    X
         INCW    X               ; pop off 1 level
         INCW    X               ; ADDW   X,#2 
-	LDW     Y,#0xFFFF
-	LDW     (X),Y
-	CLRW    Y
-	LDW     (2,X),Y
-	RET
+        LDW     Y,#0xFFFF
+        LDW     (X),Y
+        CLRW    Y
+        LDW     (2,X),Y
+        RET
 MMSM1:
-	LD      A,#17	; loop count
+        LD      A,#17   ; loop count
 MMSM3:
-	CPW     X,YTEMP	; compare udh to un
-	JRULT   MMSM4	; can't subtract
-	SUBW    X,YTEMP	; can subtract
+        CPW     X,YTEMP ; compare udh to un
+        JRULT   MMSM4   ; can't subtract
+        SUBW    X,YTEMP ; can subtract
 MMSM4:
-	CCF	        ; quotient bit
-	RLCW    Y	; rotate into quotient
-	RLCW    X	; rotate into remainder
-	DEC     A	; repeat
-	JRUGT   MMSM3
-	SRAW    X
-	LDW     YTEMP,X	; done, save remainder
+        CCF             ; quotient bit
+        RLCW    Y       ; rotate into quotient
+        RLCW    X       ; rotate into remainder
+        DEC     A       ; repeat
+        JRUGT   MMSM3
+        SRAW    X
+        LDW     YTEMP,X ; done, save remainder
         POPW    X
         INCW    X               ; drop 
         INCW    X               ; ADDW   X,#2 
-	LDW     (X),Y
-	LDW     Y,YTEMP	; save quotient
-	LDW     (2,X),Y
-	RET
-	
-;	M/MOD	( d n -- r q )
-;	Signed floored divide of double by
-;	single. Return mod and quotient.
+        LDW     (X),Y
+        LDW     Y,YTEMP ; save quotient
+        LDW     (2,X),Y
+        RET
+        
+;       M/MOD   ( d n -- r q )
+;       Signed floored divide of double by
+;       single. Return mod and quotient.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"M/MOD"
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "M/MOD"
 MSMOD:
-	CALL	DUPP
-	CALL	ZLESS
-	CALL	DUPP
-	CALL	TOR
-	CALL	QBRAN
-	.dw	MMOD1
-	CALL	NEGAT
-	CALL	TOR
-	CALL	DNEGA
-	CALL	RFROM
-MMOD1:	CALL	TOR
-	JRPL    MMOD2
-        CALL	RAT
-	CALL	PLUS
-MMOD2:	CALL	RFROM
-	CALL	UMMOD
-	CALL	RFROM
-	CALL	QBRAN
-	.dw	MMOD3
-	CALL	SWAPP
-	CALL	NEGAT
-	CALL	SWAPP
-MMOD3:	RET
+        CALL    DUPP
+        CALL    ZLESS
+        CALL    DUPP
+        CALL    TOR
+        CALL    QBRAN
+        .dw     MMOD1
+        CALL    NEGAT
+        CALL    TOR
+        CALL    DNEGA
+        CALL    RFROM
+MMOD1:  CALL    TOR
+        JRPL    MMOD2
+        CALL    RAT
+        CALL    PLUS
+MMOD2:  CALL    RFROM
+        CALL    UMMOD
+        CALL    RFROM
+        CALL    QBRAN
+        .dw     MMOD3
+        CALL    SWAPP
+        CALL    NEGAT
+        CALL    SWAPP
+MMOD3:  RET
 
-;	/MOD	( n n -- r q )
-;	Signed divide. Return mod and quotient.
+;       /MOD    ( n n -- r q )
+;       Signed divide. Return mod and quotient.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	4
-	.ascii	"/MOD"
+        .dw     LINK
+        
+        LINK =  .
+        .db     4
+        .ascii  "/MOD"
 SLMOD:
-	CALL	OVER
-	CALL	ZLESS
-	CALL	SWAPP
-	JP	MSMOD
+        CALL    OVER
+        CALL    ZLESS
+        CALL    SWAPP
+        JP      MSMOD
 
-;	MOD	( n n -- r )    ( TOS STM8: -- Y,Z,N )	
-;	Signed divide. Return mod only.
+;       MOD     ( n n -- r )    ( TOS STM8: -- Y,Z,N )  
+;       Signed divide. Return mod only.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"MOD"
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  "MOD"
 MODD:
-	CALL	SLMOD
-	JP	DROP
+        CALL    SLMOD
+        JP      DROP
 
-;	/	( n n -- q )    ( TOS STM8: -- Y,Z,N )
-;	Signed divide. Return quotient only.
+;       /       ( n n -- q )    ( TOS STM8: -- Y,Z,N )
+;       Signed divide. Return quotient only.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	1
-	.ascii	"/"
+        .dw     LINK
+        
+        LINK =  .
+        .db     1
+        .ascii  "/"
 SLASH:
-	CALL	SLMOD
+        CALL    SLMOD
         ; fall through
 
 ;       NIP     ( n1 n2 -- n1 ) 
 
 NIP:
-	CALL	SWAPP
-	JP	DROP
+        CALL    SWAPP
+        JP      DROP
 
 ; Multiply
 
-;	UM*	( u u -- ud )
-;	Unsigned multiply. Return double product.
+;       UM*     ( u u -- ud )
+;       Unsigned multiply. Return double product.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"UM*"
-UMSTA:	                        ; stack have 4 bytes u1=a,b u2=c,d
-	LD      A,(2,X)	; b
-	LD      YL,A
-	LD      A,(X)	; d
-	MUL     Y,A
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  "UM*"
+UMSTA:                          ; stack have 4 bytes u1=a,b u2=c,d
+        LD      A,(2,X) ; b
+        LD      YL,A
+        LD      A,(X)   ; d
+        MUL     Y,A
         PUSHW   Y       ; PROD1 temp storage
-	LD      A,(3,X)	; a
-	LD      YL,A
-	LD      A,(X)	; d
-	MUL     Y,A
+        LD      A,(3,X) ; a
+        LD      YL,A
+        LD      A,(X)   ; d
+        MUL     Y,A
         PUSHW   Y       ; PROD2 temp storage
-	LD      A,(2,X)	; b
-	LD      YL,A
-	LD      A,(1,X)	; c
-	MUL     Y,A
-	PUSHW   Y       ; PROD3,CARRY temp storage 
-        LD      A,(3,X)	; a
-	LD      YL,A
-	LD      A,(1,X)	; c
-	MUL     Y,A	; least signifiant product
-	CLR     A
-	RRWA    Y
-	LD      (3,X),A	; store least significant byte
-	ADDW    Y,(1,SP); PROD3
-	CLR     A
-	ADC     A,#0	; save carry
+        LD      A,(2,X) ; b
+        LD      YL,A
+        LD      A,(1,X) ; c
+        MUL     Y,A
+        PUSHW   Y       ; PROD3,CARRY temp storage 
+        LD      A,(3,X) ; a
+        LD      YL,A
+        LD      A,(1,X) ; c
+        MUL     Y,A     ; least signifiant product
+        CLR     A
+        RRWA    Y
+        LD      (3,X),A ; store least significant byte
+        ADDW    Y,(1,SP); PROD3
+        CLR     A
+        ADC     A,#0    ; save carry
         LD      (1,SP),A; CARRY
-	ADDW    Y,(3,SP); PROD2
+        ADDW    Y,(3,SP); PROD2
         LD      A,(1,SP); CARRY
-        ADC     A,#0	; add 2nd carry
+        ADC     A,#0    ; add 2nd carry
         LD      (1,SP),A; CARRY
         CLR     A
-	RRWA    Y
-	LD      (2,X),A	; 2nd product byte
-	ADDW    Y,(5,SP); PROD1
-	RRWA    Y
-	LD      (1,X),A	; 3rd product byte
-	RRWA    Y		; 4th product byte now in A
+        RRWA    Y
+        LD      (2,X),A ; 2nd product byte
+        ADDW    Y,(5,SP); PROD1
+        RRWA    Y
+        LD      (1,X),A ; 3rd product byte
+        RRWA    Y               ; 4th product byte now in A
         ADC     A,(1,SP); CARRY
         LD      (X),A
         ADDW    SP,#6   ; drop temp storage
         RET
 
-;	*	( n n -- n )    ( TOS STM8: -- Y,Z,N )
-;	Signed multiply. Return single product.
+;       *       ( n n -- n )    ( TOS STM8: -- Y,Z,N )
+;       Signed multiply. Return single product.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	1
-	.ascii	"*"
+        .dw     LINK
+        
+        LINK =  .
+        .db     1
+        .ascii  "*"
 STAR:
-	CALL	UMSTA
-	JP	DROP
+        CALL    UMSTA
+        JP      DROP
 
-;	M*	( n n -- d )
-;	Signed multiply. Return double product.
+;       M*      ( n n -- d )
+;       Signed multiply. Return double product.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"M*"
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "M*"
 MSTAR:
-	CALL	DDUP
-	CALL	XORR
-	CALL	ZLESS
-	CALL	TOR
-	CALL	ABSS
-	CALL	SWAPP
-	CALL	ABSS
-	CALL	UMSTA
-	CALL	RFROM
-	CALL	QBRAN
-	.dw	MSTA1
-	CALL	DNEGA
-MSTA1:	RET
+        CALL    DDUP
+        CALL    XORR
+        CALL    ZLESS
+        CALL    TOR
+        CALL    ABSS
+        CALL    SWAPP
+        CALL    ABSS
+        CALL    UMSTA
+        CALL    RFROM
+        CALL    QBRAN
+        .dw     MSTA1
+        CALL    DNEGA
+MSTA1:  RET
 
-;	*/MOD	( n1 n2 n3 -- r q )
-;	Multiply n1 and n2, then divide
-;	by n3. Return mod and quotient.
+;       */MOD   ( n1 n2 n3 -- r q )
+;       Multiply n1 and n2, then divide
+;       by n3. Return mod and quotient.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"*/MOD"
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "*/MOD"
 SSMOD:
-	CALL	TOR
-	CALL	MSTAR
-	CALL	RFROM
-	JP	MSMOD
+        CALL    TOR
+        CALL    MSTAR
+        CALL    RFROM
+        JP      MSMOD
 
-;	*/	( n1 n2 n3 -- q )    ( TOS STM8: -- Y,Z,N )
-;	Multiply n1 by n2, then divide
-;	by n3. Return quotient only.
+;       */      ( n1 n2 n3 -- q )    ( TOS STM8: -- Y,Z,N )
+;       Multiply n1 by n2, then divide
+;       by n3. Return quotient only.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"*/"
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "*/"
 STASL:
-	CALL	SSMOD
-	JP	NIP
+        CALL    SSMOD
+        JP      NIP
 
 ; Miscellaneous
 
-;	2+	( a -- a )      ( TOS STM8: -- Y,Z,N )
-;	Add 2 to tos.
+;       2+      ( a -- a )      ( TOS STM8: -- Y,Z,N )
+;       Add 2 to tos.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"2+"
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "2+"
 CELLP:
         CALLR   DOXCODE
-	INCW    X
-	INCW    X
+        INCW    X
+        INCW    X
         RET
 
 
-;	2-	( a -- a )      ( TOS STM8: -- Y,Z,N )
-;	Subtract 2 from tos.
+;       2-      ( a -- a )      ( TOS STM8: -- Y,Z,N )
+;       Subtract 2 from tos.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"2-"
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "2-"
 CELLM:
         CALLR   DOXCODE
-	DECW    X
-	DECW    X
+        DECW    X
+        DECW    X
         RET
 
-;	2*	( n -- n )      ( TOS STM8: -- Y,Z,N )
-;	Multiply tos by 2.
+;       2*      ( n -- n )      ( TOS STM8: -- Y,Z,N )
+;       Multiply tos by 2.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"2*"
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "2*"
 CELLS:
         CALLR   DOXCODE
-	SLAW    X
+        SLAW    X
         RET
 
-;	1+	( n -- n )      ( TOS STM8: -- Y,Z,N )
-;	Add 1 to tos.
+;       1+      ( n -- n )      ( TOS STM8: -- Y,Z,N )
+;       Add 1 to tos.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"1+"
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "1+"
 ONEP:
         CALLR   DOXCODE
-	INCW    X
+        INCW    X
         RET
 
-;	1-	( n -- n )      ( TOS STM8: -- Y,Z,N )
-;	Subtract 1 from tos.
+;       1-      ( n -- n )      ( TOS STM8: -- Y,Z,N )
+;       Subtract 1 from tos.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"1-"
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "1-"
 ONEM:
         CALLR   DOXCODE
-	DECW    X
+        DECW    X
         RET
 
-;	2/	( n -- n )      ( TOS STM8: -- Y,Z,N )
-;	Multiply tos by 2.
+;       2/      ( n -- n )      ( TOS STM8: -- Y,Z,N )
+;       Multiply tos by 2.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"2/"
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "2/"
 TWOSL:
         CALLR   DOXCODE
-	SRAW    X
+        SRAW    X
         RET
 
 ;       DOXCODE   ( n -- n )   ( TOS STM8: -- Y,Z,N )
@@ -2120,71 +2120,71 @@ DOXCODE:
         LDW     (X),Y
         RET
 
-;	NOT	( w -- w )     ( TOS STM8: -- Y,Z,N )
-;	One's complement of TOS.
+;       NOT     ( w -- w )     ( TOS STM8: -- Y,Z,N )
+;       One's complement of TOS.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"NOT"
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  "NOT"
 INVER:
         CALLR   DOXCODE
-	CPLW    X
+        CPLW    X
         RET
 
-;	NEGATE	( n -- -n )     ( TOS STM8: -- Y,Z,N )
-;	Two's complement of TOS.
+;       NEGATE  ( n -- -n )     ( TOS STM8: -- Y,Z,N )
+;       Two's complement of TOS.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	6
-	.ascii	"NEGATE"
+        .dw     LINK
+        
+        LINK =  .
+        .db     6
+        .ascii  "NEGATE"
 NEGAT:
         CALLR   DOXCODE
-	NEGW    X
+        NEGW    X
         RET
 
-;	ABS	( n -- n )      ( TOS STM8: -- Y,Z,N )
-;	Return	absolute value of n.
+;       ABS     ( n -- n )      ( TOS STM8: -- Y,Z,N )
+;       Return  absolute value of n.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"ABS"
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  "ABS"
 ABSS:
         CALLR   DOXCODE
-	JRPL	1$	;positive?
-	NEGW	X	;else negate 
+        JRPL    1$      ;positive?
+        NEGW    X       ;else negate 
 1$:     RET
 
         .ifne   WORDS_EXTRACORE
-;	0=	( n -- t )      ( TOS STM8: -- Y,Z,N ))
-;	Return true if n is equal to 0
-	.dw	LINK
-	
-        LINK =	.
-	.db	(2)
-	.ascii	"0="
+;       0=      ( n -- t )      ( TOS STM8: -- Y,Z,N ))
+;       Return true if n is equal to 0
+        .dw     LINK
+        
+        LINK =  .
+        .db     (2)
+        .ascii  "0="
         .endif
 ZEQUAL:
         CALLR   DOXCODE
-	JREQ	1$	
+        JREQ    1$      
         CLRW    X               
         JRA     2$        
-1$:     CPLW	X	        ;else -1 
+1$:     CPLW    X               ;else -1 
 2$:     RET
 
-;	PICK	( ... +n -- ... w )      ( TOS STM8: -- Y,Z,N )
-;	Copy	nth stack item to tos.
+;       PICK    ( ... +n -- ... w )      ( TOS STM8: -- Y,Z,N )
+;       Copy    nth stack item to tos.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	4
-	.ascii	"PICK"
+        .dw     LINK
+        
+        LINK =  .
+        .db     4
+        .ascii  "PICK"
 PICK:
         CALLR   DOXCODE
         SLAW    X
@@ -2192,16 +2192,16 @@ PICK:
         LDW     X,(X)
         RET
 
- ;	>CHAR	( c -- c )      ( TOS STM8: -- A,Z,N )
-;	Filter non-printing characters.
+ ;      >CHAR   ( c -- c )      ( TOS STM8: -- A,Z,N )
+;       Filter non-printing characters.
 
-	.ifne	WORDS_LINKMISC
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	">CHAR"
-	.endif
+        .ifne   WORDS_LINKMISC
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  ">CHAR"
+        .endif
 TCHAR:
         LD      A,(1,X)
         AND     A,#0x7F
@@ -2213,34 +2213,34 @@ TCHAR:
 2$:     LD      (1,X),A
         RET
 
-;	DEPTH	( -- n )      ( TOS STM8: -- Y,Z,N )
-;	Return	depth of data stack.
+;       DEPTH   ( -- n )      ( TOS STM8: -- Y,Z,N )
+;       Return  depth of data stack.
 
-	.ifne   WORDS_EXTRASTACK
-        .dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"DEPTH"
+        .ifne   WORDS_EXTRASTACK
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "DEPTH"
         .endif
 DEPTH:
-	LDW     Y,#SPP          ;save data stack ptr
-	LDW     YTEMP,X
-	SUBW    Y,YTEMP	        ;#bytes = SP0 - X
-	SRAW    Y	        ;D = #stack items
-	DECW    Y               ; if neg, underflow
+        LDW     Y,#SPP          ;save data stack ptr
+        LDW     YTEMP,X
+        SUBW    Y,YTEMP         ;#bytes = SP0 - X
+        SRAW    Y               ;D = #stack items
+        DECW    Y               ; if neg, underflow
         JP      YSTOR
 
 ; Memory access
 
-;	+!	( n a -- )      ( TOS STM8: -- Y,Z,N )
-;	Add n to contents at address a.
+;       +!      ( n a -- )      ( TOS STM8: -- Y,Z,N )
+;       Add n to contents at address a.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"+!"
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "+!"
 PSTOR:
         .ifne   SPEEDOVERSIZE
         LDW     Y,X
@@ -2253,68 +2253,68 @@ PSTOR:
         LDW     (2,X),Y
         JP      STORE
         .else 
-	CALL	SWAPP
-	CALL	OVER
-	CALL	AT
-	CALL	PLUS
-	CALL	SWAPP
-	JP	STORE
+        CALL    SWAPP
+        CALL    OVER
+        CALL    AT
+        CALL    PLUS
+        CALL    SWAPP
+        JP      STORE
         .endif 
 
-;	2!	( d a -- )      ( TOS STM8: -- Y,Z,N )
-;	Store double integer to address a.
+;       2!      ( d a -- )      ( TOS STM8: -- Y,Z,N )
+;       Store double integer to address a.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"2!"
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "2!"
 DSTOR:
-	CALL	SWAPP
-	CALL	OVER
-	CALL	STORE
-	CALL	CELLP
-	JP	STORE
+        CALL    SWAPP
+        CALL    OVER
+        CALL    STORE
+        CALL    CELLP
+        JP      STORE
 
-;	2@	( a -- d )
-;	Fetch double integer from address a.
+;       2@      ( a -- d )
+;       Fetch double integer from address a.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"2@"
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "2@"
 DAT:
-	CALL	DUPP
-	CALL	CELLP
-	CALL	AT
-	CALL	SWAPP
-	JP	AT
+        CALL    DUPP
+        CALL    CELLP
+        CALL    AT
+        CALL    SWAPP
+        JP      AT
 
-;	COUNT	( b -- b +n )      ( TOS STM8: -- A,Z,N )
-;	Return count byte of a string
-;	and add 1 to byte address.
+;       COUNT   ( b -- b +n )      ( TOS STM8: -- A,Z,N )
+;       Return count byte of a string
+;       and add 1 to byte address.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"COUNT"
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "COUNT"
 COUNT:
-	CALL	DUPP
-	CALL	ONEP
-	CALL	SWAPP
-	JP	CAT
+        CALL    DUPP
+        CALL    ONEP
+        CALL    SWAPP
+        JP      CAT
 
-;	HERE	( -- a )      ( TOS STM8: -- A,Z,N )
-;	Return	top of	code dictionary.
+;       HERE    ( -- a )      ( TOS STM8: -- A,Z,N )
+;       Return  top of  code dictionary.
 
-	.ifeq	BAREBONES
-	.dw	LINK
-	
-	LINK =	.
-	.db	4
-	.ascii	"HERE"
+        .ifeq   BAREBONES
+        .dw     LINK
+        
+        LINK =  .
+        .db     4
+        .ascii  "HERE"
         .endif
 HERE:
 
@@ -2326,148 +2326,148 @@ HERE:
 
         CALL    DOLIT
         .dw     NVMCP        ; 'eval in Interpreter mode: HERE returns pointer to RAM 
-        JP	AT
+        JP      AT
         .endif
 1$:
 HERECP: 
-        CALL	CPP
-        JP	AT
+        CALL    CPP
+        JP      AT
 
-;	PAD	( -- a )  ( TOS STM8: invalid )
-;	Return address of text buffer
-;	above code dictionary.
+;       PAD     ( -- a )  ( TOS STM8: invalid )
+;       Return address of text buffer
+;       above code dictionary.
 
         .ifne   WORDS_LINKCHAR
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"PAD"
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  "PAD"
         .endif
 PAD:
         .ifne   HAS_BACKGROUND
         ; hack for background task PAD
         ; create offset for PAD area
-        PUSH	CC              ; Test interrupt level flags in CC 
-        POP	A
-        AND	A,#0x20
+        PUSH    CC              ; Test interrupt level flags in CC 
+        POP     A
+        AND     A,#0x20
         JRNE    1$
-       	CALL	DOLITC              
-	.db	(PADBG+1)       ; dedicated memory for PAD in background task
+        CALL    DOLITC              
+        .db     (PADBG+1)       ; dedicated memory for PAD in background task
         RET     
 1$:
         .endif        
-	CALLR	HERE            ; regular PAD with offset to HERE
-	CALL	DOLITC
-	.db	PADOFFS
-	JP	PLUS
+        CALLR   HERE            ; regular PAD with offset to HERE
+        CALL    DOLITC
+        .db     PADOFFS
+        JP      PLUS
 
-;	@EXECUTE	( a -- )  ( TOS STM8: undefined )
-;	Execute vector stored in address a.
+;       @EXECUTE        ( a -- )  ( TOS STM8: undefined )
+;       Execute vector stored in address a.
 
-	.ifeq	BAREBONES
-	.dw	LINK
-	
-	LINK =	.
-	.db	8
-	.ascii	"@EXECUTE"
+        .ifeq   BAREBONES
+        .dw     LINK
+        
+        LINK =  .
+        .db     8
+        .ascii  "@EXECUTE"
         .endif        
 ATEXE:
-	CALL	AT              ; @ sets Z and N
+        CALL    AT              ; @ sets Z and N
         JRNE    1$
         JP      DROP
-1$:	JP	EXECU	        ; execute if non-zero
+1$:     JP      EXECU           ; execute if non-zero
 
 
-;	CMOVE	( b1 b2 u -- )
-;	Copy u bytes from b1 to b2.
+;       CMOVE   ( b1 b2 u -- )
+;       Copy u bytes from b1 to b2.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"CMOVE"
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "CMOVE"
 CMOVE:
-	CALL	TOR
+        CALL    TOR
         JRA     CMOV2
-CMOV1:	CALL	TOR
-	CALL	DUPP
-	CALL	CAT
-	CALL	RAT
-	CALL	CSTOR
-	CALL	ONEP
-	CALL	RFROM
-	CALL	ONEP
-CMOV2:	CALL	DONXT
-	.dw	CMOV1
-	JP	DDROP
+CMOV1:  CALL    TOR
+        CALL    DUPP
+        CALL    CAT
+        CALL    RAT
+        CALL    CSTOR
+        CALL    ONEP
+        CALL    RFROM
+        CALL    ONEP
+CMOV2:  CALL    DONXT
+        .dw     CMOV1
+        JP      DDROP
 
-;	FILL	( b u c -- )
-;	Fill u bytes of character c
-;	to area beginning at b.
+;       FILL    ( b u c -- )
+;       Fill u bytes of character c
+;       to area beginning at b.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	4
-	.ascii	"FILL"
+        .dw     LINK
+        
+        LINK =  .
+        .db     4
+        .ascii  "FILL"
 FILL:
-	CALL	SWAPP
-	CALL	TOR
-	CALL	SWAPP
+        CALL    SWAPP
+        CALL    TOR
+        CALL    SWAPP
         JRA     FILL2
-FILL1:	CALL	DDUP
-	CALL	CSTOR
-	CALL	ONEP
-FILL2:	CALL	DONXT
-	.dw	FILL1
-	JP	DDROP
+FILL1:  CALL    DDUP
+        CALL    CSTOR
+        CALL    ONEP
+FILL2:  CALL    DONXT
+        .dw     FILL1
+        JP      DDROP
 
-;	ERASE	( b u -- )
-;	Erase u bytes beginning at b.
+;       ERASE   ( b u -- )
+;       Erase u bytes beginning at b.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"ERASE"
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "ERASE"
 ERASE:
-	CALL	ZERO
-	JRA	FILL
+        CALL    ZERO
+        JRA     FILL
 
-;	PACK$	( b u a -- a )
-;	Build a counted string with
-;	u characters from b. Null fill.
+;       PACK$   ( b u a -- a )
+;       Build a counted string with
+;       u characters from b. Null fill.
 
-	.ifne	WORDS_LINKCHAR
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"PACK$"
+        .ifne   WORDS_LINKCHAR
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "PACK$"
         .endif
 PACKS:
-	CALL	DUPP
-	CALL	TOR	        ; strings only on cell boundary
-	CALL	DDUP
-	CALL	CSTOR
-	CALL	ONEP            ; save count
-	CALL	SWAPP
-	CALL	CMOVE
-	CALL	RFROM
-	RET
+        CALL    DUPP
+        CALL    TOR             ; strings only on cell boundary
+        CALL    DDUP
+        CALL    CSTOR
+        CALL    ONEP            ; save count
+        CALL    SWAPP
+        CALL    CMOVE
+        CALL    RFROM
+        RET
 
 ; Numeric output, single precision
 
-;	DIGIT	( u -- c )      ( TOS STM8: -- Y,Z,N )
-;	Convert digit u to a character.
+;       DIGIT   ( u -- c )      ( TOS STM8: -- Y,Z,N )
+;       Convert digit u to a character.
 
-	.ifne	WORDS_LINKCHAR
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"DIGIT"
+        .ifne   WORDS_LINKCHAR
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "DIGIT"
         .endif
 DIGIT:
         LD      A,(1,X)
@@ -2479,47 +2479,47 @@ DIGIT:
         RET
          
 
-;	EXTRACT ( n base -- n c )   ( TOS STM8: -- Y,Z,N )
-;	Extract least significant digit from n.
+;       EXTRACT ( n base -- n c )   ( TOS STM8: -- Y,Z,N )
+;       Extract least significant digit from n.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	7
-	.ascii	"EXTRACT"
-	.endif
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     7
+        .ascii  "EXTRACT"
+        .endif
 EXTRC:
-	CALL	ZERO
-	CALL	SWAPP
-	CALL	UMMOD
-	CALL	SWAPP
-	JP	DIGIT
+        CALL    ZERO
+        CALL    SWAPP
+        CALL    UMMOD
+        CALL    SWAPP
+        JP      DIGIT
 
-;	<#	( -- )   ( TOS STM8: -- Y,Z,N )
-;	Initiate numeric output process.
+;       <#      ( -- )   ( TOS STM8: -- Y,Z,N )
+;       Initiate numeric output process.
 
-	.ifne	WORDS_LINKCHAR
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"<#"
+        .ifne   WORDS_LINKCHAR
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "<#"
         .endif
 BDIGS:
-	CALL	PAD
-	CALL	HLD
-	JP	STORE
+        CALL    PAD
+        CALL    HLD
+        JP      STORE
 
-;	HOLD	( c -- )    ( TOS STM8: -- Y,Z,N )
-;	Insert a character into output string.
+;       HOLD    ( c -- )    ( TOS STM8: -- Y,Z,N )
+;       Insert a character into output string.
 
-	.ifne	WORDS_LINKCHAR
-	.dw	LINK
-	
-	LINK =	.
-	.db	4
-	.ascii	"HOLD"
+        .ifne   WORDS_LINKCHAR
+        .dw     LINK
+        
+        LINK =  .
+        .db     4
+        .ascii  "HOLD"
         .endif
 HOLD:
         LDW     Y,USRHLD
@@ -2530,49 +2530,49 @@ HOLD:
         JP      DROP
 
 
-;	#	( u -- u )    ( TOS STM8: -- Y,Z,N )
-;	Extract one digit from u and
-;	append digit to output string.
+;       #       ( u -- u )    ( TOS STM8: -- Y,Z,N )
+;       Extract one digit from u and
+;       append digit to output string.
 
-	.ifne	WORDS_LINKCHAR
-	.dw	LINK
-	
-	LINK =	.
-	.db	1
-	.ascii	"#"
+        .ifne   WORDS_LINKCHAR
+        .dw     LINK
+        
+        LINK =  .
+        .db     1
+        .ascii  "#"
         .endif
 DIG:
-	CALL	BASE
-	CALL	AT
-	CALL	EXTRC
-	JRA	HOLD
+        CALL    BASE
+        CALL    AT
+        CALL    EXTRC
+        JRA     HOLD
 
-;	#S	( u -- 0 )
-;	Convert u until all digits
-;	are added to output string.
+;       #S      ( u -- 0 )
+;       Convert u until all digits
+;       are added to output string.
 
-	.ifne	WORDS_LINKCHAR
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"#S"
+        .ifne   WORDS_LINKCHAR
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "#S"
         .endif
 DIGS:
-DIGS1:	CALLR	DIG
+DIGS1:  CALLR   DIG
         JRNE    DIGS1
         RET
 
-;	SIGN	( n -- )
-;	Add a minus sign to
-;	numeric output string.
+;       SIGN    ( n -- )
+;       Add a minus sign to
+;       numeric output string.
 
-	.ifne	WORDS_LINKCHAR
-	.dw	LINK
-	
-	LINK =	.
-	.db	4
-	.ascii	"SIGN"
+        .ifne   WORDS_LINKCHAR
+        .dw     LINK
+        
+        LINK =  .
+        .db     4
+        .ascii  "SIGN"
         .endif
 SIGN:
         TNZ     (X)
@@ -2580,68 +2580,68 @@ SIGN:
         LD      A,#('-')
         LD      (1,X),A
         JRA     HOLD
-SIGN1:	JP      DROP
+SIGN1:  JP      DROP
 
-;	#>	( w -- b u )
-;	Prepare output string.
+;       #>      ( w -- b u )
+;       Prepare output string.
 
-	.ifne	WORDS_LINKCHAR
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"#>"
+        .ifne   WORDS_LINKCHAR
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "#>"
         .endif
 EDIGS:
         LDW     Y,USRHLD
         LDW     (X),Y
-	CALL	PAD
-	CALL	OVER
-	JP	SUBB
+        CALL    PAD
+        CALL    OVER
+        JP      SUBB
 
-;	str	( w -- b u )
-;	Convert a signed integer
-;	to a numeric string.
+;       str     ( w -- b u )
+;       Convert a signed integer
+;       to a numeric string.
 
-	.ifne	WORDS_LINKCHAR
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"str"
-	.endif
+        .ifne   WORDS_LINKCHAR
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  "str"
+        .endif
 STR:
-	CALL	DUPP
-	CALL	TOR
-	CALL	ABSS
-	CALL	BDIGS
-	CALL	DIGS
-	CALL	RFROM
-	CALLR	SIGN
-	JRA	EDIGS
+        CALL    DUPP
+        CALL    TOR
+        CALL    ABSS
+        CALL    BDIGS
+        CALL    DIGS
+        CALL    RFROM
+        CALLR   SIGN
+        JRA     EDIGS
 
-;	HEX	( -- )
-;	Use radix 16 as base for
-;	numeric conversions.
+;       HEX     ( -- )
+;       Use radix 16 as base for
+;       numeric conversions.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"HEX"
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  "HEX"
 HEX:
         LD      A,#16
         JRA     BASESET
 
-;	DECIMAL ( -- )
-;	Use radix 10 as base
-;	for numeric conversions.
+;       DECIMAL ( -- )
+;       Use radix 10 as base
+;       for numeric conversions.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	7
-	.ascii	"DECIMAL"
+        .dw     LINK
+        
+        LINK =  .
+        .db     7
+        .ascii  "DECIMAL"
 DECIM:
         LD      A,#10
 BASESET:
@@ -2651,66 +2651,66 @@ BASESET:
 
 ; Numeric input, single precision
 
-;	DIGIT?	( c base -- u t )
-;	Convert a character to its numeric
-;	value. A flag indicates success.
+;       DIGIT?  ( c base -- u t )
+;       Convert a character to its numeric
+;       value. A flag indicates success.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	6
-	.ascii	"DIGIT?"
-	.endif
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     6
+        .ascii  "DIGIT?"
+        .endif
 DIGTQ:
-	CALL	TOR
-	CALL	DOLITC
-	.db	48	; "0"
-	CALL	SUBB
-	CALL	DOLITC
-	.db	9
-	CALL	OVER
-	CALL	LESS
-	CALL	QBRAN
-	.dw	DGTQ1
-	CALL	DOLITC
-	.db	7
-	CALL	SUBB
-	CALL	DUPP
-	CALL	DOLITC
-	.db	10
-	CALL	LESS
-	CALL	ORR
-DGTQ1:	CALL	DUPP
-	CALL	RFROM
-	JP	ULESS
+        CALL    TOR
+        CALL    DOLITC
+        .db     48      ; "0"
+        CALL    SUBB
+        CALL    DOLITC
+        .db     9
+        CALL    OVER
+        CALL    LESS
+        CALL    QBRAN
+        .dw     DGTQ1
+        CALL    DOLITC
+        .db     7
+        CALL    SUBB
+        CALL    DUPP
+        CALL    DOLITC
+        .db     10
+        CALL    LESS
+        CALL    ORR
+DGTQ1:  CALL    DUPP
+        CALL    RFROM
+        JP      ULESS
 
-;	NUMBER? ( a -- n T | a F )
-;	Convert a number string to
-;	integer. Push a flag on tos.
+;       NUMBER? ( a -- n T | a F )
+;       Convert a number string to
+;       integer. Push a flag on tos.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	7
-	.ascii	"NUMBER?"
-	.endif
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     7
+        .ascii  "NUMBER?"
+        .endif
 NUMBQ:
-	PUSH    USRBASE+1
+        PUSH    USRBASE+1
         PUSH    #0                     ; sign flag
 
-	CALL	ZERO
-	CALL	OVER
-	CALL	COUNT
+        CALL    ZERO
+        CALL    OVER
+        CALL    COUNT
 NUMQ0:
-	CALL	OVER
-	CALL	CAT
+        CALL    OVER
+        CALL    CAT
         CALL    AFLAGS
 
         CP      A,#('$')
         JRNE    1$ 
-	CALL	HEX
+        CALL    HEX
         JRA     NUMQSKIP
 1$:
         .ifeq   BAREBONES
@@ -2722,7 +2722,7 @@ NUMQ0:
         CP      A,#('&')
         JRNE    3$
         MOV     USRBASE+1,#10
-	CALL	DECIM
+        CALL    DECIM
         JRA     NUMQSKIP
 3$:
         .endif
@@ -2731,55 +2731,55 @@ NUMQ0:
         POP     A
         PUSH    #0x80                   ; flag ?sign
 
-NUMQSKIP:	
-	CALL	SWAPP
-	CALL	ONEP
-	CALL	SWAPP
-	CALL	ONEM
+NUMQSKIP:       
+        CALL    SWAPP
+        CALL    ONEP
+        CALL    SWAPP
+        CALL    ONEM
         JRNE    NUMQ0            ; check for more modifiers
 
 NUMQ1:
-	CALL	QDQBRAN
-	.dw	NUMQ6
-	CALL	ONEM  
-	CALL	TOR             ; FOR
-NUMQ2:	CALL	DUPP
-	CALL	TOR
-	CALL	CAT
-	CALL	BASE
-	CALL	AT
-	CALL	DIGTQ
-	CALL	QBRAN           ; WHILE ( no digit -> LEAVE )
-	.dw	NUMLEAVE
+        CALL    QDQBRAN
+        .dw     NUMQ6
+        CALL    ONEM  
+        CALL    TOR             ; FOR
+NUMQ2:  CALL    DUPP
+        CALL    TOR
+        CALL    CAT
+        CALL    BASE
+        CALL    AT
+        CALL    DIGTQ
+        CALL    QBRAN           ; WHILE ( no digit -> LEAVE )
+        .dw     NUMLEAVE
 
-	CALL	SWAPP
-	CALL	BASE
-	CALL	AT
-	CALL	STAR
-	CALL	PLUS
-	CALL	RFROM
-	CALL	ONEP
+        CALL    SWAPP
+        CALL    BASE
+        CALL    AT
+        CALL    STAR
+        CALL    PLUS
+        CALL    RFROM
+        CALL    ONEP
 
-	CALL	DONXT
-	.dw	NUMQ2
+        CALL    DONXT
+        .dw     NUMQ2
 
         CALLR   NUMDROP         ; drop b
 
         LD      A,(1,SP)        ; test sign flag 
         JRPL    NUMPLUS
-	CALL	NEGAT                            
+        CALL    NEGAT                            
 NUMPLUS:
-        CALL	SWAPP                            
-	JRA	NUMQ5                             
-NUMLEAVE:                       ; LEAVE ( clean-up FOR .. NEXT )	
+        CALL    SWAPP                            
+        JRA     NUMQ5                             
+NUMLEAVE:                       ; LEAVE ( clean-up FOR .. NEXT )        
         ADDW    SP,#4           ; RFROM,RFROM,DDROP
-        CALL	DDROP             
-	CALL	ZERO
+        CALL    DDROP             
+        CALL    ZERO
         ; fall through
 NUMQ5:
-        CALL	DUPP                             
+        CALL    DUPP                             
         ; fall through
-NUMQ6:	
+NUMQ6:  
         POP     A               ; sign flag
         POP     USRBASE+1       ; restore BASE
 NUMDROP:
@@ -2788,30 +2788,30 @@ NUMDROP:
 
 ; Basic I/O
 
-;	KEY	( -- c )
-;	Wait for and return an
-;	input character.
+;       KEY     ( -- c )
+;       Wait for and return an
+;       input character.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"KEY"
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  "KEY"
 KEY:
-KEY1:	CALL	[USRQKEY]
-	CALL	QBRAN
-	.dw	KEY1
-	RET
+KEY1:   CALL    [USRQKEY]
+        CALL    QBRAN
+        .dw     KEY1
+        RET
 
-;	NUF?	( -- t )
-;	Return false if no input,
-;	else pause and if CR return true.
+;       NUF?    ( -- t )
+;       Return false if no input,
+;       else pause and if CR return true.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	4
-	.ascii	"NUF?"
+        .dw     LINK
+        
+        LINK =  .
+        .db     4
+        .ascii  "NUF?"
 NUFQ:
         .ifne   HALF_DUPLEX
         ; slow EMIT down to free the line for RX 
@@ -2826,230 +2826,230 @@ NUFQ:
         JRNE    1$
         .endif
         .endif
-	CALL	[USRQKEY]
-	CALL	DUPP
-	CALL	QBRAN
-	.dw	NUFQ1
-	CALL	DDROP
-	CALL	KEY
-	CALL	DOLITC
-	.db	CRR
-	JP	EQUAL
-NUFQ1:	RET
+        CALL    [USRQKEY]
+        CALL    DUPP
+        CALL    QBRAN
+        .dw     NUFQ1
+        CALL    DDROP
+        CALL    KEY
+        CALL    DOLITC
+        .db     CRR
+        JP      EQUAL
+NUFQ1:  RET
 
-;	SPACE	( -- )
-;	Send	blank character to
-;	output device.
+;       SPACE   ( -- )
+;       Send    blank character to
+;       output device.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"SPACE"
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "SPACE"
 SPACE:
 
-	CALL	BLANK
-	JP	[USREMIT]
+        CALL    BLANK
+        JP      [USREMIT]
 
-;	SPACES	( +n -- )
-;	Send n spaces to output device.
+;       SPACES  ( +n -- )
+;       Send n spaces to output device.
 
         .ifeq   BAREBONES
-	.dw	LINK
-	
-	LINK =	.
-	.db	6
-	.ascii	"SPACES"
+        .dw     LINK
+        
+        LINK =  .
+        .db     6
+        .ascii  "SPACES"
 SPACS:
-	CALL	ZERO
-	CALL	MAX
+        CALL    ZERO
+        CALL    MAX
         .else
 SPACS:
         .endif
-	CALL	TOR
-	JRA	CHAR2
-CHAR1:	CALL	SPACE
-CHAR2:	CALL	DONXT
-	.dw	CHAR1
-	RET
+        CALL    TOR
+        JRA     CHAR2
+CHAR1:  CALL    SPACE
+CHAR2:  CALL    DONXT
+        .dw     CHAR1
+        RET
 
-;	CR	( -- )
-;	Output a carriage return
-;	and a line feed.
+;       CR      ( -- )
+;       Output a carriage return
+;       and a line feed.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"CR"
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "CR"
 CR:
         .ifeq TERM_LINUX
-	CALL	DOLITC
-	.db	CRR
-	CALL	[USREMIT]
+        CALL    DOLITC
+        .db     CRR
+        CALL    [USREMIT]
         .endif
-	CALL	DOLITC
-	.db	LF
-	JP	[USREMIT]
+        CALL    DOLITC
+        .db     LF
+        JP      [USREMIT]
 
 
-;	do$	( -- a )
-;	Return	address of a compiled
-;	string.
+;       do$     ( -- a )
+;       Return  address of a compiled
+;       string.
 
-	.ifne	WORDS_LINKRUNTI
-	.dw	LINK
-	
-	LINK =	.
-	.db	(COMPO+3)
-	.ascii	"do$"
-	.endif
+        .ifne   WORDS_LINKRUNTI
+        .dw     LINK
+        
+        LINK =  .
+        .db     (COMPO+3)
+        .ascii  "do$"
+        .endif
 DOSTR:
-	CALL	RFROM
-	CALL	RAT
-	CALL	RFROM
-	CALL	COUNT
-	CALL	PLUS
-	CALL	TOR
-	CALL	SWAPP
-	CALL	TOR
-	RET
+        CALL    RFROM
+        CALL    RAT
+        CALL    RFROM
+        CALL    COUNT
+        CALL    PLUS
+        CALL    TOR
+        CALL    SWAPP
+        CALL    TOR
+        RET
 
-;	$"|	( -- a )
-;	Run time routine compiled by $".
-;	Return address of a compiled string.
+;       $"|     ( -- a )
+;       Run time routine compiled by $".
+;       Return address of a compiled string.
 
-	.ifne	WORDS_LINKRUNTI
-	.dw	LINK
-	
-	LINK =	.
-	.db	(COMPO+3)
-	.ascii	'$"|'
-	.endif
+        .ifne   WORDS_LINKRUNTI
+        .dw     LINK
+        
+        LINK =  .
+        .db     (COMPO+3)
+        .ascii  '$"|'
+        .endif
 STRQP:
-	CALL	DOSTR
-	RET
+        CALL    DOSTR
+        RET
 
-;	."|	( -- )
-;	Run time routine of ." .
-;	Output a compiled string.
+;       ."|     ( -- )
+;       Run time routine of ." .
+;       Output a compiled string.
 
-	.ifne	WORDS_LINKRUNTI
-	.dw	LINK
-	
-	LINK =	.
-	.db	(COMPO+3)
-	.ascii	'."|'
-	.endif
+        .ifne   WORDS_LINKRUNTI
+        .dw     LINK
+        
+        LINK =  .
+        .db     (COMPO+3)
+        .ascii  '."|'
+        .endif
 DOTQP:
-	CALL	DOSTR
-	CALL	COUNT
-	JRA	TYPES
+        CALL    DOSTR
+        CALL    COUNT
+        JRA     TYPES
 
         .ifeq   BAREBONES
-;	.R	( n +n -- )
-;	Display an integer in a field
-;	of n columns, right justified.
+;       .R      ( n +n -- )
+;       Display an integer in a field
+;       of n columns, right justified.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	".R"
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  ".R"
 DOTR:
-	CALL	TOR
-	CALL	STR
+        CALL    TOR
+        CALL    STR
         JRA     RFROMTYPES
         .endif
 
-;	U.R	( u +n -- )
-;	Display an unsigned integer
-;	in n column, right justified.
+;       U.R     ( u +n -- )
+;       Display an unsigned integer
+;       in n column, right justified.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"U.R"
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  "U.R"
 UDOTR:
-	CALL	TOR
-	CALLR   BDEDIGS
+        CALL    TOR
+        CALLR   BDEDIGS
 RFROMTYPES:        
-	CALL	RFROM
-	CALL	OVER
-	CALL	SUBB
-	CALL	SPACS
-	JRA	TYPES
+        CALL    RFROM
+        CALL    OVER
+        CALL    SUBB
+        CALL    SPACS
+        JRA     TYPES
 
-;	TYPE	( b u -- )
-;	Output u characters from b.
+;       TYPE    ( b u -- )
+;       Output u characters from b.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	4
-	.ascii	"TYPE"
+        .dw     LINK
+        
+        LINK =  .
+        .db     4
+        .ascii  "TYPE"
 TYPES:
-	CALL	TOR
-	JRA	TYPE2
-TYPE1:	CALL	DUPP
-	CALL	CAT
-	CALL	[USREMIT]
-	CALL	ONEP
-TYPE2:	
-        CALL	DONXT
-	.dw	TYPE1
-	JP	DROP
+        CALL    TOR
+        JRA     TYPE2
+TYPE1:  CALL    DUPP
+        CALL    CAT
+        CALL    [USREMIT]
+        CALL    ONEP
+TYPE2:  
+        CALL    DONXT
+        .dw     TYPE1
+        JP      DROP
 
-;	U.	( u -- )
-;	Display an unsigned integer
-;	in free format.
+;       U.      ( u -- )
+;       Display an unsigned integer
+;       in free format.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"U."
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "U."
 UDOT:
-	CALLR   BDEDIGS
-        CALL	SPACE
-	JRA	TYPES
+        CALLR   BDEDIGS
+        CALL    SPACE
+        JRA     TYPES
 
 ;       UDOT helper routine
 BDEDIGS:
-	CALL	BDIGS
-	CALL	DIGS
-	JP	EDIGS
+        CALL    BDIGS
+        CALL    DIGS
+        JP      EDIGS
 
-;	.	( w -- )
-;	Display an integer in free
-;	format, preceeded by a space.
+;       .       ( w -- )
+;       Display an integer in free
+;       format, preceeded by a space.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	1
-	.ascii	"."
+        .dw     LINK
+        
+        LINK =  .
+        .db     1
+        .ascii  "."
 DOT:
         LD      A,USRBASE+1
-	XOR     A,#10
+        XOR     A,#10
         JREQ    1$
-	JP	UDOT
-1$:	CALL	STR
-	CALL	SPACE
-	JRA	TYPES
+        JP      UDOT
+1$:     CALL    STR
+        CALL    SPACE
+        JRA     TYPES
 
-;	?	( a -- )
-;	Display contents in memory cell.
+;       ?       ( a -- )
+;       Display contents in memory cell.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	1
-	.ascii	"?"
+        .dw     LINK
+        
+        LINK =  .
+        .db     1
+        .ascii  "?"
 QUEST:
-	CALL	AT
-	JRA     DOT
+        CALL    AT
+        JRA     DOT
 
 
 ; Parsing
@@ -3075,244 +3075,244 @@ AFLAGS:
         TNZ     A
         RET
 
-;	parse	( b u c -- b u delta ; <string> )
-;	Scan string delimited by c.
-;	Return found string and its offset.
+;       parse   ( b u c -- b u delta ; <string> )
+;       Scan string delimited by c.
+;       Return found string and its offset.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	4
-	.ascii	"pars"
-	.endif
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     4
+        .ascii  "pars"
+        .endif
 PARS:
-        CALL	TEMP
-	CALL	STORE
-	CALL	OVER
-	CALL	TOR
+        CALL    TEMP
+        CALL    STORE
+        CALL    OVER
+        CALL    TOR
         JRNE    1$
-        CALL	OVER
-	CALL	RFROM
-	JP	SUBB
-1$:	CALL	ONEM
+        CALL    OVER
+        CALL    RFROM
+        JP      SUBB
+1$:     CALL    ONEM
         LD      A,USRTEMP+1     ; TEMP AT
         CP      A,#' '          ; BLANK EQUAL
         JRNE    PARS3
-	CALL	TOR
-PARS1:	
+        CALL    TOR
+PARS1:  
         LD      A,#' '
         LDW     Y,X
         LDW     Y,(Y)
         CP      A,(Y)
         JRMI    PARS2    
-	CALL	ONEP
-	CALL	DONXT
-	.dw	PARS1
+        CALL    ONEP
+        CALL    DONXT
+        .dw     PARS1
         ADDW    SP,#2                  ; RFROM DROP
-	CALL	ZERO
-	JP	DUPP
-PARS2:	CALL	RFROM
-PARS3:	CALL	OVER
-	CALL	SWAPP
-	CALL	TOR
-PARS4:	CALL	TEMP
-	CALL	AT
-	CALL	OVER
-	CALL	CAT
-	CALLR	SUBPARS         ; scan for delimiter
+        CALL    ZERO
+        JP      DUPP
+PARS2:  CALL    RFROM
+PARS3:  CALL    OVER
+        CALL    SWAPP
+        CALL    TOR
+PARS4:  CALL    TEMP
+        CALL    AT
+        CALL    OVER
+        CALL    CAT
+        CALLR   SUBPARS         ; scan for delimiter
         LD      A,USRTEMP+1     ; TEMP AT
         CP      A,#' '          ; BLANK EQUAL
         JRNE    PARS5
-	CALL	ZLESS
-PARS5:	CALL	QBRAN
-	.dw	PARS6
-	CALL	ONEP
-	CALL	DONXT
-	.dw	PARS4
-	CALL	DUPP
-	CALL	TOR
-	JRA	PARS7
+        CALL    ZLESS
+PARS5:  CALL    QBRAN
+        .dw     PARS6
+        CALL    ONEP
+        CALL    DONXT
+        .dw     PARS4
+        CALL    DUPP
+        CALL    TOR
+        JRA     PARS7
 PARS6:  ADDW    SP,#2                  ; RFROM DROP
-	CALL	DUPP
-	CALL	ONEP
-	CALL	TOR
-PARS7:	CALL	OVER
-	CALLR	SUBPARS
-	CALL	RFROM
-	CALL	RFROM
+        CALL    DUPP
+        CALL    ONEP
+        CALL    TOR
+PARS7:  CALL    OVER
+        CALLR   SUBPARS
+        CALL    RFROM
+        CALL    RFROM
 SUBPARS:
-	JP	SUBB
+        JP      SUBB
 
 
 
-;	PARSE	( c -- b u ; <string> )
-;	Scan input stream and return
-;	counted string delimited by c.
+;       PARSE   ( c -- b u ; <string> )
+;       Scan input stream and return
+;       counted string delimited by c.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"PARSE"
-	.endif
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "PARSE"
+        .endif
 PARSE:
-	CALL	TIB
-	ADDW    Y,USR_IN        ; current input buffer pointer
+        CALL    TIB
+        ADDW    Y,USR_IN        ; current input buffer pointer
         LDW     (X),Y
         LD      A,USRNTIB+1
         SUB     A,USR_IN+1      ; remaining count
         CALL    ASTOR
-	CALL    ROT
-	CALL	PARS
-	CALL	INN
-	JP	PSTOR
+        CALL    ROT
+        CALL    PARS
+        CALL    INN
+        JP      PSTOR
 
-;	.(	( -- )
-;	Output following string up to next ) .
+;       .(      ( -- )
+;       Output following string up to next ) .
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	(IMEDD+2)
-	.ascii	".("
+        .dw     LINK
+        
+        LINK =  .
+        .db     (IMEDD+2)
+        .ascii  ".("
 DOTPR:
-	CALL	DOLITC
-	.db	41	; ")"
-	CALL	PARSE
-	JP	TYPES
+        CALL    DOLITC
+        .db     41      ; ")"
+        CALL    PARSE
+        JP      TYPES
 
-;	(	( -- )
-;	Ignore following string up to next ).
-;	A comment.
+;       (       ( -- )
+;       Ignore following string up to next ).
+;       A comment.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	(IMEDD+1)
-	.ascii	"("
+        .dw     LINK
+        
+        LINK =  .
+        .db     (IMEDD+1)
+        .ascii  "("
 PAREN:
-	CALL	DOLITC
-	.db	41	; ")"
-	CALL	PARSE
-	JP	DDROP
+        CALL    DOLITC
+        .db     41      ; ")"
+        CALL    PARSE
+        JP      DDROP
 
-;	\	( -- )
-;	Ignore following text till
-;	end of line.
+;       \       ( -- )
+;       Ignore following text till
+;       end of line.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	(IMEDD+1)
-	.ascii	"\"
+        .dw     LINK
+        
+        LINK =  .
+        .db     (IMEDD+1)
+        .ascii  "\"
 BKSLA:
         LDW     Y,USRNTIB
         LDW     USR_IN,Y
         RET
 
-;	WORD	( c -- a ; <string> )
-;	Parse a word from input stream
-;	and copy it to code dictionary.
+;       WORD    ( c -- a ; <string> )
+;       Parse a word from input stream
+;       and copy it to code dictionary.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	4
-	.ascii	"WORD"
-	.endif
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     4
+        .ascii  "WORD"
+        .endif
 WORDD:
-	CALL	PARSE
-	CALL	HERE
-	CALL	CELLP
-	JP	PACKS
+        CALL    PARSE
+        CALL    HERE
+        CALL    CELLP
+        JP      PACKS
 
-;	TOKEN	( -- a ; <string> )
-;	Parse a word from input stream
-;	and copy it to name dictionary.
+;       TOKEN   ( -- a ; <string> )
+;       Parse a word from input stream
+;       and copy it to name dictionary.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"TOKEN"
-	.endif
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "TOKEN"
+        .endif
 TOKEN:
-	CALL	BLANK
-	JP	WORDD
+        CALL    BLANK
+        JP      WORDD
 
 ; Dictionary search
 
-;	NAME>	( na -- ca )
-;	Return a code address given
-;	a name address.
+;       NAME>   ( na -- ca )
+;       Return a code address given
+;       a name address.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"NAME>"
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "NAME>"
         .endif
 NAMET:
-	CALL	COUNT
-	CALL	DOLITC
-	.db	31
-	CALL	ANDD
-	JP	PLUS
+        CALL    COUNT
+        CALL    DOLITC
+        .db     31
+        CALL    ANDD
+        JP      PLUS
 
-;	SAME?	( a a u -- a a f \ -0+ )
-;	Compare u cells in two
-;	strings. Return 0 if identical.
+;       SAME?   ( a a u -- a a f \ -0+ )
+;       Compare u cells in two
+;       strings. Return 0 if identical.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"SAME?"
-	.endif
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "SAME?"
+        .endif
 SAMEQ:
-	CALL	ONEM
-	CALL	TOR
-	JRA	SAME2
-SAME1:	CALL	OVER
-	CALL	RAT
-	CALL	PLUS
-	CALL	CAT
+        CALL    ONEM
+        CALL    TOR
+        JRA     SAME2
+SAME1:  CALL    OVER
+        CALL    RAT
+        CALL    PLUS
+        CALL    CAT
         .ifne   CASEINSENSITIVE
         CALLR   CUPPER
         .endif
-	CALL	OVER
-	CALL	RAT
-	CALL	PLUS
-	CALL	CAT
+        CALL    OVER
+        CALL    RAT
+        CALL    PLUS
+        CALL    CAT
         .ifne   CASEINSENSITIVE
         CALLR   CUPPER
         .endif
-        CALL	SUBB
-	CALL	QDQBRAN
-	.dw	SAME2
-	CALL	RFROM
-	JP	DROP
-SAME2:	CALL	DONXT
-	.dw	SAME1
-	JP	ZERO
+        CALL    SUBB
+        CALL    QDQBRAN
+        .dw     SAME2
+        CALL    RFROM
+        JP      DROP
+SAME2:  CALL    DONXT
+        .dw     SAME1
+        JP      ZERO
 
         .ifne   CASEINSENSITIVE
-;	CUPPER	( c -- c )
+;       CUPPER  ( c -- c )
 ;       convert char to upper case
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
 
-	LINK =	.
-	.db	4
-	.ascii	"CUPPER"
-	.endif
+        LINK =  .
+        .db     4
+        .ascii  "CUPPER"
+        .endif
 CUPPER:
         LD      A,(1,X)
         CP      A,#('a')
@@ -3324,912 +3324,912 @@ CUPPER:
 1$:      RET
         .endif
 
-;	NAME?	( a -- ca na | a F )
-;	Search vocabularies for a string.
+;       NAME?   ( a -- ca na | a F )
+;       Search vocabularies for a string.
 
         .ifne   WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"NAME?"
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "NAME?"
         .endif
 NAMEQ:
-	CALL	CNTXT
-	JRA	FIND
+        CALL    CNTXT
+        JRA     FIND
 
-;	find	( a va -- ca na | a F )
-;	Search vocabulary for string.
-;	Return ca and na if succeeded.
+;       find    ( a va -- ca na | a F )
+;       Search vocabulary for string.
+;       Return ca and na if succeeded.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	4
-	.ascii	"find"
-	.endif
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     4
+        .ascii  "find"
+        .endif
 FIND:
-	CALL	SWAPP
-	CALL	DUPP
-	CALL	CAT
-	CALL	TEMP
-	CALL	STORE
-	CALL	DUPP
-	CALL	AT
-	CALL	TOR
-	CALL	CELLP
-	CALL	SWAPP
-FIND1:	CALL	AT
-	JREQ    FIND6
-	CALL	DUPP
-	CALL	AT
-	CALL	DOLIT
-	.dw	MASKK
-	CALL	ANDD
+        CALL    SWAPP
+        CALL    DUPP
+        CALL    CAT
+        CALL    TEMP
+        CALL    STORE
+        CALL    DUPP
+        CALL    AT
+        CALL    TOR
+        CALL    CELLP
+        CALL    SWAPP
+FIND1:  CALL    AT
+        JREQ    FIND6
+        CALL    DUPP
+        CALL    AT
+        CALL    DOLIT
+        .dw     MASKK
+        CALL    ANDD
         .ifne   CASEINSENSITIVE
         CALLR   CUPPER
         .endif
-        CALL	RAT
+        CALL    RAT
         .ifne   CASEINSENSITIVE
         CALLR   CUPPER
         .endif
-	CALL	XORR
-	CALL	QBRAN
-	.dw	FIND2
-	CALL	CELLP
+        CALL    XORR
+        CALL    QBRAN
+        .dw     FIND2
+        CALL    CELLP
         CALL    MONE                   ; 0xFFFF
-	JRA	FIND3
-FIND2:	CALL	CELLP
-	CALL	TEMP
-	CALL	AT
-	CALL	SAMEQ
-FIND3:	JRA	FIND4
-FIND6:	ADDW    SP,#2                  ; RFROM DROP
-	CALL	SWAPP
-	CALL	CELLM
-	JRA	SWAPFIND
-FIND4:	CALL	QBRAN
-	.dw	FIND5
-	CALL	CELLM
-	CALL	CELLM
-	JRA	FIND1
+        JRA     FIND3
+FIND2:  CALL    CELLP
+        CALL    TEMP
+        CALL    AT
+        CALL    SAMEQ
+FIND3:  JRA     FIND4
+FIND6:  ADDW    SP,#2                  ; RFROM DROP
+        CALL    SWAPP
+        CALL    CELLM
+        JRA     SWAPFIND
+FIND4:  CALL    QBRAN
+        .dw     FIND5
+        CALL    CELLM
+        CALL    CELLM
+        JRA     FIND1
 FIND5:  ADDW    SP,#2                  ; RFROM DROP
-	CALL	NIP
-	CALL	CELLM
-	CALL	DUPP
-	CALL	NAMET
+        CALL    NIP
+        CALL    CELLM
+        CALL    DUPP
+        CALL    NAMET
 SWAPFIND:
-	JP	SWAPP
+        JP      SWAPP
 
 ; Terminal response
 
-;	^H	( bot eot cur -- bot eot cur )
-;	Backup cursor by one character.
+;       ^H      ( bot eot cur -- bot eot cur )
+;       Backup cursor by one character.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"^h"
-	.endif
-BKSP:
-	CALL	TOR
-	CALL	OVER
-	CALL	RFROM
-	CALL	SWAPP
-	CALL	OVER
-	CALL	XORR
-	CALL	QBRAN
-	.dw	BACK1
-        .ifeq   HALF_DUPLEX
-	CALL	DOLITC
-	.db	BKSPP
-	CALL	[USREMIT]
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "^h"
         .endif
-	CALL	ONEM
-	CALL	BLANK
-	CALL	[USREMIT]
-	CALL	DOLITC
-	.db	BKSPP
-	JP	[USREMIT]
-BACK1:	RET
+BKSP:
+        CALL    TOR
+        CALL    OVER
+        CALL    RFROM
+        CALL    SWAPP
+        CALL    OVER
+        CALL    XORR
+        CALL    QBRAN
+        .dw     BACK1
+        .ifeq   HALF_DUPLEX
+        CALL    DOLITC
+        .db     BKSPP
+        CALL    [USREMIT]
+        .endif
+        CALL    ONEM
+        CALL    BLANK
+        CALL    [USREMIT]
+        CALL    DOLITC
+        .db     BKSPP
+        JP      [USREMIT]
+BACK1:  RET
 
-;	TAP	( bot eot cur c -- bot eot cur )
-;	Accept and echo key stroke
-;	and bump cursor.
+;       TAP     ( bot eot cur c -- bot eot cur )
+;       Accept and echo key stroke
+;       and bump cursor.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"TAP"
-	.endif
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  "TAP"
+        .endif
 TAP:
         .ifeq   HALF_DUPLEX
-	CALL	DUPP
-	CALL	[USREMIT]
+        CALL    DUPP
+        CALL    [USREMIT]
         .endif
-	CALL	OVER
-	CALL	CSTOR
-	JP	ONEP
+        CALL    OVER
+        CALL    CSTOR
+        JP      ONEP
 
-;	kTAP	( bot eot cur c -- bot eot cur )
-;	Process a key stroke,
-;	CR or backspace.
+;       kTAP    ( bot eot cur c -- bot eot cur )
+;       Process a key stroke,
+;       CR or backspace.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	4
-	.ascii	"kTAP"
-	.endif
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     4
+        .ascii  "kTAP"
+        .endif
 KTAP:
         LD      A,(1,X)
         CP     A,#CRR
         JREQ    KTAP2
 
-	;CALL    YFLAGS
+        ;CALL    YFLAGS
         ;CPW     Y,#BKSPP
         ;JREQ    KTAP1
-        CALL	DOLITC
-	.db	BKSPP
-	CALL	XORR
-	CALL	QBRAN
-	.dw	KTAP1
+        CALL    DOLITC
+        .db     BKSPP
+        CALL    XORR
+        CALL    QBRAN
+        .dw     KTAP1
 
-	CALL	BLANK
-	JP	TAP
-KTAP1:	JP	BKSP
-KTAP2:	CALL	DROP
-	CALL	NIP
-	JP	DUPP
+        CALL    BLANK
+        JP      TAP
+KTAP1:  JP      BKSP
+KTAP2:  CALL    DROP
+        CALL    NIP
+        JP      DUPP
 
-;	accept	( b u -- b u )
-;	Accept characters to input
-;	buffer. Return with actual count.
+;       accept  ( b u -- b u )
+;       Accept characters to input
+;       buffer. Return with actual count.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	6
-	.ascii	"ACCEPT"
-	.endif
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     6
+        .ascii  "ACCEPT"
+        .endif
 ACCEP:
-	CALL	OVER
-	CALL	PLUS
-	CALL	OVER
-ACCP1:	CALL	DDUP
-	CALL	XORR
-	CALL	QBRAN
-	.dw	ACCP4
-	CALL	KEY
-	CALL	DUPP
-	CALL	BLANK
-	CALL	DOLITC
-	.db	127
-	CALL	WITHI
-	CALL	QBRAN
-	.dw	ACCP2
-	CALL	TAP
-	JRA	ACCP3
-ACCP2:	CALL	KTAP
-ACCP3:	JRA	ACCP1
-ACCP4:	CALL	DROP
-	CALL	OVER
-	JP	SUBB
+        CALL    OVER
+        CALL    PLUS
+        CALL    OVER
+ACCP1:  CALL    DDUP
+        CALL    XORR
+        CALL    QBRAN
+        .dw     ACCP4
+        CALL    KEY
+        CALL    DUPP
+        CALL    BLANK
+        CALL    DOLITC
+        .db     127
+        CALL    WITHI
+        CALL    QBRAN
+        .dw     ACCP2
+        CALL    TAP
+        JRA     ACCP3
+ACCP2:  CALL    KTAP
+ACCP3:  JRA     ACCP1
+ACCP4:  CALL    DROP
+        CALL    OVER
+        JP      SUBB
 
-;	QUERY	( -- )
-;	Accept input stream to
-;	terminal input buffer.
+;       QUERY   ( -- )
+;       Accept input stream to
+;       terminal input buffer.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"QUERY"
-	.endif
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "QUERY"
+        .endif
 QUERY:
-	CALL	TIB
-	CALL	DOLITC
-	.db	TIBLENGTH                      
-	CALL	ACCEP                         
-	CALL	NTIB
-	CALL	STORE
+        CALL    TIB
+        CALL    DOLITC
+        .db     TIBLENGTH                      
+        CALL    ACCEP                         
+        CALL    NTIB
+        CALL    STORE
         CLR     USR_IN
         CLR     USR_IN+1
         JP      DROP
 
-;	ABORT	( -- )
-;	Reset data stack and
-;	jump to QUIT.
+;       ABORT   ( -- )
+;       Reset data stack and
+;       jump to QUIT.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"ABORT"
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "ABORT"
         .endif
 ABORT:
-	CALL	PRESE
-	JP	QUIT
+        CALL    PRESE
+        JP      QUIT
 
-;	abort"	( f -- )
-;	Run time routine of ABORT".
-;	Abort with a message.
+;       abort"  ( f -- )
+;       Run time routine of ABORT".
+;       Abort with a message.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	(COMPO+5)
-	.ascii	"aborq"
-	.endif
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     (COMPO+5)
+        .ascii  "aborq"
+        .endif
 ABORQ:
-	CALL	QBRAN
-	.dw	ABOR2	;text flag
-	CALL	DOSTR
-ABOR1:	CALL	SPACE
-	CALL	COUNT
-	CALL	TYPES
-	CALL	DOLITC
-	.db	63 ; "?"
-	CALL	[USREMIT]
-	CALL	CR
-	JP	ABORT	;pass error string
-ABOR2:	CALL	DOSTR
-	JP	DROP
+        CALL    QBRAN
+        .dw     ABOR2   ;text flag
+        CALL    DOSTR
+ABOR1:  CALL    SPACE
+        CALL    COUNT
+        CALL    TYPES
+        CALL    DOLITC
+        .db     63 ; "?"
+        CALL    [USREMIT]
+        CALL    CR
+        JP      ABORT   ;pass error string
+ABOR2:  CALL    DOSTR
+        JP      DROP
 
 ; The text interpreter
 
-;	$INTERPRET	( a -- )
-;	Interpret a word. If failed,
-;	try to convert it to an integer.
+;       $INTERPRET      ( a -- )
+;       Interpret a word. If failed,
+;       try to convert it to an integer.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	10
-	.ascii	"$INTERPRET"
-	.endif
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     10
+        .ascii  "$INTERPRET"
+        .endif
 INTER:
-	CALL	NAMEQ
-	CALL	QDQBRAN         ; ?defined
-	.dw	INTE1
-	CALL	AT
-	CALL	DOLIT
-	.dw	0x04000	        ; COMPO*256
-	CALL	ANDD	        ; ?compile only lexicon bits
-	CALL	ABORQ
-	.db	13
-	.ascii	" compile only"
-	JP	EXECU
-INTE1:	CALL	NUMBQ	        ; convert a number
-	CALL	QBRAN
-	.dw	ABOR1
-	RET
+        CALL    NAMEQ
+        CALL    QDQBRAN         ; ?defined
+        .dw     INTE1
+        CALL    AT
+        CALL    DOLIT
+        .dw     0x04000         ; COMPO*256
+        CALL    ANDD            ; ?compile only lexicon bits
+        CALL    ABORQ
+        .db     13
+        .ascii  " compile only"
+        JP      EXECU
+INTE1:  CALL    NUMBQ           ; convert a number
+        CALL    QBRAN
+        .dw     ABOR1
+        RET
 
-;	[	( -- )
-;	Start	text interpreter.
+;       [       ( -- )
+;       Start   text interpreter.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	(IMEDD+1)
-	.ascii	"["
+        .dw     LINK
+        
+        LINK =  .
+        .db     (IMEDD+1)
+        .ascii  "["
 LBRAC:
         LDW     Y,#INTER
         LDW     USREVAL,Y
         RET
 
-;	Test if 'EVAL points to $INTERPRETER
+;       Test if 'EVAL points to $INTERPRETER
 COMPIQ:
         LDW     Y,USREVAL
-	CPW     Y,#INTER
+        CPW     Y,#INTER
         RET
 
-;	.OK	( -- )
-;	Display 'ok' while interpreting.
+;       .OK     ( -- )
+;       Display 'ok' while interpreting.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	".OK"
-	.endif
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  ".OK"
+        .endif
 DOTOK:
-	CALLR	COMPIQ
-	JRNE    DOTO1
+        CALLR   COMPIQ
+        JRNE    DOTO1
 
         .ifne   BAREBONES
 HI:
         .endif
-	CALL	DOTQP
-	.db	3
-	.ascii	" ok"
-DOTO1:	JP	CR
+        CALL    DOTQP
+        .db     3
+        .ascii  " ok"
+DOTO1:  JP      CR
 
-;	?STACK	( -- )
-;	Abort if stack underflows.
+;       ?STACK  ( -- )
+;       Abort if stack underflows.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	6
-	.ascii	"?STACK"
-	.endif
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     6
+        .ascii  "?STACK"
+        .endif
 QSTAC:
-	CALL	DEPTH
-	CALL	ZLESS	;check only for underflow
-	CALL	ABORQ
-	.db	11
-	.ascii	" underflow "
-	RET
+        CALL    DEPTH
+        CALL    ZLESS   ;check only for underflow
+        CALL    ABORQ
+        .db     11
+        .ascii  " underflow "
+        RET
 
-;	EVAL	( -- )
-;	Interpret input stream.
+;       EVAL    ( -- )
+;       Interpret input stream.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	4
-	.ascii	"EVAL"
-	.endif
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     4
+        .ascii  "EVAL"
+        .endif
 EVAL:
-EVAL1:	CALL	TOKEN
+EVAL1:  CALL    TOKEN
         LD      A,(Y)
         JREQ    EVAL2
-	CALL    [USREVAL]
-        CALLR	QSTAC	        ; evaluate input, check stack
-	JRA     EVAL1
-EVAL2:	
+        CALL    [USREVAL]
+        CALLR   QSTAC           ; evaluate input, check stack
+        JRA     EVAL1
+EVAL2:  
         INCW    X
         INCW    X
-	JP	[USRPROMPT]     ; DOTOK or PACE
+        JP      [USRPROMPT]     ; DOTOK or PACE
 
-;	PRESET	( -- )
-;	Reset data stack pointer and
-;	terminal input buffer.
+;       PRESET  ( -- )
+;       Reset data stack pointer and
+;       terminal input buffer.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	6
-	.ascii	"PRESET"
-	.endif
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     6
+        .ascii  "PRESET"
+        .endif
 PRESE:
         CLR     USRNTIB
         CLR     USRNTIB+1
-	LDW	X,#SPP          ; initialize data stack
+        LDW     X,#SPP          ; initialize data stack
         RET
 
-;	QUIT	( -- )
-;	Reset return stack pointer
-;	and start text interpreter.
+;       QUIT    ( -- )
+;       Reset return stack pointer
+;       and start text interpreter.
 
-	.ifne	WORDS_LINKINTER
-	.dw	LINK
-	
-	LINK =	.
-	.db	4
-	.ascii	"QUIT"
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     4
+        .ascii  "QUIT"
         .endif
 QUIT:
-	CALL	DOLIT
-	.dw	RPP
-	CALL	RPSTO	;reset return stack pointer
-QUIT1:	CALL	LBRAC	;start interpretation
-QUIT2:	CALL	QUERY	;get input
-        CALLR	EVAL
-	JRA	QUIT2	;continue till error
+        CALL    DOLIT
+        .dw     RPP
+        CALL    RPSTO   ;reset return stack pointer
+QUIT1:  CALL    LBRAC   ;start interpretation
+QUIT2:  CALL    QUERY   ;get input
+        CALLR   EVAL
+        JRA     QUIT2   ;continue till error
 
 ; The compiler
 
-;	'	( -- ca )
-;	Search vocabularies for
-;	next word in input stream.
+;       '       ( -- ca )
+;       Search vocabularies for
+;       next word in input stream.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	1
-	.ascii	"'"
+        .dw     LINK
+        
+        LINK =  .
+        .db     1
+        .ascii  "'"
 TICK:
-	CALL	TOKEN
-	CALL	NAMEQ	;?defined
-	CALL	QBRAN
-	.dw	ABOR1
-	RET	;yes, push code address
+        CALL    TOKEN
+        CALL    NAMEQ   ;?defined
+        CALL    QBRAN
+        .dw     ABOR1
+        RET     ;yes, push code address
 
-;	Allocate n bytes to code DICTIONARY.
+;       Allocate n bytes to code DICTIONARY.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"ALLOT"
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "ALLOT"
 ALLOT:
-	CALL	CPP
-	JP	PSTOR
+        CALL    CPP
+        JP      PSTOR
 
-;	,	( w -- )
-;	Compile an integer into
-;	code dictionary.
+;       ,       ( w -- )
+;       Compile an integer into
+;       code dictionary.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	1
-	.ascii	","
+        .dw     LINK
+        
+        LINK =  .
+        .db     1
+        .ascii  ","
 COMMA:
-	CALL	HERECP                    ; directly write to CP
-	CALL	DUPP
-	CALL	CELLP	;cell boundary
-	CALL	CPP
-	CALL	STORE
-	JP	STORE
+        CALL    HERECP                    ; directly write to CP
+        CALL    DUPP
+        CALL    CELLP   ;cell boundary
+        CALL    CPP
+        CALL    STORE
+        JP      STORE
 
-;	C,	( c -- )
-;	Compile a byte into code dictionary.
+;       C,      ( c -- )
+;       Compile a byte into code dictionary.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	"C,"
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  "C,"
 CCOMMA:
-	CALL	HERECP                    ; directly write to CP
-	CALL	DUPP
-	CALL	ONEP
-	CALL	CPP
-	CALL	STORE
-	JP	CSTOR
+        CALL    HERECP                    ; directly write to CP
+        CALL    DUPP
+        CALL    ONEP
+        CALL    CPP
+        CALL    STORE
+        JP      CSTOR
 
-;	[COMPILE]	( -- ; <string> )
-;	Compile next immediate
-;	word into code dictionary.
+;       [COMPILE]       ( -- ; <string> )
+;       Compile next immediate
+;       word into code dictionary.
 
         .ifeq   BAREBONES
-	.dw	LINK
-	
-	LINK =	.
-	.db	(IMEDD+9)
-	.ascii	"[COMPILE]"
+        .dw     LINK
+        
+        LINK =  .
+        .db     (IMEDD+9)
+        .ascii  "[COMPILE]"
         .endif
 BCOMP:
-	CALL	TICK
-	JP	JSRC
+        CALL    TICK
+        JP      JSRC
 
-;	COMPILE ( -- )
-;	Compile next jsr in
-;	colon list to code dictionary.
+;       COMPILE ( -- )
+;       Compile next jsr in
+;       colon list to code dictionary.
 
         .ifeq   BAREBONES
-	.dw	LINK
-	
-	LINK =	.
-	.db	(COMPO+7)
-	.ascii	"COMPILE"
-	.endif
+        .dw     LINK
+        
+        LINK =  .
+        .db     (COMPO+7)
+        .ascii  "COMPILE"
+        .endif
 COMPI:
-	CALL	RFROM
-	CALL	ONEP
-	CALL	DUPP
-	CALL	AT
-	CALL	JSRC	        ; compile subroutine
-	CALL	CELLP
-	CALL	TOR       ; this was a JP - a serious bug that took a while to find
+        CALL    RFROM
+        CALL    ONEP
+        CALL    DUPP
+        CALL    AT
+        CALL    JSRC            ; compile subroutine
+        CALL    CELLP
+        CALL    TOR       ; this was a JP - a serious bug that took a while to find
         RET
 
-;	LITERAL ( w -- )
-;	Compile tos to dictionary
-;	as an integer literal.
+;       LITERAL ( w -- )
+;       Compile tos to dictionary
+;       as an integer literal.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	(IMEDD+7)
-	.ascii	"LITERAL"
+        .dw     LINK
+        
+        LINK =  .
+        .db     (IMEDD+7)
+        .ascii  "LITERAL"
 LITER:
-	CALL	COMPI
-	CALL	DOLIT
-	JP	COMMA
+        CALL    COMPI
+        CALL    DOLIT
+        JP      COMMA
 
-;	$,"	( -- )
-;	Compile a literal string
-;	up to next " .
+;       $,"     ( -- )
+;       Compile a literal string
+;       up to next " .
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	'$,"'
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  '$,"'
 STRCQ:
-	CALL	DOLITC
-	.db	34	; "
-	CALL	PARSE
-	CALL	HERECP
-	CALL	PACKS	;string to code dictionary
+        CALL    DOLITC
+        .db     34      ; "
+        CALL    PARSE
+        CALL    HERECP
+        CALL    PACKS   ;string to code dictionary
 CNTPCPPSTORE:
-	CALL	COUNT
-	CALL	PLUS	;calculate aligned end of string
-	CALL	CPP
-	JP	STORE
+        CALL    COUNT
+        CALL    PLUS    ;calculate aligned end of string
+        CALL    CPP
+        JP      STORE
 
 ; Structures
 
-;	FOR	( -- a )
-;	Start a FOR-NEXT loop
-;	structure in a colon definition.
+;       FOR     ( -- a )
+;       Start a FOR-NEXT loop
+;       structure in a colon definition.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	(IMEDD+3)
-	.ascii	"FOR"
+        .dw     LINK
+        
+        LINK =  .
+        .db     (IMEDD+3)
+        .ascii  "FOR"
 FOR:
-	CALL	COMPI
-	CALL	TOR
-	JP	HERE
+        CALL    COMPI
+        CALL    TOR
+        JP      HERE
 
-;	NEXT	( a -- )
-;	Terminate a FOR-NEXT loop.
+;       NEXT    ( a -- )
+;       Terminate a FOR-NEXT loop.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	(IMEDD+4)
-	.ascii	"NEXT"
+        .dw     LINK
+        
+        LINK =  .
+        .db     (IMEDD+4)
+        .ascii  "NEXT"
 NEXT:
-	CALL	COMPI
-	CALL	DONXT
-	JP	COMMA
+        CALL    COMPI
+        CALL    DONXT
+        JP      COMMA
 
         .ifne   HAS_DOLOOP 
-;	DO	( -- a )
-;	Start a DO LOOP loop
-;	structure in a colon definition.
+;       DO      ( -- a )
+;       Start a DO LOOP loop
+;       structure in a colon definition.
 
-        .dw	LINK
+        .dw     LINK
 
-        LINK =	.
-        .db	(IMEDD+2)
-        .ascii	"DO"
+        LINK =  .
+        .db     (IMEDD+2)
+        .ascii  "DO"
 DOO:
-	CALL	COMPI
-	CALL	SWAPP
-	CALL	COMPI
-	CALL	TOR
-	JRA	FOR
+        CALL    COMPI
+        CALL    SWAPP
+        CALL    COMPI
+        CALL    TOR
+        JRA     FOR
 
-;	LOOP	( a -- )
-;	Terminate a DO-LOOP loop.
+;       LOOP    ( a -- )
+;       Terminate a DO-LOOP loop.
 
-	.dw	LINK
+        .dw     LINK
 
-	LINK =	.
-	.db	(IMEDD+4)
-	.ascii	"LOOP"
+        LINK =  .
+        .db     (IMEDD+4)
+        .ascii  "LOOP"
 LOOP:
-        CALL	COMPI
+        CALL    COMPI
         CALL    ONE
         JRA     PLOOP
 
-;	+LOOP	( a +n -- )
-;	Terminate a DO - +LOOP loop.
+;       +LOOP   ( a +n -- )
+;       Terminate a DO - +LOOP loop.
 
-	.dw	LINK
+        .dw     LINK
 
-	LINK =	.
-	.db	(IMEDD+5)
-	.ascii	"+LOOP"
+        LINK =  .
+        .db     (IMEDD+5)
+        .ascii  "+LOOP"
 PLOOP:        
-        CALL	COMPI
-        CALL	DOPLOOP
-        JP	COMMA
+        CALL    COMPI
+        CALL    DOPLOOP
+        JP      COMMA
         .endif
 
-;	BEGIN	( -- a )
-;	Start an infinite or
-;	indefinite loop structure.
+;       BEGIN   ( -- a )
+;       Start an infinite or
+;       indefinite loop structure.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	(IMEDD+5)
-	.ascii	"BEGIN"
-BEGIN:
-	JP	HERE
-
-;	UNTIL	( a -- )
-;	Terminate a BEGIN-UNTIL
-;	indefinite loop structure.
-
-	.dw	LINK
-	
-	LINK =	.
-	.db	(IMEDD+5)
-	.ascii	"UNTIL"
-UNTIL:
-	CALL	COMPI
-	CALL	QBRAN
-	JP	COMMA
-
-;	AGAIN	( a -- )
-;	Terminate a BEGIN-AGAIN
-;	infinite loop structure.
-
-	.dw	LINK
-	
-	LINK =	.
-	.db	(IMEDD+5)
-	.ascii	"AGAIN"
-AGAIN:
-	CALL    CCOMMALIT
-        .db     BRAN_OPC
-        JP	COMMA	
+        .dw     LINK
         
-;	IF	( -- A )
-;	Begin a conditional branch.
+        LINK =  .
+        .db     (IMEDD+5)
+        .ascii  "BEGIN"
+BEGIN:
+        JP      HERE
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	(IMEDD+2)
-	.ascii	"IF"
+;       UNTIL   ( a -- )
+;       Terminate a BEGIN-UNTIL
+;       indefinite loop structure.
+
+        .dw     LINK
+        
+        LINK =  .
+        .db     (IMEDD+5)
+        .ascii  "UNTIL"
+UNTIL:
+        CALL    COMPI
+        CALL    QBRAN
+        JP      COMMA
+
+;       AGAIN   ( a -- )
+;       Terminate a BEGIN-AGAIN
+;       infinite loop structure.
+
+        .dw     LINK
+        
+        LINK =  .
+        .db     (IMEDD+5)
+        .ascii  "AGAIN"
+AGAIN:
+        CALL    CCOMMALIT
+        .db     BRAN_OPC
+        JP      COMMA   
+        
+;       IF      ( -- A )
+;       Begin a conditional branch.
+
+        .dw     LINK
+        
+        LINK =  .
+        .db     (IMEDD+2)
+        .ascii  "IF"
 IFF:
-	CALL	COMPI
-	CALL	QBRAN
-	CALL	HERE
-	CALL	ZERO
-	JP	COMMA
+        CALL    COMPI
+        CALL    QBRAN
+        CALL    HERE
+        CALL    ZERO
+        JP      COMMA
 
-;	THEN	( A -- )
-;	Terminate a conditional branch structure.
+;       THEN    ( A -- )
+;       Terminate a conditional branch structure.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	(IMEDD+4)
-	.ascii	"THEN"
+        .dw     LINK
+        
+        LINK =  .
+        .db     (IMEDD+4)
+        .ascii  "THEN"
 THENN:
-	CALL	HERE
-	CALLR	SWAPLOC
-	JP	STORE
+        CALL    HERE
+        CALLR   SWAPLOC
+        JP      STORE
 
-;	ELSE	( A -- A )
-;	Start the false clause in an IF-ELSE-THEN structure.
+;       ELSE    ( A -- A )
+;       Start the false clause in an IF-ELSE-THEN structure.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	(IMEDD+4)
-	.ascii	"ELSE"
+        .dw     LINK
+        
+        LINK =  .
+        .db     (IMEDD+4)
+        .ascii  "ELSE"
 ELSEE:
-	CALLR   AHEAD
-	CALLR	SWAPLOC
-	CALL	HERE
-	CALLR	SWAPLOC
-	JP	STORE
+        CALLR   AHEAD
+        CALLR   SWAPLOC
+        CALL    HERE
+        CALLR   SWAPLOC
+        JP      STORE
 
-;	AHEAD	( -- A )
-;	Compile a forward branch instruction.
+;       AHEAD   ( -- A )
+;       Compile a forward branch instruction.
 
-	.ifeq	BAREBONES
-	.dw	LINK
-	
-	LINK =	.
-	.db	(IMEDD+5)
-	.ascii	"AHEAD"
+        .ifeq   BAREBONES
+        .dw     LINK
+        
+        LINK =  .
+        .db     (IMEDD+5)
+        .ascii  "AHEAD"
         .endif
 AHEAD:
-	CALL    CCOMMALIT
+        CALL    CCOMMALIT
         .db     BRAN_OPC
-	CALL	HERE
-	CALL	ZERO
-        JP	COMMA
+        CALL    HERE
+        CALL    ZERO
+        JP      COMMA
 
 
 
-;	WHILE	( a -- A a )
-;	Conditional branch out of a BEGIN-WHILE-REPEAT loop.
+;       WHILE   ( a -- A a )
+;       Conditional branch out of a BEGIN-WHILE-REPEAT loop.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	(IMEDD+5)
-	.ascii	"WHILE"
+        .dw     LINK
+        
+        LINK =  .
+        .db     (IMEDD+5)
+        .ascii  "WHILE"
 WHILE:
         CALL    IFF
 SWAPLOC:
-	JP	SWAPP
+        JP      SWAPP
 
-;	REPEAT	( A a -- )
-;	Terminate a BEGIN-WHILE-REPEAT indefinite loop.
+;       REPEAT  ( A a -- )
+;       Terminate a BEGIN-WHILE-REPEAT indefinite loop.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	(IMEDD+6)
-	.ascii	"REPEAT"
+        .dw     LINK
+        
+        LINK =  .
+        .db     (IMEDD+6)
+        .ascii  "REPEAT"
 REPEA:
-	CALLR   AGAIN
-	CALL	HERE
-	CALLR	SWAPLOC
-	JP	STORE
+        CALLR   AGAIN
+        CALL    HERE
+        CALLR   SWAPLOC
+        JP      STORE
 
-;	AFT	( a -- a A )
-;	Jump to THEN in a FOR-AFT-THEN-NEXT loop the first time through.
+;       AFT     ( a -- a A )
+;       Jump to THEN in a FOR-AFT-THEN-NEXT loop the first time through.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	(IMEDD+3)
-	.ascii	"AFT"
+        .dw     LINK
+        
+        LINK =  .
+        .db     (IMEDD+3)
+        .ascii  "AFT"
 AFT:
-	CALL	DROP
-	CALL	AHEAD
-	CALL	HERE
-	JRA	SWAPLOC
+        CALL    DROP
+        CALL    AHEAD
+        CALL    HERE
+        JRA     SWAPLOC
 
-;	ABORT"	( -- ; <string> )
-;	Conditional abort with an error message.
+;       ABORT"  ( -- ; <string> )
+;       Conditional abort with an error message.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	(IMEDD+6)
-	.ascii	"ABORT"
-	.db	'"
+        .dw     LINK
+        
+        LINK =  .
+        .db     (IMEDD+6)
+        .ascii  "ABORT"
+        .db     '"
 ABRTQ:
-	CALL	COMPI
-	CALL	ABORQ
-	JRA	STRCQLOC
+        CALL    COMPI
+        CALL    ABORQ
+        JRA     STRCQLOC
 
-;	$"	( -- ; <string> )
-;	Compile an inline string literal.
+;       $"      ( -- ; <string> )
+;       Compile an inline string literal.
 
-	.ifne	WORDS_LINKCHAR
-	.dw	LINK
-	
-	LINK =	.
-	.db	(IMEDD+2)
-	.ascii	'$"'
+        .ifne   WORDS_LINKCHAR
+        .dw     LINK
+        
+        LINK =  .
+        .db     (IMEDD+2)
+        .ascii  '$"'
         .endif
 STRQ:
-	CALL	COMPI
-	CALL	STRQP
+        CALL    COMPI
+        CALL    STRQP
 STRCQLOC:        
-	JP	STRCQ
+        JP      STRCQ
 
-;	."	( -- ; <string> )
-;	Compile an inline string literal to be typed out at run time.
+;       ."      ( -- ; <string> )
+;       Compile an inline string literal to be typed out at run time.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	(IMEDD+2)
-	.ascii	'."'
+        .dw     LINK
+        
+        LINK =  .
+        .db     (IMEDD+2)
+        .ascii  '."'
 DOTQ:
-	CALL	COMPI
-	CALL	DOTQP
-	JRA	STRCQLOC
+        CALL    COMPI
+        CALL    DOTQP
+        JRA     STRCQLOC
 
 ; Name compiler
 
-;	?UNIQUE ( a -- a )
-;	Display a warning message
-;	if word already exists.
+;       ?UNIQUE ( a -- a )
+;       Display a warning message
+;       if word already exists.
 
-	.ifne	WORDS_LINKCOMP
-	.dw	LINK
-	
-	LINK =	.
-	.db	7
-	.ascii	"?UNIQUE"
-	.endif
+        .ifne   WORDS_LINKCOMP
+        .dw     LINK
+        
+        LINK =  .
+        .db     7
+        .ascii  "?UNIQUE"
+        .endif
 UNIQU:
-	CALL	DUPP
-	CALL	NAMEQ	;?name exists
-	CALL	QBRAN
-	.dw	UNIQ1
-	CALL	DOTQP	;redef are OK
-	.db	7
-	.ascii	" reDef "	
-	CALL	OVER
-	CALL	COUNT
-	CALL	TYPES	;just in case
-UNIQ1:	JP	DROP
+        CALL    DUPP
+        CALL    NAMEQ   ;?name exists
+        CALL    QBRAN
+        .dw     UNIQ1
+        CALL    DOTQP   ;redef are OK
+        .db     7
+        .ascii  " reDef "       
+        CALL    OVER
+        CALL    COUNT
+        CALL    TYPES   ;just in case
+UNIQ1:  JP      DROP
 
-;	$,n	( na -- )
-;	Build a new dictionary name
-;	using string at na.
+;       $,n     ( na -- )
+;       Build a new dictionary name
+;       using string at na.
 
-	.ifne	WORDS_LINKCOMP
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"$,n"
-	.endif
+        .ifne   WORDS_LINKCOMP
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  "$,n"
+        .endif
 SNAME:
-	CALL	DUPP
-	CALL	CAT	;?null input
-	CALL	QBRAN
-	.dw	PNAM1
-	CALL	UNIQU	;?redefinition
-	CALL	DUPP
+        CALL    DUPP
+        CALL    CAT     ;?null input
+        CALL    QBRAN
+        .dw     PNAM1
+        CALL    UNIQU   ;?redefinition
+        CALL    DUPP
         CALL    CNTPCPPSTORE
-        CALL	DUPP
-	CALL	LAST
-	CALL	STORE	;save na for vocabulary link
-	CALL	CELLM	;link address
-	CALL	CNTXT
-	CALL	AT
-	CALL	SWAPP
-	CALL	STORE
-	RET	;save code pointer
-PNAM1:	CALL	STRQP
-	.db	5
-	.ascii	" name" ;null input
-	JP	ABOR1
+        CALL    DUPP
+        CALL    LAST
+        CALL    STORE   ;save na for vocabulary link
+        CALL    CELLM   ;link address
+        CALL    CNTXT
+        CALL    AT
+        CALL    SWAPP
+        CALL    STORE
+        RET     ;save code pointer
+PNAM1:  CALL    STRQP
+        .db     5
+        .ascii  " name" ;null input
+        JP      ABOR1
 
 ; FORTH compiler
 
-;	$COMPILE	( a -- )
-;	Compile next word to
-;	dictionary as a token or literal.
+;       $COMPILE        ( a -- )
+;       Compile next word to
+;       dictionary as a token or literal.
 
-	.ifne	WORDS_LINKCOMP
-	.dw	LINK
-	
-	LINK =	.
-	.db	8
-	.ascii	"$COMPILE"
-	.endif
+        .ifne   WORDS_LINKCOMP
+        .dw     LINK
+        
+        LINK =  .
+        .db     8
+        .ascii  "$COMPILE"
+        .endif
 SCOMP:
-	CALL	NAMEQ
-	CALL	QDQBRAN	        ; ?defined
-	.dw	SCOM2
-	CALL    YFLAGS
+        CALL    NAMEQ
+        CALL    QDQBRAN         ; ?defined
+        .dw     SCOM2
+        CALL    YFLAGS
         LDW     Y,(Y)
 
         LD      A,YH
         AND     A,#IMEDD
         JREQ    SCOM1
 
-        JP	EXECU
-SCOM1:	JP	JSRC
-SCOM2:	CALL	NUMBQ	;try to convert to number
-	CALL	QBRAN
-	.dw	ABOR1
-	JP	LITER
+        JP      EXECU
+SCOM1:  JP      JSRC
+SCOM2:  CALL    NUMBQ   ;try to convert to number
+        CALL    QBRAN
+        .dw     ABOR1
+        JP      LITER
 
-;	OVERT	( -- )
-;	Link a new word into vocabulary.
+;       OVERT   ( -- )
+;       Link a new word into vocabulary.
 
-	.ifne	WORDS_LINKCOMP
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"OVERT"
-	.endif
+        .ifne   WORDS_LINKCOMP
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "OVERT"
+        .endif
 OVERT:
         .ifne   HAS_CPNVM
-	CALL	LAST
-	CALL	AT
+        CALL    LAST
+        CALL    AT
         
         LD      A,YH
         AND     A,#0xF8         ; does USRLAST point to NVM?
@@ -4258,100 +4258,100 @@ OVERT:
         RET 
         .endif
 
-;	;	( -- )
-;	Terminate a colon definition.
+;       ;       ( -- )
+;       Terminate a colon definition.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	(IMEDD+COMPO+1)
-	.ascii	";"
+        .dw     LINK
+        
+        LINK =  .
+        .db     (IMEDD+COMPO+1)
+        .ascii  ";"
 SEMIS:
         CALL    CCOMMALIT
         .db     EXIT_OPC
-	CALL	LBRAC
-	JP	OVERT
+        CALL    LBRAC
+        JP      OVERT
 
-;	]	( -- )
-;	Start compiling words in
-;	input stream.
+;       ]       ( -- )
+;       Start compiling words in
+;       input stream.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	1
-	.ascii	"]"
+        .dw     LINK
+        
+        LINK =  .
+        .db     1
+        .ascii  "]"
 RBRAC:
         LDW     Y,#SCOMP
         LDW     USREVAL,Y
         RET
 
-;	CALL,	( ca -- )
-;	Compile a subroutine call.
+;       CALL,   ( ca -- )
+;       Compile a subroutine call.
 
         .ifeq   BAREBONES
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"CALL,"
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "CALL,"
         .endif
 JSRC:
-	CALL	CCOMMALIT
-	.db	CALL_OPC	 ; opcode CALL
-	JP	COMMA
+        CALL    CCOMMALIT
+        .db     CALL_OPC         ; opcode CALL
+        JP      COMMA
 
-;	:	( -- ; <string> )
-;	Start a new colon definition
-;	using next word as its name.
+;       :       ( -- ; <string> )
+;       Start a new colon definition
+;       using next word as its name.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	1
-	.ascii	":"
+        .dw     LINK
+        
+        LINK =  .
+        .db     1
+        .ascii  ":"
 COLON:
-	CALL	RBRAC           ; do "]" first to set HERE to compile state
-	CALL	TOKEN
-	JP	SNAME
+        CALL    RBRAC           ; do "]" first to set HERE to compile state
+        CALL    TOKEN
+        JP      SNAME
 
 
-;	IMMEDIATE	( -- )
-;	Make last compiled word
-;	an immediate word.
+;       IMMEDIATE       ( -- )
+;       Make last compiled word
+;       an immediate word.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	9
-	.ascii	"IMMEDIATE"
+        .dw     LINK
+        
+        LINK =  .
+        .db     9
+        .ascii  "IMMEDIATE"
 IMMED:
         LD      A,[USRLAST]
         OR      A,#IMEDD
         LD      [USRLAST],A
         RET
 
-	;CALL	DOLIT
-	;.dw	0x08000	;	IMEDD*256
-	;CALL	LAST
-	;CALL	AT
-	;CALL	AT
-	;CALL	ORR
-	;CALL	LAST
-	;CALL	AT
-	;JP	STORE
+        ;CALL   DOLIT
+        ;.dw    0x08000 ;       IMEDD*256
+        ;CALL   LAST
+        ;CALL   AT
+        ;CALL   AT
+        ;CALL   ORR
+        ;CALL   LAST
+        ;CALL   AT
+        ;JP     STORE
 
 ; Defining words
 
-;	CREATE	( -- ; <string> )
-;	Compile a new array
-;	without allocating space.
+;       CREATE  ( -- ; <string> )
+;       Compile a new array
+;       without allocating space.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	6
-	.ascii	"CREATE"
+        .dw     LINK
+        
+        LINK =  .
+        .db     6
+        .ascii  "CREATE"
 CREAT:
         .ifne   HAS_CPNVM
         CALL    TEVAL
@@ -4360,8 +4360,8 @@ CREAT:
         CALL    RBRAC           ; "]" make HERE return CP even in INTERPRETER mode
         .endif
 
-	CALL	TOKEN
-	CALL	SNAME
+        CALL    TOKEN
+        CALL    SNAME
         CALL    OVERT
 
         .ifne   HAS_CPNVM
@@ -4370,21 +4370,21 @@ CREAT:
         CALL    STORE           ; from here on ',', 'C,', '$,"' and 'ALLOT' write to CP
         .endif
 
-	CALL	COMPI
-	CALL	DOVAR
-	RET
+        CALL    COMPI
+        CALL    DOVAR
+        RET
 
 
         .ifne   HAS_DOES
 
-;	DOES> 	( -- )
-;	Define action of defining words
+;       DOES>   ( -- )
+;       Define action of defining words
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	(IMEDD+5)
-	.ascii	"DOES>"
+        .dw     LINK
+        
+        LINK =  .
+        .db     (IMEDD+5)
+        .ascii  "DOES>"
 DOESS:
         CALL    COMPI
         CALL    DODOES          ; 3 CALL dodoes>
@@ -4399,15 +4399,15 @@ DOESS:
         .db     EXIT_OPC        ; 1 RET (EXIT)
         RET 
 
-;	dodoes	( -- )
-;	link action to words created by defining words
+;       dodoes  ( -- )
+;       link action to words created by defining words
 
-	.ifne	WORDS_LINKRUNTI
-	.dw	LINK
-	
-	LINK =	.
-	.db	6
-	.ascii	"dodoes"
+        .ifne   WORDS_LINKRUNTI
+        .dw     LINK
+        
+        LINK =  .
+        .db     6
+        .ascii  "dodoes"
         .endif
 DODOES:
         CALL    LAST                   ; ( link field of current word )
@@ -4432,83 +4432,83 @@ DODOES:
         RET
         .endif 
 
-;	VARIABLE	( -- ; <string> )
-;	Compile a new variable
-;	initialized to 0.
+;       VARIABLE        ( -- ; <string> )
+;       Compile a new variable
+;       initialized to 0.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	8
-	.ascii	"VARIABLE"
+        .dw     LINK
+        
+        LINK =  .
+        .db     8
+        .ascii  "VARIABLE"
 VARIA:
-	CALL	CREAT
-	CALL	ZERO
-	JP	COMMA
+        CALL    CREAT
+        CALL    ZERO
+        JP      COMMA
 
 ; Tools
 
-;	_TYPE	( b u -- )
-;	Display a string. Filter
-;	non-printing characters.
+;       _TYPE   ( b u -- )
+;       Display a string. Filter
+;       non-printing characters.
 
-	.ifne	WORDS_LINKMISC
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"_TYPE"
+        .ifne   WORDS_LINKMISC
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "_TYPE"
         .endif
 UTYPE:
-	CALL	TOR	;start count down loop
-	JRA	UTYP2	;skip first pass
-UTYP1:	CALL	DUPP
-	CALL	CAT
-	CALL	TCHAR
-	CALL	[USREMIT]	;display only printable
-	CALL	ONEP	;increment address
-UTYP2:	CALL	DONXT
-	.dw	UTYP1	;loop till done
-	JP	DROP
+        CALL    TOR     ;start count down loop
+        JRA     UTYP2   ;skip first pass
+UTYP1:  CALL    DUPP
+        CALL    CAT
+        CALL    TCHAR
+        CALL    [USREMIT]       ;display only printable
+        CALL    ONEP    ;increment address
+UTYP2:  CALL    DONXT
+        .dw     UTYP1   ;loop till done
+        JP      DROP
 
-;	dm+	( a u -- a )
-;	Dump u bytes from ,
-;	leaving a+u on	stack.
+;       dm+     ( a u -- a )
+;       Dump u bytes from ,
+;       leaving a+u on  stack.
 
-	.ifne	WORDS_LINKMISC
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"dm+"
-	.endif
+        .ifne   WORDS_LINKMISC
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  "dm+"
+        .endif
 DUMPP:
-	CALL	OVER
-	CALL	DOLITC
-	.db	4
-	CALL	UDOTR	;display address
-	CALL	SPACE
-	CALL	TOR	;start count down loop
-	JRA	PDUM2	;skip first pass
-PDUM1:	CALL	DUPP
-	CALL	CAT
-	CALL	DOLITC
-	.db	3
-	CALL	UDOTR	;display numeric data
-	CALL	ONEP	;increment address
-PDUM2:	CALL	DONXT
-	.dw	PDUM1	;loop till done
-	RET
+        CALL    OVER
+        CALL    DOLITC
+        .db     4
+        CALL    UDOTR   ;display address
+        CALL    SPACE
+        CALL    TOR     ;start count down loop
+        JRA     PDUM2   ;skip first pass
+PDUM1:  CALL    DUPP
+        CALL    CAT
+        CALL    DOLITC
+        .db     3
+        CALL    UDOTR   ;display numeric data
+        CALL    ONEP    ;increment address
+PDUM2:  CALL    DONXT
+        .dw     PDUM1   ;loop till done
+        RET
 
-;	DUMP	( a u -- )
-;	Dump u bytes from a,
-;	in a formatted manner.
+;       DUMP    ( a u -- )
+;       Dump u bytes from a,
+;       in a formatted manner.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	4
-	.ascii	"DUMP"
+        .dw     LINK
+        
+        LINK =  .
+        .db     4
+        .ascii  "DUMP"
 DUMP:
         PUSH    USRBASE+1       ; BASE AT TOR save radix
         LD      A,#16                  ; DOLITC 16 
@@ -4516,168 +4516,168 @@ DUMP:
         CALL    YFLAGS
         DIV     Y,A             ; / change count to lines
         PUSHW   Y               ; start count down loop
-DUMP1:	CALL	CR
-	CALL	DOLITC
-	.db	16
-	CALL	DDUP
-	CALLR	DUMPP	;display numeric
-	CALL	ROT
-	CALL	ROT
-	CALL	SPACE
-	CALL	SPACE
-	CALLR	UTYPE	;display printable characters
-	CALL	DONXT
-	.dw	DUMP1	;loop till done
-DUMP3:	
+DUMP1:  CALL    CR
+        CALL    DOLITC
+        .db     16
+        CALL    DDUP
+        CALLR   DUMPP   ;display numeric
+        CALL    ROT
+        CALL    ROT
+        CALL    SPACE
+        CALL    SPACE
+        CALLR   UTYPE   ;display printable characters
+        CALL    DONXT
+        .dw     DUMP1   ;loop till done
+DUMP3:  
         POP     USRBASE+1       ; restore radix
         JP      DROP
 
-;	.S	( ... -- ... )
-;	Display	contents of stack.
+;       .S      ( ... -- ... )
+;       Display contents of stack.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	2
-	.ascii	".S"
+        .dw     LINK
+        
+        LINK =  .
+        .db     2
+        .ascii  ".S"
 DOTS:
-	CALL	CR
-	CALL	DEPTH	;stack depth
-	CALL	TOR	;start count down loop
-	JRA	DOTS2	;skip first pass
-DOTS1:	CALL	RAT
-	CALL    ONEP
-	CALL	PICK
-	CALL	DOT	;index stack, display contents
-DOTS2:	CALL	DONXT
-	.dw	DOTS1	;loop till done
-	CALL	DOTQP
-	.db	5
-	.ascii	" <sp "
-	RET
+        CALL    CR
+        CALL    DEPTH   ;stack depth
+        CALL    TOR     ;start count down loop
+        JRA     DOTS2   ;skip first pass
+DOTS1:  CALL    RAT
+        CALL    ONEP
+        CALL    PICK
+        CALL    DOT     ;index stack, display contents
+DOTS2:  CALL    DONXT
+        .dw     DOTS1   ;loop till done
+        CALL    DOTQP
+        .db     5
+        .ascii  " <sp "
+        RET
 
-;	.ID	( na -- )
-;	Display	name at address.
+;       .ID     ( na -- )
+;       Display name at address.
 
-	.ifne	WORDS_LINKMISC
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	".ID"
+        .ifne   WORDS_LINKMISC
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  ".ID"
         .endif
 DOTID:
-	CALL	QDQBRAN	;if zero no name
-	.dw	DOTI1
-	CALL	COUNT
-	CALL	DOLITC
-	.db	0x01F
-	CALL	ANDD	;mask lexicon bits
-	JP	UTYPE
-DOTI1:	CALL	DOTQP
-	.db	9
-	.ascii	" (noName)"
-	RET
+        CALL    QDQBRAN ;if zero no name
+        .dw     DOTI1
+        CALL    COUNT
+        CALL    DOLITC
+        .db     0x01F
+        CALL    ANDD    ;mask lexicon bits
+        JP      UTYPE
+DOTI1:  CALL    DOTQP
+        .db     9
+        .ascii  " (noName)"
+        RET
 
         .ifne   WORDS_EXTRADEBUG
-;	>NAME	( ca -- na | F )
-;	Convert code address
-;	to a name address.
+;       >NAME   ( ca -- na | F )
+;       Convert code address
+;       to a name address.
 
-	.ifne	WORDS_LINKMISC
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	">NAME"
+        .ifne   WORDS_LINKMISC
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  ">NAME"
         .endif
 TNAME:
-	CALL	CNTXT	;vocabulary link
-TNAM2:	CALL	AT
-	CALL	DUPP	;?last word in a vocabulary
-	CALL	QBRAN
-	.dw	TNAM4
-	CALL	DDUP
-	CALL	NAMET
-	CALL	XORR	;compare
-	CALL	QBRAN
-	.dw	TNAM3
-	CALL	CELLM	;continue with next word
-	JRA	TNAM2
-TNAM3:	JP	NIP
-TNAM4:	CALL	DDROP
-	JP	ZERO
+        CALL    CNTXT   ;vocabulary link
+TNAM2:  CALL    AT
+        CALL    DUPP    ;?last word in a vocabulary
+        CALL    QBRAN
+        .dw     TNAM4
+        CALL    DDUP
+        CALL    NAMET
+        CALL    XORR    ;compare
+        CALL    QBRAN
+        .dw     TNAM3
+        CALL    CELLM   ;continue with next word
+        JRA     TNAM2
+TNAM3:  JP      NIP
+TNAM4:  CALL    DDROP
+        JP      ZERO
 
-;	SEE	( -- ; <string> )
-;	A simple decompiler.
-;	Updated for byte machines.
+;       SEE     ( -- ; <string> )
+;       A simple decompiler.
+;       Updated for byte machines.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	3
-	.ascii	"SEE"
+        .dw     LINK
+        
+        LINK =  .
+        .db     3
+        .ascii  "SEE"
 SEE:
-	CALL	TICK	;starting address
-	CALL	CR
-	CALL	ONEM
+        CALL    TICK    ;starting address
+        CALL    CR
+        CALL    ONEM
 SEE1:
-	CALL	CELLP   ;Fixed tg9541
-	CALL	DUPP
-	CALL	AT
-	CALL	DUPP	;?does it contain a zero
-	CALL	QBRAN
-	.dw	SEE2
-	CALL	TNAME	;?is it a name
-SEE2:	CALL	QDQBRAN	;name address or zero
-	;CALL	QBRAN
-	.dw	SEE3
-	CALL	SPACE
-	CALL	DOTID	;display name
-	CALL	ONEP
-	JRA	SEE4
-SEE3:	CALL	DUPP
-	CALL	CAT
-	CALL	UDOT	;display number
-SEE4:	CALL	NUFQ	;user control
-	CALL	QBRAN
-	.dw	SEE1
-	JP	DROP
+        CALL    CELLP   ;Fixed tg9541
+        CALL    DUPP
+        CALL    AT
+        CALL    DUPP    ;?does it contain a zero
+        CALL    QBRAN
+        .dw     SEE2
+        CALL    TNAME   ;?is it a name
+SEE2:   CALL    QDQBRAN ;name address or zero
+        ;CALL   QBRAN
+        .dw     SEE3
+        CALL    SPACE
+        CALL    DOTID   ;display name
+        CALL    ONEP
+        JRA     SEE4
+SEE3:   CALL    DUPP
+        CALL    CAT
+        CALL    UDOT    ;display number
+SEE4:   CALL    NUFQ    ;user control
+        CALL    QBRAN
+        .dw     SEE1
+        JP      DROP
         .endif
 
-;	WORDS	( -- )
-;	Display names in vocabulary.
+;       WORDS   ( -- )
+;       Display names in vocabulary.
 
-	.dw	LINK
-	
-	LINK =	.
-	.db	5
-	.ascii	"WORDS"
+        .dw     LINK
+        
+        LINK =  .
+        .db     5
+        .ascii  "WORDS"
 WORDS:
-	CALL	CR
-	CALL	CNTXT	        ; only in context
-WORS1:	CALL	AT              ; @ sets Z and N
+        CALL    CR
+        CALL    CNTXT           ; only in context
+WORS1:  CALL    AT              ; @ sets Z and N
         JREQ    1$              ; ?at end of list
-	CALL	DUPP
-	CALL	SPACE
-	CALL	DOTID	        ; display a name
-	CALL	CELLM
+        CALL    DUPP
+        CALL    SPACE
+        CALL    DOTID           ; display a name
+        CALL    CELLM
         JRA     WORS1
-1$:	JP	DROP
+1$:     JP      DROP
 
-	
-	
+        
+        
 ;===============================================================
 
         .ifne   WORDS_EXTRAMEM
-;	BITSR ( t a u -- )
-;	Set/reset bit #u (0..7) in the byte at address a to bool t
+;       BITSR ( t a u -- )
+;       Set/reset bit #u (0..7) in the byte at address a to bool t
 ;       Note: creates/executes BSER/BRES + RET code on Data Stack
-	.dw	LINK
-	
-        LINK =	.
-	.db	(5)
-	.ascii	"BITSR"
+        .dw     LINK
+        
+        LINK =  .
+        .db     (5)
+        .ascii  "BITSR"
 BRSS:
         LD      A,#0x72         ; Opcode BSET/BRES 
         LD      (X),A
@@ -4698,11 +4698,11 @@ BRSS:
 
 ;       2C!  ( n b -- )
 ;       Store word C-wise to 16 bit HW registers "MSB first" 
-	.dw	LINK
-	
-        LINK =	.
-	.db	(3)
-	.ascii	"2C!"
+        .dw     LINK
+        
+        LINK =  .
+        .db     (3)
+        .ascii  "2C!"
 DCSTOR:        
         CALL    DDUP
         LD      A,(2,X)
@@ -4714,11 +4714,11 @@ DCSTOR:
 
 ;       2C@  ( a -- n )
 ;       Fetch word C-wise from 16 bit HW config. registers "MSB first" 
-	.dw	LINK
+        .dw     LINK
         
         LINK =  .
-	.db	(3)
-	.ascii	"2C@"
+        .db     (3)
+        .ascii  "2C@"
 DCAT:        
         CALL    DOXCODE
         LDW     Y,X
@@ -4734,12 +4734,12 @@ DCAT:
 
         .ifne   HAS_KEYS
 
-;	?KEYB	( -- c T | F )  ( TOS STM8: -- Y,Z,N )
-;	Return keyboard char and true, or false if no key pressed.
-	.dw	LINK
-	LINK =	.
-	.db	5
-	.ascii	"?KEYB"
+;       ?KEYB   ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
+;       Return keyboard char and true, or false if no key pressed.
+        .dw     LINK
+        LINK =  .
+        .db     5
+        .ascii  "?KEYB"
 QKEYB:
         CALLR   BKEY
         CALL    AFLAGS
@@ -4763,11 +4763,11 @@ NOKEYB:
 
 ;       BKEY  ( -- n )     ( TOS STM8: -- A,Z,N )
 ;       Read board key state as a bitfield
-	.dw	LINK
+        .dw     LINK
         
         LINK =  .
-	.db	(4)
-	.ascii	"BKEY"
+        .db     (4)
+        .ascii  "BKEY"
 BKEY:   
         .ifne   BOARD_W1209
         ; Keys "set" (1), "+" (2), and "-" (4) on PC.3:5
@@ -4812,11 +4812,11 @@ PAT7SAZ:
 
 ;       E7S  ( c -- )
 ;       Convert char to 7-seg LED pattern, and insert it in display buffer
-	.dw	LINK
+        .dw     LINK
         
         LINK =  .
-	.db	(3)
-	.ascii	"E7S"
+        .db     (3)
+        .ascii  "E7S"
 EMIT7S: 
         LD      A,(1,X)         ; c to A
 
@@ -4844,7 +4844,7 @@ EMIT7S:
         JRA     E7LOOKA 
 E7ALPH:
         ; 'A'--'z'
-        AND	A,#0x5F         ; convert to uppercase
+        AND     A,#0x5F         ; convert to uppercase
         SUB     A,#'A'
         LD      (1,X),A
         CALL    DOLIT
@@ -4866,11 +4866,11 @@ E7END:
 
 ;       P7S  ( c -- )
 ;       Insert 7-seg pattern at left side of LED display buffer, rotate buffer left
-	.dw	LINK
+        .dw     LINK
         
         LINK =  .
-	.db	(3)
-	.ascii	"P7S"
+        .db     (3)
+        .ascii  "P7S"
 PUT7S:       
         LDW     Y,X             ; w to AX
         LD      A,(1,Y)
@@ -4889,7 +4889,7 @@ PUT7SA:
 ;       Multiplexed 7-seg LED display
 LED_MPX:        
         LD      A,TICKCNTL
-        AND	A,#3        
+        AND     A,#3        
         .ifne   BOARD_W1209        
         BSET    PD_ODR,#4       ; clear digit outputs .321
         BSET    PB_ODR,#5
@@ -4947,11 +4947,11 @@ LED_MPX:
         .ifne   HAS_OUTPUTS
 ;       OUT!  ( c -- )
 ;       Put c to board outputs, storing a copy in OUTPUTS  
-	.dw	LINK
+        .dw     LINK
         
         LINK =  .
-	.db	(4)
-	.ascii	"OUT!"
+        .db     (4)
+        .ascii  "OUT!"
 OUTSTOR:
         LD      A,(1,X)
         LD      OUTPUTS,A
@@ -4985,11 +4985,11 @@ OUTSTOR:
         .ifne   HAS_ADC
 ;       ADC!  ( c -- )
 ;       Init ADC, select channel for conversion 
-	.dw	LINK
+        .dw     LINK
         
         LINK =  .
-	.db	(4)
-	.ascii	"ADC!"
+        .db     (4)
+        .ascii  "ADC!"
         ADC_CSR = 0x5400
         ADC_CR1 = 0x5401
         ADC_CR2 = 0x5402
@@ -5005,11 +5005,11 @@ ADCSTOR:
 
 ;       ADC@  ( -- w )
 ;       start ADC conversion, read result
-	.dw	LINK
+        .dw     LINK
         
         LINK =  .
-	.db	(4)
-	.ascii	"ADC@"
+        .db     (4)
+        .ascii  "ADC@"
 
         ADC_DRH = 0x5404
 ADCAT:
@@ -5028,11 +5028,11 @@ ADCAT:
         .ifne   WORDS_EXTRAEEPR
 ;       ULOCK  ( -- )
 ;       Unlock EEPROM (STM8S)
-	.dw	LINK
+        .dw     LINK
         
         LINK =  .
-	.db	(5)
-	.ascii	"ULOCK"
+        .db     (5)
+        .ascii  "ULOCK"
 ULOCK:
         MOV     FLASH_DUKR,#0xAE
         MOV     FLASH_DUKR,#0x56
@@ -5042,11 +5042,11 @@ ULOCK:
 
 ;       LOCK  ( -- )
 ;       Lock EEPROM (STM8S)
-	.dw	LINK
+        .dw     LINK
         
         LINK =  .
-	.db	(4)
-	.ascii	"LOCK"
+        .db     (4)
+        .ascii  "LOCK"
 LOCK:
         BRES    FLASH_IAPSR,#3
         RET
@@ -5057,11 +5057,11 @@ LOCK:
 ;       ULOCKF  ( -- )
 ;       Unlock Flash (STM8S)
         .ifne   WORDS_EXTRAEEPR
-	.dw	LINK
+        .dw     LINK
         
         LINK =  .
-	.db	(6)
-	.ascii	"ULOCKF"
+        .db     (6)
+        .ascii  "ULOCKF"
         .endif
 UNLOCK_FLASH:
         MOV     FLASH_PUKR,#0x56
@@ -5073,11 +5073,11 @@ UNLOCK_FLASH:
 ;       LOCKF  ( -- )
 ;       Lock Flash (STM8S)
         .ifne   WORDS_EXTRAEEPR
-	.dw	LINK
+        .dw     LINK
         
         LINK =  .
-	.db	(5)
-	.ascii	"LOCKF"
+        .db     (5)
+        .ascii  "LOCKF"
         .endif
 LOCK_FLASH:
         BRES    FLASH_IAPSR,#1
@@ -5086,9 +5086,9 @@ LOCK_FLASH:
 
         .ifne  HAS_CPNVM
 
-;	Test if CP points doesn't point to RAM
+;       Test if CP points doesn't point to RAM
 NVMQ:
-	LD      A,USRCP
+        LD      A,USRCP
         AND     A,#0xF8
         RET
 
@@ -5104,11 +5104,11 @@ SWAPCP:
 
 ;       NVM  ( -- )
 ;       Compile to NVM (enter mode NVM)
-	.dw	LINK
+        .dw     LINK
         
         LINK =  .
-	.db	(3)
-	.ascii	"NVM"
+        .db     (3)
+        .ascii  "NVM"
 NVMM:        
         CALLR    NVMQ
         JRNE    1$           ; state entry action?
@@ -5123,11 +5123,11 @@ NVMM:
 
 ;       RAM  ( -- )
 ;       Compile to RAM (enter mode RAM)
-	.dw	LINK
+        .dw     LINK
         
         LINK =  .
-	.db	(3)
-	.ascii	"RAM"
+        .db     (3)
+        .ascii  "RAM"
 RAMM:        
         CALLR   NVMQ
         JREQ    1$
@@ -5147,21 +5147,21 @@ RAMM:
 
 ;       RESET  ( -- )
 ;       Reset Flash dictionary and 'BOOT to defaults and restart
-	.dw	LINK
+        .dw     LINK
         
         LINK =  .
-	.db	(5)
-	.ascii	"RESET"
+        .db     (5)
+        .ascii  "RESET"
 RESETT:        
-	CALLR   UNLOCK_FLASH
-        CALL	DOLIT
-	.dw     UDEFAULTS	
-	CALL	DOLIT
+        CALLR   UNLOCK_FLASH
+        CALL    DOLIT
+        .dw     UDEFAULTS       
+        CALL    DOLIT
         .dw     UBOOT
-	CALL	DOLITC
-	.db	(ULAST-UBOOT)
-	CALL	CMOVE	        ; initialize user area
-	CALLR   LOCK_FLASH
+        CALL    DOLITC
+        .db     (ULAST-UBOOT)
+        CALL    CMOVE           ; initialize user area
+        CALLR   LOCK_FLASH
         JP      COLD
  
         .endif
@@ -5175,10 +5175,10 @@ RESETT:
 
          
 ;===============================================================
-	LASTN	=	LINK	;last name defined
+        LASTN   =       LINK    ;last name defined
 
- 	.area CODE
-	.area INITIALIZER
+        .area CODE
+        .area INITIALIZER
         END_SDCC_FLASH = .
-	.area CABS (ABS)
+        .area CABS (ABS)
 
