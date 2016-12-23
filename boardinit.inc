@@ -30,7 +30,6 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
         MOV     PD_CR1,#0b00111110 
         .endif
        
-        .endif 
         .ifne   BOARD_C0135
         ; "Nano PLC Relay board"
         MOV     PB_DDR,#0x10
