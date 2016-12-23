@@ -3,7 +3,7 @@
 PORTINIT:
         .ifne   STM8S_DISCOVERY
         ; STM8S Discovery init GPIO & clock
-	MOV	PD_DDR,#0x01	; LED, SWIM
+  MOV	PD_DDR,#0x01	; LED, SWIM
 	MOV	PD_CR1,#0x03	; pullups
 	MOV	PD_CR2,#0x01	; speed
 	BSET    CLK_SWCR,#1     ; enable external clcok
@@ -30,7 +30,10 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
         MOV     PD_CR1,#0b00111110 
         .endif
        
-       
+      OV     ITC_SPR4,#0xF7  ; Interrupt prio. low for TIM2 (Int13)
+        MOV     TIM2_CR1,#0x01  ; enable TIM2
+        MOV     TIM2_IER,#0x01  ; enable TIM2 interrupt
+        .endif 
         .ifne   BOARD_C0135
         ; "Nano PLC Relay board"
         MOV     PB_DDR,#0x10

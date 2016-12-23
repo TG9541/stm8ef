@@ -99,8 +99,36 @@
 ;--------------------------------------------------------
 	.area CODE
 
+        ;************************************
+	;******  1) General Constants  ******
+        ;************************************
+
+	VER     =     2         ; Version major release version
+	EXT     =     2         ; Version minor extension
+
+	TRUEE   =     0xFFFF    ; true flag
+	COMPO   =     0x40      ; lexicon compile only bit
+	IMEDD   =     0x80      ; lexicon immediate bit
+	MASKK   =     0x1F7F    ; lexicon bit mask
+
+        TIBLENGTH =   80        ; size of TIB (starting at TIBOFFS)
+        PADOFFS =     80        ; offset text buffer above dictionary 
+	CELLL   =      2        ; size of a cell
+	BASEE   =     10        ; default radix
+        BKSPP   =      8        ; backspace
+	LF      =     10        ; line feed
+        PACE    =     11        ; pace character for host handshake (ASCII VT) 
+	CRR     =     13        ; carriage return
+	ERR     =     27        ; error escape
+	TIC     =     39        ; tick
+
+        EXIT_OPC =    0x81      ; RET opcode
+	BRAN_OPC =    0xCC      ; JP opcode
+	CALL_OPC =    0xCD      ; CALL opcode
+
+
         ;**********************************
-        ;******  1) Global defaults  ******
+        ;******  2) Global defaults  ******
         ;**********************************
         ; Note: add defaults for new features here but 
         ;       configure them in globconf.inc  
@@ -139,7 +167,7 @@
         WORDS_LINKINTER = 0     ; Link interpreter words: ACCEPT QUERY TAP kTAP hi 'BOOT tmp >IN 'TIB #TIB eval CONTEXT pars PARSE NUMBER? DIGIT? WORD TOKEN NAME> SAME? find ABORT aborq $INTERPRET INTER? .OK ?STACK EVAL PRESET QUIT $COMPILE
         WORDS_LINKCOMP  = 0     ; Link compiler words: cp last OVERT $"| ."| $,n 
         WORDS_LINKRUNTI = 0     ; Link runtime words: doLit do$ doVAR donxt dodoes ?branch branch 
-        WORDS_LINKCHAR =  0     ; Link char out words: DIGIT <# # #S SIGN #> str hld HOLD 
+        WORDS_LINKCHAR =  0     ; Link char out words: DIGIT <# # #S SIGN #> str hld HOLD PACK$ 
         WORDS_LINKMISC =  0     ; Link composing words of SEE DUMP WORDS: >CHAR _TYPE dm+ .ID >NAME  
 
         WORDS_EXTRASTACK = 0    ; Link/include stack core words: rp@ rp! sp! sp@ DEPTH 
@@ -150,7 +178,7 @@
         WORDS_HWREG      = 0    ; Peripheral Register words
 
         ;*************************************************
-        ;******  2) Hardware/board type selection  ******
+        ;******  3) Hardware/board type selection  ******
         ;*************************************************
 
         ; sdasstm8 doesn't accept constants on the command line. 
@@ -160,7 +188,7 @@
         .include "globconf.inc"
 
         ;**********************************************
-        ;******  3) Device dependent features  ******
+        ;******  4) Device dependent features  ******
         ;**********************************************
         ; Define memory location for device dependent features here
 
@@ -194,7 +222,7 @@
 
 
         ;************************************************
-        ;******  4) Board Driver Memory  ******
+        ;******  5) Board Driver Memory  ******
         ;************************************************
         ; Memory for board related code, e.g. interrupt routines
          
@@ -240,7 +268,7 @@
         .endif
 
         ;**************************************************
-	;******  5) General User & System Variables  ******
+	;******  6) General User & System Variables  ******
         ;**************************************************
 
         UPP   = UPPLOC          ; offset user area
@@ -253,7 +281,6 @@
         
         ; Core variables (same order as 'BOOT initializer block)
 
-        ; TODO: refactor into BGPP, UPP and UPP0 
         USRRAMINIT = USREMIT
 
         USREMIT  =   UPP+0      ; excection vector of EMIT
@@ -275,40 +302,11 @@
         USRTEMP =    UPP+28     ; temporary storage for interpreter (VARIABLE tmp)
         YTEMP	=    UPP+30	; extra working register for core words
 
-        ;************************************
-	;******  6) General Constants  ******
-        ;************************************
-
-	VER     =     2         ; Version major release version
-	EXT     =     2         ; Version minor extension
-
-	TRUEE   =     0xFFFF    ; true flag
-	COMPO   =     0x40      ; lexicon compile only bit
-	IMEDD   =     0x80      ; lexicon immediate bit
-	MASKK   =     0x1F7F    ; lexicon bit mask
-
-        TIBLENGTH =   80        ; size of TIB (starting at TIBOFFS)
-        PADOFFS =     80        ; offset text buffer above dictionary 
-	CELLL   =      2        ; size of a cell
-	BASEE   =     10        ; default radix
-        BKSPP   =      8        ; backspace
-	LF      =     10        ; line feed
-        PACE    =     11        ; pace character for host handshake (ASCII VT) 
-	CRR     =     13        ; carriage return
-	ERR     =     27        ; error escape
-	TIC     =     39        ; tick
-
-        EXIT_OPC =    0x81      ; RET opcode
-	BRAN_OPC =    0xCC      ; JP opcode
-	CALL_OPC =    0xCD      ; CALL opcode
-
-
         ;***********************
 	;******  7) Code  ******
         ;***********************
 
-
-; Main entry points and COLD start data
+;       Main entry points and COLD start data
 
 ;	COLD	( -- )
 ;	The hilevel cold start sequence.
@@ -568,63 +566,6 @@ _TIM2_UO_IRQHandler:
         .endif
 
 
-        .ifne   HAS_LED7SEG
-;       Multiplexed 7-seg LED display
-LED_MPX:        
-        LD      A,TICKCNTL
-        AND	A,#3        
-        .ifne   BOARD_W1209        
-        BSET    PD_ODR,#4       ; clear digit outputs .321
-        BSET    PB_ODR,#5
-        BSET    PB_ODR,#4
-
-        JRNE    1$
-        LD      A,LED7MSB+1
-        BRES    PD_ODR,#4       ; digit .3.. 
-        JRA     3$
-
-1$:     CP      A,#1
-        JRNE    2$
-        LD      A,LED7LSB
-        BRES    PB_ODR,#5       ; digit ..2.
-        JRA     3$
-
-2$:     CP      A,#2
-        JRNE    4$  
-        LD      A,LED7LSB+1 
-        BRES    PB_ODR,#4       ; digit ...1
-        ; fall through
-         
-3$:
-        ; W1209 7S LED display row
-        ; bit 76453210 input (parameter A)
-        ;  PA .....FB.
-        ;  PC CG...... 
-        ;  PD ..A.DPE.
-        RRC     A
-        BCCM    PD_ODR,#5       ; A
-        RRC     A
-        BCCM    PA_ODR,#2       ; B
-        RRC     A
-        BCCM    PC_ODR,#7       ; C
-        RRC     A
-        BCCM    PD_ODR,#3       ; D
-        RRC     A
-        BCCM    PD_ODR,#1       ; E
-        RRC     A
-        BCCM    PA_ODR,#1       ; F
-        RRC     A
-        BCCM    PC_ODR,#6       ; G
-        RRC     A
-        BCCM    PD_ODR,#2       ; P
-4$:        
-        .else
-        ; implement board LED port mapping 
-        .endif
-        RET
-
-        .endif
-
 ; ==============================================
 
 ;	?KEY	( -- c T | F )  ( TOS STM8: -- Y,Z,N )
@@ -756,6 +697,7 @@ CCOMMALIT:
 	CALL    CCOMMA
 	JRA     CSKIPRET     
 
+
         .ifne   HAS_DOLOOP 
         ;	(+loop)	( +n -- )
         ;	Add n to index R@ and test for lower than limit (R-CELL)@.
@@ -812,6 +754,7 @@ DONXT:
 	JP      (2,Y)
 NEX1:   LDW     (3,SP),Y
         JRA     BRAN
+
 
 ;       QDQBRAN     ( n -- n )
 ;       QDUP QBRANCH phrase
@@ -1088,7 +1031,7 @@ TOR:
         .endif
 SPAT:
 	LDW     Y,X
-        JRA      YSTOR
+        JRA     YSTOR
 
 
 ;	DUP	( w -- w w )    ( TOS STM8: -- Y,Z,N )
@@ -1182,7 +1125,7 @@ ANDD:
 	AND	A,(2,X)
         JRA     LDADROP
 
-;	OR	( w w -- w )    ( TOS STM8: -- Y,Z,N )
+;	OR	( w w -- w )    ( TOS STM8: -- immediate Y,Z,N )
 ;	Bitwise inclusive OR.
 
 	.dw	LINK
@@ -1652,9 +1595,9 @@ ROT:
 	RET
         .else
         CALL    TOR
-        CALL    SWAPP
+        CALLR   1$
         CALL    RFROM
-        JP      SWAPP
+1$:     JP      SWAPP
         .endif
 
 ;	2DUP	( w1 w2 -- w1 w2 w1 w2 )
@@ -2539,7 +2482,7 @@ DIGIT:
 ;	EXTRACT ( n base -- n c )   ( TOS STM8: -- Y,Z,N )
 ;	Extract least significant digit from n.
 
-	.ifne	WORDS_LINKCHAR
+	.ifne	WORDS_LINKINTER
 	.dw	LINK
 	
 	LINK =	.
@@ -3121,6 +3064,7 @@ YFLAGS:
         LDW     Y,(Y)
         RET
 
+
 ;       AFLAGS  ( c -- )       ( TOS STM8: -- A,Z,N ) 
 ;       Consume TOS to CPU A and Flags
 
@@ -3130,13 +3074,6 @@ AFLAGS:
         INCW    X
         TNZ     A
         RET
-
-;       parse helper routine
-TEMPATBLEQ:        
-	CALL	TEMP
-	CALL	AT
-	CALL	BLANK
-	JP	EQUAL
 
 ;	parse	( b u c -- b u delta ; <string> )
 ;	Scan string delimited by c.
@@ -3150,7 +3087,7 @@ TEMPATBLEQ:
 	.ascii	"pars"
 	.endif
 PARS:
-	CALL	TEMP
+        CALL	TEMP
 	CALL	STORE
 	CALL	OVER
 	CALL	TOR
@@ -3158,23 +3095,21 @@ PARS:
         CALL	OVER
 	CALL	RFROM
 	JP	SUBB
-1$:
-	CALL	ONEM
-        CALLR   TEMPATBLEQ
-	CALL	QBRAN
-	.dw	PARS3
+1$:	CALL	ONEM
+        LD      A,USRTEMP+1     ; TEMP AT
+        CP      A,#' '          ; BLANK EQUAL
+        JRNE    PARS3
 	CALL	TOR
-PARS1:	CALL	BLANK
-	CALL	OVER
-	CALL	CAT	;skip leading blanks ONLY
-	CALL	SUBB
-	CALLR   YFLAGS
+PARS1:	
+        LD      A,#' '
+        LDW     Y,X
+        LDW     Y,(Y)
+        CP      A,(Y)
         JRMI    PARS2    
 	CALL	ONEP
 	CALL	DONXT
 	.dw	PARS1
-	CALL	RFROM
-	CALL	DROP
+        ADDW    SP,#2                  ; RFROM DROP
 	CALL	ZERO
 	JP	DUPP
 PARS2:	CALL	RFROM
@@ -3185,10 +3120,10 @@ PARS4:	CALL	TEMP
 	CALL	AT
 	CALL	OVER
 	CALL	CAT
-	CALL	SUBB	;scan for delimiter
-        CALLR   TEMPATBLEQ
-	CALL	QBRAN
-	.dw	PARS5
+	CALLR	SUBPARS         ; scan for delimiter
+        LD      A,USRTEMP+1     ; TEMP AT
+        CP      A,#' '          ; BLANK EQUAL
+        JRNE    PARS5
 	CALL	ZLESS
 PARS5:	CALL	QBRAN
 	.dw	PARS6
@@ -3198,15 +3133,15 @@ PARS5:	CALL	QBRAN
 	CALL	DUPP
 	CALL	TOR
 	JRA	PARS7
-PARS6:	CALL	RFROM
-	CALL	DROP
+PARS6:  ADDW    SP,#2                  ; RFROM DROP
 	CALL	DUPP
 	CALL	ONEP
 	CALL	TOR
 PARS7:	CALL	OVER
-	CALL	SUBB
+	CALLR	SUBPARS
 	CALL	RFROM
 	CALL	RFROM
+SUBPARS:
 	JP	SUBB
 
 
@@ -3223,17 +3158,13 @@ PARS7:	CALL	OVER
 	.ascii	"PARSE"
 	.endif
 PARSE:
-	CALL	TOR
 	CALL	TIB
-	CALL	INN
-	CALL	AT
-	CALL	PLUS	;current input buffer pointer
-	CALL	NTIB
-	CALL	AT
-	CALL	INN
-	CALL	AT
-	CALL	SUBB	;remaining count
-	CALL	RFROM
+	ADDW    Y,USR_IN        ; current input buffer pointer
+        LDW     (X),Y
+        LD      A,USRNTIB+1
+        SUB     A,USR_IN+1      ; remaining count
+        CALL    ASTOR
+	CALL    ROT
 	CALL	PARS
 	CALL	INN
 	JP	PSTOR
@@ -3454,22 +3385,21 @@ FIND2:	CALL	CELLP
 	CALL	AT
 	CALL	SAMEQ
 FIND3:	JRA	FIND4
-FIND6:	CALL	RFROM
-	CALL	DROP
+FIND6:	ADDW    SP,#2                  ; RFROM DROP
 	CALL	SWAPP
 	CALL	CELLM
-	JP	SWAPP
+	JRA	SWAPFIND
 FIND4:	CALL	QBRAN
 	.dw	FIND5
 	CALL	CELLM
 	CALL	CELLM
 	JRA	FIND1
-FIND5:	CALL	RFROM
-	CALL	DROP
+FIND5:  ADDW    SP,#2                  ; RFROM DROP
 	CALL	NIP
 	CALL	CELLM
 	CALL	DUPP
 	CALL	NAMET
+SWAPFIND:
 	JP	SWAPP
 
 ; Terminal response
@@ -3611,10 +3541,9 @@ QUERY:
 	CALL	ACCEP                         
 	CALL	NTIB
 	CALL	STORE
-	CALL	DROP
-	CALL	ZERO
-	CALL	INN
-	JP	STORE
+        CLR     USR_IN
+        CLR     USR_IN+1
+        JP      DROP
 
 ;	ABORT	( -- )
 ;	Reset data stack and
@@ -4076,7 +4005,7 @@ IFF:
 	.ascii	"THEN"
 THENN:
 	CALL	HERE
-	CALL	SWAPP
+	CALLR	SWAPLOC
 	JP	STORE
 
 ;	ELSE	( A -- A )
@@ -4089,9 +4018,9 @@ THENN:
 	.ascii	"ELSE"
 ELSEE:
 	CALLR   AHEAD
-        CALL	SWAPP
+	CALLR	SWAPLOC
 	CALL	HERE
-	CALL	SWAPP
+	CALLR	SWAPLOC
 	JP	STORE
 
 ;	AHEAD	( -- A )
@@ -4123,6 +4052,7 @@ AHEAD:
 	.ascii	"WHILE"
 WHILE:
         CALL    IFF
+SWAPLOC:
 	JP	SWAPP
 
 ;	REPEAT	( A a -- )
@@ -4136,7 +4066,7 @@ WHILE:
 REPEA:
 	CALLR   AGAIN
 	CALL	HERE
-	CALL	SWAPP
+	CALLR	SWAPLOC
 	JP	STORE
 
 ;	AFT	( a -- a A )
@@ -4151,7 +4081,7 @@ AFT:
 	CALL	DROP
 	CALL	AHEAD
 	CALL	HERE
-	JP	SWAPP
+	JRA	SWAPLOC
 
 ;	ABORT"	( -- ; <string> )
 ;	Conditional abort with an error message.
@@ -4165,7 +4095,7 @@ AFT:
 ABRTQ:
 	CALL	COMPI
 	CALL	ABORQ
-	JP	STRCQ
+	JRA	STRCQLOC
 
 ;	$"	( -- ; <string> )
 ;	Compile an inline string literal.
@@ -4180,6 +4110,7 @@ ABRTQ:
 STRQ:
 	CALL	COMPI
 	CALL	STRQP
+STRCQLOC:        
 	JP	STRCQ
 
 ;	."	( -- ; <string> )
@@ -4193,7 +4124,7 @@ STRQ:
 DOTQ:
 	CALL	COMPI
 	CALL	DOTQP
-	JP	STRCQ
+	JRA	STRCQLOC
 
 ; Name compiler
 
@@ -4270,15 +4201,15 @@ PNAM1:	CALL	STRQP
 SCOMP:
 	CALL	NAMEQ
 	CALL	QDQBRAN	        ; ?defined
-	;CALL	QBRAN
 	.dw	SCOM2
-	CALL	AT
-	CALL	DOLIT
-	.dw	0x08000	        ; IMEDD*256
-	CALL	ANDD	;?immediate
-	CALL	QBRAN
-	.dw	SCOM1
-	JP	EXECU
+	CALL    YFLAGS
+        LDW     Y,(Y)
+
+        LD      A,YH
+        AND     A,#IMEDD
+        JREQ    SCOM1
+
+        JP	EXECU
 SCOM1:	JP	JSRC
 SCOM2:	CALL	NUMBQ	;try to convert to number
 	CALL	QBRAN
@@ -4380,15 +4311,10 @@ JSRC:
 	.db	1
 	.ascii	":"
 COLON:
-        .ifne  HAS_CPNVM
-	CALL	RBRAC   ; directly do "]" to indicate to HERE that we're no longer interpreting
+	CALL	RBRAC           ; do "]" first to set HERE to compile state
 	CALL	TOKEN
 	JP	SNAME
-        .else
-	CALL	TOKEN
-	CALL	SNAME
-       	JP	RBRAC
-        .endif
+
 
 ;	IMMEDIATE	( -- )
 ;	Make last compiled word
@@ -4400,15 +4326,20 @@ COLON:
 	.db	9
 	.ascii	"IMMEDIATE"
 IMMED:
-	CALL	DOLIT
-	.dw	0x08000	;	IMEDD*256
-	CALL	LAST
-	CALL	AT
-	CALL	AT
-	CALL	ORR
-	CALL	LAST
-	CALL	AT
-	JP	STORE
+        LD      A,[USRLAST]
+        OR      A,#IMEDD
+        LD      [USRLAST],A
+        RET
+
+	;CALL	DOLIT
+	;.dw	0x08000	;	IMEDD*256
+	;CALL	LAST
+	;CALL	AT
+	;CALL	AT
+	;CALL	ORR
+	;CALL	LAST
+	;CALL	AT
+	;JP	STORE
 
 ; Defining words
 
@@ -4579,30 +4510,27 @@ PDUM2:	CALL	DONXT
 	.db	4
 	.ascii	"DUMP"
 DUMP:
-	CALL	BASE
-	CALL	AT
-	CALL	TOR
-	CALL	HEX	;save radix, set hex
-	CALL	DOLITC
-	.db	16
-	CALL	SLASH	;change count to lines
-	CALL	TOR	;start count down loop
+        PUSH    USRBASE+1       ; BASE AT TOR save radix
+        LD      A,#16                  ; DOLITC 16 
+        LD      USRBASE+1,A     ; set hex
+        CALL    YFLAGS
+        DIV     Y,A             ; / change count to lines
+        PUSHW   Y               ; start count down loop
 DUMP1:	CALL	CR
 	CALL	DOLITC
 	.db	16
 	CALL	DDUP
-	CALL	DUMPP	;display numeric
+	CALLR	DUMPP	;display numeric
 	CALL	ROT
 	CALL	ROT
 	CALL	SPACE
 	CALL	SPACE
-	CALL	UTYPE	;display printable characters
+	CALLR	UTYPE	;display printable characters
 	CALL	DONXT
 	.dw	DUMP1	;loop till done
-DUMP3:	CALL	DROP
-	CALL	RFROM
-	CALL	BASE
-	JP	STORE	;restore radix
+DUMP3:	
+        POP     USRBASE+1       ; restore radix
+        JP      DROP
 
 ;	.S	( ... -- ... )
 ;	Display	contents of stack.
@@ -4738,18 +4666,18 @@ WORS1:	CALL	AT              ; @ sets Z and N
 1$:	JP	DROP
 
 	
-;	
+	
 ;===============================================================
 
         .ifne   WORDS_EXTRAMEM
-;	BSR ( t a b -- )
-;	Set/Reset bit #b (0..7) at address a to bool t
+;	BITSR ( t a u -- )
+;	Set/reset bit #u (0..7) in the byte at address a to bool t
 ;       Note: creates/executes BSER/BRES + RET code on Data Stack
 	.dw	LINK
 	
         LINK =	.
-	.db	(3)
-	.ascii	"BSR"
+	.db	(5)
+	.ascii	"BITSR"
 BRSS:
         LD      A,#0x72         ; Opcode BSET/BRES 
         LD      (X),A
@@ -4764,9 +4692,8 @@ BRSS:
         LD      A,#EXIT_OPC     ; Opcode RET
         LD      (4,X),A
         LDW     Y,X
-        CALL    (Y)             ; call code to avoid "use after free"
         ADDW    X,#6            
-        RET
+        JP      (Y)            
 
 
 ;       2C!  ( n b -- )
@@ -4803,66 +4730,8 @@ DCAT:
         .endif
 
 
-        .ifne   WORDS_EXTRAEEPR
-;       ULOCK  ( -- )
-;       Unlock EEPROM (STM8S)
-	.dw	LINK
-        
-        LINK =  .
-	.db	(5)
-	.ascii	"ULOCK"
-ULOCK:
-        MOV     FLASH_DUKR,#0xAE
-        MOV     FLASH_DUKR,#0x56
-1$:     BTJF    FLASH_IAPSR,#3,1$    ; PM0051 4.1 requires polling bit3=1 before writing
-        RET
+;===============================================================
 
-
-;       LOCK  ( -- )
-;       Lock EEPROM (STM8S)
-	.dw	LINK
-        
-        LINK =  .
-	.db	(4)
-	.ascii	"LOCK"
-LOCK:
-        BRES    FLASH_IAPSR,#3
-        RET
-        .endif
-
-         
-        .ifne   (HAS_CPNVM + WORDS_EXTRAEEPR)
-;       ULOCKF  ( -- )
-;       Unlock Flash (STM8S)
-        .ifne   WORDS_EXTRAEEPR
-	.dw	LINK
-        
-        LINK =  .
-	.db	(6)
-	.ascii	"ULOCKF"
-        .endif
-UNLOCK_FLASH:
-        MOV     FLASH_PUKR,#0x56
-        MOV     FLASH_PUKR,#0xAE
-1$:     BTJF    FLASH_IAPSR,#1,1$    ; PM0051 4.1 requires polling bit1=1 before writing
-        RET
-
-
-;       LOCKF  ( -- )
-;       Lock Flash (STM8S)
-        .ifne   WORDS_EXTRAEEPR
-	.dw	LINK
-        
-        LINK =  .
-	.db	(5)
-	.ascii	"LOCKF"
-        .endif
-LOCK_FLASH:
-        BRES    FLASH_IAPSR,#1
-        RET
-        .endif
-
-;-----------------------------------------------
         .ifne   HAS_KEYS
 
 ;	?KEYB	( -- c T | F )  ( TOS STM8: -- Y,Z,N )
@@ -4922,6 +4791,7 @@ BKEY:
         JP      ASTOR
        .endif
 
+;===============================================================
 
         .ifne   HAS_LED7SEG
 
@@ -5014,9 +4884,65 @@ PUT7SA:
         INCW    X               ; ADDW   X,#2 
         INCW    X
         RET
+
+
+;       Multiplexed 7-seg LED display
+LED_MPX:        
+        LD      A,TICKCNTL
+        AND	A,#3        
+        .ifne   BOARD_W1209        
+        BSET    PD_ODR,#4       ; clear digit outputs .321
+        BSET    PB_ODR,#5
+        BSET    PB_ODR,#4
+
+        JRNE    1$
+        LD      A,LED7MSB+1
+        BRES    PD_ODR,#4       ; digit .3.. 
+        JRA     3$
+
+1$:     CP      A,#1
+        JRNE    2$
+        LD      A,LED7LSB
+        BRES    PB_ODR,#5       ; digit ..2.
+        JRA     3$
+
+2$:     CP      A,#2
+        JRNE    4$  
+        LD      A,LED7LSB+1 
+        BRES    PB_ODR,#4       ; digit ...1
+        ; fall through
+         
+3$:
+        ; W1209 7S LED display row
+        ; bit 76453210 input (parameter A)
+        ;  PA .....FB.
+        ;  PC CG...... 
+        ;  PD ..A.DPE.
+        RRC     A
+        BCCM    PD_ODR,#5       ; A
+        RRC     A
+        BCCM    PA_ODR,#2       ; B
+        RRC     A
+        BCCM    PC_ODR,#7       ; C
+        RRC     A
+        BCCM    PD_ODR,#3       ; D
+        RRC     A
+        BCCM    PD_ODR,#1       ; E
+        RRC     A
+        BCCM    PA_ODR,#1       ; F
+        RRC     A
+        BCCM    PC_ODR,#6       ; G
+        RRC     A
+        BCCM    PD_ODR,#2       ; P
+4$:        
+        .else
+        ; implement board LED port mapping 
+        .endif
+        RET
+
         .endif
 
-;-----------------------------------------------
+;===============================================================
 
         .ifne   HAS_OUTPUTS
 ;       OUT!  ( c -- )
@@ -5099,6 +5025,65 @@ ADCAT:
 
 ;===============================================================
 
+        .ifne   WORDS_EXTRAEEPR
+;       ULOCK  ( -- )
+;       Unlock EEPROM (STM8S)
+	.dw	LINK
+        
+        LINK =  .
+	.db	(5)
+	.ascii	"ULOCK"
+ULOCK:
+        MOV     FLASH_DUKR,#0xAE
+        MOV     FLASH_DUKR,#0x56
+1$:     BTJF    FLASH_IAPSR,#3,1$    ; PM0051 4.1 requires polling bit3=1 before writing
+        RET
+
+
+;       LOCK  ( -- )
+;       Lock EEPROM (STM8S)
+	.dw	LINK
+        
+        LINK =  .
+	.db	(4)
+	.ascii	"LOCK"
+LOCK:
+        BRES    FLASH_IAPSR,#3
+        RET
+        .endif
+
+         
+        .ifne   (HAS_CPNVM + WORDS_EXTRAEEPR)
+;       ULOCKF  ( -- )
+;       Unlock Flash (STM8S)
+        .ifne   WORDS_EXTRAEEPR
+	.dw	LINK
+        
+        LINK =  .
+	.db	(6)
+	.ascii	"ULOCKF"
+        .endif
+UNLOCK_FLASH:
+        MOV     FLASH_PUKR,#0x56
+        MOV     FLASH_PUKR,#0xAE
+1$:     BTJF    FLASH_IAPSR,#1,1$    ; PM0051 4.1 requires polling bit1=1 before writing
+        RET
+
+
+;       LOCKF  ( -- )
+;       Lock Flash (STM8S)
+        .ifne   WORDS_EXTRAEEPR
+	.dw	LINK
+        
+        LINK =  .
+	.db	(5)
+	.ascii	"LOCKF"
+        .endif
+LOCK_FLASH:
+        BRES    FLASH_IAPSR,#1
+        RET
+        .endif
+
         .ifne  HAS_CPNVM
 
 ;	Test if CP points doesn't point to RAM
@@ -5106,13 +5091,6 @@ NVMQ:
 	LD      A,USRCP
         AND     A,#0xF8
         RET
-
-;       NVMADR? ( a -- f )
-;       return 0 if address is in RAM
-;NVMADRQ:
-;	CALL	DOLIT
-;	.dw	0xf800
-;        JP      ANDD
 
 
 ;       Helper routine: swap USRCP and NVMCP
@@ -5137,7 +5115,7 @@ NVMM:
         ; in NVM mode only link words in NVM
         MOV     USRLAST,NVMCONTEXT
         MOV     USRLAST+1,NVMCONTEXT+1
-        CALLR    SWAPCP
+        CALLR   SWAPCP
         CALL    UNLOCK_FLASH
 1$:
         RET
@@ -5151,9 +5129,9 @@ NVMM:
 	.db	(3)
 	.ascii	"RAM"
 RAMM:        
-        CALLR    NVMQ
+        CALLR   NVMQ
         JREQ    1$
-        CALLR    SWAPCP          ; Switch back to mode RAM
+        CALLR   SWAPCP          ; Switch back to mode RAM
 
         MOV     COLDNVMCP,NVMCP ; Store NCM pointers for init in COLD 
         MOV     COLDNVMCP+1,NVMCP+1
@@ -5162,7 +5140,7 @@ RAMM:
 
         MOV     USRLAST,USRCONTEXT
         MOV     USRLAST+1,USRCONTEXT+1
-        CALL    LOCK_FLASH
+        CALLR   LOCK_FLASH
 1$:
         RET
 
@@ -5175,7 +5153,7 @@ RAMM:
 	.db	(5)
 	.ascii	"RESET"
 RESETT:        
-	CALL    UNLOCK_FLASH
+	CALLR   UNLOCK_FLASH
         CALL	DOLIT
 	.dw     UDEFAULTS	
 	CALL	DOLIT
@@ -5183,14 +5161,13 @@ RESETT:
 	CALL	DOLITC
 	.db	(ULAST-UBOOT)
 	CALL	CMOVE	        ; initialize user area
-	CALL    LOCK_FLASH
+	CALLR   LOCK_FLASH
         JP      COLD
  
-
         .endif
 
+;===============================================================
        
-
 
         .ifne WORDS_HWREG * (STM8S003F3 + STM8S103F3)
           .include "hwregs8s003.inc"
