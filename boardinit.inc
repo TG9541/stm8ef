@@ -30,9 +30,6 @@ WAIT0:	BTJF    CLK_SWCR,#3,WAIT0 ; wait SWIF
         MOV     PD_CR1,#0b00111110 
         .endif
        
-      OV     ITC_SPR4,#0xF7  ; Interrupt prio. low for TIM2 (Int13)
-        MOV     TIM2_CR1,#0x01  ; enable TIM2
-        MOV     TIM2_IER,#0x01  ; enable TIM2 interrupt
         .endif 
         .ifne   BOARD_C0135
         ; "Nano PLC Relay board"
