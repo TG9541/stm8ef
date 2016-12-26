@@ -8,7 +8,7 @@
         HAS_ADC         = 0    ; Analog input words
         
         HAS_BACKGROUND  = 0    ; Background Forth task (TIM2 ticker)
-        HAS_CPNVM       = 0    ; Can compile to Flash, always interpret to RAM 
+        HAS_CPNVM       = 1    ; Can compile to Flash, always interpret to RAM 
         HAS_DOES        = 0    ; CREATE-DOES> extension
         HAS_DOLOOP      = 0    ; DO .. LOOP extension: DO LEAVE LOOP +LOOP
 

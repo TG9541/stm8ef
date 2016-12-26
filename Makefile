@@ -31,7 +31,7 @@ main.ihx: main.c $(MDEPS)
 
 forth.rel: forth.asm $(FDEPS) 
 	mkdir -p out/$(BOARD)
-	sdasstm8 -I./$(BOARD) -plosgffw out/$(BOARD)/forth.rel forth.asm 
+	sdasstm8 -I. -I./$(BOARD) -plosgffw out/$(BOARD)/forth.rel forth.asm 
 
 flash: main.ihx  
 	stm8flash -c stlinkv2 -p stm8s103f3 -w out/$(BOARD)/$(BOARD).ihx

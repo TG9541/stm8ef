@@ -162,7 +162,7 @@
 
         CASEINSENSITIVE = 0     ; Case insensitive dictionary search
         SPEEDOVERSIZE   = 0     ; Speed-over-size in core words ROT - = < 
-        BAREBONES       = 0     ; Remove or unlink some more: hi HERE .R U.R SPACES @EXECUTE AHEAD CALL, EXIT COMPILE [COMPILE]
+        BAREBONES       = 0     ; Remove or unlink some more: hi HERE .R U.R SPACES @EXECUTE AHEAD CALL, EXIT COMPILE [COMPILE] DEPTH
 
         WORDS_LINKINTER = 0     ; Link interpreter words: ACCEPT QUERY TAP kTAP hi 'BOOT tmp >IN 'TIB #TIB eval CONTEXT pars PARSE NUMBER? DIGIT? WORD TOKEN NAME> SAME? find ABORT aborq $INTERPRET INTER? .OK ?STACK EVAL PRESET QUIT $COMPILE
         WORDS_LINKCOMP  = 0     ; Link compiler words: cp last OVERT $"| ."| $,n 
@@ -170,7 +170,7 @@
         WORDS_LINKCHAR =  0     ; Link char out words: DIGIT <# # #S SIGN #> str hld HOLD PACK$ 
         WORDS_LINKMISC =  0     ; Link composing words of SEE DUMP WORDS: >CHAR _TYPE dm+ .ID >NAME  
 
-        WORDS_EXTRASTACK = 0    ; Link/include stack core words: rp@ rp! sp! sp@ DEPTH 
+        WORDS_EXTRASTACK = 0    ; Link/include stack core words: rp@ rp! sp! sp@  
         WORDS_EXTRADEBUG = 0    ; Extra debug words: SEE
         WORDS_EXTRACORE  = 0    ; Extra core words: =0 I
         WORDS_EXTRAMEM   = 0    ; Extra memory words: BSR 2C@ 2C!
@@ -239,7 +239,6 @@
 
         BGADDR   =      0x50    ; address of background routine (0: off) 
         TICKCNT =       0x52    ; 16 bit ticker (counts up)
-        TICKCNTL =      0x53    ; ticker LSB
 
         .ifne   HAS_KEYS
         KEYREPET =      0x54    ; board key repetition control (8 bit)
@@ -252,9 +251,10 @@
         .endif
 
         ;******  Board variables  ******
-        .ifne   HAS_TXDSIM
-        TIM4TCNT =      0x58    ; TIM4 TX interrupt counter
-        TIM4TXREG  =    0x59    ; TIM4 char for TX
+        .ifne   HAS_TXDSIM ;+ HAS_RXDSIM
+        TIM4TCNT =      0x57    ; TIM4 TX interrupt counter
+        TIM4TXREG  =    0x58    ; TIM4 char for TX
+        TIM4RXREG  =    0x59    ; TIM4 char for TX
         .endif
 
         .ifne   HAS_OUTPUTS
@@ -306,6 +306,73 @@
         ;******  7) Code  ******
         ;***********************
 
+
+;       TIM2 interrupt handler for background task 
+_TIM2_UO_IRQHandler:
+        .ifne   (HAS_LED7SEG + HAS_BACKGROUND)
+        BRES    TIM2_SR1,#0     ; clear TIM2 UIF 
+
+        .ifne   HAS_LED7SEG
+        CALL    LED_MPX         ; board dependent code for 7Seg-LED-Displays
+        .endif
+
+;       Background operation saves & restores the context of the interactive task
+;       Cyclic context reset of Forth background task (stack, BASE, HLD, I/O vector) 
+        .ifne   HAS_BACKGROUND 
+        LDW     X,TICKCNT
+        INCW    X
+        LDW     TICKCNT,X
+
+        LDW     Y,BGADDR        ; address of background task
+        TNZW    Y               ; 0: background operation off 
+        JREQ    1$
+
+        LDW     X,YTEMP         ; Save context 
+        PUSHW   X
+        
+        PUSH    USRBASE+1     ; 8bit since BASE should be < 36
+        MOV     USRBASE+1,#10
+
+        LDW     X,USREMIT       ; save EMIT exection vector
+        PUSHW   X
+        LDW     X,#(BCKGRND_EMIT)
+        LDW     USREMIT,X
+        
+        LDW     X,USRQKEY       ; save QKEY exection vector
+        PUSHW   X
+        LDW     X,#(BCKGRND_QKEY)
+        LDW     USRQKEY,X
+
+        LDW     X,USRHLD
+        PUSHW   X
+        LDW     X,#(PADBG)      ; in background task, alway start with an empty PAD
+        LDW     USRHLD,X
+        
+        LDW     X,#(BSPP)       ; init data stack for background task to BSPP 
+        CALL    (Y)
+
+        POPW    X
+        LDW     USRHLD,X
+
+        POPW    X
+        LDW     USRQKEY,X
+
+        POPW    X
+        LDW     USREMIT,X
+        
+        POP     USRBASE+1
+
+        POPW    X
+        LDW     YTEMP,X
+1$:
+        .endif
+
+        IRET
+        .endif
+
+
+; ==============================================
+
 ;       Main entry points and COLD start data
 
 ;       COLD    ( -- )
@@ -330,7 +397,7 @@ COLD:
 
         LDW     X,#RPP          ; initialize return stack
         LDW     SP,X
-        LDW     X,#SPP          ; Pre-initialize data stack
+        CALL    PRESE           ; initialize data stack, TIB 
 
         CALL    DOLIT
         .dw     UZERO
@@ -340,10 +407,7 @@ COLD:
         .db     (ULAST-UZERO)
         CALL    CMOVE           ; initialize user area
 
-        CALL    PRESE           ; initialize data stack, TIB 
-
-         ; Board I/O initialization
-        .include "boardinit.inc"
+        CALLR   BOARDINIT       ; Board initialization (see "boardcore.inc")
 
         .ifne   HAS_OUTPUTS
         CALL    ZERO
@@ -353,10 +417,17 @@ COLD:
         ; Hardware initialization complete
         RIM                     ; enable interrupts 
 
-        CALL    TBOOT
-        CALL    ATEXE           ; application boot
+        CALL    [TBOOT+3]       ; application boot
         CALL    OVERT           ; initialize CONTEXT from USRLAST 
         JP      QUIT            ; start interpretation
+
+
+;       ##############################################
+;       Include for board support code
+;       Board I/O initialization and interrupt code 
+;       Hardware dependent words "?RX" "TX!" "OUT!"
+        .include "boardcore.inc"
+;       ##############################################
 
 
 ;       'BOOT   ( -- a )
@@ -435,139 +506,6 @@ HI:
         .endif
 
 
-
-;      Device dependent I/O
-
-
-_TIM4_IRQHandler:
-
-        .ifne   HAS_TXDSIM
-        ; TIM4 interrupt handler W1209 software TxD. 
-        ; RxD (PD_6) is on the board's sensor header, 
-        ; STM8S UART1 half-duplex mode requires TxD (PD_5) 
-        ; Work-around: change from RxD to GPIO for SW-TX
-        ; To use, write char to TIM4TXREG, then 0x0A to TIM4TCNT
-        ; BCPL    PA_ODR,#3     ; pin debug
-        BRES    TIM4_SR,#0      ; clear TIM4 UIF 
-        LD      A,TIM4TCNT
-        JRNE    TIM4_TRANS      ; transmit in progress
-        BRES    TIM4_IER,#0     ; disable TIM4 interrupt
-        JRNE    TIM4_END        ; nothing to transmit
-TIM4_TRANS:        
-        CP      A,#0x0B         ; TIM4TCNT > 0x0A: count down
-        JRMI    TIM4_START      
-        JRA     TIM4_DEC       
-
-TIM4_START:  
-        CP      A,#10
-        JRNE    TIM4_STOP
-
-        ; configure PD_6 from RX to GPIO 
-        BRES    UART1_CR2,#2    ; disable RX
-        BSET    PD_DDR,#PDTX    ; set PD_6 to output
-
-        RCF                     ; start bit, set PD_6 low 
-        JRA     TIM4_BIT         
-
-TIM4_STOP:  
-        CP      A,#1
-        JRNE    TIM4_SER
-        ; TIM4TCNT == 1 
-        SCF                     ; stop bit, set PD_6 high 
-        JRA     TIM4_BIT         
-               
-TIM4_SER:
-        ; TIM4TCNT == 9:2
-        SRL     TIM4TXREG    
-        ; fall through
-
-TIM4_BIT:
-        ; Set RxTx port to CF 
-        BCCM    PD_ODR,#PDTX
-        ; fall through
-
-TIM4_DEC:             
-        DEC     TIM4TCNT        ; next TXD TIM4 state
-        JRNE    TIM4_END
-
-        ; TIM4TCNT == 0
-        BRES    PD_DDR,#PDTX    ; set PD_6 to input
-        BSET    UART1_CR2,#2    ; re-enable RX
-        ; fall through
-
-TIM4_END:             
-        ; BCPL    PA_ODR,#3
-        IRET 
-        .endif
-
-
-;       TIM2 interrupt handler for background task 
-_TIM2_UO_IRQHandler:
-        .ifne   (HAS_LED7SEG + HAS_BACKGROUND)
-        ; BSET    PA_ODR,#3     ; pin debug
-        BRES    TIM2_SR1,#0     ; clear TIM2 UIF 
-
-        .ifne   HAS_LED7SEG
-        CALL    LED_MPX
-        .endif
-
-        .ifne   HAS_BACKGROUND 
-        LDW     X,TICKCNT
-        INCW    X
-        LDW     TICKCNT,X
-
-        LDW     Y,BGADDR        ; address of background task
-        TNZW    Y               ; 0: background operation off 
-        JREQ    1$
-
-        LDW     X,YTEMP         ; Save context 
-        PUSHW   X
-
-        
-        PUSH    USRBASE+1     ; 8bit since BASE should be < 36
-        MOV     USRBASE+1,#10
-
-        LDW     X,USREMIT       ; save EMIT exection vector
-        PUSHW   X
-        LDW     X,#(BCKGRND_EMIT)
-        LDW     USREMIT,X
-        
-        LDW     X,USRQKEY       ; save QKEY exection vector
-        PUSHW   X
-        LDW     X,#(BCKGRND_QKEY)
-        LDW     USRQKEY,X
-
-        LDW     X,USRHLD
-        PUSHW   X
-        LDW     X,#(PADBG)      ; in background task, alway start with an empty PAD
-        LDW     USRHLD,X
-        
-        LDW     X,#(BSPP)       ; init data stack for background task to BSPP 
-        CALL    (Y)
-
-        POPW    X
-        LDW     USRHLD,X
-
-        POPW    X
-        LDW     USRQKEY,X
-
-        POPW    X
-        LDW     USREMIT,X
-        
-        POP     USRBASE+1
-
-        POPW    X
-        LDW     YTEMP,X
-1$:
-        .endif
-
-        ; BRES    PA_ODR,#3
-        IRET
-        .endif
-
-
-; ==============================================
-
 ;       ?KEY    ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
 ;       Return input char and true, or false.
         .dw     LINK
@@ -575,26 +513,7 @@ _TIM2_UO_IRQHandler:
         .db     4
         .ascii  "?KEY"
 QKEY:
-        .ifeq   BAREBONES
         JP      [USRQKEY]
-
-
-;       ?RX     ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
-;       Return serial interface input char from and true, or false.
-        .dw     LINK
-        LINK =  .
-        .db     3
-        .ascii  "?RX"
-        .endif
-QRX:
-        CLR     A               ; A: flag false
-        BTJF    UART1_SR,#5,QRXSTOR
-        LD      A,UART1_DR      ; get char in A
-ATOKEY:
-        CALLR   QRXSTOR         ; push char
-        JP      ONE             ; flag true
-QRXSTOR:
-        JP      ASTOR           ; push char or flag false
 
 
 ;       EMIT    ( c -- )
@@ -605,70 +524,10 @@ QRXSTOR:
         .db     4
         .ascii  "EMIT"
 EMIT:
-        .ifeq   BAREBONES
         JP      [USREMIT]
-
-;       TX!     ( c -- )
-;       Send character c to the serial interface.
-
-        .dw     LINK
-        LINK =  .
-        .db     3
-        .ascii  "TX!"
-        .endif
-TXSTOR:
-        .ifne   HALF_DUPLEX
-        BRES    UART1_CR2,#2    ; disable rx
-
-        .ifne   BOARD_W1209
-
-1$:     BTJT    TIM4_IER,#0,1$  ; wait for end of TX
-        LD      A,(1,X)
-        INCW    X               ; ADDW   X,#2 
-        INCW    X
-        LD      TIM4TXREG,A
-        MOV     TIM4TCNT,#11     ; init next transfer 
-        BSET    TIM4_IER,#0     ; enabale TIM4 interrupt
-         
-        .else                   ; HALF_DUPLEX, not BOARD_W1209
-        LD      A,(1,X)
-        INCW    X               ; ADDW   X,#2 
-        INCW    X
-1$:     BTJF    UART1_SR,#7,1$  ; loop until tdre
-        LD      UART1_DR,A      ; send A
-2$:     BTJF    UART1_SR,#6,2$  ; loop until tc
-        BSET    UART1_CR2,#2    ; enable rx
-        .endif  
-
-        .else                   ; not HALF_DUPLEX
-        LD      A,(1,X)
-        INCW    X               ; ADDW   X,#2 
-        INCW    X
-3$:     BTJF    UART1_SR,#7,3$  ; loop until tdre
-        LD      UART1_DR,A      ; send A
-        .endif
-        RET
 
 
 ; The kernel
-;       doLit   ( -- w )
-;       Push an inline literal.
-
-        .ifne   WORDS_LINKRUNTI
-        .dw     LINK
-        LINK =  .
-        .db     (COMPO+5)
-        .ascii  "doLit"
-        .endif
-DOLIT:
-        
-        DECW    X               ;SUBW   X,#2    
-        DECW    X
-        LDW     Y,(1,SP)
-        LDW     Y,(Y)
-        LDW     (X),Y
-        POPW    Y
-        JP      (2,Y)
 
 ;       PUSHLIT ( -- C )
 ;       Subroutine for DOLITC and CCOMMALIT
@@ -697,6 +556,26 @@ CCOMMALIT:
         CALL    CCOMMA
         JRA     CSKIPRET     
 
+
+;       doLit   ( -- w )
+;       Push an inline literal.
+
+        .ifne   WORDS_LINKRUNTI
+        .dw     LINK
+        LINK =  .
+        .db     (COMPO+5)
+        .ascii  "doLit"
+        .endif
+DOLIT:
+        
+        DECW    X               ;SUBW   X,#2    
+        DECW    X
+        LDW     Y,(1,SP)
+        LDW     Y,(Y)
+        LDW     (X),Y
+POPYJPY:        
+        POPW    Y
+        JP      (2,Y)
 
         .ifne   HAS_DOLOOP 
         ;       (+loop) ( +n -- )
@@ -755,7 +634,6 @@ DONXT:
 NEX1:   LDW     (3,SP),Y
         JRA     BRAN
 
-
 ;       QDQBRAN     ( n -- n )
 ;       QDUP QBRANCH phrase
 QDQBRAN:
@@ -777,8 +655,7 @@ QBRAN:
         INCW    X
         LDW     Y,(Y)
         JREQ    BRAN
-        POPW    Y
-        JP      (2,Y)
+        JRA     POPYJPY
         
 ;       branch  ( -- )
 ;       Branch to an inline address.
@@ -830,11 +707,18 @@ EXIT:
         .db     1
         .ascii  "@"
 AT:
-        LDW     Y,X             ; Y = a
-        LDW     Y,(Y)           
-        LDW     Y,(Y)
-        LDW     (X),Y           ; w = @Y
-        RET     
+        LDW     Y,X
+        LDW     X,(X)
+        LDW     X,(X)
+        EXGW    X,Y
+        LDW     (X),Y
+        RET
+
+        ;LDW     Y,X             ; Y = a
+        ;LDW     Y,(Y)           
+        ;LDW     Y,(Y)
+        ;LDW     (X),Y           ; w = @Y
+       ; RET     
 
 ;       !       ( w a -- )      ( TOS STM8: -- Y,Z,N )
 ;       Pop data stack to memory.
@@ -845,12 +729,21 @@ AT:
         .ascii  "!"
 STORE:
         LDW     Y,X
-        LDW     Y,(Y)           ; Y=a
-        LDW     YTEMP,Y
-        LDW     Y,X
-        LDW     Y,(2,Y)
-        LDW     [YTEMP],Y
+        LDW     X,(X)
+        LDW     YTEMP,X
+        LDW     X,Y
+        LDW     X,(2,X)
+        LDW     [YTEMP],X
+        EXGW    X,Y
         JRA     DDROP
+
+        ;LDW     Y,X
+        ;LDW     Y,(Y)           ; Y=a
+        ;LDW     YTEMP,Y
+        ;LDW     Y,X
+        ;LDW     Y,(2,Y)
+        ;LDW     [YTEMP],Y
+        ;JRA     DDROP
 
 
 ;       C@      ( b -- c )      ( TOS STM8: -- A,Z,N )
@@ -864,6 +757,7 @@ STORE:
 CAT:
         LDW     Y,X             ; Y=b
         LDW     Y,(Y)
+YCAT:        
         LD      A,(Y)
         CLR     (X)
         LD      (1,X),A
@@ -899,19 +793,21 @@ RPAT:
 ;       RP!     ( a -- )
 ;       Set return stack pointer.
 
-        .ifne   (WORDS_LINKINTER + WORDS_EXTRASTACK)
+        .ifne   ( WORDS_EXTRASTACK)
         .dw     LINK
         LINK =  .
         .db     (COMPO+3)
         .ascii  "rp!"
-        .endif
 RPSTO:
         POPW    Y
         LDW     YTEMP,Y
         LDW     Y,X
+        INCW    X               ; fixed error: TOS not consumed
+        INCW    X
         LDW     Y,(Y)
         LDW     SP,Y
         JP      [YTEMP]
+        .endif
 
 ;       R>      ( -- w )     ( TOS STM8: -- Y,Z,N )
 ;       Pop return stack to data stack.
@@ -1028,10 +924,10 @@ TOR:
         LINK =  .
         .db     3
         .ascii  "sp@"
-        .endif
 SPAT:
         LDW     Y,X
         JRA     YSTOR
+        .endif
 
 
 ;       DUP     ( w -- w w )    ( TOS STM8: -- Y,Z,N )
@@ -1215,10 +1111,10 @@ UPL1:   LD      (1,X),A
         LINK =  .
         .db     3
         .ascii  "sp!"
-        .endif
 SPSTO:
         LDW     X,(X)   ;X = a
         RET     
+        .endif
 
 
 ;       CONTEXT ( -- a )     ( TOS STM8: -- Y,Z,N )
@@ -2216,7 +2112,7 @@ TCHAR:
 ;       DEPTH   ( -- n )      ( TOS STM8: -- Y,Z,N )
 ;       Return  depth of data stack.
 
-        .ifne   WORDS_EXTRASTACK
+        .ifeq   BAREBONES
         .dw     LINK
         
         LINK =  .
@@ -2224,11 +2120,12 @@ TCHAR:
         .ascii  "DEPTH"
         .endif
 DEPTH:
-        LDW     Y,#SPP          ;save data stack ptr
-        LDW     YTEMP,X
-        SUBW    Y,YTEMP         ;#bytes = SP0 - X
-        SRAW    Y               ;D = #stack items
-        DECW    Y               ; if neg, underflow
+        LDW     Y,X
+        NEGW    X
+        ADDW    X,#SPP
+        SRAW    X
+        ;DECW    X               ; fixed: off-by-one to compensate error in "rp!"
+        EXGW    X,Y
         JP      YSTOR
 
 ; Memory access
@@ -2242,24 +2139,18 @@ DEPTH:
         .db     2
         .ascii  "+!"
 PSTOR:
-        .ifne   SPEEDOVERSIZE
         LDW     Y,X
-        LDW     Y,(2,Y)
-        LDW     YTEMP,Y
-        LDW     Y,X
-        LDW     Y,(Y)
-        LDW     Y,(Y)
-        ADDW    Y,YTEMP
-        LDW     (2,X),Y
-        JP      STORE
-        .else 
-        CALL    SWAPP
-        CALL    OVER
-        CALL    AT
-        CALL    PLUS
-        CALL    SWAPP
-        JP      STORE
-        .endif 
+        LDW     X,(X)
+        LDW     YTEMP,X
+        LDW     X,Y
+        LDW     X,(2,X)
+        PUSHW   X
+        LDW     X,[YTEMP]
+        ADDW    X,(1,SP)
+        LDW     [YTEMP],X
+        POPW    X
+        EXGW    X,Y
+        JP      DDROP
 
 ;       2!      ( d a -- )      ( TOS STM8: -- Y,Z,N )
 ;       Store double integer to address a.
@@ -2295,11 +2186,13 @@ DAT:
 ;       Return count byte of a string
 ;       and add 1 to byte address.
 
+        .ifeq   BAREBONES
         .dw     LINK
         
         LINK =  .
         .db     5
         .ascii  "COUNT"
+        .endif
 COUNT:
         CALL    DUPP
         CALL    ONEP
@@ -2371,17 +2264,17 @@ PAD:
         LINK =  .
         .db     8
         .ascii  "@EXECUTE"
-        .endif        
 ATEXE:
-        CALL    AT              ; @ sets Z and N
-        JRNE    1$
-        JP      DROP
-1$:     JP      EXECU           ; execute if non-zero
-
-
+        CALL    YFLAGS
+        LDW     Y,(Y)
+        JREQ    1$
+        JP      (Y)
+1$:     RET
+        .endif        
+         
 ;       CMOVE   ( b1 b2 u -- )
 ;       Copy u bytes from b1 to b2.
-
+; 37 bytes
         .dw     LINK
         
         LINK =  .
@@ -2391,8 +2284,7 @@ CMOVE:
         CALL    TOR
         JRA     CMOV2
 CMOV1:  CALL    TOR
-        CALL    DUPP
-        CALL    CAT
+        CALL    DUPPCAT
         CALL    RAT
         CALL    CSTOR
         CALL    ONEP
@@ -2423,6 +2315,7 @@ FILL2:  CALL    DONXT
         .dw     FILL1
         JP      DDROP
 
+        .ifeq   BAREBONES
 ;       ERASE   ( b u -- )
 ;       Erase u bytes beginning at b.
 
@@ -2434,6 +2327,7 @@ FILL2:  CALL    DONXT
 ERASE:
         CALL    ZERO
         JRA     FILL
+        .endif
 
 ;       PACK$   ( b u a -- a )
 ;       Build a counted string with
@@ -2453,7 +2347,7 @@ PACKS:
         CALL    CSTOR
         CALL    ONEP            ; save count
         CALL    SWAPP
-        CALL    CMOVE
+        CALLR   CMOVE
         CALL    RFROM
         RET
 
@@ -2494,7 +2388,7 @@ EXTRC:
         CALL    SWAPP
         CALL    UMMOD
         CALL    SWAPP
-        JP      DIGIT
+        JRA     DIGIT
 
 ;       <#      ( -- )   ( TOS STM8: -- Y,Z,N )
 ;       Initiate numeric output process.
@@ -2542,9 +2436,8 @@ HOLD:
         .ascii  "#"
         .endif
 DIG:
-        CALL    BASE
-        CALL    AT
-        CALL    EXTRC
+        CALLR   BASEAT
+        CALLR   EXTRC
         JRA     HOLD
 
 ;       #S      ( u -- 0 )
@@ -2614,8 +2507,8 @@ STR:
         CALL    DUPP
         CALL    TOR
         CALL    ABSS
-        CALL    BDIGS
-        CALL    DIGS
+        CALLR   BDIGS
+        CALLR   DIGS
         CALL    RFROM
         CALLR   SIGN
         JRA     EDIGS
@@ -2649,41 +2542,13 @@ BASESET:
         CLR     USRBASE
         RET
 
+;       BASE@     ( -- u )
+;       Get BASE value
+BASEAT:
+        CALL    BASE
+        JP      AT
+
 ; Numeric input, single precision
-
-;       DIGIT?  ( c base -- u t )
-;       Convert a character to its numeric
-;       value. A flag indicates success.
-
-        .ifne   WORDS_LINKINTER
-        .dw     LINK
-        
-        LINK =  .
-        .db     6
-        .ascii  "DIGIT?"
-        .endif
-DIGTQ:
-        CALL    TOR
-        CALL    DOLITC
-        .db     48      ; "0"
-        CALL    SUBB
-        CALL    DOLITC
-        .db     9
-        CALL    OVER
-        CALL    LESS
-        CALL    QBRAN
-        .dw     DGTQ1
-        CALL    DOLITC
-        .db     7
-        CALL    SUBB
-        CALL    DUPP
-        CALL    DOLITC
-        .db     10
-        CALL    LESS
-        CALL    ORR
-DGTQ1:  CALL    DUPP
-        CALL    RFROM
-        JP      ULESS
 
 ;       NUMBER? ( a -- n T | a F )
 ;       Convert a number string to
@@ -2710,7 +2575,7 @@ NUMQ0:
 
         CP      A,#('$')
         JRNE    1$ 
-        CALL    HEX
+        CALLR   HEX
         JRA     NUMQSKIP
 1$:
         .ifeq   BAREBONES
@@ -2721,8 +2586,7 @@ NUMQ0:
 2$:        
         CP      A,#('&')
         JRNE    3$
-        MOV     USRBASE+1,#10
-        CALL    DECIM
+        CALLR   DECIM
         JRA     NUMQSKIP
 3$:
         .endif
@@ -2746,17 +2610,16 @@ NUMQ1:
 NUMQ2:  CALL    DUPP
         CALL    TOR
         CALL    CAT
-        CALL    BASE
-        CALL    AT
+        CALLR   BASEAT
         CALL    DIGTQ
         CALL    QBRAN           ; WHILE ( no digit -> LEAVE )
         .dw     NUMLEAVE
 
         CALL    SWAPP
-        CALL    BASE
-        CALL    AT
+        CALLR   BASEAT
         CALL    STAR
         CALL    PLUS
+        
         CALL    RFROM
         CALL    ONEP
 
@@ -2773,8 +2636,8 @@ NUMPLUS:
         JRA     NUMQ5                             
 NUMLEAVE:                       ; LEAVE ( clean-up FOR .. NEXT )        
         ADDW    SP,#4           ; RFROM,RFROM,DDROP
-        CALL    DDROP             
-        CALL    ZERO
+        CALLR   NUMDROP
+        CLR     (X)
         ; fall through
 NUMQ5:
         CALL    DUPP                             
@@ -2784,6 +2647,32 @@ NUMQ6:
         POP     USRBASE+1       ; restore BASE
 NUMDROP:
         JP      DROP
+
+;       DIGIT?  ( c base -- u t )
+;       Convert a character to its numeric
+;       value. A flag indicates success.
+
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+        
+        LINK =  .
+        .db     6
+        .ascii  "DIGIT?"
+        .endif
+DIGTQ:
+        CALL    TOR
+        LD      A,YL
+        SUB     A,#'0'
+        CP      A,#10
+        JRMI    DGTQ1
+        SUB     A,#7
+        CP      A,#10
+        JRPL    DGTQ1
+        CPL     A
+DGTQ1:  LD      (1,X),A        
+        CALL    DUPP
+        CALL    RFROM
+        JP      ULESS
 
 
 ; Basic I/O
@@ -2803,6 +2692,7 @@ KEY1:   CALL    [USRQKEY]
         .dw     KEY1
         RET
 
+        .ifeq   BAREBONES 
 ;       NUF?    ( -- t )
 ;       Return false if no input,
 ;       else pause and if CR return true.
@@ -2816,9 +2706,9 @@ NUFQ:
         .ifne   HALF_DUPLEX
         ; slow EMIT down to free the line for RX 
         .ifne   HAS_BACKGROUND * HALF_DUPLEX 
-        LD      A,TICKCNTL
+        LD      A,TICKCNT+1
         ADD     A,#3
-1$:     CP      A,TICKCNTL
+1$:     CP      A,TICKCNT+1
         JRNE    1$ 
         .else
         CLRW    Y            
@@ -2827,15 +2717,15 @@ NUFQ:
         .endif
         .endif
         CALL    [USRQKEY]
-        CALL    DUPP
-        CALL    QBRAN
-        .dw     NUFQ1
+        LD      A,(1,X)
+        JREQ    NUFQ1
         CALL    DDROP
-        CALL    KEY
+        CALLR   KEY
         CALL    DOLITC
         .db     CRR
         JP      EQUAL
 NUFQ1:  RET
+        .endif
 
 ;       SPACE   ( -- )
 ;       Send    blank character to
@@ -2868,7 +2758,7 @@ SPACS:
         .endif
         CALL    TOR
         JRA     CHAR2
-CHAR1:  CALL    SPACE
+CHAR1:  CALLR   SPACE
 CHAR2:  CALL    DONXT
         .dw     CHAR1
         RET
@@ -2942,7 +2832,8 @@ STRQP:
         .ascii  '."|'
         .endif
 DOTQP:
-        CALL    DOSTR
+        CALLR   DOSTR
+COUNTTYPES:
         CALL    COUNT
         JRA     TYPES
 
@@ -2976,8 +2867,9 @@ UDOTR:
         CALLR   BDEDIGS
 RFROMTYPES:        
         CALL    RFROM
-        CALL    OVER
-        CALL    SUBB
+        LD      A,(1,X)
+        SUB     A,(3,X)         ;  OVER SUBS
+        LD      (1,X),A
         CALL    SPACS
         JRA     TYPES
 
@@ -2992,8 +2884,7 @@ RFROMTYPES:
 TYPES:
         CALL    TOR
         JRA     TYPE2
-TYPE1:  CALL    DUPP
-        CALL    CAT
+TYPE1:  CALL    DUPPCAT
         CALL    [USREMIT]
         CALL    ONEP
 TYPE2:  
@@ -3034,7 +2925,7 @@ DOT:
         LD      A,USRBASE+1
         XOR     A,#10
         JREQ    1$
-        JP      UDOT
+        JRA     UDOT
 1$:     CALL    STR
         CALL    SPACE
         JRA     TYPES
@@ -3109,8 +3000,9 @@ PARS1:
         CALL    ONEP
         CALL    DONXT
         .dw     PARS1
-        ADDW    SP,#2                  ; RFROM DROP
+        ADDW    SP,#2           ; RFROM DROP
         CALL    ZERO
+DUPPARS:
         JP      DUPP
 PARS2:  CALL    RFROM
 PARS3:  CALL    OVER
@@ -3130,11 +3022,11 @@ PARS5:  CALL    QBRAN
         CALL    ONEP
         CALL    DONXT
         .dw     PARS4
-        CALL    DUPP
+        CALLR   DUPPARS
         CALL    TOR
         JRA     PARS7
 PARS6:  ADDW    SP,#2                  ; RFROM DROP
-        CALL    DUPP
+        CALLR   DUPPARS
         CALL    ONEP
         CALL    TOR
 PARS7:  CALL    OVER
@@ -3180,7 +3072,7 @@ PARSE:
 DOTPR:
         CALL    DOLITC
         .db     41      ; ")"
-        CALL    PARSE
+        CALLR   PARSE
         JP      TYPES
 
 ;       (       ( -- )
@@ -3195,7 +3087,7 @@ DOTPR:
 PAREN:
         CALL    DOLITC
         .db     41      ; ")"
-        CALL    PARSE
+        CALLR   PARSE
         JP      DDROP
 
 ;       \       ( -- )
@@ -3224,7 +3116,7 @@ BKSLA:
         .ascii  "WORD"
         .endif
 WORDD:
-        CALL    PARSE
+        CALLR   PARSE
         CALL    HERE
         CALL    CELLP
         JP      PACKS
@@ -3242,7 +3134,7 @@ WORDD:
         .endif
 TOKEN:
         CALL    BLANK
-        JP      WORDD
+        JRA     WORDD
 
 ; Dictionary search
 
@@ -3264,6 +3156,18 @@ NAMET:
         CALL    ANDD
         JP      PLUS
 
+
+;       R@ indexed char lookup for SAME?
+SAMEQCAT:
+        CALL    OVER
+        ADDW    Y,(3,SP)             ; R-OVER> PLUS
+       .ifne   CASEINSENSITIVE
+        CALL    YCAT
+        JRA   CUPPER
+        .else
+        JP      YCAT
+        .endif
+
 ;       SAME?   ( a a u -- a a f \ -0+ )
 ;       Compare u cells in two
 ;       strings. Return 0 if identical.
@@ -3279,21 +3183,10 @@ SAMEQ:
         CALL    ONEM
         CALL    TOR
         JRA     SAME2
-SAME1:  CALL    OVER
-        CALL    RAT
-        CALL    PLUS
-        CALL    CAT
-        .ifne   CASEINSENSITIVE
-        CALLR   CUPPER
-        .endif
-        CALL    OVER
-        CALL    RAT
-        CALL    PLUS
-        CALL    CAT
-        .ifne   CASEINSENSITIVE
-        CALLR   CUPPER
-        .endif
-        CALL    SUBB
+SAME1:  
+        CALLR   SAMEQCAT
+        CALLR   SAMEQCAT
+        CALL    XORR
         CALL    QDQBRAN
         .dw     SAME2
         CALL    RFROM
@@ -3321,7 +3214,7 @@ CUPPER:
         JRUGT   1$
         AND     A,#0xDF
         LD      (1,X),A
-1$:      RET
+1$:     RET
         .endif
 
 ;       NAME?   ( a -- ca na | a F )
@@ -3350,16 +3243,14 @@ NAMEQ:
         .ascii  "find"
         .endif
 FIND:
-        CALL    SWAPP
-        CALL    DUPP
-        CALL    CAT
-        CALL    TEMP
-        CALL    STORE
-        CALL    DUPP
-        CALL    AT
-        CALL    TOR
+        CALLR   SWAPPF
+        LD      A,(Y)           ; DUPP CAT
+        CLR     USRTEMP         ; TEMP
+        LD      USRTEMP+1,A     ; STORE
+        LDW     Y,(Y)           ; DUPP AT
+        PUSHW   Y               ; TOR
         CALL    CELLP
-        CALL    SWAPP
+        CALLR   SWAPPF
 FIND1:  CALL    AT
         JREQ    FIND6
         CALL    DUPP
@@ -3386,9 +3277,9 @@ FIND2:  CALL    CELLP
         CALL    SAMEQ
 FIND3:  JRA     FIND4
 FIND6:  ADDW    SP,#2                  ; RFROM DROP
-        CALL    SWAPP
+        CALLR   SWAPPF
         CALL    CELLM
-        JRA     SWAPFIND
+        JRA     SWAPPF
 FIND4:  CALL    QBRAN
         .dw     FIND5
         CALL    CELLM
@@ -3399,7 +3290,7 @@ FIND5:  ADDW    SP,#2                  ; RFROM DROP
         CALL    CELLM
         CALL    DUPP
         CALL    NAMET
-SWAPFIND:
+SWAPPF:
         JP      SWAPP
 
 ; Terminal response
@@ -3418,19 +3309,17 @@ BKSP:
         CALL    TOR
         CALL    OVER
         CALL    RFROM
-        CALL    SWAPP
+        CALLR   SWAPPF
         CALL    OVER
         CALL    XORR
         CALL    QBRAN
         .dw     BACK1
         .ifeq   HALF_DUPLEX
-        CALL    DOLITC
-        .db     BKSPP
-        CALL    [USREMIT]
+        CALLR   BACKSP
         .endif
         CALL    ONEM
-        CALL    BLANK
-        CALL    [USREMIT]
+        CALL    SPACE
+BACKSP:
         CALL    DOLITC
         .db     BKSPP
         JP      [USREMIT]
@@ -3472,9 +3361,6 @@ KTAP:
         CP     A,#CRR
         JREQ    KTAP2
 
-        ;CALL    YFLAGS
-        ;CPW     Y,#BKSPP
-        ;JREQ    KTAP1
         CALL    DOLITC
         .db     BKSPP
         CALL    XORR
@@ -3576,13 +3462,12 @@ ABORQ:
         .dw     ABOR2   ;text flag
         CALL    DOSTR
 ABOR1:  CALL    SPACE
-        CALL    COUNT
-        CALL    TYPES
+        CALL    COUNTTYPES
         CALL    DOLITC
         .db     63 ; "?"
         CALL    [USREMIT]
         CALL    CR
-        JP      ABORT   ;pass error string
+        JRA     ABORT   ;pass error string
 ABOR2:  CALL    DOSTR
         JP      DROP
 
@@ -3726,13 +3611,12 @@ PRESE:
         .ascii  "QUIT"
         .endif
 QUIT:
-        CALL    DOLIT
-        .dw     RPP
-        CALL    RPSTO   ;reset return stack pointer
-QUIT1:  CALL    LBRAC   ;start interpretation
-QUIT2:  CALL    QUERY   ;get input
+        LDW     Y,#RPP          ; initialize return stack
+        LDW     SP,Y
+QUIT1:  CALL    LBRAC           ; start interpretation
+QUIT2:  CALL    QUERY           ; get input
         CALLR   EVAL
-        JRA     QUIT2   ;continue till error
+        JRA     QUIT2           ; continue till error
 
 ; The compiler
 
@@ -4148,8 +4032,7 @@ UNIQU:
         .db     7
         .ascii  " reDef "       
         CALL    OVER
-        CALL    COUNT
-        CALL    TYPES   ;just in case
+        CALL    COUNTTYPES   ;just in case
 UNIQ1:  JP      DROP
 
 ;       $,n     ( na -- )
@@ -4164,8 +4047,7 @@ UNIQ1:  JP      DROP
         .ascii  "$,n"
         .endif
 SNAME:
-        CALL    DUPP
-        CALL    CAT     ;?null input
+        CALL    DUPPCAT         ; ?null input
         CALL    QBRAN
         .dw     PNAM1
         CALL    UNIQU   ;?redefinition
@@ -4331,15 +4213,6 @@ IMMED:
         LD      [USRLAST],A
         RET
 
-        ;CALL   DOLIT
-        ;.dw    0x08000 ;       IMEDD*256
-        ;CALL   LAST
-        ;CALL   AT
-        ;CALL   AT
-        ;CALL   ORR
-        ;CALL   LAST
-        ;CALL   AT
-        ;JP     STORE
 
 ; Defining words
 
@@ -4432,6 +4305,7 @@ DODOES:
         RET
         .endif 
 
+        .ifeq   BAREBONES
 ;       VARIABLE        ( -- ; <string> )
 ;       Compile a new variable
 ;       initialized to 0.
@@ -4445,6 +4319,7 @@ VARIA:
         CALL    CREAT
         CALL    ZERO
         JP      COMMA
+        .endif
 
 ; Tools
 
@@ -4462,8 +4337,7 @@ VARIA:
 UTYPE:
         CALL    TOR     ;start count down loop
         JRA     UTYP2   ;skip first pass
-UTYP1:  CALL    DUPP
-        CALL    CAT
+UTYP1:  CALL    DUPPCAT
         CALL    TCHAR
         CALL    [USREMIT]       ;display only printable
         CALL    ONEP    ;increment address
@@ -4490,8 +4364,7 @@ DUMPP:
         CALL    SPACE
         CALL    TOR     ;start count down loop
         JRA     PDUM2   ;skip first pass
-PDUM1:  CALL    DUPP
-        CALL    CAT
+PDUM1:  CALL    DUPPCAT
         CALL    DOLITC
         .db     3
         CALL    UDOTR   ;display numeric data
@@ -4579,6 +4452,10 @@ DOTI1:  CALL    DOTQP
         .ascii  " (noName)"
         RET
 
+DUPPCAT:
+        CALL    DUPP
+        JP      CAT
+
         .ifne   WORDS_EXTRADEBUG
 ;       >NAME   ( ca -- na | F )
 ;       Convert code address
@@ -4630,14 +4507,12 @@ SEE1:
         .dw     SEE2
         CALL    TNAME   ;?is it a name
 SEE2:   CALL    QDQBRAN ;name address or zero
-        ;CALL   QBRAN
         .dw     SEE3
         CALL    SPACE
         CALL    DOTID   ;display name
         CALL    ONEP
         JRA     SEE4
-SEE3:   CALL    DUPP
-        CALL    CAT
+SEE3:   CALLR   DUPPCAT
         CALL    UDOT    ;display number
 SEE4:   CALL    NUFQ    ;user control
         CALL    QBRAN
@@ -4729,67 +4604,6 @@ DCAT:
         RET
         .endif
 
-
-;===============================================================
-
-        .ifne   HAS_KEYS
-
-;       ?KEYB   ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
-;       Return keyboard char and true, or false if no key pressed.
-        .dw     LINK
-        LINK =  .
-        .db     5
-        .ascii  "?KEYB"
-QKEYB:
-        CALLR   BKEY
-        CALL    AFLAGS
-        JRNE    KEYBPRESS
-        ; Bit7: flag press + 100*5ms hold before repetition
-        MOV     KEYREPET,#(0x80 + 100)
-        JRA     NOKEYB
-KEYBPRESS:
-        ADD     A,#0x40         ; bit values 1,2,4 to 'A','B','D'
-        BTJF    KEYREPET,#7,KEYBHOLD
-        BRES    KEYREPET,#7
-        JRA     ATOKEYB
-KEYBHOLD:
-        DEC     KEYREPET
-        JRNE    NOKEYB
-        MOV     KEYREPET,#30    ; repetition time: n*5ms
-ATOKEYB:
-        JP      ATOKEY          ; push char and flag true
-NOKEYB:
-        JP      ZERO            ; push flag false
-
-;       BKEY  ( -- n )     ( TOS STM8: -- A,Z,N )
-;       Read board key state as a bitfield
-        .dw     LINK
-        
-        LINK =  .
-        .db     (4)
-        .ascii  "BKEY"
-BKEY:   
-        .ifne   BOARD_W1209
-        ; Keys "set" (1), "+" (2), and "-" (4) on PC.3:5
-        LD      A,PC_IDR
-        SLA     A
-        SWAP    A
-        CPL     A
-        AND     A,#0x07
-        .else
-        .ifne   BOARD_C0135
-        ; Key "S2" port PA3 (inverted)
-        LD      A,PA_IDR
-        SLA     A
-        SWAP    A
-        CPL     A
-        AND     A,#0x01
-        .else
-        CLR     A
-        .endif
-        .endif
-        JP      ASTOR
-       .endif
 
 ;===============================================================
 
@@ -4885,102 +4699,42 @@ PUT7SA:
         INCW    X
         RET
 
-
-;       Multiplexed 7-seg LED display
-LED_MPX:        
-        LD      A,TICKCNTL
-        AND     A,#3        
-        .ifne   BOARD_W1209        
-        BSET    PD_ODR,#4       ; clear digit outputs .321
-        BSET    PB_ODR,#5
-        BSET    PB_ODR,#4
-
-        JRNE    1$
-        LD      A,LED7MSB+1
-        BRES    PD_ODR,#4       ; digit .3.. 
-        JRA     3$
-
-1$:     CP      A,#1
-        JRNE    2$
-        LD      A,LED7LSB
-        BRES    PB_ODR,#5       ; digit ..2.
-        JRA     3$
-
-2$:     CP      A,#2
-        JRNE    4$  
-        LD      A,LED7LSB+1 
-        BRES    PB_ODR,#4       ; digit ...1
-        ; fall through
-         
-3$:
-        ; W1209 7S LED display row
-        ; bit 76453210 input (parameter A)
-        ;  PA .....FB.
-        ;  PC CG...... 
-        ;  PD ..A.DPE.
-        RRC     A
-        BCCM    PD_ODR,#5       ; A
-        RRC     A
-        BCCM    PA_ODR,#2       ; B
-        RRC     A
-        BCCM    PC_ODR,#7       ; C
-        RRC     A
-        BCCM    PD_ODR,#3       ; D
-        RRC     A
-        BCCM    PD_ODR,#1       ; E
-        RRC     A
-        BCCM    PA_ODR,#1       ; F
-        RRC     A
-        BCCM    PC_ODR,#6       ; G
-        RRC     A
-        BCCM    PD_ODR,#2       ; P
-4$:        
-        .else
-        ; implement board LED port mapping 
-        .endif
-        RET
-
         .endif
 
 ;===============================================================
 
-        .ifne   HAS_OUTPUTS
-;       OUT!  ( c -- )
-;       Put c to board outputs, storing a copy in OUTPUTS  
+        .ifne   HAS_KEYS
+
+;       ?KEYB   ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
+;       Return keyboard char and true, or false if no key pressed.
         .dw     LINK
-        
         LINK =  .
-        .db     (4)
-        .ascii  "OUT!"
-OUTSTOR:
-        LD      A,(1,X)
-        LD      OUTPUTS,A
-        INCW    X               ; ADDW   X,#2 
-        INCW    X
-        .ifne   BOARD_W1209
-        RRC     A
-        BCCM    PA_ODR,#3       ; W1209 relay
+        .db     5
+        .ascii  "?KEYB"
+QKEYB:
+        CALL    BKEYCHAR        ; Read char from keyboard (option: vectored code)
+        CALL    AFLAGS
+
+        JRNE    KEYBPRESS
+        ; Bit7: flag press + 100*5ms hold before repetition
+        MOV     KEYREPET,#(0x80 + 100)
+        JRA     NOKEYB
+KEYBPRESS:
+        BTJF    KEYREPET,#7,KEYBHOLD
+        BRES    KEYREPET,#7
+        JRA     ATOKEYB
+KEYBHOLD:
+        DEC     KEYREPET
+        JRNE    NOKEYB
+        MOV     KEYREPET,#30    ; repetition time: n*5ms
+ATOKEYB:
+        JP      ATOKEY          ; push char and flag true
+NOKEYB:
+        JP      ZERO            ; push flag false
+
         .endif
-        .ifne   BOARD_C0135
-        XOR     A,#0x0F         ; C0135 Relay-4 Board 
-        RRC     A
-        BCCM    PB_ODR,#4       ; Relay1
-        RRC     A
-        BCCM    PC_ODR,#3       ; Relay2
-        RRC     A
-        BCCM    PC_ODR,#4       ; Relay3
-        RRC     A
-        BCCM    PC_ODR,#5       ; Relay4
-        RRC     A
-        BCCM    PD_ODR,#4       ; LED
-        .endif
-        .ifne   BOARD_MINDEV
-        RRC     A
-        CCF
-        BCCM    PB_ODR,#5       ; PB5 LED
-        .endif
-        RET       
-        .endif
+
+;===============================================================
 
         .ifne   HAS_ADC
 ;       ADC!  ( c -- )
