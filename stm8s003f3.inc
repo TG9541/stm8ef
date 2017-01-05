@@ -25,6 +25,10 @@
         FLASH_IAPSR =   0x505F  ; Flash in-application programming status register
         FLASH_PUKR =    0x5062  ; Flash unprotection register
         FLASH_DUKR =    0x5064  ; Data EEPROM unprotection register
+       
+  EXTI_CR1 = 0x50A0 ; External interrupt control register 1
+  EXTI_CR2 = 0x50A1 ; External interrupt control register 2
+
 
          ; *** Clock Control ***
         CLK_CKDIVR =    0x50C6  ; Clock divider register

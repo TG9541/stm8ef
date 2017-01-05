@@ -13,7 +13,7 @@
 ;       156 14th Avenue
 ;       San Mateo, CA 94402
 ;       (650) 571-7639
-
+;
 ; Original main description: 
 ;       FORTH Virtual Machine:
 ;       Subroutine threaded model
@@ -47,7 +47,7 @@
 ; * words for STM8 ADC control: ADC! ADC@ 
 ; * words for board keys, outputs, LEDs: OUT OUT!
 ; * words for EEPROM, FLASH lock/unlock: LOCK ULOCK LOCKF ULOCKF
-; * words for bit operations, inv. order word access: BSR 2C@ 2C! 
+; * words for bit operations, inv. order word access: B! 2C@ 2C! 
 ; * words for compile to Flash memory: NVR RAM RESET
 ; * words for ASCII file transfer: FILE HAND
 ;
@@ -65,6 +65,7 @@
 ; Public variables in this module
 ;--------------------------------------------------------
 
+        .globl _EXTI3_IRQHandler
         .globl _TIM2_UO_IRQHandler
         .globl _TIM4_IRQHandler
         .globl _forth
@@ -133,47 +134,47 @@
         ; Note: add defaults for new features here but 
         ;       configure them in globconf.inc  
 
-        STM8S_DISCOVERY = 0     ; (currently broken)
-        BOARD_MINDEV =    0     ; STM8S103F3 "minimum development board"
-        BOARD_W1209 =     0     ; W1209 Thermostat board
-        BOARD_C0135 =     0     ; C0135 "Relay Board-4 STM8S"
+        STM8S003F3       = 0    ; 8K flash, 1K RAM, 128 EEPROM, UART1
+        STM8S103F3       = 0    ; like STM8S003F3, 640 EEPROM 
+        STM8S105C6       = 0    ; 32K flash, 2K RAM, 1K EEPROM, UART2
 
-        STM8S003F3   =    0     ; 8K flash, 1K RAM, 128 EEPROM, UART1
-        STM8S103F3   =    0     ; like STM8S003F3, 640 EEPROM 
-        STM8S105C6   =    0     ; 32K flash, 2K RAM, 1K EEPROM, UART2
+        TERM_LINUX       = 1    ; LF terminates line 
+        HALF_DUPLEX      = 0    ; Use EMIT/?KEY in half duplex mode
+        HAS_TXUART       = 1    ; Enable UART TXD, word TX!
+        HAS_RXUART       = 1    ; Enable UART RXD, word ?RX
+        HAS_TXSIM        = 0    ; Enable TxD via GPIO/TIM4, word TXGP!
+        PDTX             = 0    ; Port D GPIO for HAS_TXSIM
+        HAS_RXSIM        = 0    ; Enable RxD via GPIO/TIM4, word ?RXGP
+        PDRX             = 0    ; Port D GPIO for HAS_RXSIM
 
-        HALF_DUPLEX  =    0     ; RS232 shared Rx/Tx line, bus style
-        TERM_LINUX   =    1     ; LF terminates line 
+        EMIT_BG  = DROP         ; TODO: vectored NUL background EMIT vector
+        QKEY_BG  = ZERO         ; TODO: NUL background QKEY vector
 
-        HAS_TXDSIM   =    0     ; TxD SW simulation
-        HAS_LED7SEG  =    0     ; 7-seg LED on board
-        HAS_KEYS     =    0     ; Board has keys
-        HAS_OUTPUTS  =    0     ; Board outputs, e.g. relays
-        HAS_INPUTS   =    0     ; Board digital inputs
-        HAS_ADC      =    0     ; Board analog inputs
+        HAS_LED7SEG      = 0    ; 7-seg LED on board
+        HAS_KEYS         = 0    ; Board has keys
+        HAS_OUTPUTS      = 0    ; Board outputs, e.g. relays
+        HAS_INPUTS       = 0    ; Board digital inputs
+        HAS_ADC          = 0    ; Board analog inputs
         
-        HAS_BACKGROUND =  0     ; Background Forth task (TIM2 ticker)
-        HAS_CPNVM    =    0     ; Can compile to Flash, always interpret to RAM 
-        HAS_DOES     =    0     ; DOES> extension
-        HAS_DOLOOP   =    0     ; DO .. LOOP extension: DO LEAVE LOOP +LOOP
+        HAS_BACKGROUND   = 0    ; Background Forth task (TIM2 ticker)
+        HAS_CPNVM        = 0    ; Can compile to Flash, always interpret to RAM 
+        HAS_DOES         = 0    ; DOES> extension
+        HAS_DOLOOP       = 0    ; DO .. LOOP extension: DO LEAVE LOOP +LOOP
 
-        BCKGRND_EMIT = DROP     ; "NUL" background EMIT vector
-        BCKGRND_QKEY = ZERO     ; "NUL" background QKEY vector
+        CASEINSENSITIVE  = 0    ; Case insensitive dictionary search
+        SPEEDOVERSIZE    = 0    ; Speed-over-size in core words ROT - = < 
+        BAREBONES        = 0    ; Remove or unlink some more: hi HERE .R U.R SPACES @EXECUTE AHEAD CALL, EXIT COMPILE [COMPILE] DEPTH
 
-        CASEINSENSITIVE = 0     ; Case insensitive dictionary search
-        SPEEDOVERSIZE   = 0     ; Speed-over-size in core words ROT - = < 
-        BAREBONES       = 0     ; Remove or unlink some more: hi HERE .R U.R SPACES @EXECUTE AHEAD CALL, EXIT COMPILE [COMPILE] DEPTH
-
-        WORDS_LINKINTER = 0     ; Link interpreter words: ACCEPT QUERY TAP kTAP hi 'BOOT tmp >IN 'TIB #TIB eval CONTEXT pars PARSE NUMBER? DIGIT? WORD TOKEN NAME> SAME? find ABORT aborq $INTERPRET INTER? .OK ?STACK EVAL PRESET QUIT $COMPILE
-        WORDS_LINKCOMP  = 0     ; Link compiler words: cp last OVERT $"| ."| $,n 
-        WORDS_LINKRUNTI = 0     ; Link runtime words: doLit do$ doVAR donxt dodoes ?branch branch 
-        WORDS_LINKCHAR =  0     ; Link char out words: DIGIT <# # #S SIGN #> str hld HOLD PACK$ 
-        WORDS_LINKMISC =  0     ; Link composing words of SEE DUMP WORDS: >CHAR _TYPE dm+ .ID >NAME  
+        WORDS_LINKINTER  = 0    ; Link interpreter words: ACCEPT QUERY TAP kTAP hi 'BOOT tmp >IN 'TIB #TIB eval CONTEXT pars PARSE NUMBER? DIGIT? WORD TOKEN NAME> SAME? find ABORT aborq $INTERPRET INTER? .OK ?STACK EVAL PRESET QUIT $COMPILE
+        WORDS_LINKCOMP   = 0    ; Link compiler words: cp last OVERT $"| ."| $,n 
+        WORDS_LINKRUNTI  = 0    ; Link runtime words: doLit do$ doVAR donxt dodoes ?branch branch 
+        WORDS_LINKCHAR   = 0    ; Link char out words: DIGIT <# # #S SIGN #> str hld HOLD PACK$ 
+        WORDS_LINKMISC   = 0    ; Link composing words of SEE DUMP WORDS: >CHAR _TYPE dm+ .ID >NAME  
 
         WORDS_EXTRASTACK = 0    ; Link/include stack core words: rp@ rp! sp! sp@  
         WORDS_EXTRADEBUG = 0    ; Extra debug words: SEE
         WORDS_EXTRACORE  = 0    ; Extra core words: =0 I
-        WORDS_EXTRAMEM   = 0    ; Extra memory words: BSR 2C@ 2C!
+        WORDS_EXTRAMEM   = 0    ; Extra memory words: B! 2C@ 2C!
         WORDS_EXTRAEEPR  = 0    ; Extra EEPROM lock/unlock words: LOCK ULOCK ULOCKF LOCKF 
         WORDS_HWREG      = 0    ; Peripheral Register words
 
@@ -251,10 +252,11 @@
         .endif
 
         ;******  Board variables  ******
-        .ifne   HAS_TXDSIM ;+ HAS_RXDSIM
-        TIM4TCNT =      0x57    ; TIM4 TX interrupt counter
-        TIM4TXREG  =    0x58    ; TIM4 char for TX
-        TIM4RXREG  =    0x59    ; TIM4 char for TX
+        .ifne   HAS_TXSIM ;+ HAS_RXSIM
+        TIM4TCNT =      0x56    ; TIM4 RX/TX interrupt counter
+        TIM4TXREG  =    0x57    ; TIM4 TX transmit buffer and shift register
+        TIM4RXREG  =    0x58    ; TIM4 RX shift register
+        TIM4RXBUF  =    0x59    ; TIM4 RX receive buffer
         .endif
 
         .ifne   HAS_OUTPUTS
@@ -335,12 +337,12 @@ _TIM2_UO_IRQHandler:
 
         LDW     X,USREMIT       ; save EMIT exection vector
         PUSHW   X
-        LDW     X,#(BCKGRND_EMIT)
+        LDW     X,#(EMIT_BG)
         LDW     USREMIT,X
         
         LDW     X,USRQKEY       ; save QKEY exection vector
         PUSHW   X
-        LDW     X,#(BCKGRND_QKEY)
+        LDW     X,#(QKEY_BG)
         LDW     USRQKEY,X
 
         LDW     X,USRHLD
@@ -389,6 +391,7 @@ _forth:                         ; SDCC entry
 
 COLD:
         SIM                     ; disable interrupts 
+        MOV     CLK_CKDIVR,#0   ; Clock divider register
         
         LDW     X,#(RAMEND-FORTHRAM) 
 1$:     CLR     (FORTHRAM,X)                    
@@ -409,6 +412,61 @@ COLD:
 
         CALLR   BOARDINIT       ; Board initialization (see "boardcore.inc")
 
+        .ifne   HAS_BACKGROUND
+        ; init 5ms timer interrupt
+        MOV     TIM2_PSCR,#0x03 ; prescaler 1/8
+        MOV     TIM2_ARRH,#0x26 ; reload 5ms H 
+        MOV     TIM2_ARRL,#0xDE ;        5ms L
+        MOV     ITC_SPR4,#0xF7  ; Interrupt prio. low for TIM2 (Int13)
+        MOV     TIM2_CR1,#0x01  ; enable TIM2
+        MOV     TIM2_IER,#0x01  ; enable TIM2 interrupt
+        .endif
+
+        .ifne   HAS_RXUART+HAS_TXUART
+        ; Init RS232 communication port
+        ; STM8S[01]003F3 init UART
+        MOV     UART1_BRR2,#0x003       ; 9600 baud
+        MOV     UART1_BRR1,#0x068       ; 0068 9600 baud
+        .ifne   HAS_RXUART*HAS_TXUART
+        MOV     UART1_CR2,#0x0C        ; Use UART1 full duplex
+        .else
+        .ifne   HAS_TXUART
+        MOV     UART1_CR2,#0x08        ; UART1 enable tx
+        .endif
+        .ifne   HAS_RXUART
+        MOV     UART1_CR2,#0x04        ; UART1 enable rx 
+        .endif
+        .endif
+        .endif
+
+        .ifne   HAS_RXSIM+HAS_TXSIM
+        ; TIM4 based RXD or TXD: initialize timer 
+        TIM4RELOAD = 0xCF       ; reload 0.104 ms (9600 baud)
+        MOV     TIM4_ARR,#TIM4RELOAD
+        MOV     TIM4_PSCR,#0x03 ; prescaler 1/8
+        MOV     ITC_SPR6,#0x3F  ; Interrupt prio "high" for TIM4 (Int23)
+        MOV     TIM4_CR1,#0x01  ; enable TIM4
+        .ifne  PDRX^PDTX 
+        HALF_DUPLEX_SIM = 0     ; is there no better way to do "!=" in ASxxxx 2.x?
+        .else
+        HALF_DUPLEX_SIM = 1     ; Half-duplex RxTx if GPIO is shared
+        .endif
+        .endif
+
+        .ifne   HAS_TXSIM*((PDRX-PDTX)+(1-HAS_RXSIM))
+        ; init TxD through GPIO if not shared pin with PDRX
+        BSET    PD_DDR,#PDTX    ; PDTX GPIO output
+        BSET    PD_CR1,#PDTX    ; enable PDTX push-pull
+        .endif
+
+        .ifne   (HAS_RXSIM)
+        ; init RxD through GPIO
+        BSET    EXTI_CR1,#7     ; External interrupt Port D falling edge
+        BRES    PD_DDR,#PDRX    ; 0: input (default)
+        BSET    PD_CR1,#PDRX    ; enable PDRX pull-up 
+        BSET    PD_CR2,#PDRX    ; enable PDRX external interrupt
+        .endif
+
         .ifne   HAS_OUTPUTS
         CALL    ZERO
         CALL    OUTSTOR
@@ -424,8 +482,8 @@ COLD:
 
 ;       ##############################################
 ;       Include for board support code
-;       Board I/O initialization and interrupt code 
-;       Hardware dependent words "?RX" "TX!" "OUT!"
+;       Board I/O initialization and E/E mapping code 
+;       Hardware dependent words, e.g.  BKEY, OUT!
         .include "boardcore.inc"
 ;       ##############################################
 
@@ -475,7 +533,6 @@ TBOOT:
         ULAST = .
         .endif
 
-
         .ifeq   BAREBONES
 ;       hi      ( -- )
 ;       Display sign-on message.
@@ -488,6 +545,7 @@ TBOOT:
         .ascii  "hi"
         .endif
 HI:
+        ; TODO: move to board initialization?
         .ifne   HAS_LED7SEG
         MOV     LED7MSB+1,#0x66 ; 7S LEDs .4..
         MOV     LED7LSB,  #0x78 ; 7S LEDs ..t.
@@ -505,6 +563,182 @@ HI:
         JP      CR
         .endif
 
+; ==============================================
+
+;      Device dependent I/O
+
+        .ifne   HAS_RXUART
+;       ?RX     ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
+;       Return serial interface input char from and true, or false.
+
+        .ifeq   BAREBONES
+        .dw     LINK
+        LINK =  .
+        .db     3
+        .ascii  "?RX"
+        .endif
+QRX:
+        CLR     A               ; A: flag false
+        BTJF    UART1_SR,#5,1$
+        LD      A,UART1_DR      ; get char in A
+1$:     JP      ATOKEY          ; push char or flag false
+        .endif
+
+
+        .ifne   HAS_TXUART
+;       TX!     ( c -- )
+;       Send character c to the serial interface.
+
+        .ifeq   BAREBONES
+        .dw     LINK
+        LINK =  .
+        .db     3
+        .ascii  "TX!"
+        .endif
+TXSTOR:
+        INCW    X
+        LD      A,(X)
+        INCW    X
+        
+        .ifne   HALF_DUPLEX * (1-HAS_TXSIM)  
+        ; HALF_DUPLEX with normal UART (e.g. wired-or Rx and Tx)
+        BRES    UART1_CR2,#2    ; disable rx
+1$:     BTJF    UART1_SR,#7,1$  ; loop until tdre
+        LD      UART1_DR,A      ; send A
+2$:     BTJF    UART1_SR,#6,2$  ; loop until tc
+        BSET    UART1_CR2,#2    ; enable rx
+        .else                   ; not HALF_DUPLEX
+1$:     BTJF    UART1_SR,#7,1$  ; loop until tdre
+        LD      UART1_DR,A      ; send A
+        .endif
+        RET
+        .endif
+
+        .ifne   HAS_RXSIM
+;       ?RXP     ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
+;       Return char from a simulated serial interface and true, or false.
+
+        .ifeq   BAREBONES
+        .dw     LINK
+        LINK =  .
+        .ifne   HAS_RXUART
+        .db     4
+        .ascii  "?RXP"
+        .else
+        .db     3
+        .ascii  "?RX"
+        .endif
+        .endif
+        .ifeq   HAS_RXUART
+QRX:
+        .endif
+QRXP:
+        CLR     A 
+        EXG     A,TIM4RXBUF     ; read and consume char 
+        JP      ATOKEY
+        .endif
+
+        .ifne   HAS_TXSIM
+;       TXP!     ( c -- )
+;       Send character c to a simulated serial interface.
+
+        .ifeq   BAREBONES
+        .dw     LINK
+        LINK =  .
+        .ifne   HAS_TXUART
+        .db     4
+        .ascii  "TXP!"
+        .else
+        .db     3
+        .ascii  "TX!"
+        .endif
+        .endif
+
+        .ifeq   HAS_TXUART
+TXSTOR:
+        .endif
+TXPSTOR:
+        INCW    X
+        LD      A,(X)
+        INCW    X
+
+1$:     TNZ     TIM4TCNT   
+        JRNE    1$              ; wait for free TIM4 RX-TX 
+
+        .ifne   HALF_DUPLEX_SIM
+        BRES    PD_CR2,#PDRX    ; disable PDRX external interrupt
+        ;BSET    PD_DDR,#PDRX    ; port PDRX=PDRX to output
+        .endif
+
+        LD      TIM4TXREG,A     ; char to TXSIM output register
+        MOV     TIM4TCNT,#10    ; init next transfer 
+        CLR     TIM4_CNTR       ; reset TIM4, trigger update interrupt
+        BSET    TIM4_IER,#0     ; enable TIM4 interrupt
+        RET
+        .endif
+
+;       RxD through GPIO start-bit interrupt handler
+_EXTI3_IRQHandler:
+        .ifne   HAS_RXSIM
+        BRES    PD_CR2,#PDRX    ; disable PDRX external interrupt
+
+        ; Set-up TIM4 for 8N1 Rx sampling at half bit time  
+        MOV     TIM4TCNT,#(-9)  ; set sequence counter for RX 
+        MOV     TIM4_CNTR,#(TIM4RELOAD/2)
+        BRES    TIM4_SR,#0      ; clear TIM4 UIF 
+        BSET    TIM4_IER,#0     ; enable TIM4 interrupt
+        IRET
+        .endif
+
+_TIM4_IRQHandler:
+;       TODO: reset the µC if a unepected interrupt occurs?
+        .ifne   HAS_RXSIM+HAS_TXSIM
+        ; TIM4 interrupt handler for software Rx/Tx or half-duplex Rx+Tx
+
+        ;BCPL    PC_ODR,#4  ; pin debug
+        
+        BRES    TIM4_SR,#0      ; clear TIM4 UIF 
+
+        LD      A,TIM4TCNT      ; TIM4CNT is the step counter
+        JRMI    TIM4_RECVE      ; negative index: receive
+        JRNE    TIM4_TRANS      ; positive index: transmit
+        ; TIM4CNT is zero
+
+TIM4_OFF:
+        .ifne   HALF_DUPLEX_SIM
+        BSET    PD_CR2,#PDRX    ; enable PDRX external interrupt
+        BRES    PD_DDR,#PDRX    ; set shared GPIO to input
+        .endif
+        BRES    TIM4_IER,#0     ; disable TIM4 interrupt
+        IRET
+TIM4_RECVE:
+        BTJT    PD_IDR,#PDRX,1$ ; dummy branch, copy GPIO to CF
+1$:     RRC     TIM4RXREG
+        INC     TIM4TCNT
+        JRNE    TIM4_END
+        MOV     TIM4RXBUF,TIM4RXREG ; save result (CF is now start-bit) 
+        .ifeq   HALF_DUPLEX_SIM
+        BSET    PD_CR2,#PDRX    ; enable PDRX external interrupt
+        .endif
+        JRA     TIM4_OFF
+TIM4_TRANS:        
+        CP      A,#10           ; test if startbit (coincidentially set CF) 
+        JRNE    TIM4_SER
+        .ifne   HALF_DUPLEX_SIM
+        BSET    PD_DDR,#PDRX    ; port PDRX=PDRX to output
+        .endif
+        JRA     TIM4_BIT        ; emit start bit (CF=0 from CP)
+TIM4_SER:
+        RRC     TIM4TXREG       ; get data bit, shift in stop bit (CF=1 from CP) 
+        ; fall through
+TIM4_BIT:
+        BCCM    PD_ODR,#PDTX    ; Set GPIO to CF
+        DEC     TIM4TCNT        ; next TXD TIM4 state
+        JREQ    TIM4_OFF        ; complete when TIM4CNT is zero 
+        ; fall through
+TIM4_END:
+        IRET 
+        .endif
 
 ;       ?KEY    ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
 ;       Return input char and true, or false.
@@ -514,7 +748,6 @@ HI:
         .ascii  "?KEY"
 QKEY:
         JP      [USRQKEY]
-
 
 ;       EMIT    ( c -- )
 ;       Send character c to output device.
@@ -526,7 +759,7 @@ QKEY:
 EMIT:
         JP      [USREMIT]
 
-
+; ==============================================
 ; The kernel
 
 ;       PUSHLIT ( -- C )
@@ -714,12 +947,6 @@ AT:
         LDW     (X),Y
         RET
 
-        ;LDW     Y,X             ; Y = a
-        ;LDW     Y,(Y)           
-        ;LDW     Y,(Y)
-        ;LDW     (X),Y           ; w = @Y
-       ; RET     
-
 ;       !       ( w a -- )      ( TOS STM8: -- Y,Z,N )
 ;       Pop data stack to memory.
 
@@ -736,15 +963,6 @@ STORE:
         LDW     [YTEMP],X
         EXGW    X,Y
         JRA     DDROP
-
-        ;LDW     Y,X
-        ;LDW     Y,(Y)           ; Y=a
-        ;LDW     YTEMP,Y
-        ;LDW     Y,X
-        ;LDW     Y,(2,Y)
-        ;LDW     [YTEMP],Y
-        ;JRA     DDROP
-
 
 ;       C@      ( b -- c )      ( TOS STM8: -- A,Z,N )
 ;       Push byte in memory to stack.
@@ -951,15 +1169,16 @@ DUPP:
         .ascii  "SWAP"
 SWAPP:
         LDW     Y,X
-        LDW     Y,(2,Y)
-        PUSHW   Y
-        LDW     Y,X
-        LDW     Y,(Y)
+        LDW     X,(2,X)
+        PUSHW   X
+        LDW     X,Y
+        LDW     X,(X)
+        EXGW    X,Y
         LDW     (2,X),Y
         POPW    Y
         LDW     (X),Y
-        RET     
-
+        RET
+        
 ;       OVER    ( w1 w2 -- w1 w2 w1 ) ( TOS STM8: -- Y,Z,N )
 ;       Copy second stack item to top.
 
@@ -1287,6 +1506,17 @@ ASTOR:
         LD      YL,A
         JP      YSTOR
 
+
+;       ATOKEY core ( -- c T | f )    ( TOS STM8: -- Y,Z,N )
+;       Return input char and true, or false.
+ATOKEY:
+        TNZ     A
+        JREQ    1$
+        CALLR   1$              ; push char
+        JRA     MONE            ; flag true
+1$:     JRA     ASTOR           ; push char or flag false
+
+
 ;       TIB     ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Return address of terminal input buffer.
 
@@ -1476,13 +1706,14 @@ QDUP1:  RET
 ROT:
         .ifne   SPEEDOVERSIZE
         LDW     Y,X
-        LDW     Y,(4,Y)
-        PUSHW   Y
-        LDW     Y,X
-        LDW     Y,(2,Y)
-        PUSHW   Y
-        LDW     Y,X
-        LDW     Y,(Y)
+        LDW     X,(4,X)
+        PUSHW   X
+        LDW     X,Y
+        LDW     X,(2,X)
+        PUSHW   X
+        LDW     X,Y
+        LDW     X,(X)
+        EXGW    X,Y
         LDW     (2,X),Y
         POPW    Y 
         LDW     (4,X),Y
@@ -2069,9 +2300,9 @@ ZEQUAL:
         CALLR   DOXCODE
         JREQ    1$      
         CLRW    X               
-        JRA     2$        
+        RET
 1$:     CPLW    X               ;else -1 
-2$:     RET
+        RET
 
 ;       PICK    ( ... +n -- ... w )      ( TOS STM8: -- Y,Z,N )
 ;       Copy    nth stack item to tos.
@@ -4545,14 +4776,14 @@ WORS1:  CALL    AT              ; @ sets Z and N
 ;===============================================================
 
         .ifne   WORDS_EXTRAMEM
-;       BITSR ( t a u -- )
+;       B! ( t a u -- )
 ;       Set/reset bit #u (0..7) in the byte at address a to bool t
 ;       Note: creates/executes BSER/BRES + RET code on Data Stack
         .dw     LINK
         
         LINK =  .
-        .db     (5)
-        .ascii  "BITSR"
+        .db     (2)
+        .ascii  "B!"
 BRSS:
         LD      A,#0x72         ; Opcode BSET/BRES 
         LD      (X),A

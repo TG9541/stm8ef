@@ -1,49 +1,57 @@
 # STM8S eForth (stm8ef)
 
-This is an extended and refactored version of [Dr. C.H. Ting's eForth for the *STM8S Discovery*](http://www.forth.org/svfig/kk/07-2010.html) that turns STM8S *Value Line* µCs boards into an interactive Forth development environment. The [SDCC toolchain](http://sdcc.sourceforge.net/) is used for building the eForth core, which makes mixing Forth, assembly, and C possible.
+This is an extended and refactored version of [Dr. C.H. Ting's eForth for the *STM8S Discovery*](http://www.forth.org/svfig/kk/07-2010.html) that turns STM8S *Value Line* µCs boards into interactive Forth development environments. The [SDCC toolchain](http://sdcc.sourceforge.net/) is applied for building the eForth core, which makes mixing Forth, assembly, and C possible.
 
-The binary of an interactive eForth system uses below 4400 bytes, including the overhead from SDCC (C startup code and interrupt table). With a rich feature feature set (*Compile to Flash*, *Background Task*, and *CREATE-DOES>*) the binary size is below 5000 bytes.
+The binary of a basic interactive eForth system uses below 3800 bytes, including the overhead from SDCC (C startup code and interrupt table). With a rich feature feature set (*Compile to Flash*, *Background Task*) and extenions (*DO-LEAVE-LOOP/+LOOP*, *CREATE-DOES>*, native bit set) the binary size is below 5000 bytes.
 
-Please refer to the [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) for more information! 
+Please refer to the [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) for more information!
 
 ## Overview
 
 Features:
 
+* configurable vocabulary subsets for binary size optimizations
+* Subroutine Threaded Code (STC) with native BRANCH and EXIT
 * compile Forth to NVM (Non Volatile Memory with Flash IAP)
 * autostart feature for embedded applications
-* preemptive background tasks, e.g. for `INPUT-PROCESS-OUTPUT` proces with fixed cycle time (default 5ms)
-* configurable vocabulary subsets for binary size reduction
-* Subroutine Threaded Code (STC) with native BRANCH and EXIT
-* Extended vocabulary:
-  * *CREATE-DOES>* for defining words
-  * Loop structure words: DO LEAVE LOOP +LOOP
-  * STM8 ADC control: ADC! ADC@
-  * board keys, outputs, LEDs: OUT OUT!
-  * EEPROM, FLASH lock/unlock: LOCK ULOCK LOCKF ULOCKF
-  * native bit set/reset: BSR
-  * inverted byte order 16bit register access: 2C@ 2C!
-  * compile to Flash memory: NVR RAM RESET
-  * autostart applications: 'BOOT
-  * ASCII file transfer: FILE HAND
+* preemptive background tasks with fixed cycle time (default 5ms)
+  * robust and fast context switch with "clean stack" approach
+  * allows `INPUT-PROCESS-OUTPUT` processing indepent from the Forth console
+  * allows setting process parameters through interactive console
+  * in background tasks `?KEY` can read board keys, and [boards with 7Seg-LED UI](https://github.com/TG9541/stm8ef/wiki/eForth-Background-Task) can emit to the LED display
+* configuration options for serial console or dual serial interface
+  * UART: ?RX TX!
+  * GPIO w/ Port D edge & Timer4 interrupts: ?RXP TXP!
+  * half-duplex "bus style" communication through a single Port D pin (e.g. PD1/SWIM)
 * board support for Chinese made [STM8S based very low cost boards][WG1]:
   * W1209 LED display & half-duplex with SW TX
   * C0135 Relay-4 Board
   * STM8S103F3 "$0.70" breakout board
-  * support for [boards with 7Seg-LED UI](https://github.com/TG9541/stm8ef/wiki/eForth-Background-Task): in a background task, `123 .` goes to the 7Seg-LED display, and `?KEY` reads board keys
-
+  * configuration folders for easy application to other boards
+  * no UART required for interactive console
+* Extended vocabulary:
+  * *CREATE-DOES>* for defining *defining words*
+  * Vectored I/O: 'KEY? 'EMIT
+  * Loop structure words: DO LEAVE LOOP +LOOP
+  * STM8 ADC control: ADC! ADC@
+  * board keys, outputs, LEDs: BKEY KEYB? EMIT7S OUT OUT!
+  * EEPROM, FLASH lock/unlock: LOCK ULOCK LOCKF ULOCKF
+  * native bit set/reset: B! (b a u -- )
+  * inverted byte order 16bit register access: 2C@ 2C!
+  * compile to Flash memory: NVR RAM RESET
+  * autostart applications: 'BOOT
+  * ASCII file transfer: FILE HAND
 
 Canges that required refactoring the original code:
 
 * use of the free SDCC tool chain ("ASxxxx V2.0" syntax, SDCC linker with declaration of ISR routines in `main.c`)
 * removal of hard STM8S105C6 dependencies (e.g. RAM layout, UART2)
 * flexible RAM layout, meaningful symbols for RAM locations
-* conditional code for different target boards with a subdirectory based configuration framework 
-* bugfixes (e.g. COMPILE)
+* conditional code for different target boards with a subdirectory based configuration framework
+* bugfixes (e.g. COMPILE, DEPTH, R!)
 * major binary size optimization
 
-
-## Support for STM8S Value Line µC 
+## Support for STM8S Value Line µC
 
 The availability of low-cost boards (e.g. thermostats, power supplies, WIFI modules) makes the *STM8S003F3P6* the main target.
 
@@ -51,28 +59,80 @@ The main differences between STM8S003F3P6 and STM8S105C6T6 (*STM8S Discovery*) a
 
 * 8 KiB Flash instead of 32 KiB
 * 1 KiB RAM instead of 2 KiB
-* 128 bytes EEPROM instead of 1 KiB (the STM8S103F3 has 640 bytes) 
+* 128 bytes EEPROM instead of 1 KiB (the STM8S103F3 has 640 bytes)
 * reduced set of GPIO and other peripherals
 * UART1 instead of UART2
 
 ## Board support:
 
-There is board suport for some easily available "Chinese gadgets". For details, refer to [STM8S-Value-Line-Gadgets][WG1] in the Wiki.
+There is board support for some easily available "Chinese gadgets". For details, refer to [STM8S-Value-Line-Gadgets][WG1] in the Wiki.
 
-* `BOARD_CORE` STM8S003F3 core, most extra feature words disabled 
-* `BOARD_MINDEV` STM8S103F3 low cost "minimum development board"
-* `BOARD_W1209` W1209 low cost thermostat with LED display and half-duplex RS232 through sensor header (9600 baud) 
-* `BOARD_C0135` C0135 "Relay-4 Board" (can be used as a *Nano PLC*)
+* `CORE` starting point for new boards, most extra feature words disabled
+* `SWIMCOM` communication through the SWIM interface for board exploration
+* `MINDEV` STM8S103F3 low cost "minimum development board"
+* `W1209` W1209 (also XH-W1209) low cost thermostat with LED display and half-duplex RS232 through sensor header (9600 baud)
+* `C0135` C0135 "Relay-4 Board" (can be used as a *Nano PLC*)
+
+Binaries for the listed targets are in the *Releases* section.
 
 Currently, there is no support for the STM8S Discovery, since I don't have any STM8S105C6T6 based boards for testing.
+
+
+### STM8S00h3F3 "Communication through PD1/SWIM"
+
+This is a tgeneric STM8EF target for exploring boards where PD1 is available on the SWIM ICP interface. Access to PD5 (TxD) and PD6 (RxD) is not required, bus-style half-duplex console communciation with a software UART simulation is used instead.
+
+* Binary size about 5800 bytes
+* Selected feature set:
+  * words for register addresses (e.g. Px_CR2 Px_CR1 Px_DDR Px_IDR Px_ODR)
+  * compile to Flash
+  * EEPROM access
+  * background task
+  * eForth extensions *CREATE-DOES>*, *DO-LEAVE-LOOP/+LOOP*
+  * special STM8 memory access words (bit addressing, reversed access order)
+  * Case insensitive vocabulary
+* Clock source internal 16 MHz RC oscillator `HSI`
+
+It's advisable to have at least two boards for reverse engineering: one in original state, and one for testing new code. Please [open a ticket here](https://github.com/TG9541/stm8ef/issues), or contact the STM8EF [Hackaday.io project](https://hackaday.io/project/16097-eforth-for-cheap-stm8s-value-line-gadgets) before you start working on a new board!.
+
+For serial communication, e.g. with the help of a CH340 USB-serial converter, the following simple interface can be used:
+
+```
+STM8 device    .      .----o serial TxD "TTL"
+               .      |
+               .     ---
+               .     / \  1N4148
+               .     ---
+ICP header     .      |
+               .      *----o serial RxD "TTL
+               .      |
+STM8 PD1/SWIM-->>-----*----o ST-LINK SWIM
+               .
+NRST----------->>----------o ST-LINK NRST
+               .
+GND------------>>-----*----o ST-LINK GND
+               .      |
+................      .----o serial GND
+```
+
+**Warning**: while this target has been designed with exploring unknown boards in mind, the original ROM contents of most boards is read-protected and can't be read. Once erased the orignal function can't be recovered without the help from the manufacturer (unless you understand how the hardware works and write your own code).
+
+**Warning**: if your target board is designed to supply or control connected devices (e.g. a power supply) don't assume any fail-safe properties from the board (e.g. the output voltage of a power supply board may go to the maximum without the proper software, or when certain port pins are set through the console). Disconnect any connected equipment. If possible only supply the µC!
+
+**Warning**: when working with unknown boards make sure to have at least a basic understanding of the schematics and workings of the board, and the authors of this software can't help you with reverse-engineering an unsupported board. Working knowledge of electronics engineering is assumed. Use common sense!
+
+Run `make BOARD=SWIMCOM flash` for building and flashing.
 
 ### STM8S003F3 Core
 
 The plain STM8S003F3P6 eForth core as a starting point for configurations
 
-* 16MHz HSI, serial console
-* Reduced feature set for minimal memory footprint (less than 4400 bytes)
+* 16MHz HSI,
+* Reduced feature set for minimal memory footprint (less than 4KiB )
 * Configured for the interactive use case, e.g. hardware testing, or as a debugging console
+* Selected feature set:
+  * compile to Flash
+  * serial console with UART
 
 More features can be selected from the list of options in `globalconf.inc`.
 
@@ -82,14 +142,14 @@ Run `make BOARD=CORE flash` for building and flashing.
 
 Cheap STM8S103F3P6-based breakout board with LED on port B5 (there are plenty of vendors on EBay or AliExpress, the price starts below $0.70 incl. shipping)
 
-* Binary size below 5300 bytes 
+* Binary size below 5000 bytes
 * Selected feature set:
-  * compile to Flash 
-  * background task 
-  * CREATE-DOES>
-  * I/O words
-  * special STM8 memory access words (bit addressing, reversed access order) 
+  * compile to Flash
   * EEPROM access
+  * background task
+  * eForth extensions *CREATE-DOES>*, *DO-LEAVE-LOOP/+LOOP*
+  * I/O words
+  * special STM8 memory access words (bit addressing, reversed access order)
   * Case insensitive vocabulary
 * Clock source internal 16 MHz RC oscillator `HSI`
 
@@ -97,18 +157,19 @@ Run `make BOARD=MINDEV flash` for building and flashing.
 
 ### W1209 Thermostat Module
 
-STM8S003F3P6-based thermostat board with a 3 digit 7S-LED display, relay, and a 10k NTC sensor. 
+STM8S003F3P6-based thermostat board with a 3 digit 7S-LED display, relay, and a 10k NTC sensor.
 This very cheap board can be used easily for single input/single output control applications with a basic UI (e.g. timer, counter, dosing, monitoring).
 
-* Binary size about 5600 bytes
+* Binary size about 5400 bytes
 * Selected feature set:
-  * 7S-LED display and board keys
   * Half-duplex serial interface through sensor header
-  * compile to Flash 
-  * background task 
-  * CREATE-DOES>
-  * I/O words
+  * 7S-LED display and board keys
+  * compile to Flash
   * EEPROM access
+  * background task
+  * eForth extensions *CREATE-DOES>*, *DO-LEAVE-LOOP/+LOOP*
+  * I/O words
+  * special STM8 memory access words (bit addressing, reversed access order)
   * Case insensitive vocabulary
 * Clock source internal 16 MHz RC oscillator `HSI`
 
@@ -118,14 +179,14 @@ Run `make BOARD=W1209 flash` for building and flashing.
 
 Interactive development is possible using half-duplex RS232 communication through the sensor header:
 
-Port D6 (RxD) is on the NTC header. I implemented a half-duplex "multiple access bus" communication interface with an interrupt based
-software simulation for TX that causes very little CPU overhead (9600 baud with TIM4).
+Port D6 (RxD) is on the NTC header. I implemented a half-duplex "multiple access bus" communication interface with an interrupt based software simulation for TX that causes very little CPU overhead (9600 baud with TIM4).
 
 Prerequists for using eForth on a W1209 interactively:
 
-* remove the capacitor next to header (0.47µF would limit the UART to about 5 character/s) 
-* on the terminal side, use wired-or *RXD || TxD* (with open drain, e.g. USB CH340 with 1N4148 in series with TxD) 
+* remove the capacitor next to header (0.47µF would limit the UART to about 5 character/s)
+* on the terminal side, use wired-or *RXD || TxD* (with open drain, e.g. USB CH340 with 1N4148 in series with TxD)
 
+Alternative solution: reconfigure to use PD1/SWIM (shared with 7S-LED segment `A`)
 
 Refer to the [wiki](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets#w1209).
 
@@ -133,22 +194,17 @@ Refer to the [wiki](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadge
 
 The board, sometimes labelled C0135 or "Relay Board-4" is a low cost PLC I/O expander with the following features:
 
-* STM8S103F3P6 (640 bytes EEPROM) 
-* 4 relays NC/NO rated 250VAC-10A (with red monitoring LEDs) on PB4, PC3, PC4, and PC5 
-* 4 unprotected inputs (PC6, PC7, PD2, PD3, 2 usable as 3.3V analog-in), 
-* 1 LED on PD4, 
-* 1 key on PA3, 
+* STM8S103F3P6 (640 bytes EEPROM)
+* 4 relays NC/NO rated 250VAC-10A (with red monitoring LEDs) on PB4, PC3, PC4, and PC5
+* 4 unprotected inputs (PC6, PC7, PD2, PD3, 2 usable as 3.3V analog-in),
+* 1 LED on PD4,
+* 1 key on PA3,
 * RS485 (PB5 enable - PD5 TX, PD6 RX on headers)
-* 8MHz crystal (or 16 MHz HSI) 
+* 8MHz crystal (or 16 MHz HSI)
 
-* Binary size below 5300 bytes 
-* Selected feature set:
-  * compile to Flash 
-  * background task 
-  * CREATE-DOES>
-  * I/O words
-  * EEPROM access
-  * Case insensitive vocabulary
+* Binary size below 5100 bytes
+* Selected feature set like MINDEV, additionally:
+  * I/O words for board keys, OUT! for relays
 * Clock source internal 16 MHz RC oscillator `HSI`
 
 Run `make BOARD=C0135 flash` for building and flashing.

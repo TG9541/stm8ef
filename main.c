@@ -30,6 +30,9 @@ volatile __at(0x0300) uint8_t dstackData[0x80];  // Data stack, growing down
 volatile __at(0x0380) uint8_t tibData[0x50];     // Terminal input buffer TIB, growing up
 volatile __at(0x03D0) uint8_t rstackData[0x30];  // Return stack   
 
+// declare interrupt handler for Port D external interrupts 
+void EXTI3_IRQHandler() __interrupt (6);
+
 // declare interrupt handler for TIM2 update overflow
 void TIM2_UO_IRQHandler() __interrupt (13);
 
