@@ -78,9 +78,9 @@ Binaries for the listed targets are in the *Releases* section.
 Currently, there is no support for the STM8S Discovery, since I don't have any STM8S105C6T6 based boards for testing.
 
 
-### STM8S00h3F3 "Communication through PD1/SWIM"
+### STM8S003F3 "Communication through PD1/SWIM"
 
-This is a tgeneric STM8EF target for exploring boards where PD1 is available on the SWIM ICP interface. Access to PD5 (TxD) and PD6 (RxD) is not required, bus-style half-duplex console communciation with a software UART simulation is used instead.
+This is a generic STM8EF target for exploring boards where no UART pins are broken out but where PD1 is available on a SWIM ICP header. Access to PD5/TX and PD6/RX is not required, bus-style half-duplex console communciation with a software UART simulation is used instead.
 
 * Binary size about 5800 bytes
 * Selected feature set:
@@ -93,13 +93,12 @@ This is a tgeneric STM8EF target for exploring boards where PD1 is available on 
   * Case insensitive vocabulary
 * Clock source internal 16 MHz RC oscillator `HSI`
 
-It's advisable to have at least two boards for reverse engineering: one in original state, and one for testing new code. Please [open a ticket here](https://github.com/TG9541/stm8ef/issues), or contact the STM8EF [Hackaday.io project](https://hackaday.io/project/16097-eforth-for-cheap-stm8s-value-line-gadgets) before you start working on a new board!.
-
-For serial communication, e.g. with the help of a CH340 USB-serial converter, the following simple interface can be used:
+For serial communication the following simple wired-or interface can be used:
 
 ```
+
 STM8 device    .      .----o serial TxD "TTL"
-               .      |
+               .      |      (e.g. "CH340 USB serial converter")
                .     ---
                .     / \  1N4148
                .     ---
@@ -115,21 +114,23 @@ GND------------>>-----*----o ST-LINK GND
 ................      .----o serial GND
 ```
 
-**Warning**: while this target has been designed with exploring unknown boards in mind, the original ROM contents of most boards is read-protected and can't be read. Once erased the orignal function can't be recovered without the help from the manufacturer (unless you understand how the hardware works and write your own code).
+It's advisable to have at least two boards for reverse engineering: one in original state, and one for testing new code. Please [open a ticket here](https://github.com/TG9541/stm8ef/issues), or contact the STM8EF [Hackaday.io project](https://hackaday.io/project/16097-eforth-for-cheap-stm8s-value-line-gadgets) before you start working on a new board!
 
-**Warning**: if your target board is designed to supply or control connected devices (e.g. a power supply) don't assume any fail-safe properties from the board (e.g. the output voltage of a power supply board may go to the maximum without the proper software, or when certain port pins are set through the console). Disconnect any connected equipment. If possible only supply the µC!
+**Warning**:  the original ROM contents of most boards is read-protected and can't be read, and once erased the original function can't be restored (your board will be useless unless you write your own code).
 
-**Warning**: when working with unknown boards make sure to have at least a basic understanding of the schematics and workings of the board, and the authors of this software can't help you with reverse-engineering an unsupported board. Working knowledge of electronics engineering is assumed. Use common sense!
+**Warning**: if your target board is designed to supply or control connected devices (e.g. a power supply unit) don't assume any fail-safe properties of the board (e.g. the output voltage of a power supply board might rise to the maximum without the proper software). Disconnect any connected equipment, and if possible only supply the µC with a current limiting power supply!
+
+**Warning**: when working with unknown boards make sure to have at least a basic understanding of the schematics and workings of the board! The author(s) of this software can't help you reverse-engineering an unsupported board. Working knowledge of electronics engineering is assumed. Use common sense!
 
 Run `make BOARD=SWIMCOM flash` for building and flashing.
 
 ### STM8S003F3 Core
 
-The plain STM8S003F3P6 eForth core as a starting point for configurations
+A plain STM8S003F3P6 eForth core as a starting point for configurations
 
 * 16MHz HSI,
-* Reduced feature set for minimal memory footprint (less than 4KiB )
-* Configured for the interactive use case, e.g. hardware testing, or as a debugging console
+* Reduced feature set for minimal memory footprint (less than 4KiB Flash)
+* Reduced vocabulary for the interactive use case (e.g. for hardware testing or as a debugging console)
 * Selected feature set:
   * compile to Flash
   * serial console with UART
@@ -140,7 +141,7 @@ Run `make BOARD=CORE flash` for building and flashing.
 
 ### STM8S103F3 "minimum development board"
 
-Cheap STM8S103F3P6-based breakout board with LED on port B5 (there are plenty of vendors on EBay or AliExpress, the price starts below $0.70 incl. shipping)
+Cheap STM8S103F3P6-based breakout board with LED on port B5 (there are plenty of vendors on EBay or AliExpress, the price starts below $0.70 incl. shipping).
 
 * Binary size below 5000 bytes
 * Selected feature set:
@@ -157,15 +158,14 @@ Run `make BOARD=MINDEV flash` for building and flashing.
 
 ### W1209 Thermostat Module
 
-STM8S003F3P6-based thermostat board with a 3 digit 7S-LED display, relay, and a 10k NTC sensor.
-This very cheap board can be used easily for single input/single output control applications with a basic UI (e.g. timer, counter, dosing, monitoring).
+STM8S003F3P6-based thermostat board with a 3 digit 7S-LED display, a relay, and a 10k NTC sensor.
+This very cheap board can be used for single input/single output control applications with a basic UI (e.g. timer, counter, dosing, monitoring).
 
-* Binary size about 5400 bytes
+* Binary size below 5500 bytes
 * Selected feature set:
   * Half-duplex serial interface through sensor header
-  * 7S-LED display and board keys
-  * compile to Flash
-  * EEPROM access
+  * 7S-LED display and board keys (P7S E7S BKEY KEYB?)
+  * compile to Flash and EEPROM access
   * background task
   * eForth extensions *CREATE-DOES>*, *DO-LEAVE-LOOP/+LOOP*
   * I/O words
@@ -177,9 +177,7 @@ Run `make BOARD=W1209 flash` for building and flashing.
 
 #### Serial console on W1209
 
-Interactive development is possible using half-duplex RS232 communication through the sensor header:
-
-Port D6 (RxD) is on the NTC header. I implemented a half-duplex "multiple access bus" communication interface with an interrupt based software simulation for TX that causes very little CPU overhead (9600 baud with TIM4).
+Interactive development is possible using the sensor header as a half-duplex "bus style" serial interface with an interrupt basedUART simulation that causes very little CPU overhead (9600 baud with TIM4).
 
 Prerequists for using eForth on a W1209 interactively:
 
@@ -194,6 +192,7 @@ Refer to the [wiki](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadge
 
 The board, sometimes labelled C0135 or "Relay Board-4" is a low cost PLC I/O expander with the following features:
 
+* Binary size below 5100 bytes
 * STM8S103F3P6 (640 bytes EEPROM)
 * 4 relays NC/NO rated 250VAC-10A (with red monitoring LEDs) on PB4, PC3, PC4, and PC5
 * 4 unprotected inputs (PC6, PC7, PD2, PD3, 2 usable as 3.3V analog-in),
@@ -201,10 +200,8 @@ The board, sometimes labelled C0135 or "Relay Board-4" is a low cost PLC I/O exp
 * 1 key on PA3,
 * RS485 (PB5 enable - PD5 TX, PD6 RX on headers)
 * 8MHz crystal (or 16 MHz HSI)
-
-* Binary size below 5100 bytes
 * Selected feature set like MINDEV, additionally:
-  * I/O words for board keys, OUT! for relays
+  * I/O words for board keys, OUT! for relays and LED
 * Clock source internal 16 MHz RC oscillator `HSI`
 
 Run `make BOARD=C0135 flash` for building and flashing.
