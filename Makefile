@@ -11,6 +11,7 @@ build:
 	make BOARD=W1209
 	make BOARD=C0135
 	make BOARD=MINDEV
+	make BOARD=SWIMCOM
 
 clean:
 	rm -rf out/*
