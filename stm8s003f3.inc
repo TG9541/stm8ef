@@ -36,26 +36,28 @@
         PD_CR2       = 0x5013   ; Port D control register 2             (0x00)
 
 ; ***** Port E
-
+;.ifne  0
         PE_ODR       = 0x5014   ; Port E data output latch register     (0x00)
         PE_IDR       = 0x5015   ; Port E input pin value register       (0xXX)
         PE_DDR       = 0x5016   ; Port E data direction register        (0x00)
         PE_CR1       = 0x5017   ; Port E control register 1             (0x00)
         PE_CR2       = 0x5018   ; Port E control register 2             (0x00)
+;.endif
 
 ; ***** Port F
-
+;.ifne  0
         PF_ODR       = 0x5019   ; Port F data output latch register     (0x00)
         PF_IDR       = 0x501A   ; Port F input pin value register       (0xXX)
         PF_DDR       = 0x501B   ; Port F data direction register        (0x00)
         PF_CR1       = 0x501C   ; Port F control register 1             (0x00)
         PF_CR2       = 0x501D   ; Port F control register 2             (0x00)
+;.endif
 
 ; ***** 6.2.2 General hardware register map
 
 
 ; ***** Flash
-
+;.ifne  0
         FLASH_CR1    = 0x505A   ; Flash control register 1              (0x00)
         FLASH_CR2    = 0x505B   ; Flash control register 2              (0x00)
         FLASH_NCR2   = 0x505C   ; Flash complementary control register 2 (0xFF)
@@ -64,11 +66,14 @@
         FLASH_IAPSR  = 0x505F   ; Flash in-application programming status register (0x00)
         FLASH_PUKR   = 0x5062   ; Flash Program memory unprotection register (0x00)
         FLASH_DUKR   = 0x5064   ; Data EEPROM unprotection register     (0x00)
+;.endif
 
 ; ***** ITC
 
+;.ifne  0
         EXTI_CR1     = 0x50A0   ; External interrupt control register 1 (0x00)
         EXTI_CR2     = 0x50A1   ; External interrupt control register 2 (0x00)
+;.endif
 
 ; ***** RST
 
@@ -76,6 +81,7 @@
 
 ; ***** CLK
 
+;.ifne  0
         CLK_ICKR     = 0x50C0   ; Internal clock control register       (0x01)
         CLK_ECKR     = 0x50C1   ; External clock control register       (0x00)
         CLK_CMSR     = 0x50C3   ; Clock master status register          (0xE1)
@@ -87,15 +93,20 @@
         CLK_CCOR     = 0x50C9   ; Configurable clock control register   (0x00)
         CLK_PCKENR2  = 0x50CA   ; Peripheral clock gating register 2    (0xFF)
         CLK_HSITRIMR = 0x50CC   ; HSI clock calibration trimming register  (0x00)
+;.endif
 
 ; ***** SWIM
 
+;.ifne  0
         CLK_SWIMCCR  = 0x50CD   ; clock control register                (0bXXXXXXX0)
+;.endif
 
 ; ***** WWDG
 
+;.ifne  0
         WWDG_CR      = 0x50D1   ; WWDG control register                 (0x7F)
         WWDG_WR      = 0x50D2   ; WWDR window register                  (0x7F)
+;.endif
 
 ; ***** IWDG
 
@@ -131,9 +142,6 @@
         I2C_FREQR    = 0x5212   ; I2C frequency register                (0x00)
         I2C_OARL     = 0x5213   ; I2C own address register low          (0x00)
         I2C_OARH     = 0x5214   ; I2C own address register high         (0x00)
-
-; ***** I2C
-
         I2C_DR       = 0x5216   ; I2C data register                     (0x00)
         I2C_SR1      = 0x5217   ; I2C status register 1                 (0x00)
         I2C_SR2      = 0x5218   ; I2C status register 2                 (0x00)
@@ -144,7 +152,8 @@
         I2C_TRISER   = 0x521D   ; I2C TRISE register                    (0x02)
         I2C_PECR     = 0x521E   ; I2C packet error checking register    (0x00)
 
-; ***** UART1
+; ***** UART1 
+;.ifeq HAS_TXUART+HAS_RXUART
 
         UART1_SR     = 0x5230   ; UART1 status register                 (0xC0)
         UART1_DR     = 0x5231   ; UART1 data register                   (0xXX)
@@ -157,6 +166,7 @@
         UART1_CR5    = 0x5238   ; UART1 control register 5              (0x00)
         UART1_GTR    = 0x5239   ; UART1 guard time register             (0x00)
         UART1_PSCR   = 0x523A   ; UART1 prescaler register              (0x00)
+;.endif
 
 ; ***** TIM1
 
@@ -193,7 +203,8 @@
         TIM1_DTR     = 0x526E   ; TIM1 dead-time register               (0x00)
         TIM1_OISR    = 0x526F   ; TIM1 output idle state register       (0x00)
 
-; ***** TIM2
+; ***** TIM2 
+;.ifeq HAS_BACKGROUND
 
         TIM2_CR1     = 0x5300   ; TIM2 control register 1               (0x00)
         TIM2_IER     = 0x5303   ; TIM2 interrupt enable register        (0x00)
@@ -216,8 +227,11 @@
         TIM2_CCR2L   = 0x5314   ; TIM2 capture/compare register 2 low   (0x00)
         TIM2_CCR3H   = 0x5315   ; TIM2 capture/compare register 3 high  (0x00)
         TIM2_CCR3L   = 0x5316   ; TIM2 capture/compare register 3 low   (0x00)
+;.endif
 
-; ***** TIM4
+; ***** TIM4 
+
+;.ifeq HAS_TXSIM+HAS_RXSIM
 
         TIM4_CR1     = 0x5340   ; TIM4 control register 1               (0x00)
         TIM4_IER     = 0x5343   ; TIM4 interrupt enable register        (0x00)
@@ -226,8 +240,11 @@
         TIM4_CNTR    = 0x5346   ; TIM4 counter                          (0x00)
         TIM4_PSCR    = 0x5347   ; TIM4 prescaler register               (0x00)
         TIM4_ARR     = 0x5348   ; TIM4 auto-reload register             (0xFF)
+;.endif
 
-; ***** ADC1
+; ***** ADC1 
+
+;.ifeq HAS_ADC
 
         ADC_DBxR     = 0x53E0   ; ADC data buffer registers 0x53E0 to 0x53F3 (0x00)
         ADC_CSR      = 0x5400   ; ADC control/status register           (0x00)
@@ -246,12 +263,14 @@
         ADC_AWSRL    = 0x540D   ; ADC analog watchdog status register low (0x00)
         ADC_AWCRH    = 0x540E   ; ADC analog watchdog control register high (0x00)
         ADC_AWCRL    = 0x540F   ; ADC analog watchdog control register low (0x00)
+;.endif
 
 ; ***** 6.2.3 CPU/SWIM/debug module/interrupt controller registers
 
 
 ; ***** CPU
 
+;.ifne  0
         CPU_A        = 0x7F00   ; Accumulator                           (0x00)
         CPU_PCE      = 0x7F01   ; Program counter extended              (0x00)
         CPU_PCH      = 0x7F02   ; Program counter high                  (0x00)
@@ -263,13 +282,15 @@
         CPU_SPH      = 0x7F08   ; Stack pointer high                    (0x03)
         CPU_SPL      = 0x7F09   ; Stack pointer low                     (0xFF)
         CPU_CCR      = 0x7F0A   ; Condition code register               (0x28)
+;.endif
 
-; ***** CPU
+; ***** CFG
 
         CFG_GCR      = 0x7F60   ; Global configuration register         (0x00)
 
 ; ***** ITC
 
+;.ifne  0
         ITC_SPR1     = 0x7F70   ; Interrupt software priority register 1 (0xFF)
         ITC_SPR2     = 0x7F71   ; Interrupt software priority register 2 (0xFF)
         ITC_SPR3     = 0x7F72   ; Interrupt software priority register 3 (0xFF)
@@ -278,13 +299,17 @@
         ITC_SPR6     = 0x7F75   ; Interrupt software priority register 6 (0xFF)
         ITC_SPR7     = 0x7F76   ; Interrupt software priority register 7 (0xFF)
         ITC_SPR8     = 0x7F77   ; Interrupt software priority register 8 (0xFF)
+;.endif
 
 ; ***** SWIM
 
+;.ifne  0
         SWIM_CSR     = 0x7F80   ; SWIM control status register          (0x00)
+;.endif
 
 ; ***** DM
 
+;.ifne  0
         DM_BK1RE     = 0x7F90   ; DM breakpoint 1 register extended byte (0xFF)
         DM_BK1RH     = 0x7F91   ; DM breakpoint 1 register high byte    (0xFF)
         DM_BK1RL     = 0x7F92   ; DM breakpoint 1 register low byte     (0xFF)
@@ -296,3 +321,4 @@
         DM_CSR1      = 0x7F98   ; DM debug module control/status register 1 (0x10)
         DM_CSR2      = 0x7F99   ; DM debug module control/status register 2 (0x00)
         DM_ENFCTR    = 0x7F9A   ; DM enable function register           (0xFF)
+;.endif
