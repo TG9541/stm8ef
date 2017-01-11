@@ -296,12 +296,11 @@
 
         ; Null initialized core variables (growing down)
 
-        NVMCONTEXT = UPP+18     ; point to top of dictionary in Non Volatile Memory
-        USRCONTEXT = UPP+20     ; start vocabulary search
-        USRHLD  =    UPP+22     ; hold a pointer of output string
-        USRNTIB =    UPP+24     ; count in terminal input buffer
-        USR_IN  =    UPP+26     ; hold parsing pointer
-        USRTEMP =    UPP+28     ; temporary storage for interpreter (VARIABLE tmp)
+        NVMCONTEXT = UPP+20     ; point to top of dictionary in Non Volatile Memory
+        USRCONTEXT = UPP+22     ; start vocabulary search
+        USRHLD  =    UPP+24     ; hold a pointer of output string
+        USRNTIB =    UPP+26     ; count in terminal input buffer
+        USR_IN  =    UPP+28     ; hold parsing pointer
         YTEMP   =    UPP+30     ; extra working register for core words
 
         ;***********************
@@ -1395,20 +1394,6 @@ CPP:
         .ascii  "BASE"
 BASE:
         LD      A,#(RAMBASE+USRBASE)
-        JRA     ASTOR
-
-;       tmp     ( -- a )     ( TOS STM8: -- Y,Z,N )
-;       A temporary storage.
-
-        .ifne   WORDS_LINKINTER
-        .dw     LINK
-
-        LINK =  .
-        .db     3
-        .ascii  "tmp"
-        .endif
-TEMP:
-        LD      A,#(RAMBASE+USRTEMP)
         JRA     ASTOR
 
 ;       >IN     ( -- a )     ( TOS STM8: -- Y,Z,N )
@@ -3223,16 +3208,16 @@ AFLAGS:
         .ascii  "pars"
         .endif
 PARS:
-        CALL    TEMP
-        CALL    STORE
+        CALLR   AFLAGS          ; TEMP CSTOR
+        PUSH    A
         CALL    OVER
         CALL    TOR
         JRNE    1$
         CALL    OVER
         CALL    RFROM
-        JP      SUBB
+        JRA     PARSEND
 1$:     CALL    ONEM
-        LD      A,USRTEMP+1     ; TEMP AT
+        ld      A,(3,SP)        ; TEMP CAT
         CP      A,#' '          ; BLANK EQUAL
         JRNE    PARS3
         CALL    TOR
@@ -3247,18 +3232,20 @@ PARS1:
         .dw     PARS1
         ADDW    SP,#2           ; RFROM DROP
         CALL    ZERO
+        POP     A               ; discard TEMP
 DUPPARS:
         JP      DUPP
 PARS2:  CALL    RFROM
 PARS3:  CALL    OVER
         CALL    SWAPP
         CALL    TOR
-PARS4:  CALL    TEMP
-        CALL    AT
+PARS4:  
+        LD      A,(5,SP)        ; TEMP CAT
+        CALL    ASTOR
         CALL    OVER
         CALL    CAT
         CALLR   SUBPARS         ; scan for delimiter
-        LD      A,USRTEMP+1     ; TEMP AT
+        LD      A,(5,SP)        ; TEMP CAT
         CP      A,#' '          ; BLANK EQUAL
         JRNE    PARS5
         CALL    ZLESS
@@ -3270,7 +3257,7 @@ PARS5:  CALL    QBRAN
         CALLR   DUPPARS
         CALL    TOR
         JRA     PARS7
-PARS6:  ADDW    SP,#2                  ; RFROM DROP
+PARS6:  ADDW    SP,#2           ; RFROM DROP
         CALLR   DUPPARS
         CALL    ONEP
         CALL    TOR
@@ -3278,6 +3265,8 @@ PARS7:  CALL    OVER
         CALLR   SUBPARS
         CALL    RFROM
         CALL    RFROM
+PARSEND:
+        POP     A               ; discard TEMP
 SUBPARS:
         JP      SUBB
 
@@ -3488,11 +3477,10 @@ NAMEQ:
         .ascii  "find"
         .endif
 FIND:
-        CALLR   SWAPPF
-        LD      A,(Y)           ; DUPP CAT
-        CLR     USRTEMP         ; TEMP
-        LD      USRTEMP+1,A     ; STORE
-        LDW     Y,(Y)           ; DUPP AT
+        CALLR   SWAPPF          ; SWAPP
+        LDW     Y,(Y)           ; DUPP CAT TEMP CSTOR DUPP AT
+        LD      A,YH
+        PUSH    A               ; (push TEMP)
         PUSHW   Y               ; TOR
         CALL    CELLP
         CALLR   SWAPPF
@@ -3517,11 +3505,11 @@ FIND1:  CALL    AT
         CALL    MONE                   ; 0xFFFF
         JRA     FIND3
 FIND2:  CALL    CELLP
-        CALL    TEMP
-        CALL    AT
+        LD      A,(3,SP)               ; TEMP CAT
+        CALL    ASTOR
         CALL    SAMEQ
 FIND3:  JRA     FIND4
-FIND6:  ADDW    SP,#2                  ; RFROM DROP
+FIND6:  ADDW    SP,#3                  ; (pop TEMP) RFROM DROP
         CALLR   SWAPPF
         CALL    CELLM
         JRA     SWAPPF
@@ -3530,7 +3518,7 @@ FIND4:  CALL    QBRAN
         CALL    CELLM
         CALL    CELLM
         JRA     FIND1
-FIND5:  ADDW    SP,#2                  ; RFROM DROP
+FIND5:  ADDW    SP,#3                  ; (pop TEMP) RFROM DROP
         CALL    NIP
         CALL    CELLM
         CALL    DUPP
