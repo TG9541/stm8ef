@@ -21,33 +21,31 @@ BOARDINIT:
 
         .ifne   HAS_LED7SEG
 ;       LED_MPX driver ( -- )
-;       Code called from ISR for LED MPX
+;       Output bit pattern in A to 7S-LED digit hardware 
 
 LED_MPX:
         BSET    PD_ODR,#4       ; set digit outputs .321
         BSET    PB_ODR,#5
         BSET    PB_ODR,#4
 
-        LD      A,TICKCNT+1
-        AND     A,#3
-
         JRNE    1$
-        LD      A,LED7MSB+1
         BRES    PD_ODR,#4       ; digit .3..
         JRA     3$
 
 1$:     CP      A,#1
         JRNE    2$
-        LD      A,LED7LSB
         BRES    PB_ODR,#5       ; digit ..2.
         JRA     3$
 
 2$:     CP      A,#2
         JRNE    4$
-        LD      A,LED7LSB+1
         BRES    PB_ODR,#4       ; digit ...1
         ; fall through
-3$:
+
+3$:     CLRW    X
+        LD      XL,A
+        LD      A,(LED7LAST-2,X)
+        
         ; W1209 7S LED display row
         ; bit 76453210 input (parameter A)
         ;  PA .....FB.
@@ -69,6 +67,7 @@ LED_MPX:
         BCCM    PC_ODR,#6       ; G
         RRC     A
         BCCM    PD_ODR,#2       ; P
+
 4$:     RET
         .endif
 

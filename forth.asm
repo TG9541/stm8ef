@@ -252,21 +252,20 @@
         .endif
 
         ;******  Board variables  ******
+        .ifne   HAS_OUTPUTS
+        OUTPUTS =       0x55    ; outputs, like relays, LEDs, etc. (16 bit)
+        .endif
+
         .ifne   HAS_TXSIM ;+ HAS_RXSIM
-        TIM4TCNT =      0x56    ; TIM4 RX/TX interrupt counter
+        TIM4TCNT   =    0x56    ; TIM4 RX/TX interrupt counter
         TIM4TXREG  =    0x57    ; TIM4 TX transmit buffer and shift register
         TIM4RXREG  =    0x58    ; TIM4 RX shift register
         TIM4RXBUF  =    0x59    ; TIM4 RX receive buffer
         .endif
 
-        .ifne   HAS_OUTPUTS
-        OUTPUTS =       0x5A    ; outputs, like relays, LEDs, etc. (16 bit)
-        .endif
-
-
         .ifne   HAS_LED7SEG
-        LED7MSB  =      0x5C    ; word 7S LEDs digits  43..
-        LED7LSB  =      0x5E    ; word 7S LEDs digits  ..21
+        LED7FIRST =    0x5A    ; leftmost 7S-LED digit  6.....
+        LED7LAST  =    0x5F    ; rightmost 7S-LED digit .....1
         .endif
 
         ;**************************************************
@@ -314,6 +313,8 @@ _TIM2_UO_IRQHandler:
         BRES    TIM2_SR1,#0     ; clear TIM2 UIF
 
         .ifne   HAS_LED7SEG
+        LD      A,TICKCNT+1
+        AND     A,#HAS_LED7SEG  ; TODO better name
         CALL    LED_MPX         ; board dependent code for 7Seg-LED-Displays
         .endif
 
@@ -331,7 +332,7 @@ _TIM2_UO_IRQHandler:
         LDW     X,YTEMP         ; Save context
         PUSHW   X
 
-        PUSH    USRBASE+1     ; 8bit since BASE should be < 36
+        PUSH    USRBASE+1       ; 8bit since BASE should be < 36
         MOV     USRBASE+1,#10
 
         LDW     X,USREMIT       ; save EMIT exection vector
@@ -556,9 +557,9 @@ TBOOT:
 HI:
         ; TODO: move to board initialization?
         .ifne   HAS_LED7SEG
-        MOV     LED7MSB+1,#0x66 ; 7S LEDs .4..
-        MOV     LED7LSB,  #0x78 ; 7S LEDs ..t.
-        MOV     LED7LSB+1,#0x74 ; 7S LEDs ...h
+        MOV     LED7LAST-2,#0x66 ; 7S LEDs .4..
+        MOV     LED7LAST-1,#0x78 ; 7S LEDs ..t.
+        MOV     LED7LAST-0,#0x74 ; 7S LEDs ...h
         .endif
 
         CALL    CR
@@ -567,7 +568,7 @@ HI:
         .ascii  "stm8eForth v"
         .db     (VER+'0')
         .ascii  "."
-        .db     (EXT+'0')       ;version
+        .db     (EXT+'0')       ; version
 
         JP      CR
         .endif
@@ -4689,6 +4690,7 @@ DUPPCAT:
         CALL    DUPP
         JP      CAT
 
+
         .ifne   WORDS_EXTRADEBUG
 ;       >NAME   ( ca -- na | F )
 ;       Convert code address
@@ -4869,10 +4871,12 @@ EMIT7S:
 
         CP      A,#32
         JRNE    1$
-        CLRW    Y
-        LDW     LED7MSB,Y
-        LDW     LED7LSB,Y
-        JRA     E7END
+
+        LDW     Y,#LED7FIRST
+        LDW     (X),Y
+        CALL    DOLITC
+        .db     (LED7LAST-LED7FIRST+1)
+        JP    ERASE
 
 1$:     CP      A,#'.'
         JREQ    E7DOT
@@ -4903,8 +4907,8 @@ E7LOOKA:
 
 E7DOT:
         LD      A,#0x80         ; 7-seg P (dot)
-        OR      A,LED7LSB+1
-        LD      LED7LSB+1,A
+        OR      A,LED7LAST
+        LD      LED7LAST,A
         JRA     E7END
 
 E7END:
@@ -4919,17 +4923,15 @@ E7END:
         .db     (3)
         .ascii  "P7S"
 PUT7S:
-        LDW     Y,X             ; w to AX
-        LD      A,(1,Y)
-PUT7SA:
-        LDW     Y,LED7LSB
-        RLWA    Y
-        LDW     LED7LSB,Y
-        LDW     Y,LED7MSB
-        RLWA    Y
-        LDW     LED7MSB,Y
-        INCW    X               ; ADDW   X,#2
-        INCW    X
+        CALL    DOLITC
+        .db     LED7FIRST+1
+        CALL    DOLITC
+        .db     LED7FIRST
+        CALL    DOLITC
+        .db     LED7LAST-LED7FIRST
+        CALL    CMOVE
+        CALL    AFLAGS
+        LD      LED7LAST,A
         RET
 
         .endif
