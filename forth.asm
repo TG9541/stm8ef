@@ -65,6 +65,10 @@
 ; Public variables in this module
 ;--------------------------------------------------------
 
+        .globl _TRAP_Handler
+        .globl _EXTI0_IRQHandler
+        .globl _EXTI1_IRQHandler
+        .globl _EXTI2_IRQHandler
         .globl _EXTI3_IRQHandler
         .globl _TIM2_UO_IRQHandler
         .globl _TIM4_IRQHandler
@@ -306,6 +310,23 @@
         ;******  7) Code  ******
         ;***********************
 
+_TRAP_Handler:
+        ; Operation
+        ;PC = PC + 1
+        ;(SP--) = LSB (PC)
+        ;(SP--) = MSB (PC)
+        ;(SP--) = Ext(PC) 
+        ;(SP--) = YL
+        ;(SP--) = YH
+        ;(SP--) = XL
+        ;(SP--) = XH
+        ;(SP--) = A
+        ;(SP--) = CC
+        ;PC = TRAP Interrupt Vector Contents
+        LDW     Y,(1,SP)
+        LDW     0,Y
+
+        IRET
 
 ;       TIM2 interrupt handler for background task
 _TIM2_UO_IRQHandler:
@@ -415,8 +436,10 @@ COLD:
         .ifne   HAS_BACKGROUND
         ; init 5ms timer interrupt
         MOV     TIM2_PSCR,#0x03 ; prescaler 1/8
-        MOV     TIM2_ARRH,#0x26 ; reload 5ms H
-        MOV     TIM2_ARRL,#0xDE ;        5ms L
+        MOV     TIM2_ARRH,#0x0F ; reload 5ms H
+        MOV     TIM2_ARRL,#0x8C ;        5ms L
+        ;MOV     TIM2_ARRH,#0x26 ; reload 5ms H
+        ;MOV     TIM2_ARRL,#0xDE ;        5ms L
         MOV     ITC_SPR4,#0xF7  ; Interrupt prio. low for TIM2 (Int13)
         MOV     TIM2_CR1,#0x01  ; enable TIM2
         MOV     TIM2_IER,#0x01  ; enable TIM2 interrupt
@@ -677,7 +700,6 @@ TXPSTOR:
 
         .ifne   HALF_DUPLEX_SIM
         BRES    PD_CR2,#PDRX    ; disable PDRX external interrupt
-        ;BSET    PD_DDR,#PDRX    ; port PDRX=PDRX to output
         .endif
 
         LD      TIM4TXREG,A     ; char to TXSIM output register
@@ -688,6 +710,9 @@ TXPSTOR:
         .endif
 
 ;       RxD through GPIO start-bit interrupt handler
+_EXTI0_IRQHandler:
+_EXTI1_IRQHandler:
+_EXTI2_IRQHandler:
 _EXTI3_IRQHandler:
         .ifne   HAS_RXSIM
         BRES    PD_CR2,#PDRX    ; disable PDRX external interrupt
@@ -735,7 +760,7 @@ TIM4_TRANS:
         CP      A,#10           ; test if startbit (coincidentially set CF)
         JRNE    TIM4_SER
         .ifne   HALF_DUPLEX_SIM
-        BSET    PD_DDR,#PDRX    ; port PDRX=PDRX to output
+        BSET    PD_DDR,#PDRX    ; port PD1=PDRX to output
         .endif
         JRA     TIM4_BIT        ; emit start bit (CF=0 from CP)
 TIM4_SER:
@@ -5154,6 +5179,17 @@ RESETT:
         JP      COLD
 
         .endif
+
+;       TRAP  ( -- )
+;       Test _TRAP_Handler 
+        .dw     LINK
+
+        LINK =  .
+        .db     (4)
+        .ascii  "TRAP"
+TRAPP:
+        TRAP
+        RET
 
 ;===============================================================
 

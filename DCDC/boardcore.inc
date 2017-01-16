@@ -6,67 +6,88 @@
 BOARDINIT:
         ; Board I/O initialization
 
-        ; W1209 STM8S003F3 init GPIO
-        MOV     PA_DDR,#0b00001110 ; relay,B,F
+        ; DCDC STM8S003F3 init GPIO
+        MOV     PA_DDR,#0b00001110 ; ----3AF-
         MOV     PA_CR1,#0b00001110
-        MOV     PB_DDR,#0b00110000 ; d2,d3
-        MOV     PB_CR1,#0b00110000
-        MOV     PC_DDR,#0b11000000 ; G,C
-        MOV     PC_CR1,#0b11111000 ; G,C-+S... Key pullups
-        MOV     PD_DDR,#0b00111110 ; A,DP,D,d1,A
-        MOV     PD_CR1,#0b00111110
+        MOV     PB_DDR,#0b00010000 ; --.o---- PB4:LEDout
+        MOV     PB_CR1,#0b00010000
+        MOV     PC_DDR,#0b11101000 ; PDE.i--- PC3:LEDin PC4:Vin PC5:E/keyIn
+        MOV     PC_CR1,#0b11101000
+        MOV     PD_DDR,#0b01110110 ; -21B.GC- PD2:G/keyOut PD3:Vout
+        MOV     PD_CR1,#0b01110110
         RET
+
+        ; ,
 
 ;===============================================================
 
         .ifne   HAS_LED7SEG
 ;       LED_MPX driver ( -- )
-;       Output bit pattern in A to 7S-LED digit hardware 
-
+;       Output bit pattern in A to 7S-LED digit hardware
 LED_MPX:
-        BSET    PD_ODR,#4       ; Digit .3..
-        BSET    PB_ODR,#5       ; Digit ..2.
-        BSET    PB_ODR,#4       ; Digit ...1
+        .ifeq   (PDRX-1)
+        TNZ     TIM4TCNT
+        JRNE    0$
+        BRES    PD_DDR,#PDRX    ; port PD1=PDRX to input
+        BSET    PD_CR2,#PDRX    ; enable PDRX external interrupt
+0$:
+        TNZ     A
+        .endif
+
+        BSET    PA_ODR,#3       ; Digit .3..
+        BSET    PD_ODR,#6       ; Digit ..2.
+        BSET    PD_ODR,#5       ; Digit ...1
 
         JRNE    1$
-        BRES    PD_ODR,#4       ; digit .3..
+        BRES    PA_ODR,#3       ; digit .3..
         JRA     3$
 
 1$:     CP      A,#1
         JRNE    2$
-        BRES    PB_ODR,#5       ; digit ..2.
+        BRES    PD_ODR,#6       ; digit ..2.
         JRA     3$
 
 2$:     CP      A,#2
         JRNE    4$
-        BRES    PB_ODR,#4       ; digit ...1
+        BRES    PD_ODR,#5       ; digit ...1
         ; fall through
 
 3$:     CLRW    X
         LD      XL,A
         LD      A,(LED7LAST-2,X)
-        
-        ; W1209 7S LED display row
+
+        ; DCDC 7S LED display row
         ; bit 76453210 input (parameter A)
-        ;  PA .....FB.
-        ;  PC CG......
-        ;  PD ..A.DPE.
+        ;  PA -----AF-
+        ;  PC PDE-----
+        ;  PD ---B-GC-
         RRC     A
-        BCCM    PD_ODR,#5       ; A
+        BCCM    PA_ODR,#2       ; A
         RRC     A
-        BCCM    PA_ODR,#2       ; B
+        BCCM    PD_ODR,#4       ; B
+
         RRC     A
-        BCCM    PC_ODR,#7       ; C
+
+        .ifeq   (PDRX-1)
+        JRNC    5$
+        TNZ     TIM4TCNT
+        JRNE    5$
+        BCCM    PD_ODR,#1       ; C
+        BRES    PD_CR2,#PDRX    ; disable PDRX external interrupt
+        BSET    PD_DDR,#PDRX    ; port PD1=PDRX to output
+5$:
+        .endif
+
         RRC     A
-        BCCM    PD_ODR,#3       ; D
+        BCCM    PC_ODR,#6       ; D
         RRC     A
-        BCCM    PD_ODR,#1       ; E
+        BCCM    PC_ODR,#5       ; E
         RRC     A
         BCCM    PA_ODR,#1       ; F
         RRC     A
-        BCCM    PC_ODR,#6       ; G
+        BCCM    PD_ODR,#2       ; G
         RRC     A
-        BCCM    PD_ODR,#2       ; P
+        BCCM    PC_ODR,#7       ; P
 
 4$:     RET
         .endif
@@ -86,8 +107,11 @@ OUTSTOR:
         LD      A,(X)
         LD      OUTPUTS,A
         INCW    X
+        CPL     A
         RRC     A
-        BCCM    PA_ODR,#3       ; W1209 relay
+        BCCM    PC_ODR,#3       ; DCDC LED in
+        RRC     A
+        BCCM    PB_ODR,#4       ; DCDC LED out
         RET
         .endif
 
