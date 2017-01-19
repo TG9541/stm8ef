@@ -25,14 +25,11 @@ BOARDINIT:
 ;       LED_MPX driver ( -- )
 ;       Output bit pattern in A to 7S-LED digit hardware
 LED_MPX:
-        .ifeq   (PDRX-1)
-        TNZ     TIM4TCNT
-        JRNE    0$
-        BRES    PD_DDR,#PDRX    ; port PD1=PDRX to input
-        BSET    PD_CR2,#PDRX    ; enable PDRX external interrupt
-0$:
-        TNZ     A
-        .endif
+
+        BRES    PD_DDR,#1       ; port PD1=SWIM to input
+
+        BRES    PC_DDR,#7       ; port to input
+        BSET    PC_CR2,#7       ; enable PNRX external interrupt
 
         BSET    PA_ODR,#3       ; Digit .3..
         BSET    PD_ODR,#6       ; Digit ..2.
@@ -68,15 +65,11 @@ LED_MPX:
 
         RRC     A
 
-        .ifeq   (PDRX-1)
         JRNC    5$
-        TNZ     TIM4TCNT
-        JRNE    5$
-        BCCM    PD_ODR,#1       ; C
-        BRES    PD_CR2,#PDRX    ; disable PDRX external interrupt
-        BSET    PD_DDR,#PDRX    ; port PD1=PDRX to output
+        BSET    PD_ODR,#1       ; C
+        ;BCCM    PD_ODR,#1       ; C
+        BSET    PD_DDR,#1       ; port PD1=SWIM to output
 5$:
-        .endif
 
         RRC     A
         BCCM    PC_ODR,#6       ; D
@@ -87,7 +80,12 @@ LED_MPX:
         RRC     A
         BCCM    PD_ODR,#2       ; G
         RRC     A
-        BCCM    PC_ODR,#7       ; P
+        JRNC    4$
+        TNZ     TIM4TCNT
+        JRNE    4$
+        BRES    PC_CR2,#7       ; disable PNRX external interrupt
+        BSET    PC_DDR,#7       ; port to output
+        BSET    PC_ODR,#7       ; P
 
 4$:     RET
         .endif

@@ -70,24 +70,24 @@ LED_MPX:
         TNZ     TIM4TCNT
         JRNE    LEDMPXEND
 
-        BRES   PD_CR2,#PDRX    ; disable PDRX external interrupt
+        BRES   PD_CR2,#PNRX    ; disable PNRX external interrupt
         push    A
         LD      A,#8
         push    A
 
         LD     A,PD_ODR
-        BSET   PD_DDR,#PDRX
+        BSET   PD_DDR,#PNRX
 7$:     SLL    (2,SP)
         BCCM   PC_ODR,#5
-        BRES   PD_ODR,#PDRX
+        BRES   PD_ODR,#PNRX
         LD     PD_ODR,A
         DEC    (1,SP)
         JRNE   7$
 
-        BRES   PD_DDR,#PDRX
+        BRES   PD_DDR,#PNRX
         pop    A
         pop    A
-        BSET   PD_CR2,#PDRX    ; enable PDRX external interrupt
+        BSET   PD_CR2,#PNRX    ; enable PNRX external interrupt
 
 LEDMPXEND:        
         RET

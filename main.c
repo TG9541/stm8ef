@@ -31,7 +31,7 @@ volatile __at(0x0380) uint8_t tibData[0x50];     // Terminal input buffer TIB, g
 volatile __at(0x03D0) uint8_t rstackData[0x30];  // Return stack
 
 // declare trap handler
-void TRAP_Handler() __interrupt (1);
+void TRAP_Handler() __trap;
 
 // declare interrupt handler for Port A external interrupts
 void EXTI0_IRQHandler() __interrupt (3);

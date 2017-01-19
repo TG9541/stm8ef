@@ -147,9 +147,10 @@
         HAS_TXUART       = 1    ; Enable UART TXD, word TX!
         HAS_RXUART       = 1    ; Enable UART RXD, word ?RX
         HAS_TXSIM        = 0    ; Enable TxD via GPIO/TIM4, word TXGP!
-        PDTX             = 0    ; Port D GPIO for HAS_TXSIM
         HAS_RXSIM        = 0    ; Enable RxD via GPIO/TIM4, word ?RXGP
-        PDRX             = 0    ; Port D GPIO for HAS_RXSIM
+        PSIM     = PORTD        ; Port for UART simulation
+        PNRX             = 1    ; Port GPIO# for HAS_RXDSIM
+        PNTX             = 1    ; Port GPIO# for HAS_TXDSIM
 
         EMIT_BG  = DROP         ; TODO: vectored NUL background EMIT vector
         QKEY_BG  = ZERO         ; TODO: NUL background QKEY vector
@@ -311,21 +312,18 @@
         ;***********************
 
 _TRAP_Handler:
-        ; Operation
-        ;PC = PC + 1
-        ;(SP--) = LSB (PC)
-        ;(SP--) = MSB (PC)
-        ;(SP--) = Ext(PC) 
-        ;(SP--) = YL
-        ;(SP--) = YH
-        ;(SP--) = XL
-        ;(SP--) = XH
-        ;(SP--) = A
-        ;(SP--) = CC
-        ;PC = TRAP Interrupt Vector Contents
-        LDW     Y,(1,SP)
-        LDW     0,Y
-
+        DECW    X
+        DECW    X
+        LDW     (3,SP),X               ; XH,XL
+        EXGW    X,Y
+        LDW     X,(8,SP)               ; PC MSB/LSB
+        LDW     X,(X)
+        LDW     (Y),X
+        LDW     (5,SP),X               ; YH,YL
+        LDW     X,(8,SP)               
+        INCW    X
+        INCW    X
+        LDW     (8,SP),X 
         IRET
 
 ;       TIM2 interrupt handler for background task
@@ -469,25 +467,41 @@ COLD:
         MOV     TIM4_PSCR,#0x03 ; prescaler 1/8
         MOV     ITC_SPR6,#0x3F  ; Interrupt prio "high" for TIM4 (Int23)
         MOV     TIM4_CR1,#0x01  ; enable TIM4
-        .ifne  PDRX^PDTX
+        .ifne  PNRX^PNTX
         HALF_DUPLEX_SIM = 0     ; is there no better way to do "!=" in ASxxxx 2.x?
         .else
         HALF_DUPLEX_SIM = 1     ; Half-duplex RxTx if GPIO is shared
         .endif
         .endif
 
-        .ifne   HAS_TXSIM*((PDRX-PDTX)+(1-HAS_RXSIM))
-        ; init TxD through GPIO if not shared pin with PDRX
-        BSET    PD_DDR,#PDTX    ; PDTX GPIO output
-        BSET    PD_CR1,#PDTX    ; enable PDTX push-pull
+        .ifne   HAS_TXSIM*((PNRX-PNTX)+(1-HAS_RXSIM))
+        ; init TxD through GPIO if not shared pin with PNRX
+        BSET    PSIM+DDR,#PNTX    ; PNTX GPIO output
+        BSET    PSIM+CR1,#PNTX    ; enable PNTX push-pull
         .endif
 
         .ifne   (HAS_RXSIM)
         ; init RxD through GPIO
+
+        .ifeq   (PSIM-PORTA)
+        BSET    EXTI_CR1,#1     ; External interrupt Port A falling edge
+        .else
+        
+        .ifeq   (PSIM-PORTB)
+        BSET    EXTI_CR1,#3     ; External interrupt Port B falling edge
+        .else
+        
+        .ifeq   (PSIM-PORTC)
+        BSET    EXTI_CR1,#5     ; External interrupt Port C falling edge
+        .else
         BSET    EXTI_CR1,#7     ; External interrupt Port D falling edge
-        BRES    PD_DDR,#PDRX    ; 0: input (default)
-        BSET    PD_CR1,#PDRX    ; enable PDRX pull-up
-        BSET    PD_CR2,#PDRX    ; enable PDRX external interrupt
+        .endif
+        
+        .endif
+        .endif
+        BRES    PSIM+DDR,#PNRX    ; 0: input (default)
+        BSET    PD_CR1,#PNRX    ; enable PNRX pull-up
+        BSET    PSIM+CR2,#PNRX    ; enable PNRX external interrupt
         .endif
 
         .ifne   HAS_OUTPUTS
@@ -699,7 +713,7 @@ TXPSTOR:
         JRNE    1$              ; wait for free TIM4 RX-TX
 
         .ifne   HALF_DUPLEX_SIM
-        BRES    PD_CR2,#PDRX    ; disable PDRX external interrupt
+        BRES    PSIM+CR2,#PNRX    ; disable PNRX external interrupt
         .endif
 
         LD      TIM4TXREG,A     ; char to TXSIM output register
@@ -715,7 +729,7 @@ _EXTI1_IRQHandler:
 _EXTI2_IRQHandler:
 _EXTI3_IRQHandler:
         .ifne   HAS_RXSIM
-        BRES    PD_CR2,#PDRX    ; disable PDRX external interrupt
+        BRES    PSIM+CR2,#PNRX    ; disable PNRX external interrupt
 
         ; Set-up TIM4 for 8N1 Rx sampling at half bit time
         MOV     TIM4TCNT,#(-9)  ; set sequence counter for RX
@@ -741,33 +755,33 @@ _TIM4_IRQHandler:
 
 TIM4_OFF:
         .ifne   HALF_DUPLEX_SIM
-        BSET    PD_CR2,#PDRX    ; enable PDRX external interrupt
-        BRES    PD_DDR,#PDRX    ; set shared GPIO to input
+        BSET    PSIM+CR2,#PNRX    ; enable PNRX external interrupt
+        BRES    PSIM+DDR,#PNRX    ; set shared GPIO to input
         .endif
         BRES    TIM4_IER,#0     ; disable TIM4 interrupt
         IRET
-TIM4_RECVE:
-        BTJT    PD_IDR,#PDRX,1$ ; dummy branch, copy GPIO to CF
+        TIM4_RECVE:
+        BTJT    PSIM+IDR,#PNRX,1$ ; dummy branch, copy GPIO to CF
 1$:     RRC     TIM4RXREG
         INC     TIM4TCNT
         JRNE    TIM4_END
         MOV     TIM4RXBUF,TIM4RXREG ; save result (CF is now start-bit)
         .ifeq   HALF_DUPLEX_SIM
-        BSET    PD_CR2,#PDRX    ; enable PDRX external interrupt
+        BSET    PSIM+CR2,#PNRX    ; enable PNRX external interrupt
         .endif
         JRA     TIM4_OFF
 TIM4_TRANS:
         CP      A,#10           ; test if startbit (coincidentially set CF)
         JRNE    TIM4_SER
         .ifne   HALF_DUPLEX_SIM
-        BSET    PD_DDR,#PDRX    ; port PD1=PDRX to output
+        BSET    PSIM+DDR,#PNRX    ; port PD1=PNRX to output
         .endif
         JRA     TIM4_BIT        ; emit start bit (CF=0 from CP)
 TIM4_SER:
         RRC     TIM4TXREG       ; get data bit, shift in stop bit (CF=1 from CP)
         ; fall through
 TIM4_BIT:
-        BCCM    PD_ODR,#PDTX    ; Set GPIO to CF
+        BCCM    PSIM+ODR,#PNTX    ; Set GPIO to CF
         DEC     TIM4TCNT        ; next TXD TIM4 state
         JREQ    TIM4_OFF        ; complete when TIM4CNT is zero
         ; fall through
@@ -5179,17 +5193,6 @@ RESETT:
         JP      COLD
 
         .endif
-
-;       TRAP  ( -- )
-;       Test _TRAP_Handler 
-        .dw     LINK
-
-        LINK =  .
-        .db     (4)
-        .ascii  "TRAP"
-TRAPP:
-        TRAP
-        RET
 
 ;===============================================================
 

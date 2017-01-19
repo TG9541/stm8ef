@@ -8,9 +8,10 @@
         HAS_TXUART       = 0    ; No UART TXD, word TX!
         HAS_RXUART       = 0    ; No UART RXD, word ?RX
         HAS_TXSIM        = 1    ; Enable TxD via GPIO/TIM4, word TXGP!
-        PDTX             = 1    ; Port D GPIO for HAS_TXDSIM
         HAS_RXSIM        = 1    ; Enable RxD via GPIO/TIM4, word ?RXGP
-        PDRX             = 1    ; Port D GPIO for HAS_RXDSIM
+        PSIM     = PORTD        ; Port for UART simulation
+        PNRX             = 1    ; Port GPIO# for HAS_RXDSIM
+        PNTX             = 1    ; Port GPIO# for HAS_TXDSIM
 
         EMIT_BG  = DROP         ; 7S-LED background EMIT vector
         QKEY_BG  = ZERO         ; Board keys background QKEY vector

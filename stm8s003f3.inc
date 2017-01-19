@@ -2,9 +2,18 @@
 
 ; ***** 6.2.1 I/O port hardware register map
 
+        PORTA        = PA_ODR  
+        PORTB        = PB_ODR  
+        PORTC        = PC_ODR  
+        PORTD        = PD_ODR  
+        ODR          = 0
+        IDR          = 1
+        DDR          = 2
+        CR1          = 3
+        CR2          = 4
 
 ; ***** Port A
-
+        
         PA_ODR       = 0x5000   ; Port A data output latch register     (0x00)
         PA_IDR       = 0x5001   ; Port A input pin value register       (0xXX)
         PA_DDR       = 0x5002   ; Port A data direction register        (0x00)
