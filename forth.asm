@@ -128,6 +128,8 @@
         TIC     =     39        ; tick
 
         EXIT_OPC =    0x81      ; RET opcode
+        DOLIT_OPC =   0x83      ; TRAP opcode as DOLIT
+        CALLR_OPC =   0xAD      ; CALLR opcode for relative addressing
         BRAN_OPC =    0xCC      ; JP opcode
         CALL_OPC =    0xCD      ; CALL opcode
 
@@ -311,6 +313,9 @@
         ;******  7) Code  ******
         ;***********************
 
+
+;       TRAP handler for DOLIT
+;       Push the inline literal following the TRAP instruction
 _TRAP_Handler:
         DECW    X
         DECW    X
@@ -421,7 +426,8 @@ COLD:
         LDW     SP,X
         CALL    PRESE           ; initialize data stack, TIB
 
-        CALL    DOLIT
+        ;CALL    DOLIT
+        TRAP
         .dw     UZERO
         CALL    DOLITC
         .db     USRRAMINIT
@@ -2483,7 +2489,8 @@ HERE:
         CALL    COMPIQ
         JRNE    1$
 
-        CALL    DOLIT
+        ;CALL    DOLIT
+        TRAP
         .dw     NVMCP        ; 'eval in Interpreter mode: HERE returns pointer to RAM
         JP      AT
         .endif
@@ -3528,7 +3535,8 @@ FIND1:  CALL    AT
         JREQ    FIND6
         CALL    DUPP
         CALL    AT
-        CALL    DOLIT
+        ;CALL    DOLIT
+        TRAP
         .dw     MASKK
         CALL    ANDD
         .ifne   CASEINSENSITIVE
@@ -3762,7 +3770,8 @@ INTER:
         CALL    QDQBRAN         ; ?defined
         .dw     INTE1
         CALL    AT
-        CALL    DOLIT
+        ;CALL    DOLIT
+        TRAP
         .dw     0x04000         ; COMPO*256
         CALL    ANDD            ; ?compile only lexicon bits
         CALL    ABORQ
@@ -3999,9 +4008,13 @@ COMPI:
         .db     (IMEDD+7)
         .ascii  "LITERAL"
 LITER:
-        CALL    COMPI
-        CALL    DOLIT
+        CALL    CCOMMALIT
+        .db     DOLIT_OPC
         JP      COMMA
+
+        ;CALL    COMPI
+        ;CALL    DOLIT
+        ;JP      COMMA
 
 ;       $,"     ( -- )
 ;       Compile a literal string
@@ -4452,9 +4465,27 @@ RBRAC:
         .ascii  "CALL,"
         .endif
 JSRC:
+        CALL    DUPP
+        CALL    HERE
+        CALL    CELLP 
+        CALL    SUBB
+        LD      A,YH
+        INC     A
+        JRNE    1$
+        LD      A,YL
+        TNZ     A
+        JRPL    1$
+        LD      A,#CALLR_OPC
+        LD      YH,A
+        LDW     (2,X),Y
+        JRA     2$
+1$:
         CALL    CCOMMALIT
         .db     CALL_OPC         ; opcode CALL
+2$:
+        CALL    DROP
         JP      COMMA
+
 
 ;       :       ( -- ; <string> )
 ;       Start a new colon definition
@@ -4536,7 +4567,8 @@ DOESS:
         CALL    DODOES          ; 3 CALL dodoes>
         CALL    HERECP
         CALL    DOLITC
-        .db     9
+        .db     7
+        ;.db     9
         CALL    PLUS
         CALL    LITER           ; 3 CALL doLit + 2 (HERECP+9)
         CALL    COMPI
@@ -4567,8 +4599,10 @@ DODOES:
         CALL    OVER                   ; ' HERE '
         CALL    ONEP                   ; ' HERE ('+1)
         CALL    STORE                  ; ' \ CALL DOVAR <- JP HERE
-        CALL    COMPI
-        CALL    DOLIT                  ; ' \ HERE <- DOLIT
+        CALL    CCOMMALIT
+        .db     DOLIT_OPC              ; \ HERE <- DOLIT <- ('+3) <- branch
+        ;CALL    COMPI
+        ;CALL    DOLIT                  ; ' \ HERE <- DOLIT
         CALL    DOLITC
         .db     3                      ; ' 3
         CALL    PLUS                   ; ('+3)
@@ -4929,7 +4963,8 @@ EMIT7S:
         ; '-'--'9' (and '@')
         SUB     A,#','
         LD      (1,X),A
-        CALL    DOLIT
+        ;CALL    DOLIT
+        TRAP
         .dw     PAT7SM9
         JRA     E7LOOKA
 E7ALPH:
@@ -4937,7 +4972,8 @@ E7ALPH:
         AND     A,#0x5F         ; convert to uppercase
         SUB     A,#'A'
         LD      (1,X),A
-        CALL    DOLIT
+        ;CALL    DOLIT
+        TRAP
         .dw     PAT7SAZ
 E7LOOKA:
         CALL    PLUS
@@ -5182,9 +5218,11 @@ RAMM:
         .ascii  "RESET"
 RESETT:
         CALLR   UNLOCK_FLASH
-        CALL    DOLIT
+        ;CALL    DOLIT
+        TRAP
         .dw     UDEFAULTS
-        CALL    DOLIT
+        ;CALL    DOLIT
+        TRAP
         .dw     UBOOT
         CALL    DOLITC
         .db     (ULAST-UBOOT)
