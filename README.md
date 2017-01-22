@@ -11,7 +11,10 @@ Please refer to the [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) for 
 Features:
 
 * configurable vocabulary subsets for binary size optimizations
-* Subroutine Threaded Code (STC) with native BRANCH and EXIT
+* Subroutine Threaded Code (STC) with improved code density
+  * native BRANCH (JP), and EXIT (RET)
+  * relative CALL with two bytes where possible
+  * pseudo-opcode for DOLIT using TRAP: compiled literals 3 instead of 5 bytes
 * compile Forth to NVM (Non Volatile Memory with Flash IAP)
 * autostart feature for embedded applications
 * preemptive background tasks with fixed cycle time (default 5ms)
@@ -22,7 +25,7 @@ Features:
 * configuration options for serial console or dual serial interface
   * UART: ?RX TX!
   * GPIO w/ Port D edge & Timer4 interrupts: ?RXP TXP!
-  * half-duplex "bus style" communication through a single Port D pin (e.g. PD1/SWIM)
+  * half-duplex "bus style" communication with a single GPIO (e.g. PD1/SWIM)
 * board support for Chinese made [STM8S based very low cost boards][WG1]:
   * W1209 LED display & half-duplex with SW TX
   * C0135 Relay-4 Board
