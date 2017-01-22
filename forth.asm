@@ -168,6 +168,7 @@
         HAS_DOES         = 0    ; DOES> extension
         HAS_DOLOOP       = 0    ; DO .. LOOP extension: DO LEAVE LOOP +LOOP
 
+        USE_CALLDOLIT    = 0    ; use CALL DOLIT instead of the DOLIT TRAP handler (deprecated)
         CASEINSENSITIVE  = 0    ; Case insensitive dictionary search
         SPEEDOVERSIZE    = 0    ; Speed-over-size in core words ROT - = <
         BAREBONES        = 0    ; Remove or unlink some more: hi HERE .R U.R SPACES @EXECUTE AHEAD CALL, EXIT COMPILE [COMPILE] DEPTH
@@ -314,9 +315,11 @@
         ;***********************
 
 
+
 ;       TRAP handler for DOLIT
 ;       Push the inline literal following the TRAP instruction
 _TRAP_Handler:
+        .ifeq  USE_CALLDOLIT
         DECW    X
         DECW    X
         LDW     (3,SP),X               ; XH,XL
@@ -325,11 +328,38 @@ _TRAP_Handler:
         LDW     X,(X)
         LDW     (Y),X
         LDW     (5,SP),X               ; YH,YL
-        LDW     X,(8,SP)               
+        LDW     X,(8,SP)
         INCW    X
         INCW    X
-        LDW     (8,SP),X 
+        LDW     (8,SP),X
         IRET
+
+;       Macros for inline literals using the TRAP approach
+
+        .macro DoLitC c
+        TRAP
+        .dw     c
+        .endm
+
+        .macro DoLitW w
+        TRAP
+        .dw     w
+        .endm
+
+        .else
+
+;       Macros for inline literals using CALL DOLIT / CALL DOLITC
+        .macro DoLitC c
+        call    DOLITC
+        .db     c
+        .endm
+
+        .macro DoLitW w
+        call    DOLIT
+        .db     w
+        .endm
+
+        .endif
 
 ;       TIM2 interrupt handler for background task
 _TIM2_UO_IRQHandler:
@@ -426,13 +456,9 @@ COLD:
         LDW     SP,X
         CALL    PRESE           ; initialize data stack, TIB
 
-        ;CALL    DOLIT
-        TRAP
-        .dw     UZERO
-        CALL    DOLITC
-        .db     USRRAMINIT
-        CALL    DOLITC
-        .db     (ULAST-UZERO)
+        DoLitW  UZERO
+        DoLitC  USRRAMINIT
+        DoLitC  (ULAST-UZERO)
         CALL    CMOVE           ; initialize user area
 
         CALLR   BOARDINIT       ; Board initialization (see "boardcore.inc")
@@ -492,17 +518,17 @@ COLD:
         .ifeq   (PSIM-PORTA)
         BSET    EXTI_CR1,#1     ; External interrupt Port A falling edge
         .else
-        
+
         .ifeq   (PSIM-PORTB)
         BSET    EXTI_CR1,#3     ; External interrupt Port B falling edge
         .else
-        
+
         .ifeq   (PSIM-PORTC)
         BSET    EXTI_CR1,#5     ; External interrupt Port C falling edge
         .else
         BSET    EXTI_CR1,#7     ; External interrupt Port D falling edge
         .endif
-        
+
         .endif
         .endif
         BRES    PSIM+DDR,#PNRX    ; 0: input (default)
@@ -829,21 +855,22 @@ PUSHLIT:
         LD      (X),A
         RET
 
-;       DOLITC  ( -- C )
-;       Push an inline literal character (8 bit).
-DOLITC:
-        CALLR   PUSHLIT
-CSKIPRET:
-        POPW    Y
-        JP      (1,Y)
-
 ;       CCOMMALIT ( -- )
 ;       Compile inline literall byte into code dictionary.
 CCOMMALIT:
         CALLR   PUSHLIT
         CALL    CCOMMA
-        JRA     CSKIPRET
+CSKIPRET:
+        POPW    Y
+        JP      (1,Y)
 
+        .ifne   USE_CALLDOLIT
+
+;       DOLITC  ( -- C )
+;       Push an inline literal character (8 bit).
+DOLITC:
+        CALLR   PUSHLIT
+        JRA     CSKIPRET
 
 ;       doLit   ( -- w )
 ;       Push an inline literal.
@@ -861,9 +888,8 @@ DOLIT:
         LDW     Y,(1,SP)
         LDW     Y,(Y)
         LDW     (X),Y
-POPYJPY:
-        POPW    Y
-        JP      (2,Y)
+        JRA     POPYJPY
+        .endif
 
         .ifne   HAS_DOLOOP
         ;       (+loop) ( +n -- )
@@ -897,8 +923,8 @@ DOPLOOP:
         .db     (COMPO+5)
         .ascii  "LEAVE"
 LEAVE:
-        POPW    Y
-        ADDW    SP,#4
+        ADDW    SP,#6
+        POPW    Y               ; DO leaves the address of +loop on the R-stack
         JP      (2,Y)
         .endif
 
@@ -943,7 +969,9 @@ QBRAN:
         INCW    X
         LDW     Y,(Y)
         JREQ    BRAN
-        JRA     POPYJPY
+POPYJPY:
+        POPW    Y
+        JP      (2,Y)
 
 ;       branch  ( -- )
 ;       Branch to an inline address.
@@ -1683,8 +1711,7 @@ TPROMPT:
 
 ;       ( -- ) EMIT pace character for handshake in FILE mode
 PACEE:
-        CALL    DOLITC
-        .db     PACE      ; pace character for host handshake
+        DoLitC   PACE      ; pace character for host handshake
         JP      [USREMIT]
 
 
@@ -2489,9 +2516,7 @@ HERE:
         CALL    COMPIQ
         JRNE    1$
 
-        ;CALL    DOLIT
-        TRAP
-        .dw     NVMCP        ; 'eval in Interpreter mode: HERE returns pointer to RAM
+        DoLitW  NVMCP        ; 'eval in Interpreter mode: HERE returns pointer to RAM
         JP      AT
         .endif
 1$:
@@ -2518,14 +2543,12 @@ PAD:
         POP     A
         AND     A,#0x20
         JRNE    1$
-        CALL    DOLITC
-        .db     (PADBG+1)       ; dedicated memory for PAD in background task
+        DoLitC  (PADBG+1)       ; dedicated memory for PAD in background task
         RET
 1$:
         .endif
         CALLR   HERE            ; regular PAD with offset to HERE
-        CALL    DOLITC
-        .db     PADOFFS
+        DoLitC  PADOFFS
         JP      PLUS
 
 ;       @EXECUTE        ( a -- )  ( TOS STM8: undefined )
@@ -2998,8 +3021,7 @@ NUFQ:
         JREQ    NUFQ1
         CALL    DDROP
         CALLR   KEY
-        CALL    DOLITC
-        .db     CRR
+        DoLitC  CRR
         JP      EQUAL
 NUFQ1:  RET
         .endif
@@ -3051,12 +3073,10 @@ CHAR2:  CALL    DONXT
         .ascii  "CR"
 CR:
         .ifeq TERM_LINUX
-        CALL    DOLITC
-        .db     CRR
+        DoLitC  CRR
         CALL    [USREMIT]
         .endif
-        CALL    DOLITC
-        .db     LF
+        DoLitC  LF
         JP      [USREMIT]
 
 
@@ -3286,7 +3306,7 @@ PARS2:  CALL    RFROM
 PARS3:  CALL    OVER
         CALL    SWAPP
         CALL    TOR
-PARS4:  
+PARS4:
         LD      A,(5,SP)        ; TEMP CAT
         CALL    ASTOR
         CALL    OVER
@@ -3351,8 +3371,7 @@ PARSE:
         .db     (IMEDD+2)
         .ascii  ".("
 DOTPR:
-        CALL    DOLITC
-        .db     41      ; ")"
+        DoLitC  41      ; ")"
         CALLR   PARSE
         JP      TYPES
 
@@ -3366,8 +3385,7 @@ DOTPR:
         .db     (IMEDD+1)
         .ascii  "("
 PAREN:
-        CALL    DOLITC
-        .db     41      ; ")"
+        DoLitC  41      ; ")"
         CALLR   PARSE
         JP      DDROP
 
@@ -3432,8 +3450,7 @@ TOKEN:
         .endif
 NAMET:
         CALL    COUNT
-        CALL    DOLITC
-        .db     31
+        DoLitC  31
         CALL    ANDD
         JP      PLUS
 
@@ -3535,9 +3552,7 @@ FIND1:  CALL    AT
         JREQ    FIND6
         CALL    DUPP
         CALL    AT
-        ;CALL    DOLIT
-        TRAP
-        .dw     MASKK
+        DoLitW  MASKK
         CALL    ANDD
         .ifne   CASEINSENSITIVE
         CALLR   CUPPER
@@ -3601,8 +3616,7 @@ BKSP:
         CALL    ONEM
         CALL    SPACE
 BACKSP:
-        CALL    DOLITC
-        .db     BKSPP
+        DoLitC  BKSPP
         JP      [USREMIT]
 BACK1:  RET
 
@@ -3642,8 +3656,7 @@ KTAP:
         CP     A,#CRR
         JREQ    KTAP2
 
-        CALL    DOLITC
-        .db     BKSPP
+        DoLitC  BKSPP
         CALL    XORR
         CALL    QBRAN
         .dw     KTAP1
@@ -3677,8 +3690,7 @@ ACCP1:  CALL    DDUP
         CALL    KEY
         CALL    DUPP
         CALL    BLANK
-        CALL    DOLITC
-        .db     127
+        DoLitC  127
         CALL    WITHI
         CALL    QBRAN
         .dw     ACCP2
@@ -3703,8 +3715,7 @@ ACCP4:  CALL    DROP
         .endif
 QUERY:
         CALL    TIB
-        CALL    DOLITC
-        .db     TIBLENGTH
+        DoLitC  TIBLENGTH
         CALL    ACCEP
         CALL    NTIB
         CALL    STORE
@@ -3744,8 +3755,7 @@ ABORQ:
         CALL    DOSTR
 ABOR1:  CALL    SPACE
         CALL    COUNTTYPES
-        CALL    DOLITC
-        .db     63 ; "?"
+        DoLitC  63 ; "?"
         CALL    [USREMIT]
         CALL    CR
         JRA     ABORT   ;pass error string
@@ -3770,9 +3780,7 @@ INTER:
         CALL    QDQBRAN         ; ?defined
         .dw     INTE1
         CALL    AT
-        ;CALL    DOLIT
-        TRAP
-        .dw     0x04000         ; COMPO*256
+        DoLitW  0x04000         ; COMPO*256
         CALL    ANDD            ; ?compile only lexicon bits
         CALL    ABORQ
         .db     13
@@ -4008,13 +4016,14 @@ COMPI:
         .db     (IMEDD+7)
         .ascii  "LITERAL"
 LITER:
+        .ifne  USE_CALLDOLIT
+        CALL    COMPI
+        CALL    DOLIT
+        .else
         CALL    CCOMMALIT
         .db     DOLIT_OPC
+        .endif
         JP      COMMA
-
-        ;CALL    COMPI
-        ;CALL    DOLIT
-        ;JP      COMMA
 
 ;       $,"     ( -- )
 ;       Compile a literal string
@@ -4026,8 +4035,7 @@ LITER:
         .db     3
         .ascii  '$,"'
 STRCQ:
-        CALL    DOLITC
-        .db     34      ; "
+        DoLitC  34      ; "
         CALL    PARSE
         CALL    HERECP
         CALL    PACKS   ;string to code dictionary
@@ -4077,6 +4085,12 @@ NEXT:
         .db     (IMEDD+2)
         .ascii  "DO"
 DOO:
+        CALL    CCOMMALIT
+        .db     DOLIT_OPC       ; LOOP address cell for usage by LEAVE at runtime
+        CALL    ZERO            ; changes here require an offset adjustment in PLOOP
+        CALL    COMMA           ; this placeholder cell gets patched at compile time
+        CALL    COMPI
+        CALL    TOR
         CALL    COMPI
         CALL    SWAPP
         CALL    COMPI
@@ -4107,6 +4121,11 @@ LOOP:
 PLOOP:
         CALL    COMPI
         CALL    DOPLOOP
+        CALL    HERE            ; resolve address in DO for usage by LEAVE at runtime
+        CALL    OVER            ; use HERE from DO/FOR
+        DoLitC  14              ; apply negative offset
+        CALL    SUBB
+        CALL    STORE           ; patch runtime code generated by DO
         JP      COMMA
         .endif
 
@@ -4405,8 +4424,7 @@ OVERT:
 
         LDW     NVMCONTEXT,Y    ; update NVMCONTEXT
 
-        CALL    DOLITC
-        .db     CTOP            ; is there any vocabulary in RAM?
+        DoLitC  CTOP            ; is there any vocabulary in RAM?
         CALL    DUPP
         CALL    AT
         CALL    QBRAN
@@ -4415,8 +4433,7 @@ OVERT:
 2$:
         CALL    DROP
 1$:
-        CALL    DOLITC
-        .db     USRCONTEXT
+        DoLitC  USRCONTEXT
         JP      STORE           ; or update USRCONTEXT
 
         .else
@@ -4467,7 +4484,7 @@ RBRAC:
 JSRC:
         CALL    DUPP
         CALL    HERE
-        CALL    CELLP 
+        CALL    CELLP
         CALL    SUBB
         LD      A,YH
         INC     A
@@ -4566,9 +4583,11 @@ DOESS:
         CALL    COMPI
         CALL    DODOES          ; 3 CALL dodoes>
         CALL    HERECP
-        CALL    DOLITC
-        .db     7
-        ;.db     9
+        .ifne  USE_CALLDOLIT
+        DoLitC  9
+        .else
+        DoLitC  7
+        .endif
         CALL    PLUS
         CALL    LITER           ; 3 CALL doLit + 2 (HERECP+9)
         CALL    COMPI
@@ -4591,20 +4610,21 @@ DODOES:
         CALL    LAST                   ; ( link field of current word )
         CALL    AT
         CALL    NAMET                  ; ' ( 'last  )
-        CALL    DOLITC
-        .db     BRAN_OPC               ; ' JP
+        DoLitC  BRAN_OPC               ; ' JP
         CALL    OVER                   ; ' JP '
         CALL    CSTOR                  ; ' \ CALL <- JP
         CALL    HERECP                 ; ' HERE
         CALL    OVER                   ; ' HERE '
         CALL    ONEP                   ; ' HERE ('+1)
         CALL    STORE                  ; ' \ CALL DOVAR <- JP HERE
+        .ifne  USE_CALLDOLIT
+        CALL    COMPI
+        CALL    DOLIT                  ; ' \ HERE <- DOLIT
+        .else
         CALL    CCOMMALIT
         .db     DOLIT_OPC              ; \ HERE <- DOLIT <- ('+3) <- branch
-        ;CALL    COMPI
-        ;CALL    DOLIT                  ; ' \ HERE <- DOLIT
-        CALL    DOLITC
-        .db     3                      ; ' 3
+        .endif
+        DoLitC  3                      ; ' 3
         CALL    PLUS                   ; ('+3)
         CALL    COMMA                  ; \ HERE <- DOLIT <-('+3)
         CALL    CCOMMALIT
@@ -4665,15 +4685,13 @@ UTYP2:  CALL    DONXT
         .endif
 DUMPP:
         CALL    OVER
-        CALL    DOLITC
-        .db     4
+        DoLitC  4
         CALL    UDOTR   ;display address
         CALL    SPACE
         CALL    TOR     ;start count down loop
         JRA     PDUM2   ;skip first pass
 PDUM1:  CALL    DUPPCAT
-        CALL    DOLITC
-        .db     3
+        DoLitC  3
         CALL    UDOTR   ;display numeric data
         CALL    ONEP    ;increment address
 PDUM2:  CALL    DONXT
@@ -4691,14 +4709,13 @@ PDUM2:  CALL    DONXT
         .ascii  "DUMP"
 DUMP:
         PUSH    USRBASE+1       ; BASE AT TOR save radix
-        LD      A,#16                  ; DOLITC 16
+        LD      A,#16           ; DOLITC 16
         LD      USRBASE+1,A     ; set hex
         CALL    YFLAGS
         DIV     Y,A             ; / change count to lines
         PUSHW   Y               ; start count down loop
 DUMP1:  CALL    CR
-        CALL    DOLITC
-        .db     16
+        DoLitC  16
         CALL    DDUP
         CALLR   DUMPP   ;display numeric
         CALL    ROT
@@ -4750,8 +4767,7 @@ DOTID:
         CALL    QDQBRAN ;if zero no name
         .dw     DOTI1
         CALL    COUNT
-        CALL    DOLITC
-        .db     0x01F
+        DoLitC  0x01F
         CALL    ANDD    ;mask lexicon bits
         JP      UTYPE
 DOTI1:  CALL    DOTQP
@@ -4947,8 +4963,7 @@ EMIT7S:
 
         LDW     Y,#LED7FIRST
         LDW     (X),Y
-        CALL    DOLITC
-        .db     (LED7LAST-LED7FIRST+1)
+        DoLitC  (LED7LAST-LED7FIRST+1)
         JP    ERASE
 
 1$:     CP      A,#'.'
@@ -4963,18 +4978,14 @@ EMIT7S:
         ; '-'--'9' (and '@')
         SUB     A,#','
         LD      (1,X),A
-        ;CALL    DOLIT
-        TRAP
-        .dw     PAT7SM9
+        DoLitW  PAT7SM9
         JRA     E7LOOKA
 E7ALPH:
         ; 'A'--'z'
         AND     A,#0x5F         ; convert to uppercase
         SUB     A,#'A'
         LD      (1,X),A
-        ;CALL    DOLIT
-        TRAP
-        .dw     PAT7SAZ
+        DoLitW  PAT7SAZ
 E7LOOKA:
         CALL    PLUS
         CALL    CAT
@@ -4998,12 +5009,9 @@ E7END:
         .db     (3)
         .ascii  "P7S"
 PUT7S:
-        CALL    DOLITC
-        .db     LED7FIRST+1
-        CALL    DOLITC
-        .db     LED7FIRST
-        CALL    DOLITC
-        .db     LED7LAST-LED7FIRST
+        DoLitC  LED7FIRST+1
+        DoLitC  LED7FIRST
+        DoLitC  LED7LAST-LED7FIRST
         CALL    CMOVE
         CALL    AFLAGS
         LD      LED7LAST,A
@@ -5218,14 +5226,9 @@ RAMM:
         .ascii  "RESET"
 RESETT:
         CALLR   UNLOCK_FLASH
-        ;CALL    DOLIT
-        TRAP
-        .dw     UDEFAULTS
-        ;CALL    DOLIT
-        TRAP
-        .dw     UBOOT
-        CALL    DOLITC
-        .db     (ULAST-UBOOT)
+        DoLitW  UDEFAULTS
+        DoLitW  UBOOT
+        DoLitC  (ULAST-UBOOT)
         CALL    CMOVE           ; initialize user area
         CALLR   LOCK_FLASH
         JP      COLD
