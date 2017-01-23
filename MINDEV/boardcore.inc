@@ -35,6 +35,10 @@ LED_MPX:
         .db     (4)
         .ascii  "OUT!"
 OUTSTOR:
+        INCW    X
+        LD      A,(X)
+        LD      OUTPUTS,A
+        INCW    X
         RRC     A
         CCF
         BCCM    PB_ODR,#5       ; PB5 LED
