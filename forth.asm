@@ -906,12 +906,20 @@ DOPLOOP:
         LDW     YTEMP,Y
         LDW     Y,X
         LDW     Y,(Y)
+        LD      A,YH
         INCW    X
         INCW    X
         ADDW    Y,(3,SP)
         CPW     Y,YTEMP
+        PUSH    CC
+        TNZ     A
+        JRMI    1$
+        POP     CC
         JRSGE   LEAVE
-        LDW     (3,SP),Y
+        JRA     2$
+1$:     POP     CC
+        JRSLT   LEAVE
+2$:     LDW     (3,SP),Y
         JRA     BRAN
 
 ;       LEAVE   ( -- )
@@ -4122,7 +4130,7 @@ PLOOP:
         CALL    COMPI
         CALL    DOPLOOP
         CALL    HERE
-        CALL    OVER            ; use mark from DO/FOR, apply negative offset 
+        CALL    OVER            ; use mark from DO/FOR, apply negative offset
         DoLitC  14
         CALL    SUBB
         CALL    STORE           ; patch DO runtime code for LEAVE
