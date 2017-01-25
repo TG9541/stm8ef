@@ -465,7 +465,7 @@ COLD:
         CALLR   BOARDINIT       ; Board initialization (see "boardcore.inc")
 
         .ifne   HAS_BACKGROUND
-        ; init 5ms timer interrupt
+        ; init BG timer interrupt
         MOV     TIM2_PSCR,#0x03 ; prescaler 1/8
         MOV     TIM2_ARRH,#(BG_TIM2_REL/256)  ; reload H
         MOV     TIM2_ARRL,#(BG_TIM2_REL%256)  ;        L
@@ -496,7 +496,7 @@ COLD:
         TIM4RELOAD = 0xCF       ; reload 0.104 ms (9600 baud)
         MOV     TIM4_ARR,#TIM4RELOAD
         MOV     TIM4_PSCR,#0x03 ; prescaler 1/8
-        MOV     ITC_SPR6,#0x3F  ; Interrupt prio "high" for TIM4 (Int23)
+;        MOV     ITC_SPR6,#0x3F  ; Interrupt prio "high" for TIM4 (Int23)
         MOV     TIM4_CR1,#0x01  ; enable TIM4
         .ifne  PNRX^PNTX
         HALF_DUPLEX_SIM = 0     ; is there no better way to do "!=" in ASxxxx 2.x?
@@ -5240,6 +5240,7 @@ RESETT:
         CALLR   LOCK_FLASH
         JP      COLD
 
+
 ;       HALT  ( -- )
 ;       Issue the HALT instruction
         .dw     LINK
@@ -5249,6 +5250,51 @@ RESETT:
         .ascii  "HALT"
 HALTT:
         HALT
+        RET
+
+;       SAVEC ( -- )
+;       Minimal context switch for interrupt code without character I/O
+        .dw     LINK
+
+        LINK =  .
+        .db     (5)
+        .ascii  "SAVEC"
+SAVEC:
+        LDW     X,YTEMP         ; Save context
+        PUSHW   X
+        LDW     X,#(BSPP)       ; init data stack for interrupt BSPP
+        RET
+
+
+;       RESTC ( -- )
+;       Restore context interrupt code
+        .dw     LINK
+
+        LINK =  .
+        .db     (5)
+        .ascii  "RESTC"
+RESTC:
+        POPW    X
+        LDW     YTEMP,x         ; Save context
+        IRET
+
+
+;       IVEC! ( a n -- )
+;       Set interrupt vector n to a.
+;       Flash write protection needs to removed first
+        .dw     LINK
+
+        LINK =  .
+        .db     (5)
+        .ascii  "IVEC!"
+IVECST:
+        CALL    YFLAGS
+        SLAW    Y
+        SLAW    Y
+        ADDW    Y,#0x800A
+        LDW     YTEMP,Y
+        CALL    YFLAGS
+        LDW     [YTEMP],Y
         RET
 
         .endif
