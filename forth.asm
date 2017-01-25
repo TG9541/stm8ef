@@ -164,6 +164,7 @@
         HAS_ADC          = 0    ; Board analog inputs
 
         HAS_BACKGROUND   = 0    ; Background Forth task (TIM2 ticker)
+        BG_TIM2_REL = 0x26DE    ; Reload value for TIM2 background ticker (default 0x26DE @ 5ms HSE)
         HAS_CPNVM        = 0    ; Can compile to Flash, always interpret to RAM
         HAS_DOES         = 0    ; DOES> extension
         HAS_DOLOOP       = 0    ; DO .. LOOP extension: DO LEAVE LOOP +LOOP
@@ -466,10 +467,8 @@ COLD:
         .ifne   HAS_BACKGROUND
         ; init 5ms timer interrupt
         MOV     TIM2_PSCR,#0x03 ; prescaler 1/8
-        MOV     TIM2_ARRH,#0x0F ; reload 5ms H
-        MOV     TIM2_ARRL,#0x8C ;        5ms L
-        ;MOV     TIM2_ARRH,#0x26 ; reload 5ms H
-        ;MOV     TIM2_ARRL,#0xDE ;        5ms L
+        MOV     TIM2_ARRH,#(BG_TIM2_REL/256)  ; reload H
+        MOV     TIM2_ARRL,#(BG_TIM2_REL%256)  ;        L
         MOV     ITC_SPR4,#0xF7  ; Interrupt prio. low for TIM2 (Int13)
         MOV     TIM2_CR1,#0x01  ; enable TIM2
         MOV     TIM2_IER,#0x01  ; enable TIM2 interrupt
