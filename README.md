@@ -22,9 +22,13 @@ Features:
   * allows `INPUT-PROCESS-OUTPUT` processing indepent from the Forth console
   * allows setting process parameters through interactive console
   * in background tasks `?KEY` can read board keys, and [boards with 7Seg-LED UI](https://github.com/TG9541/stm8ef/wiki/eForth-Background-Task) can emit to the LED display
+* Low-level interrupts in Forth
+  * lightweight context switch with `SAVEC` and `IRET`
+  * example code for HALT is in the [Wiki](https://github.com/TG9541/stm8ef/wiki/STM8S-eForth-Programming#low-level-interrupts-in-forth)
 * configuration options for serial console or dual serial interface
   * UART: ?RX TX!
-  * GPIO w/ Port D edge & Timer4 interrupts: ?RXP TXP!
+  * any GPIO or pair of GPIOs from ports PA through PD can be used as a simulated COM port
+  * GPIO w/ Port edge & Timer4 interrupts: ?RXP TXP!
   * half-duplex "bus style" communication with a single GPIO (e.g. PD1/SWIM)
 * board support for Chinese made [STM8S based very low cost boards][WG1]:
   * W1209 LED display & half-duplex with SW TX
@@ -85,12 +89,12 @@ Currently, there is no support for the STM8S Discovery, since I don't have any S
 
 This is a generic STM8EF target for exploring boards where no UART pins are broken out but where PD1 is available on a SWIM ICP header. Access to PD5/TX and PD6/RX is not required, bus-style half-duplex console communciation with a software UART simulation is used instead.
 
-* Binary size about 5800 bytes
+* Binary size about 6600 bytes
 * Selected feature set:
-  * words for register addresses (e.g. Px_CR2 Px_CR1 Px_DDR Px_IDR Px_ODR)
+  * rich set of words for register addresses (e.g. Px_CR2 Px_CR1 Px_DDR Px_IDR Px_ODR)
   * compile to Flash
   * EEPROM access
-  * background task
+  * background task and interrupts
   * eForth extensions *CREATE-DOES>*, *DO-LEAVE-LOOP/+LOOP*
   * special STM8 memory access words (bit addressing, reversed access order)
   * Case insensitive vocabulary
@@ -136,6 +140,7 @@ A plain STM8S003F3P6 eForth core as a starting point for configurations
 * Reduced vocabulary for the interactive use case (e.g. for hardware testing or as a debugging console)
 * Selected feature set:
   * compile to Flash
+  * lightweight low-level interrupts handlers in Forth code
   * serial console with UART
 
 More features can be selected from the list of options in `globalconf.inc`.
@@ -150,7 +155,7 @@ Cheap STM8S103F3P6-based breakout board with LED on port B5 (there are plenty of
 * Selected feature set:
   * compile to Flash
   * EEPROM access
-  * background task
+  * background task and interrupts
   * eForth extensions *CREATE-DOES>*, *DO-LEAVE-LOOP/+LOOP*
   * I/O words
   * special STM8 memory access words (bit addressing, reversed access order)
@@ -169,7 +174,7 @@ This very cheap board can be used for single input/single output control applica
   * Half-duplex serial interface through sensor header
   * 7S-LED display and board keys (P7S E7S BKEY KEYB?)
   * compile to Flash and EEPROM access
-  * background task
+  * background task and interrupts
   * eForth extensions *CREATE-DOES>*, *DO-LEAVE-LOOP/+LOOP*
   * I/O words
   * special STM8 memory access words (bit addressing, reversed access order)
