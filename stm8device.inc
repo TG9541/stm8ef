@@ -1,11 +1,28 @@
 ; STM8S003F3P6 and STM8S103F3P6 register addresses
+        STM8S003F3       = 1    ; 8K flash, 1K RAM, 128 EEPROM, UART1
+        STM8S103F3       = 0    ; like STM8S003F3, 640 EEPROM
+        STM8S105C6       = 0    ; 32K flash, 2K RAM, 1K EEPROM, UART2
+
+        ;******  STM8S memory addresses ******
+        RAMBASE =       0x0000  ; STM8S RAM start
+        EEPROMBASE =    0x4000  ; STM8S EEPROM start
+
+        .ifne   STM8S003F3
+        EEPROMEND =     0x407F  ; STM8S003F3: 128 bytes EEPROM
+        .endif
+
+        .ifne   STM8S103F3
+        EEPROMEND =     0x427F  ; STM8S103F3: 640 bytes EEPROM
+        .endif
 
 ; ***** 6.2.1 I/O port hardware register map
 
-        PORTA        = PA_ODR  
-        PORTB        = PB_ODR  
-        PORTC        = PC_ODR  
-        PORTD        = PD_ODR  
+        PORTA        = PA_ODR
+        PORTB        = PB_ODR
+        PORTC        = PC_ODR
+        PORTD        = PD_ODR
+        PORTX        = 0
+
         ODR          = 0
         IDR          = 1
         DDR          = 2
@@ -13,7 +30,7 @@
         CR2          = 4
 
 ; ***** Port A
-        
+
         PA_ODR       = 0x5000   ; Port A data output latch register     (0x00)
         PA_IDR       = 0x5001   ; Port A input pin value register       (0xXX)
         PA_DDR       = 0x5002   ; Port A data direction register        (0x00)
@@ -63,7 +80,6 @@
 ;.endif
 
 ; ***** 6.2.2 General hardware register map
-
 
 ; ***** Flash
 ;.ifne  0
@@ -161,7 +177,7 @@
         I2C_TRISER   = 0x521D   ; I2C TRISE register                    (0x02)
         I2C_PECR     = 0x521E   ; I2C packet error checking register    (0x00)
 
-; ***** UART1 
+; ***** UART1
 ;.ifeq HAS_TXUART+HAS_RXUART
 
         UART1_SR     = 0x5230   ; UART1 status register                 (0xC0)
@@ -212,7 +228,7 @@
         TIM1_DTR     = 0x526E   ; TIM1 dead-time register               (0x00)
         TIM1_OISR    = 0x526F   ; TIM1 output idle state register       (0x00)
 
-; ***** TIM2 
+; ***** TIM2
 ;.ifeq HAS_BACKGROUND
 
         TIM2_CR1     = 0x5300   ; TIM2 control register 1               (0x00)
@@ -238,7 +254,7 @@
         TIM2_CCR3L   = 0x5316   ; TIM2 capture/compare register 3 low   (0x00)
 ;.endif
 
-; ***** TIM4 
+; ***** TIM4
 
 ;.ifeq HAS_TXSIM+HAS_RXSIM
 
@@ -251,7 +267,7 @@
         TIM4_ARR     = 0x5348   ; TIM4 auto-reload register             (0xFF)
 ;.endif
 
-; ***** ADC1 
+; ***** ADC1
 
 ;.ifeq HAS_ADC
 
