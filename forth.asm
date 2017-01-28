@@ -171,7 +171,7 @@
 
         USE_CALLDOLIT    = 0    ; use CALL DOLIT instead of the DOLIT TRAP handler (deprecated)
         CASEINSENSITIVE  = 0    ; Case insensitive dictionary search
-        SPEEDOVERSIZE    = 0    ; Speed-over-size in core words ROT - = <
+        SPEEDOVERSIZE    = 0    ; Speed-over-size in core words ROT - = < -1 0 1
         BAREBONES        = 0    ; Remove or unlink some more: hi HERE .R U.R SPACES @EXECUTE AHEAD CALL, EXIT COMPILE [COMPILE] DEPTH
 
         WORDS_LINKINTER  = 0    ; Link interpreter words: ACCEPT QUERY TAP kTAP hi 'BOOT tmp >IN 'TIB #TIB eval CONTEXT pars PARSE NUMBER? DIGIT? WORD TOKEN NAME> SAME? find ABORT aborq $INTERPRET INTER? .OK ?STACK EVAL PRESET QUIT $COMPILE
@@ -459,12 +459,6 @@ COLD:
 
         LDW     X,#RPP          ; initialize return stack
         LDW     SP,X
-        CALL    PRESE           ; initialize data stack, TIB
-
-        DoLitW  UZERO
-        DoLitC  USRRAMINIT
-        DoLitC  (ULAST-UZERO)
-        CALL    CMOVE           ; initialize user area
 
         CALLR   BOARDINIT       ; Board initialization (see "boardcore.inc")
 
@@ -481,8 +475,8 @@ COLD:
         .ifne   HAS_RXUART+HAS_TXUART
         ; Init RS232 communication port
         ; STM8S[01]003F3 init UART
-        MOV     UART1_BRR2,#0x003       ; 9600 baud
-        MOV     UART1_BRR1,#0x068       ; 0068 9600 baud
+        LDW     X,#0x6803              ; 9600 baud
+        LDW     UART1_BRR1,X           ; 
         .ifne   HAS_RXUART*HAS_TXUART
         MOV     UART1_CR2,#0x0C        ; Use UART1 full duplex
         .else
@@ -500,7 +494,6 @@ COLD:
         TIM4RELOAD = 0xCF       ; reload 0.104 ms (9600 baud)
         MOV     TIM4_ARR,#TIM4RELOAD
         MOV     TIM4_PSCR,#0x03 ; prescaler 1/8
-;        MOV     ITC_SPR6,#0x3F  ; Interrupt prio "high" for TIM4 (Int23)
         MOV     TIM4_CR1,#0x01  ; enable TIM4
         .ifne  PNRX^PNTX
         HALF_DUPLEX_SIM = 0     ; is there no better way to do "!=" in ASxxxx 2.x?
@@ -539,13 +532,20 @@ COLD:
         BSET    PSIM+CR2,#PNRX    ; enable PNRX external interrupt
         .endif
 
+        ; Hardware initialization complete
+        RIM                     ; enable interrupts
+
+        CALL    PRESE           ; initialize data stack, TIB
+        
+        DoLitW  UZERO
+        DoLitC  USRRAMINIT
+        DoLitC  (ULAST-UZERO)
+        CALL    CMOVE           ; initialize user area
+
         .ifne   HAS_OUTPUTS
         CALL    ZERO
         CALL    OUTSTOR
         .endif
-
-        ; Hardware initialization complete
-        RIM                     ; enable interrupts
 
         CALL    [TBOOT+3]       ; application boot
         CALL    OVERT           ; initialize CONTEXT from USRLAST
@@ -1089,6 +1089,18 @@ CSTOR:
         LD      (Y),A           ; store c at b
         JRA     DDROP
 
+        .ifne   WORDS_EXTRACORE
+;       I       ( -- n )     ( TOS STM8: -- Y,Z,N )
+;       Get inner FOR-NEXT or DO-LOOP index value
+        .dw     LINK
+
+        LINK =  .
+        .db     (1)
+        .ascii  "I"
+IGET:
+        JRA     RAT
+        .endif
+
         .ifne   WORDS_EXTRASTACK
 ;       RP@     ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Push current RP to data stack.
@@ -1138,18 +1150,6 @@ PUSHJPYTEMP:
         LDW     (X),Y
         JP      [YTEMP]
 
-        .ifne   WORDS_EXTRACORE
-;       I       ( -- n )     ( TOS STM8: -- Y,Z,N )
-;       Get inner FOR-NEXT or DO-LOOP index value
-        .dw     LINK
-
-        LINK =  .
-        .db     (1)
-        .ascii  "I"
-IGET:
-        JRA     RAT
-        .endif
-
 ;       doVAR   ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Code for VARIABLE and CREATE.
 
@@ -1171,34 +1171,6 @@ YSTOR:
         LDW     (X),Y           ; push on stack
         RET                     ; go to RET of EXEC
 
-;       DROP    ( w -- )        ( TOS STM8: -- Y,Z,N )
-;       Discard top stack item.
-
-        .dw     LINK
-        LINK =  .
-        .db     4
-        .ascii  "DROP"
-DROP:
-        INCW    X               ; ADDW   X,#2
-        INCW    X
-YTOS:
-        LDW     Y,X
-        LDW     Y,(Y)
-        RET
-
-;       2DROP   ( w w -- )       ( TOS STM8: -- Y,Z,N )
-;       Discard two items on stack.
-
-        .dw     LINK
-
-        LINK =  .
-        .db     5
-        .ascii  "2DROP"
-DDROP:
-        INCW    X
-        INCW    X
-        JRA     DROP
-
 ;       R@      ( -- w )        ( TOS STM8: -- Y,Z,N )
 ;       Copy top of return stack to stack (or the FOR - NEXT index value).
 
@@ -1218,15 +1190,16 @@ RAT:
         .db     (COMPO+2)
         .ascii  ">R"
 TOR:
-        POPW    Y               ; save return addr
-        LDW     YTEMP,Y
-        LDW     Y,X
-        LDW     Y,(Y)
-        PUSHW   Y               ; restore return addr
-        LDW     Y,YTEMP
-        PUSHW   Y
+        EXGW    X,Y
+        POPW    X               ; save return addr
+        LDW     YTEMP,X
+        LDW     X,Y
+        LDW     X,(X)
+        PUSHW   X               ; restore return addr
+        LDW     X,YTEMP
+        PUSHW   X
+        LDW     X,Y
         JRA     DROP
-
 
 ;       SP@     ( -- a )        ( TOS STM8: -- Y,Z,N )
 ;       Push current stack pointer.
@@ -1241,6 +1214,34 @@ SPAT:
         JRA     YSTOR
         .endif
 
+
+;       DROP    ( w -- )        ( TOS STM8: -- Y,Z,N )
+;       Discard top stack item.
+
+        .dw     LINK
+        LINK =  .
+        .db     4
+        .ascii  "DROP"
+DROP:
+        INCW    X               ; ADDW   X,#2
+        INCW    X
+;YTOS:
+        LDW     Y,X
+        LDW     Y,(Y)
+        RET
+
+;       2DROP   ( w w -- )       ( TOS STM8: -- Y,Z,N )
+;       Discard two items on stack.
+
+        .dw     LINK
+
+        LINK =  .
+        .db     5
+        .ascii  "2DROP"
+DDROP:
+        INCW    X
+        INCW    X
+        JRA     DROP
 
 ;       DUP     ( w -- w w )    ( TOS STM8: -- Y,Z,N )
 ;       Duplicate top stack item.
@@ -1642,11 +1643,13 @@ BLANK:
 ;       0       ( -- 0)     ( TOS STM8: -- Y,Z,N )
 ;       Return 0.
 
+        .ifne   SPEEDOVERSIZE
         .dw     LINK
 
         LINK =  .
         .db     1
         .ascii  "0"
+        .endif
 ZERO:
         CLR     A
         JRA     ASTOR
@@ -1654,11 +1657,13 @@ ZERO:
 ;       1       ( -- 1)     ( TOS STM8: -- Y,Z,N )
 ;       Return 1.
 
+        .ifne   SPEEDOVERSIZE
         .dw     LINK
 
         LINK =  .
         .db     1
         .ascii  "1"
+        .endif
 ONE:
         LD      A,#1
         JRA     ASTOR
@@ -1666,11 +1671,13 @@ ONE:
 ;       -1      ( -- -1)     ( TOS STM8: -- Y,Z,N )
 ;       Return -1
 
+        .ifne   SPEEDOVERSIZE
         .dw     LINK
 
         LINK =  .
         .db     2
         .ascii  "-1"
+        .endif
 MONE:
         LDW     Y,#0xFFFF
 AYSTOR:
@@ -1687,7 +1694,7 @@ AYSTOR:
         .ascii  "TIM"
 TIMM:
         LDW     Y,TICKCNT
-        JRA     AYSTOR
+        JP      AYSTOR
 
 
 ;       BG      ( -- a)     ( TOS STM8: -- Y,Z,N )
@@ -5077,8 +5084,8 @@ NOKEYB:
         ADC_CR1 = 0x5401
         ADC_CR2 = 0x5402
 ADCSTOR:
-        LD      A,(1,X)
         INCW    X
+        LD      A,(X)
         INCW    X
         AND     A,#0x0F
         LD      ADC_CSR,A       ; select channel
