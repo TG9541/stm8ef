@@ -216,7 +216,6 @@
 
         .ifne   (STM8S003F3 + STM8S103F3)
         ;******  STM8SF103 Memory Layout ******
-        RAMEND =        0x03FF  ; system (return) stack, growing down
 
         FORTHRAM =      0x0020  ; Start of RAM controlled by Forth
         UPPLOC  =       0x0060  ; UPP (user/system area) location for 1K RAM
@@ -224,6 +223,7 @@
         SPPLOC  =       0x0350  ; SPP (data stack top), TIB start
         RPPLOC  =       RAMEND  ; RPP (return stack top)
 
+        RAMEND =        0x03FF  ; system (return) stack, growing down
         FLASHEND =      0x9FFF  ; 8K devices
 
         ;******  STM8SF103 Registers  ******
@@ -239,6 +239,9 @@
         ; ****** Indirect variables for code in NVM *****
         .ifne   HAS_CPNVM
         USRPOOL =    FORTHRAM   ; RAM for indirect variables (grow up)
+        ISPPSIZE  =     16      ; Size of data stack for interrupt tasks
+        .else
+        ISPPSIZE  =     0       ; no interrupt tasks without NVM
         .endif
 
 
@@ -284,8 +287,9 @@
         UPP   = UPPLOC          ; offset user area
         CTOP  = CTOPLOC         ; dictionary start, growing up
                                 ; note: PAD is inbetween CTOP and SPP
-        SPP   = SPPLOC-BSPPSIZE ; data stack, growing down (with SPP-1 first)
-        BSPP  = SPPLOC          ; Background data stack, grouwing down
+        SPP   = ISPP-ISPPSIZE   ; data stack, growing down (with SPP-1 first)
+        ISPP  = SPPLOC-BSPPSIZE ; Interrupt data stack, growing down
+        BSPP  = SPPLOC          ; Background data stack, growing down
         TIBB  = SPPLOC          ; Term. Input Buf. TIBLENGTH between SPPLOC and RPP
         RPP   = RPPLOC          ; return stack, growing down
 
@@ -5241,19 +5245,9 @@ RESETT:
         JP      COLD
 
 
-;       HALT  ( -- )
-;       Issue the HALT instruction
-        .dw     LINK
-
-        LINK =  .
-        .db     (4)
-        .ascii  "HALT"
-HALTT:
-        HALT
-        RET
-
 ;       SAVEC ( -- )
-;       Minimal context switch for interrupt code without character I/O
+;       Minimal context switch for low level interrupt code
+;       This should be the first word called in the interrupt handler 
         .dw     LINK
 
         LINK =  .
@@ -5262,40 +5256,23 @@ HALTT:
 SAVEC:
         LDW     X,YTEMP         ; Save context
         PUSHW   X
-        LDW     X,#(BSPP)       ; init data stack for interrupt BSPP
+        LDW     X,#(ISPP)       ; init data stack for interrupt ISPP
         RET
 
 
-;       RESTC ( -- )
-;       Restore context interrupt code
+;       IRET ( -- )
+;       Restore context and return from low level interrupt code
+;       This should be the last word called in the interrupt handler 
         .dw     LINK
 
         LINK =  .
-        .db     (5)
-        .ascii  "RESTC"
+        .db     (4)
+        .ascii  "IRET"
 RESTC:
         POPW    X
-        LDW     YTEMP,x         ; Save context
-        IRET
+        LDW     YTEMP,X         ; restore context
+        IRET                    ; not "EXIT" 
 
-
-;       IVEC! ( a n -- )
-;       Set interrupt vector n to a.
-;       Flash write protection needs to removed first
-        .dw     LINK
-
-        LINK =  .
-        .db     (5)
-        .ascii  "IVEC!"
-IVECST:
-        CALL    YFLAGS
-        SLAW    Y
-        SLAW    Y
-        ADDW    Y,#0x800A
-        LDW     YTEMP,Y
-        CALL    YFLAGS
-        LDW     [YTEMP],Y
-        RET
 
         .endif
 

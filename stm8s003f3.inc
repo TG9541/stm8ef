@@ -299,7 +299,7 @@
 
 ; ***** ITC
 
-;.ifne  0
+;.ifne  HAS_CPNVM
         ITC_SPR1     = 0x7F70   ; Interrupt software priority register 1 (0xFF)
         ITC_SPR2     = 0x7F71   ; Interrupt software priority register 2 (0xFF)
         ITC_SPR3     = 0x7F72   ; Interrupt software priority register 3 (0xFF)
