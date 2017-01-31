@@ -198,7 +198,7 @@
         .ifne   (STM8S003F3 + STM8S103F3)
         ;******  STM8SF103 Memory Layout ******
 
-        FORTHRAM =      0x0020  ; Start of RAM controlled by Forth
+        FORTHRAM =      0x0040  ; Start of RAM controlled by Forth
         UPPLOC  =       0x0060  ; UPP (user/system area) location for 1K RAM
         CTOPLOC =       0x0080  ; CTOP (user dictionary) location for 1K RAM
         SPPLOC  =       0x0350  ; SPP (data stack top), TIB start
@@ -215,50 +215,65 @@
         ;************************************************
         ; Memory for board related code, e.g. interrupt routines
 
-        ; ****** Indirect variables for code in NVM *****
-        .ifne   HAS_CPNVM
-        USRPOOL =    FORTHRAM   ; RAM for indirect variables (grow up)
-        ISPPSIZE  =     16      ; Size of data stack for interrupt tasks
-        .else
-        ISPPSIZE  =     0       ; no interrupt tasks without NVM
+        RAMPOOL =    FORTHRAM   ; RAM for variables (growing up)
+
+        .macro  RamByte varname
+        varname = RAMPOOL
+        RAMPOOL = RAMPOOL + 1
+        .endm
+
+        .macro  RamWord varname
+        varname = RAMPOOL
+        RAMPOOL = RAMPOOL + 2
+        .endm
+
+        .macro  RamBlck varname, size
+        varname = RAMPOOL
+        RAMPOOL = RAMPOOL + size
+        .endm
+
+        ;******  Board variables  ******
+        .ifne   HAS_OUTPUTS
+        RamWord OUTPUTS         ; outputs, like relays, LEDs, etc. (16 bit)
         .endif
 
-        .ifne   HAS_BACKGROUND
-        PADBG     =     0x4F    ; PAD in background task growing down from here
+        .ifne   HAS_TXSIM ;+ HAS_RXSIM
+        RamByte TIM4TCNT        ; TIM4 RX/TX interrupt counter
+        RamByte TIM4TXREG       ; TIM4 TX transmit buffer and shift register
+        RamByte TIM4RXREG       ; TIM4 RX shift register
+        RamByte TIM4RXBUF       ; TIM4 RX receive buffer
+        .endif
 
-        BGADDR   =      0x50    ; address of background routine (0: off)
-        TICKCNT =       0x52    ; 16 bit ticker (counts up)
+        .ifne   HAS_LED7SEG
+        RamBlck LED7FIRST,5     ; leftmost 7S-LED digit  6.....
+        RamByte LED7LAST        ; rightmost 7S-LED digit .....1
+        .endif
+        .ifne   HAS_BACKGROUND
+
+        RamWord BGADDR          ; address of background routine (0: off)
+        RamWord TICKCNT         ; 16 bit ticker (counts up)
 
         .ifne   HAS_KEYS
-        KEYREPET =      0x54    ; board key repetition control (8 bit)
+        RamByte KEYREPET        ; board key repetition control (8 bit)
         .endif
 
         BSPPSIZE  =     32      ; Size of data stack for background tasks
-
+        PADBG     =     0x5F    ; PAD in background task growing down from here
         .else
         BSPPSIZE  =     0       ;  no background, no extra data stack
         .endif
 
-        ;******  Board variables  ******
-        .ifne   HAS_OUTPUTS
-        OUTPUTS =       0x55    ; outputs, like relays, LEDs, etc. (16 bit)
-        .endif
-
-        .ifne   HAS_TXSIM ;+ HAS_RXSIM
-        TIM4TCNT   =    0x56    ; TIM4 RX/TX interrupt counter
-        TIM4TXREG  =    0x57    ; TIM4 TX transmit buffer and shift register
-        TIM4RXREG  =    0x58    ; TIM4 RX shift register
-        TIM4RXBUF  =    0x59    ; TIM4 RX receive buffer
-        .endif
-
-        .ifne   HAS_LED7SEG
-        LED7FIRST =    0x5A    ; leftmost 7S-LED digit  6.....
-        LED7LAST  =    0x5F    ; rightmost 7S-LED digit .....1
-        .endif
 
         ;**************************************************
         ;******  6) General User & System Variables  ******
         ;**************************************************
+
+        ; ****** Indirect variables for code in NVM *****
+        .ifne   HAS_CPNVM
+        ISPPSIZE  =     16      ; Size of data stack for interrupt tasks
+        .else
+        ISPPSIZE  =     0       ; no interrupt tasks without NVM
+        .endif
 
         UPP   = UPPLOC          ; offset user area
         CTOP  = CTOPLOC         ; dictionary start, growing up
@@ -346,8 +361,6 @@ _TIM2_UO_IRQHandler:
         BRES    TIM2_SR1,#0     ; clear TIM2 UIF
 
         .ifne   HAS_LED7SEG
-        LD      A,TICKCNT+1
-        AND     A,#HAS_LED7SEG  ; TODO better name
         CALL    LED_MPX         ; board dependent code for 7Seg-LED-Displays
         .endif
 
@@ -1295,6 +1308,19 @@ SPAT:
         .endif
 
 
+;       NIP     ( n1 n2 -- n2 )
+;       Drop 2nd item on the stack
+
+        .dw     LINK
+
+        LINK =  .
+        .db     3
+        .ascii  "NIP"
+
+NIP:
+        CALLR   SWAPP
+        JRA     DROP
+
 ;       DROP    ( w -- )        ( TOS STM8: -- Y,Z,N )
 ;       Discard top stack item.
 
@@ -2146,7 +2172,7 @@ MMOD1:  CALL    TOR
         CALL    RAT
         CALL    PLUS
 MMOD2:  CALL    RFROM
-        CALL    UMMOD
+        CALLR   UMMOD
         CALL    RFROM
         CALL    QBRAN
         .dw     MMOD3
@@ -2167,7 +2193,7 @@ SLMOD:
         CALL    OVER
         CALL    ZLESS
         CALL    SWAPP
-        JP      MSMOD
+        JRA     MSMOD
 
 ;       MOD     ( n n -- r )    ( TOS STM8: -- Y,Z,N )
 ;       Signed divide. Return mod only.
@@ -2178,7 +2204,7 @@ SLMOD:
         .db     3
         .ascii  "MOD"
 MODD:
-        CALL    SLMOD
+        CALLR   SLMOD
         JP      DROP
 
 ;       /       ( n n -- q )    ( TOS STM8: -- Y,Z,N )
@@ -2190,14 +2216,8 @@ MODD:
         .db     1
         .ascii  "/"
 SLASH:
-        CALL    SLMOD
-        ; fall through
-
-;       NIP     ( n1 n2 -- n1 )
-
-NIP:
-        CALL    SWAPP
-        JP      DROP
+        CALLR   SLMOD
+        JP      NIP
 
 ; Multiply
 
@@ -2261,7 +2281,7 @@ UMSTA:                          ; stack have 4 bytes u1=a,b u2=c,d
         .db     1
         .ascii  "*"
 STAR:
-        CALL    UMSTA
+        CALLR   UMSTA
         JP      DROP
 
 ;       M*      ( n n -- d )
@@ -2280,7 +2300,7 @@ MSTAR:
         CALL    ABSS
         CALL    SWAPP
         CALL    ABSS
-        CALL    UMSTA
+        CALLR   UMSTA
         CALL    RFROM
         CALL    QBRAN
         .dw     MSTA1
@@ -2298,7 +2318,7 @@ MSTA1:  RET
         .ascii  "*/MOD"
 SSMOD:
         CALL    TOR
-        CALL    MSTAR
+        CALLR   MSTAR
         CALL    RFROM
         JP      MSMOD
 
@@ -2312,38 +2332,36 @@ SSMOD:
         .db     2
         .ascii  "*/"
 STASL:
-        CALL    SSMOD
+        CALLR   SSMOD
         JP      NIP
 
 ; Miscellaneous
 
-;       2+      ( a -- a )      ( TOS STM8: -- Y,Z,N )
-;       Add 2 to tos.
+
+;       EXG      ( n -- n )      ( TOS STM8: -- Y,Z,N )
+;       Exchange high with low byte of n.
 
         .dw     LINK
 
         LINK =  .
-        .db     2
-        .ascii  "2+"
-CELLP:
+        .db     3
+        .ascii  "EXG"
+EXG:
         CALLR   DOXCODE
-        INCW    X
-        INCW    X
+        SWAPW   X
         RET
 
-
-;       2-      ( a -- a )      ( TOS STM8: -- Y,Z,N )
-;       Subtract 2 from tos.
+;       2/      ( n -- n )      ( TOS STM8: -- Y,Z,N )
+;       Multiply tos by 2.
 
         .dw     LINK
 
         LINK =  .
         .db     2
-        .ascii  "2-"
-CELLM:
+        .ascii  "2/"
+TWOSL:
         CALLR   DOXCODE
-        DECW    X
-        DECW    X
+        SRAW    X
         RET
 
 ;       2*      ( n -- n )      ( TOS STM8: -- Y,Z,N )
@@ -2359,16 +2377,31 @@ CELLS:
         SLAW    X
         RET
 
-;       1+      ( n -- n )      ( TOS STM8: -- Y,Z,N )
-;       Add 1 to tos.
+;       2-      ( a -- a )      ( TOS STM8: -- Y,Z,N )
+;       Subtract 2 from tos.
 
         .dw     LINK
 
         LINK =  .
         .db     2
-        .ascii  "1+"
-ONEP:
+        .ascii  "2-"
+CELLM:
         CALLR   DOXCODE
+        DECW    X
+        DECW    X
+        RET
+
+;       2+      ( a -- a )      ( TOS STM8: -- Y,Z,N )
+;       Add 2 to tos.
+
+        .dw     LINK
+
+        LINK =  .
+        .db     2
+        .ascii  "2+"
+CELLP:
+        CALLR   DOXCODE
+        INCW    X
         INCW    X
         RET
 
@@ -2385,23 +2418,23 @@ ONEM:
         DECW    X
         RET
 
-;       2/      ( n -- n )      ( TOS STM8: -- Y,Z,N )
-;       Multiply tos by 2.
+;       1+      ( n -- n )      ( TOS STM8: -- Y,Z,N )
+;       Add 1 to tos.
 
         .dw     LINK
 
         LINK =  .
         .db     2
-        .ascii  "2/"
-TWOSL:
+        .ascii  "1+"
+ONEP:
         CALLR   DOXCODE
-        SRAW    X
+        INCW    X
         RET
 
 ;       DOXCODE   ( n -- n )   ( TOS STM8: -- Y,Z,N )
-;       A call to DOXCODE precedes a code for a primitive word
-;       In the sequence: X=TOS, YTEMP=SP. TOS=X after RET
-;       Caution: no other Forth may be called
+;       DOXCODE precedes assembly code for a primitive word
+;       In the assembly code: X=(TOS), YTEMP=TOS. (TOS)=X after RET
+;       Caution: no other Forth word may be called
 DOXCODE:
         POPW    Y
         LDW     YTEMP,X

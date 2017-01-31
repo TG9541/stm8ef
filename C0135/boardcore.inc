@@ -63,7 +63,7 @@ LED_MPX:
 OUTSTOR:
         INCW    X
         LD      A,(X)
-        LD      OUTPUTS,A
+        LD      OUTPUTS+1,A
         INCW    X
         XOR     A,#0x0F         ; C0135 Relay-4 Board
         RRC     A

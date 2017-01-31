@@ -60,7 +60,7 @@ LED_MPX:
 OUTSTOR:
         INCW    X
         LD      A,(X)
-        LD      OUTPUTS,A
+        LD      OUTPUTS+1,A
         INCW    X
         RRC     A
         CCF

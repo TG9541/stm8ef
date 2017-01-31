@@ -53,6 +53,9 @@ LED_MPX:
         BSET    PB_ODR,#5       ; Digit ..2.
         BSET    PB_ODR,#4       ; Digit ...1
 
+        LD      A,TICKCNT+1
+        AND     A,#HAS_LED7SEG
+
         JRNE    1$
         BRES    PD_ODR,#4       ; digit .3..
         JRA     3$
@@ -109,7 +112,7 @@ LED_MPX:
 OUTSTOR:
         INCW    X
         LD      A,(X)
-        LD      OUTPUTS,A
+        LD      OUTPUTS+1,A
         INCW    X
         RRC     A
         BCCM    PA_ODR,#3       ; W1209 relay
