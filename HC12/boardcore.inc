@@ -27,6 +27,17 @@
 BOARDINIT:
         ; Board I/O initialization
 
+        MOV     PD_ODR  ,#0x004       ; nSEL on PD2, SDN disabled by default
+        MOV     PD_DDR  ,#0x014
+        MOV     PD_CR1  ,#0x074       ; P-P for nSEL,SDN,UART1_TX, p/u for UART1_RX
+        MOV     PC_CR1  ,#0x0F8       ; P-P for MOSI,SCLK, p/u for MISO,GPIO1
+        MOV     PC_DDR  ,#0x060       ; OE for SCK and MOSI
+        MOV     PB_CR1  ,#0x030       ; p/u for SET,GPIO0
+
+        ; Set up SPI
+        MOV     SPI_CR1 ,#0x014       ; master, CLK/8, CPOL=CPHA=0, MSB first
+        MOV     SPI_CR2 ,#0x001       ; no NSS, FD, no CRC
+        MOV     SPI_CR1 ,#0x054       ; enable SPI
         RET
 
 ; ==============================================
@@ -53,25 +64,65 @@ OUTSTOR:
         RET
         .endif
 
-;===============================================================
-
-        .ifne   HAS_KEYS
-;       BKEY  ( -- f )     ( TOS STM8: -- A,Z,N )
-;       Read board key state as a bitfield
+; ==============================================
+;       SPI  ( c -- c)
+;       Perform SPI byte cycle with result c
         .dw     LINK
 
         LINK =  .
+        .db     (3)
+        .ascii  "SPI"
+SPI:
+        LD      A,(1,X)
+        LD      SPI_DR,A
+SPITXE_WAIT:
+        BTJF    SPI_SR,#1,SPITXE_WAIT ;TXE
+SPIRXNE_WAIT:
+        BTJF    SPI_SR,#0,SPIRXNE_WAIT ;RXNE
+        LD      A,SPI_DR
+        LD      (1,X),A
+        RET
+
+;       SPIS    ( --  )
+;       SPI frame start
+; ===========================================================
+        .dw     LINK
+        LINK =  .
         .db     (4)
-        .ascii  "BKEY"
-BKEY:
-        CLR     A
-        JP      ASTOR
+        .ascii  "SPIS"
+SPIS:
+        BRES    PD_ODR,#2  ; clear nRES
+        RET 
 
+;       SPIE   ( --  )
+;       SPI frame end
+; ===========================================================
+        .dw     LINK
+        LINK =  .
+        .db     (4)
+        .ascii  "SPIE"
+SPIE:
+        BSET    PD_ODR,#2  ; set nRES
+        RET
 
-;       BKEYC  (  -- c )   ( TOS STM8: -- A,Z,N )
-;       Read and translate board dependent key bitmap into char
+;       EZE   ( -- )
+;       Enable EZRadio
+; ===========================================================
+        .dw     LINK
+        LINK =  .
+        .db     (3)
+        .ascii  "EZE"
+EZE:
+        BRES    PD_ODR,#4  ; set SDN 
+        RET
 
-BKEYCHAR:
-        JRA     BKEY            ; Dummy: get "no key" and leave it as it is
-       .endif
-
+;       EZD   ( --  )
+;       Disable EZRadio
+; ===========================================================
+        .dw     LINK
+        LINK =  .
+        .db     (3)
+        .ascii  "EZD"
+EZD:
+        BRES    PD_ODR,#4  ; clear SDN 
+        RET
