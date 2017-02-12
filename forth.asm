@@ -1941,16 +1941,15 @@ DDUP:
         .ascii  "DNEGATE"
 DNEGA:
         LDW     Y,X
+        LDW     Y,(2,Y)
+        NEGW    Y
+        PUSH    CC
+        LDW     (2,X),Y
+        LDW     Y,X
         LDW     Y,(Y)
         CPLW    Y
-        PUSHW   Y
-        LDW     Y,X
-        LDW     Y,(2,Y)
-        CPLW    Y
-        INCW    Y
-        LDW     (2,X),Y
-        POPW    Y
-        JRNC    DN1
+        POP     CC
+        JRC     DN1
         INCW    Y
 DN1:    LDW     (X),Y
         RET

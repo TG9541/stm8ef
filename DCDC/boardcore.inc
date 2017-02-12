@@ -1,4 +1,4 @@
-; XH-W1209 STM8S device dependent HW routines
+; DCDC STM8S device dependent HW routines
 
 
 ;       BOARDINIT  ( -- )
@@ -147,7 +147,7 @@ OUTSTOR:
         INCW    X
         CPL     A
         RRC     A
-        BCCM    PC_ODR,#3       ; DCDC LED in
+        ;BCCM    PC_ODR,#3       ; DCDC LED in
         RRC     A
         BCCM    PB_ODR,#4       ; DCDC LED out
         RET

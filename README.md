@@ -1,8 +1,8 @@
 # STM8S eForth (stm8ef)
 
-This is an extended and refactored version of [Dr. C.H. Ting's eForth for the *STM8S Discovery*](http://www.forth.org/svfig/kk/07-2010.html) that turns STM8S *Value Line* µCs boards into interactive Forth development environments. The [SDCC toolchain](http://sdcc.sourceforge.net/) is applied for building the eForth core, which makes mixing Forth, assembly, and C possible.
+This repository contains an extended version of [Dr. C.H. Ting's eForth for the *STM8S Discovery*](http://www.forth.org/svfig/kk/07-2010.html) that turns STM8S *Value Line* µCs boards into interactive Forth development environments. The [SDCC toolchain](http://sdcc.sourceforge.net/) makes mixing Forth, assembly, and C possible.
 
-The binary of a basic interactive eForth system uses below 3800 bytes, including the overhead from SDCC (C startup code and interrupt table). With a rich feature feature set (*Compile to Flash*, *Background Task*) and extenions (*DO-LEAVE-LOOP/+LOOP*, *CREATE-DOES>*, native bit set) the binary size is below 5000 bytes.
+The binary size of a basic interactive eForth system is below 3800 bytes (including the overhead from C startup code and interrupt table). A binary with a rich feature feature set (*Compile to Flash*, *Background Task*) and extenions (*DO-LEAVE-LOOP/+LOOP*, *CREATE-DOES>*, native bit set) uses less than 5000 bytes.  
 
 Please refer to the [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) for more information!
 
@@ -35,7 +35,6 @@ Features:
   * C0135 Relay-4 Board
   * STM8S103F3 "$0.70" breakout board
   * configuration folders for easy application to other boards
-  * no UART required for interactive console
 * Extended vocabulary:
   * *CREATE-DOES>* for defining *defining words*
   * Vectored I/O: 'KEY? 'EMIT
@@ -44,19 +43,19 @@ Features:
   * board keys, outputs, LEDs: BKEY KEYB? EMIT7S OUT OUT!
   * EEPROM, FLASH lock/unlock: LOCK ULOCK LOCKF ULOCKF
   * native bit set/reset: B! (b a u -- )
-  * inverted byte order 16bit register access: 2C@ 2C!
+  * inverted byte order 16bit register access (e.g. timer registers): 2C@ 2C!
   * compile to Flash memory: NVR RAM RESET
   * autostart applications: 'BOOT
   * ASCII file transfer: FILE HAND
 
-Canges that required refactoring the original code:
+Other changes to the original code:
 
 * use of the free SDCC tool chain ("ASxxxx V2.0" syntax, SDCC linker with declaration of ISR routines in `main.c`)
 * removal of hard STM8S105C6 dependencies (e.g. RAM layout, UART2)
 * flexible RAM layout, meaningful symbols for RAM locations
 * conditional code for different target boards with a subdirectory based configuration framework
 * bugfixes (e.g. COMPILE, DEPTH, R!)
-* major binary size optimization
+* major binary size reduction
 
 ## Support for STM8S Value Line µC
 
@@ -85,20 +84,33 @@ Binaries for the listed targets are in the *Releases* section.
 Currently, there is no support for the STM8S Discovery, since I don't have any STM8S105C6T6 based boards for testing.
 
 
+### STM8S003F3 Core
+
+A plain STM8S003F3P6 eForth core with a very lean scripting oriented vocabulary (words like AHEAD or [COMPILE] not linked) with a minimal memory footprint (less than 4KiB Flash). CORE can be used as-is or as a starting point for configurations.
+
+* Selected features:
+  * 16MHz HSI 
+  * compile to Flash
+  * lightweight low-level interrupt handlers in Forth code
+  * serial console with UART
+* Binary size below 4096 bytes
+
+More features can be selected from the list of options in `globalconf.inc`.
+
+Run `make BOARD=CORE flash` for building and flashing.
+
 ### STM8S003F3 "Communication through PD1/SWIM"
 
 This is a generic STM8EF target for exploring boards where no UART pins are broken out but where PD1 is available on a SWIM ICP header. Access to PD5/TX and PD6/RX is not required, bus-style half-duplex console communciation with a software UART simulation is used instead.
 
-* Binary size about 6600 bytes
-* Selected feature set:
+* Selected features (superset of CORE):
   * rich set of words for register addresses (e.g. Px_CR2 Px_CR1 Px_DDR Px_IDR Px_ODR)
-  * compile to Flash
   * EEPROM access
-  * background task and interrupts
+  * background task
   * eForth extensions *CREATE-DOES>*, *DO-LEAVE-LOOP/+LOOP*
-  * special STM8 memory access words (bit addressing, reversed access order)
-  * Case insensitive vocabulary
-* Clock source internal 16 MHz RC oscillator `HSI`
+  * bit addressing
+  * case-insensitive vocabulary
+* Binary size below 6600 bytes
 
 For serial communication the following simple wired-or interface can be used:
 
@@ -131,36 +143,18 @@ It's advisable to have at least two boards for reverse engineering: one in origi
 
 Run `make BOARD=SWIMCOM flash` for building and flashing.
 
-### STM8S003F3 Core
-
-A plain STM8S003F3P6 eForth core as a starting point for configurations
-
-* 16MHz HSI,
-* Reduced feature set for minimal memory footprint (less than 4KiB Flash)
-* Reduced vocabulary for the interactive use case (e.g. for hardware testing or as a debugging console)
-* Selected feature set:
-  * compile to Flash
-  * lightweight low-level interrupts handlers in Forth code
-  * serial console with UART
-
-More features can be selected from the list of options in `globalconf.inc`.
-
-Run `make BOARD=CORE flash` for building and flashing.
-
 ### STM8S103F3 "minimum development board"
 
 Cheap STM8S103F3P6-based breakout board with LED on port B5 (there are plenty of vendors on EBay or AliExpress, the price starts below $0.70 incl. shipping).
 
-* Binary size below 5000 bytes
-* Selected feature set:
-  * compile to Flash
+* Selected features (superset of CORE):
   * EEPROM access
-  * background task and interrupts
+  * background task
   * eForth extensions *CREATE-DOES>*, *DO-LEAVE-LOOP/+LOOP*
-  * I/O words
-  * special STM8 memory access words (bit addressing, reversed access order)
-  * Case insensitive vocabulary
-* Clock source internal 16 MHz RC oscillator `HSI`
+  * I/O words, bit access
+  * bit addressing
+  * case-insensitive vocabulary
+* Binary size below 5000 bytes
 
 Run `make BOARD=MINDEV flash` for building and flashing.
 
@@ -173,13 +167,13 @@ This very cheap board can be used for single input/single output control applica
 * Selected feature set:
   * Half-duplex serial interface through sensor header
   * 7S-LED display and board keys (P7S E7S BKEY KEYB?)
-  * compile to Flash and EEPROM access
-  * background task and interrupts
+  * EEPROM access
+  * background task
   * eForth extensions *CREATE-DOES>*, *DO-LEAVE-LOOP/+LOOP*
   * I/O words
-  * special STM8 memory access words (bit addressing, reversed access order)
-  * Case insensitive vocabulary
-* Clock source internal 16 MHz RC oscillator `HSI`
+  * bit addressing
+  * case-insensitive vocabulary
+* Binary size below 5500 bytes
 
 Run `make BOARD=W1209 flash` for building and flashing.
 
@@ -216,11 +210,11 @@ Run `make BOARD=C0135 flash` for building and flashing.
 
 ## Steps for creating a new board variant
 
-For creating a variant, simply create a copy of the base variant's folder (e.g. CORE). By running `make BOARD=<folderName> flash` it can be compiled, and programmed to the target.
+For creating a variant, simply copy the base variant's folder (e.g. CORE). By running `make BOARD=<folderName> flash` will be compiled, and programmed to the target. Other STM8S variants can be supported by a putting a matching `stm8device.inc` file into the board folder. 
 
 ## Disclaimer, copyright
 
-Tl;dr: this is a hobby project! Don't use this code for anything that requires any kind of correctness, support, dependability. Different licenses may apply to the code in this GitHub repository, some of which may require you to make derived work publically available!
+TL;DR: This is a hobby project! Don't use the code for any application that requires support, correctness, or dependability. Please note that different licenses may apply to the code, some of which might requirement that derived work is made publically available!
 
 Please refer to LICENSE.md for details.
 
