@@ -7,4 +7,5 @@
         BAREBONES        = 0    ; Remove or unlink some more: hi HERE .R U.R SPACES @EXECUTE AHEAD CALL, EXIT COMPILE [COMPILE]
         WORDS_EXTRACORE  = 1    ; Extra core words: =0 I
         TERM_LINUX       = 0
+		HAS_DOLOOP       = 1
 
