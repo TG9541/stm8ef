@@ -18,10 +18,11 @@
 
         HAS_LED7SEG      = 7    ; yes, 3 dig. 7-seg LED on module
         HAS_KEYS         = 2    ; yes, 3 keys on module
-        HAS_OUTPUTS      = 2    ; yes, one LED
+        HAS_OUTPUTS      = 1    ; yes, power on/off
         HAS_ADC          = 1    ; Analog input words
 
         HAS_BACKGROUND   = 1    ; Background Forth task (TIM2 ticker)
+        BG_TIM2_REL = 0x08FC    ; 1ms ticker for 7S-LED MPX
         HAS_CPNVM        = 1    ; Can compile to Flash, always interpret to RAM
         HAS_DOES         = 1    ; CREATE-DOES> extension
         HAS_DOLOOP       = 1    ; DO .. LOOP extension: DO LEAVE LOOP +LOOP

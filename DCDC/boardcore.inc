@@ -1,4 +1,4 @@
-; XH-W1209 STM8S device dependent HW routines
+; DCDC STM8S device dependent HW routines
 
 
 ;       BOARDINIT  ( -- )
@@ -17,24 +17,67 @@ BOARDINIT:
         MOV     PD_CR1,#0b01110110
         RET
 
-        ; ,
+;===============================================================
+
+;      Dummy labels for PSIM interrupts declared in main.c
+
+        .ifne   PSIM-PORTA
+;       Dummy label for _EXTIA_IRQHandler
+_EXTI0_IRQHandler:
+        .endif
+
+        .ifne   PSIM-PORTB
+;       Dummy label for _EXTIB_IRQHandler
+_EXTI1_IRQHandler:
+        .endif
+
+        .ifne   PSIM-PORTC
+;       Dummy label for _EXTIC_IRQHandler
+_EXTI2_IRQHandler:
+        .endif
+
+        .ifne   PSIM-PORTD
+;       Dummy label for _EXTID_IRQHandler
+_EXTI3_IRQHandler:
+        .endif
 
 ;===============================================================
 
+        RamWord TIMSERIAL       ; Timer: use PC7 for serial while > 0
         .ifne   HAS_LED7SEG
+
 ;       LED_MPX driver ( -- )
 ;       Output bit pattern in A to 7S-LED digit hardware
 LED_MPX:
 
+;       PD1/SWIM dual use as SWIM and as segment C
+;       enable use as SWIM when segment C is off
+
         BRES    PD_DDR,#1       ; port PD1=SWIM to input
 
-        BRES    PC_DDR,#7       ; port to input
+;       PNRX=PC7 dual use for simulated serial port and DP
+;       When using as DP: enable COM interrupt while DP is off
+
+        TNZ     TIM4TCNT        ; active sim COM: disable DP for 1 minute
+        JREQ    LMPX1
+        MOV     TIMSERIAL,#(60000/256)
+LMPX1:
+        LDW     X,TIMSERIAL     ; decrement COM use timer
+        JREQ    LMPX2           ; no COM: use DP
+        DECW    X               ; active COM: don't change PNRX properties
+        LDW     TIMSERIAL,X
+        JRA     LMPX3
+LMPX2:
+        BRES    PC_DDR,#7       ; DP off: port to input
         BSET    PC_CR2,#7       ; enable PNRX external interrupt
 
+LMPX3:
         BSET    PA_ODR,#3       ; Digit .3..
         BSET    PD_ODR,#6       ; Digit ..2.
         BSET    PD_ODR,#5       ; Digit ...1
 
+        LD      A,TICKCNT+1
+        AND     A,#HAS_LED7SEG
         JRNE    1$
         BRES    PA_ODR,#3       ; digit .3..
         JRA     3$
@@ -64,13 +107,10 @@ LED_MPX:
         BCCM    PD_ODR,#4       ; B
 
         RRC     A
-
         JRNC    5$
-        BSET    PD_ODR,#1       ; C
-        ;BCCM    PD_ODR,#1       ; C
-        BSET    PD_DDR,#1       ; port PD1=SWIM to output
+        BSET    PD_DDR,#1       ; C is active: PD1=SWIM to output
+        BSET    PD_ODR,#1
 5$:
-
         RRC     A
         BCCM    PC_ODR,#6       ; D
         RRC     A
@@ -81,7 +121,7 @@ LED_MPX:
         BCCM    PD_ODR,#2       ; G
         RRC     A
         JRNC    4$
-        TNZ     TIM4TCNT
+        TNZ     TIMSERIAL
         JRNE    4$
         BRES    PC_CR2,#7       ; disable PNRX external interrupt
         BSET    PC_DDR,#7       ; port to output
@@ -103,11 +143,11 @@ LED_MPX:
 OUTSTOR:
         INCW    X
         LD      A,(X)
-        LD      OUTPUTS,A
+        LD      OUTPUTS+1,A
         INCW    X
         CPL     A
         RRC     A
-        BCCM    PC_ODR,#3       ; DCDC LED in
+        ;BCCM    PC_ODR,#3       ; DCDC LED in
         RRC     A
         BCCM    PB_ODR,#4       ; DCDC LED out
         RET

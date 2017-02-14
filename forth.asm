@@ -133,16 +133,19 @@
         BRAN_OPC =    0xCC      ; JP opcode
         CALL_OPC =    0xCD      ; CALL opcode
 
+        ;********************************************
+        ;******  2) Device hardware addresses  ******
+        ;********************************************
+
+
+        ; STM8 device specific include (can be replaced by file in board folder)
+        .include        "stm8device.inc"
 
         ;**********************************
-        ;******  2) Global defaults  ******
+        ;******  3) Global defaults  ******
         ;**********************************
         ; Note: add defaults for new features here but
         ;       configure them in globconf.inc
-
-        STM8S003F3       = 0    ; 8K flash, 1K RAM, 128 EEPROM, UART1
-        STM8S103F3       = 0    ; like STM8S003F3, 640 EEPROM
-        STM8S105C6       = 0    ; 32K flash, 2K RAM, 1K EEPROM, UART2
 
         TERM_LINUX       = 1    ; LF terminates line
         HALF_DUPLEX      = 0    ; Use EMIT/?KEY in half duplex mode
@@ -150,7 +153,7 @@
         HAS_RXUART       = 1    ; Enable UART RXD, word ?RX
         HAS_TXSIM        = 0    ; Enable TxD via GPIO/TIM4, word TXGP!
         HAS_RXSIM        = 0    ; Enable RxD via GPIO/TIM4, word ?RXGP
-        PSIM     = PORTD        ; Port for UART simulation
+        PSIM     = PORTX        ; Port for UART simulation
         PNRX             = 1    ; Port GPIO# for HAS_RXDSIM
         PNTX             = 1    ; Port GPIO# for HAS_TXDSIM
 
@@ -171,7 +174,7 @@
 
         USE_CALLDOLIT    = 0    ; use CALL DOLIT instead of the DOLIT TRAP handler (deprecated)
         CASEINSENSITIVE  = 0    ; Case insensitive dictionary search
-        SPEEDOVERSIZE    = 0    ; Speed-over-size in core words ROT - = <
+        SPEEDOVERSIZE    = 0    ; Speed-over-size in core words ROT - = < -1 0 1
         BAREBONES        = 0    ; Remove or unlink some more: hi HERE .R U.R SPACES @EXECUTE AHEAD CALL, EXIT COMPILE [COMPILE] DEPTH
 
         WORDS_LINKINTER  = 0    ; Link interpreter words: ACCEPT QUERY TAP kTAP hi 'BOOT tmp >IN 'TIB #TIB eval CONTEXT pars PARSE NUMBER? DIGIT? WORD TOKEN NAME> SAME? find ABORT aborq $INTERPRET INTER? .OK ?STACK EVAL PRESET QUIT $COMPILE
@@ -187,105 +190,97 @@
         WORDS_EXTRAEEPR  = 0    ; Extra EEPROM lock/unlock words: LOCK ULOCK ULOCKF LOCKF
         WORDS_HWREG      = 0    ; Peripheral Register words
 
-        ;*************************************************
-        ;******  3) Hardware/board type selection  ******
-        ;*************************************************
-
-        ; sdasstm8 doesn't accept constants on the command line.
-        ; work-around: define directory for reading the config with
-        ; the "-I" option
-
-        .include "globconf.inc"
-
         ;**********************************************
         ;******  4) Device dependent features  ******
         ;**********************************************
         ; Define memory location for device dependent features here
 
-        ;******  STM8S memory addresses ******
-        RAMBASE =       0x0000  ; STM8S RAM start
-        EEPROMBASE =    0x4000  ; STM8S EEPROM start
-
-        .ifne   STM8S003F3
-        EEPROMEND =     0x407F  ; STM8S003F3: 128 bytes EEPROM
-        .endif
-
-        .ifne   STM8S103F3
-        EEPROMEND =     0x427F  ; STM8S103F3: 640 bytes EEPROM
-        .endif
-
         .ifne   (STM8S003F3 + STM8S103F3)
         ;******  STM8SF103 Memory Layout ******
-        RAMEND =        0x03FF  ; system (return) stack, growing down
 
-        FORTHRAM =      0x0020  ; Start of RAM controlled by Forth
+        FORTHRAM =      0x0040  ; Start of RAM controlled by Forth
         UPPLOC  =       0x0060  ; UPP (user/system area) location for 1K RAM
         CTOPLOC =       0x0080  ; CTOP (user dictionary) location for 1K RAM
         SPPLOC  =       0x0350  ; SPP (data stack top), TIB start
         RPPLOC  =       RAMEND  ; RPP (return stack top)
 
+        RAMEND =        0x03FF  ; system (return) stack, growing down
         FLASHEND =      0x9FFF  ; 8K devices
-
-        ;******  STM8SF103 Registers  ******
-        .include        "stm8s003f3.inc"
         .endif
 
+        .include "globconf.inc"
 
         ;************************************************
         ;******  5) Board Driver Memory  ******
         ;************************************************
         ; Memory for board related code, e.g. interrupt routines
 
-        ; ****** Indirect variables for code in NVM *****
-        .ifne   HAS_CPNVM
-        USRPOOL =    FORTHRAM   ; RAM for indirect variables (grow up)
+        RAMPOOL =    FORTHRAM   ; RAM for variables (growing up)
+
+        .macro  RamByte varname
+        varname = RAMPOOL
+        RAMPOOL = RAMPOOL + 1
+        .endm
+
+        .macro  RamWord varname
+        varname = RAMPOOL
+        RAMPOOL = RAMPOOL + 2
+        .endm
+
+        .macro  RamBlck varname, size
+        varname = RAMPOOL
+        RAMPOOL = RAMPOOL + size
+        .endm
+
+        ;******  Board variables  ******
+        .ifne   HAS_OUTPUTS
+        RamWord OUTPUTS         ; outputs, like relays, LEDs, etc. (16 bit)
         .endif
 
+        .ifne   HAS_TXSIM ;+ HAS_RXSIM
+        RamByte TIM4TCNT        ; TIM4 RX/TX interrupt counter
+        RamByte TIM4TXREG       ; TIM4 TX transmit buffer and shift register
+        RamByte TIM4RXREG       ; TIM4 RX shift register
+        RamByte TIM4RXBUF       ; TIM4 RX receive buffer
+        .endif
 
-
-        ;******  Background task variables  ******
+        .ifne   HAS_LED7SEG
+        RamBlck LED7FIRST,5     ; leftmost 7S-LED digit  6.....
+        RamByte LED7LAST        ; rightmost 7S-LED digit .....1
+        .endif
         .ifne   HAS_BACKGROUND
-        PADBG     =     0x4F    ; PAD in background task growing down from here
 
-        BGADDR   =      0x50    ; address of background routine (0: off)
-        TICKCNT =       0x52    ; 16 bit ticker (counts up)
+        RamWord BGADDR          ; address of background routine (0: off)
+        RamWord TICKCNT         ; 16 bit ticker (counts up)
 
         .ifne   HAS_KEYS
-        KEYREPET =      0x54    ; board key repetition control (8 bit)
+        RamByte KEYREPET        ; board key repetition control (8 bit)
         .endif
 
         BSPPSIZE  =     32      ; Size of data stack for background tasks
-
+        PADBG     =     0x5F    ; PAD in background task growing down from here
         .else
         BSPPSIZE  =     0       ;  no background, no extra data stack
         .endif
 
-        ;******  Board variables  ******
-        .ifne   HAS_OUTPUTS
-        OUTPUTS =       0x55    ; outputs, like relays, LEDs, etc. (16 bit)
-        .endif
-
-        .ifne   HAS_TXSIM ;+ HAS_RXSIM
-        TIM4TCNT   =    0x56    ; TIM4 RX/TX interrupt counter
-        TIM4TXREG  =    0x57    ; TIM4 TX transmit buffer and shift register
-        TIM4RXREG  =    0x58    ; TIM4 RX shift register
-        TIM4RXBUF  =    0x59    ; TIM4 RX receive buffer
-        .endif
-
-        .ifne   HAS_LED7SEG
-        LED7FIRST =    0x5A    ; leftmost 7S-LED digit  6.....
-        LED7LAST  =    0x5F    ; rightmost 7S-LED digit .....1
-        .endif
 
         ;**************************************************
         ;******  6) General User & System Variables  ******
         ;**************************************************
 
+        ; ****** Indirect variables for code in NVM *****
+        .ifne   HAS_CPNVM
+        ISPPSIZE  =     16      ; Size of data stack for interrupt tasks
+        .else
+        ISPPSIZE  =     0       ; no interrupt tasks without NVM
+        .endif
+
         UPP   = UPPLOC          ; offset user area
         CTOP  = CTOPLOC         ; dictionary start, growing up
                                 ; note: PAD is inbetween CTOP and SPP
-        SPP   = SPPLOC-BSPPSIZE ; data stack, growing down (with SPP-1 first)
-        BSPP  = SPPLOC          ; Background data stack, grouwing down
+        SPP   = ISPP-ISPPSIZE   ; data stack, growing down (with SPP-1 first)
+        ISPP  = SPPLOC-BSPPSIZE ; Interrupt data stack, growing down
+        BSPP  = SPPLOC          ; Background data stack, growing down
         TIBB  = SPPLOC          ; Term. Input Buf. TIBLENGTH between SPPLOC and RPP
         RPP   = RPPLOC          ; return stack, growing down
 
@@ -314,8 +309,6 @@
         ;***********************
         ;******  7) Code  ******
         ;***********************
-
-
 
 ;       TRAP handler for DOLIT
 ;       Push the inline literal following the TRAP instruction
@@ -368,8 +361,6 @@ _TIM2_UO_IRQHandler:
         BRES    TIM2_SR1,#0     ; clear TIM2 UIF
 
         .ifne   HAS_LED7SEG
-        LD      A,TICKCNT+1
-        AND     A,#HAS_LED7SEG  ; TODO better name
         CALL    LED_MPX         ; board dependent code for 7Seg-LED-Displays
         .endif
 
@@ -455,21 +446,15 @@ COLD:
 
         LDW     X,#RPP          ; initialize return stack
         LDW     SP,X
-        CALL    PRESE           ; initialize data stack, TIB
-
-        DoLitW  UZERO
-        DoLitC  USRRAMINIT
-        DoLitC  (ULAST-UZERO)
-        CALL    CMOVE           ; initialize user area
 
         CALLR   BOARDINIT       ; Board initialization (see "boardcore.inc")
 
         .ifne   HAS_BACKGROUND
         ; init BG timer interrupt
+        MOV     ITC_SPR4,#0xF7  ; Interrupt prio. low for TIM2 (Int13)
         MOV     TIM2_PSCR,#0x03 ; prescaler 1/8
         MOV     TIM2_ARRH,#(BG_TIM2_REL/256)  ; reload H
         MOV     TIM2_ARRL,#(BG_TIM2_REL%256)  ;        L
-        MOV     ITC_SPR4,#0xF7  ; Interrupt prio. low for TIM2 (Int13)
         MOV     TIM2_CR1,#0x01  ; enable TIM2
         MOV     TIM2_IER,#0x01  ; enable TIM2 interrupt
         .endif
@@ -477,8 +462,8 @@ COLD:
         .ifne   HAS_RXUART+HAS_TXUART
         ; Init RS232 communication port
         ; STM8S[01]003F3 init UART
-        MOV     UART1_BRR2,#0x003       ; 9600 baud
-        MOV     UART1_BRR1,#0x068       ; 0068 9600 baud
+        LDW     X,#0x6803              ; 9600 baud
+        LDW     UART1_BRR1,X           ;
         .ifne   HAS_RXUART*HAS_TXUART
         MOV     UART1_CR2,#0x0C        ; Use UART1 full duplex
         .else
@@ -496,7 +481,6 @@ COLD:
         TIM4RELOAD = 0xCF       ; reload 0.104 ms (9600 baud)
         MOV     TIM4_ARR,#TIM4RELOAD
         MOV     TIM4_PSCR,#0x03 ; prescaler 1/8
-;        MOV     ITC_SPR6,#0x3F  ; Interrupt prio "high" for TIM4 (Int23)
         MOV     TIM4_CR1,#0x01  ; enable TIM4
         .ifne  PNRX^PNTX
         HALF_DUPLEX_SIM = 0     ; is there no better way to do "!=" in ASxxxx 2.x?
@@ -535,13 +519,20 @@ COLD:
         BSET    PSIM+CR2,#PNRX    ; enable PNRX external interrupt
         .endif
 
+        ; Hardware initialization complete
+        RIM                     ; enable interrupts
+
+        CALL    PRESE           ; initialize data stack, TIB
+
+        DoLitW  UZERO
+        DoLitC  USRRAMINIT
+        DoLitC  (ULAST-UZERO)
+        CALL    CMOVE           ; initialize user area
+
         .ifne   HAS_OUTPUTS
         CALL    ZERO
         CALL    OUTSTOR
         .endif
-
-        ; Hardware initialization complete
-        RIM                     ; enable interrupts
 
         CALL    [TBOOT+3]       ; application boot
         CALL    OVERT           ; initialize CONTEXT from USRLAST
@@ -630,7 +621,7 @@ HI:
         MOV     LED7LAST-0,#0x74 ; 7S LEDs ...h
         .endif
 
-        CALL    CR
+        CALLR   1$              ; CR
         CALL    DOTQP           ; initialize I/O
         .db     15
         .ascii  "stm8eForth v"
@@ -638,7 +629,7 @@ HI:
         .ascii  "."
         .db     (EXT+'0')       ; version
 
-        JP      CR
+1$:     JP      CR
         .endif
 
 ; ==============================================
@@ -755,11 +746,25 @@ TXPSTOR:
         .endif
 
 ;       RxD through GPIO start-bit interrupt handler
-_EXTI0_IRQHandler:
-_EXTI1_IRQHandler:
-_EXTI2_IRQHandler:
-_EXTI3_IRQHandler:
+
         .ifne   HAS_RXSIM
+
+        .ifeq   PSIM-PORTA
+_EXTI0_IRQHandler:
+        .endif
+
+        .ifeq   PSIM-PORTB
+_EXTI1_IRQHandler:
+        .endif
+
+        .ifeq   PSIM-PORTC
+_EXTI2_IRQHandler:
+        .endif
+
+        .ifeq   PSIM-PORTD
+_EXTI3_IRQHandler:
+        .endif
+
         BRES    PSIM+CR2,#PNRX    ; disable PNRX external interrupt
 
         ; Set-up TIM4 for 8N1 Rx sampling at half bit time
@@ -791,7 +796,7 @@ TIM4_OFF:
         .endif
         BRES    TIM4_IER,#0     ; disable TIM4 interrupt
         IRET
-        TIM4_RECVE:
+TIM4_RECVE:
         BTJT    PSIM+IDR,#PNRX,1$ ; dummy branch, copy GPIO to CF
 1$:     RRC     TIM4RXREG
         INC     TIM4TCNT
@@ -1022,6 +1027,98 @@ EXIT:
         POPW    Y
         RET
 
+;       2!      ( d a -- )      ( TOS STM8: -- Y,Z,N )
+;       Store double integer to address a.
+
+        .dw     LINK
+
+        LINK =  .
+        .db     2
+        .ascii  "2!"
+DSTOR:
+        CALL    SWAPP
+        CALL    OVER
+        CALLR   STORE
+        CALL    CELLP
+        JRA     STORE
+
+;       2@      ( a -- d )
+;       Fetch double integer from address a.
+
+        .dw     LINK
+
+        LINK =  .
+        .db     2
+        .ascii  "2@"
+DAT:
+        CALL    DUPP
+        CALL    CELLP
+        CALLR   AT
+        CALL    SWAPP
+        JRA     AT
+
+
+        .ifne   WORDS_EXTRAMEM
+;       2C!  ( n b -- )
+;       Store word C-wise to 16 bit HW registers "MSB first"
+        .dw     LINK
+
+        LINK =  .
+        .db     (3)
+        .ascii  "2C!"
+DCSTOR:
+        CALL    DDUP
+        LD      A,(2,X)
+        LD      (3,X),A
+        CALLR   CSTOR
+        CALL    ONEP
+        JRA     CSTOR
+
+
+;       2C@  ( a -- n )
+;       Fetch word C-wise from 16 bit HW config. registers "MSB first"
+        .dw     LINK
+
+        LINK =  .
+        .db     (3)
+        .ascii  "2C@"
+DCAT:
+        CALL    DOXCODE
+        LDW     Y,X
+        LD      A,(X)
+        LD      XH,A
+        LD      A,(1,Y)
+        LD      XL,A
+        RET
+
+;       B! ( t a u -- )
+;       Set/reset bit #u (0..7) in the byte at address a to bool t
+;       Note: creates/executes BSER/BRES + RET code on Data Stack
+        .dw     LINK
+
+        LINK =  .
+        .db     (2)
+        .ascii  "B!"
+BRSS:
+        LD      A,#0x72         ; Opcode BSET/BRES
+        LD      (X),A
+        LD      A,(1,X)         ; 2nd byte of BSET/BRES
+        SLA     A               ; n *= 2 -> A
+        OR      A,#0x10
+        LDW     Y,X
+        LDW     Y,(4,Y)         ; bool b (0..15) -> Z
+        JRNE    1$              ; b!=0: BSET
+        INC     A               ; b==0: BRES
+1$:     LD      (1,X),A
+        LD      A,#EXIT_OPC     ; Opcode RET
+        LD      (4,X),A
+        LDW     Y,X
+        ADDW    X,#6
+        JP      (Y)
+
+        .endif
+
+
 ;       @       ( a -- w )      ( TOS STM8: -- Y,Z,N )
 ;       Push memory location to stack.
 
@@ -1085,6 +1182,18 @@ CSTOR:
         LD      (Y),A           ; store c at b
         JRA     DDROP
 
+        .ifne   WORDS_EXTRACORE
+;       I       ( -- n )     ( TOS STM8: -- Y,Z,N )
+;       Get inner FOR-NEXT or DO-LOOP index value
+        .dw     LINK
+
+        LINK =  .
+        .db     (1)
+        .ascii  "I"
+IGET:
+        JRA     RAT
+        .endif
+
         .ifne   WORDS_EXTRASTACK
 ;       RP@     ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Push current RP to data stack.
@@ -1134,18 +1243,6 @@ PUSHJPYTEMP:
         LDW     (X),Y
         JP      [YTEMP]
 
-        .ifne   WORDS_EXTRACORE
-;       I       ( -- n )     ( TOS STM8: -- Y,Z,N )
-;       Get inner FOR-NEXT or DO-LOOP index value
-        .dw     LINK
-
-        LINK =  .
-        .db     (1)
-        .ascii  "I"
-IGET:
-        JRA     RAT
-        .endif
-
 ;       doVAR   ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Code for VARIABLE and CREATE.
 
@@ -1167,34 +1264,6 @@ YSTOR:
         LDW     (X),Y           ; push on stack
         RET                     ; go to RET of EXEC
 
-;       DROP    ( w -- )        ( TOS STM8: -- Y,Z,N )
-;       Discard top stack item.
-
-        .dw     LINK
-        LINK =  .
-        .db     4
-        .ascii  "DROP"
-DROP:
-        INCW    X               ; ADDW   X,#2
-        INCW    X
-YTOS:
-        LDW     Y,X
-        LDW     Y,(Y)
-        RET
-
-;       2DROP   ( w w -- )       ( TOS STM8: -- Y,Z,N )
-;       Discard two items on stack.
-
-        .dw     LINK
-
-        LINK =  .
-        .db     5
-        .ascii  "2DROP"
-DDROP:
-        INCW    X
-        INCW    X
-        JRA     DROP
-
 ;       R@      ( -- w )        ( TOS STM8: -- Y,Z,N )
 ;       Copy top of return stack to stack (or the FOR - NEXT index value).
 
@@ -1214,15 +1283,16 @@ RAT:
         .db     (COMPO+2)
         .ascii  ">R"
 TOR:
-        POPW    Y               ; save return addr
-        LDW     YTEMP,Y
-        LDW     Y,X
-        LDW     Y,(Y)
-        PUSHW   Y               ; restore return addr
-        LDW     Y,YTEMP
-        PUSHW   Y
+        EXGW    X,Y
+        POPW    X               ; save return addr
+        LDW     YTEMP,X
+        LDW     X,Y
+        LDW     X,(X)
+        PUSHW   X               ; restore return addr
+        LDW     X,YTEMP
+        PUSHW   X
+        LDW     X,Y
         JRA     DROP
-
 
 ;       SP@     ( -- a )        ( TOS STM8: -- Y,Z,N )
 ;       Push current stack pointer.
@@ -1237,6 +1307,46 @@ SPAT:
         JRA     YSTOR
         .endif
 
+
+;       NIP     ( n1 n2 -- n2 )
+;       Drop 2nd item on the stack
+
+        .dw     LINK
+
+        LINK =  .
+        .db     3
+        .ascii  "NIP"
+
+NIP:
+        CALLR   SWAPP
+        JRA     DROP
+
+;       DROP    ( w -- )        ( TOS STM8: -- Y,Z,N )
+;       Discard top stack item.
+
+        .dw     LINK
+        LINK =  .
+        .db     4
+        .ascii  "DROP"
+DROP:
+        INCW    X               ; ADDW   X,#2
+        INCW    X
+        LDW     Y,X
+        LDW     Y,(Y)
+        RET
+
+;       2DROP   ( w w -- )       ( TOS STM8: -- Y,Z,N )
+;       Discard two items on stack.
+
+        .dw     LINK
+
+        LINK =  .
+        .db     5
+        .ascii  "2DROP"
+DDROP:
+        INCW    X
+        INCW    X
+        JRA     DROP
 
 ;       DUP     ( w -- w w )    ( TOS STM8: -- Y,Z,N )
 ;       Duplicate top stack item.
@@ -1602,10 +1712,10 @@ ATOKEY:
         LINK =  .
         .db     3
         .ascii  "TIB"
-        .endif
 TIB:
-        LDW     Y,#(TIBB)
-        JP      YSTOR
+        DoLitW  TIBB
+        RET
+        .endif
 
         .ifne   HAS_OUTPUTS
 ;       OUT     ( -- a )     ( TOS STM8: -- Y,Z,N )
@@ -1638,11 +1748,13 @@ BLANK:
 ;       0       ( -- 0)     ( TOS STM8: -- Y,Z,N )
 ;       Return 0.
 
+        .ifne   SPEEDOVERSIZE
         .dw     LINK
 
         LINK =  .
         .db     1
         .ascii  "0"
+        .endif
 ZERO:
         CLR     A
         JRA     ASTOR
@@ -1650,11 +1762,13 @@ ZERO:
 ;       1       ( -- 1)     ( TOS STM8: -- Y,Z,N )
 ;       Return 1.
 
+        .ifne   SPEEDOVERSIZE
         .dw     LINK
 
         LINK =  .
         .db     1
         .ascii  "1"
+        .endif
 ONE:
         LD      A,#1
         JRA     ASTOR
@@ -1662,11 +1776,13 @@ ONE:
 ;       -1      ( -- -1)     ( TOS STM8: -- Y,Z,N )
 ;       Return -1
 
+        .ifne   SPEEDOVERSIZE
         .dw     LINK
 
         LINK =  .
         .db     2
         .ascii  "-1"
+        .endif
 MONE:
         LDW     Y,#0xFFFF
 AYSTOR:
@@ -1683,7 +1799,7 @@ AYSTOR:
         .ascii  "TIM"
 TIMM:
         LDW     Y,TICKCNT
-        JRA     AYSTOR
+        JP      AYSTOR
 
 
 ;       BG      ( -- a)     ( TOS STM8: -- Y,Z,N )
@@ -1825,16 +1941,15 @@ DDUP:
         .ascii  "DNEGATE"
 DNEGA:
         LDW     Y,X
+        LDW     Y,(2,Y)
+        NEGW    Y
+        PUSH    CC
+        LDW     (2,X),Y
+        LDW     Y,X
         LDW     Y,(Y)
         CPLW    Y
-        PUSHW   Y
-        LDW     Y,X
-        LDW     Y,(2,Y)
-        CPLW    Y
-        INCW    Y
-        LDW     (2,X),Y
-        POPW    Y
-        JRNC    DN1
+        POP     CC
+        JRC     DN1
         INCW    Y
 DN1:    LDW     (X),Y
         RET
@@ -2056,7 +2171,7 @@ MMOD1:  CALL    TOR
         CALL    RAT
         CALL    PLUS
 MMOD2:  CALL    RFROM
-        CALL    UMMOD
+        CALLR   UMMOD
         CALL    RFROM
         CALL    QBRAN
         .dw     MMOD3
@@ -2077,7 +2192,7 @@ SLMOD:
         CALL    OVER
         CALL    ZLESS
         CALL    SWAPP
-        JP      MSMOD
+        JRA     MSMOD
 
 ;       MOD     ( n n -- r )    ( TOS STM8: -- Y,Z,N )
 ;       Signed divide. Return mod only.
@@ -2088,7 +2203,7 @@ SLMOD:
         .db     3
         .ascii  "MOD"
 MODD:
-        CALL    SLMOD
+        CALLR   SLMOD
         JP      DROP
 
 ;       /       ( n n -- q )    ( TOS STM8: -- Y,Z,N )
@@ -2100,14 +2215,8 @@ MODD:
         .db     1
         .ascii  "/"
 SLASH:
-        CALL    SLMOD
-        ; fall through
-
-;       NIP     ( n1 n2 -- n1 )
-
-NIP:
-        CALL    SWAPP
-        JP      DROP
+        CALLR   SLMOD
+        JP      NIP
 
 ; Multiply
 
@@ -2171,7 +2280,7 @@ UMSTA:                          ; stack have 4 bytes u1=a,b u2=c,d
         .db     1
         .ascii  "*"
 STAR:
-        CALL    UMSTA
+        CALLR   UMSTA
         JP      DROP
 
 ;       M*      ( n n -- d )
@@ -2190,7 +2299,7 @@ MSTAR:
         CALL    ABSS
         CALL    SWAPP
         CALL    ABSS
-        CALL    UMSTA
+        CALLR   UMSTA
         CALL    RFROM
         CALL    QBRAN
         .dw     MSTA1
@@ -2208,7 +2317,7 @@ MSTA1:  RET
         .ascii  "*/MOD"
 SSMOD:
         CALL    TOR
-        CALL    MSTAR
+        CALLR   MSTAR
         CALL    RFROM
         JP      MSMOD
 
@@ -2222,38 +2331,36 @@ SSMOD:
         .db     2
         .ascii  "*/"
 STASL:
-        CALL    SSMOD
+        CALLR   SSMOD
         JP      NIP
 
 ; Miscellaneous
 
-;       2+      ( a -- a )      ( TOS STM8: -- Y,Z,N )
-;       Add 2 to tos.
+
+;       EXG      ( n -- n )      ( TOS STM8: -- Y,Z,N )
+;       Exchange high with low byte of n.
 
         .dw     LINK
 
         LINK =  .
-        .db     2
-        .ascii  "2+"
-CELLP:
+        .db     3
+        .ascii  "EXG"
+EXG:
         CALLR   DOXCODE
-        INCW    X
-        INCW    X
+        SWAPW   X
         RET
 
-
-;       2-      ( a -- a )      ( TOS STM8: -- Y,Z,N )
-;       Subtract 2 from tos.
+;       2/      ( n -- n )      ( TOS STM8: -- Y,Z,N )
+;       Multiply tos by 2.
 
         .dw     LINK
 
         LINK =  .
         .db     2
-        .ascii  "2-"
-CELLM:
+        .ascii  "2/"
+TWOSL:
         CALLR   DOXCODE
-        DECW    X
-        DECW    X
+        SRAW    X
         RET
 
 ;       2*      ( n -- n )      ( TOS STM8: -- Y,Z,N )
@@ -2269,16 +2376,31 @@ CELLS:
         SLAW    X
         RET
 
-;       1+      ( n -- n )      ( TOS STM8: -- Y,Z,N )
-;       Add 1 to tos.
+;       2-      ( a -- a )      ( TOS STM8: -- Y,Z,N )
+;       Subtract 2 from tos.
 
         .dw     LINK
 
         LINK =  .
         .db     2
-        .ascii  "1+"
-ONEP:
+        .ascii  "2-"
+CELLM:
         CALLR   DOXCODE
+        DECW    X
+        DECW    X
+        RET
+
+;       2+      ( a -- a )      ( TOS STM8: -- Y,Z,N )
+;       Add 2 to tos.
+
+        .dw     LINK
+
+        LINK =  .
+        .db     2
+        .ascii  "2+"
+CELLP:
+        CALLR   DOXCODE
+        INCW    X
         INCW    X
         RET
 
@@ -2295,23 +2417,23 @@ ONEM:
         DECW    X
         RET
 
-;       2/      ( n -- n )      ( TOS STM8: -- Y,Z,N )
-;       Multiply tos by 2.
+;       1+      ( n -- n )      ( TOS STM8: -- Y,Z,N )
+;       Add 1 to tos.
 
         .dw     LINK
 
         LINK =  .
         .db     2
-        .ascii  "2/"
-TWOSL:
+        .ascii  "1+"
+ONEP:
         CALLR   DOXCODE
-        SRAW    X
+        INCW    X
         RET
 
 ;       DOXCODE   ( n -- n )   ( TOS STM8: -- Y,Z,N )
-;       A call to DOXCODE precedes a code for a primitive word
-;       In the sequence: X=TOS, YTEMP=SP. TOS=X after RET
-;       Caution: no other Forth may be called
+;       DOXCODE precedes assembly code for a primitive word
+;       In the assembly code: X=(TOS), YTEMP=TOS. (TOS)=X after RET
+;       Caution: no other Forth word may be called
 DOXCODE:
         POPW    Y
         LDW     YTEMP,X
@@ -2457,36 +2579,6 @@ PSTOR:
         POPW    X
         EXGW    X,Y
         JP      DDROP
-
-;       2!      ( d a -- )      ( TOS STM8: -- Y,Z,N )
-;       Store double integer to address a.
-
-        .dw     LINK
-
-        LINK =  .
-        .db     2
-        .ascii  "2!"
-DSTOR:
-        CALL    SWAPP
-        CALL    OVER
-        CALL    STORE
-        CALL    CELLP
-        JP      STORE
-
-;       2@      ( a -- d )
-;       Fetch double integer from address a.
-
-        .dw     LINK
-
-        LINK =  .
-        .db     2
-        .ascii  "2@"
-DAT:
-        CALL    DUPP
-        CALL    CELLP
-        CALL    AT
-        CALL    SWAPP
-        JP      AT
 
 ;       COUNT   ( b -- b +n )      ( TOS STM8: -- A,Z,N )
 ;       Return count byte of a string
@@ -3358,7 +3450,7 @@ SUBPARS:
         .ascii  "PARSE"
         .endif
 PARSE:
-        CALL    TIB
+        DoLitW  TIBB
         ADDW    Y,USR_IN        ; current input buffer pointer
         LDW     (X),Y
         LD      A,USRNTIB+1
@@ -3466,7 +3558,7 @@ NAMET:
 SAMEQCAT:
         CALL    OVER
         ADDW    Y,(3,SP)             ; R-OVER> PLUS
-       .ifne   CASEINSENSITIVE
+        .ifne   CASEINSENSITIVE
         CALL    YCAT
         JRA   CUPPER
         .else
@@ -3721,7 +3813,7 @@ ACCP4:  CALL    DROP
         .ascii  "QUERY"
         .endif
 QUERY:
-        CALL    TIB
+        DoLitW  TIBB
         DoLitC  TIBLENGTH
         CALL    ACCEP
         CALL    NTIB
@@ -4544,38 +4636,6 @@ IMMED:
 
 ; Defining words
 
-;       CREATE  ( -- ; <string> )
-;       Compile a new array
-;       without allocating space.
-
-        .dw     LINK
-
-        LINK =  .
-        .db     6
-        .ascii  "CREATE"
-CREAT:
-        .ifne   HAS_CPNVM
-        CALL    TEVAL
-        CALL    AT
-        CALL    TOR             ; save TEVAL
-        CALL    RBRAC           ; "]" make HERE return CP even in INTERPRETER mode
-        .endif
-
-        CALL    TOKEN
-        CALL    SNAME
-        CALL    OVERT
-
-        .ifne   HAS_CPNVM
-        CALL    RFROM
-        CALL    TEVAL           ; restore TEVAL
-        CALL    STORE           ; from here on ',', 'C,', '$,"' and 'ALLOT' write to CP
-        .endif
-
-        CALL    COMPI
-        CALL    DOVAR
-        RET
-
-
         .ifne   HAS_DOES
 
 ;       DOES>   ( -- )
@@ -4638,6 +4698,39 @@ DODOES:
         .db     BRAN_OPC               ; \ HERE <- DOLIT <- ('+3) <- branch
         RET
         .endif
+
+
+;       CREATE  ( -- ; <string> )
+;       Compile a new array
+;       without allocating space.
+
+        .dw     LINK
+
+        LINK =  .
+        .db     6
+        .ascii  "CREATE"
+CREAT:
+        .ifne   HAS_CPNVM
+        CALL    TEVAL
+        CALL    AT
+        CALL    TOR             ; save TEVAL
+        CALL    RBRAC           ; "]" make HERE return CP even in INTERPRETER mode
+        .endif
+
+        CALL    TOKEN
+        CALL    SNAME
+        CALL    OVERT
+
+        .ifne   HAS_CPNVM
+        CALL    RFROM
+        CALL    TEVAL           ; restore TEVAL
+        CALL    STORE           ; from here on ',', 'C,', '$,"' and 'ALLOT' write to CP
+        .endif
+
+        CALL    COMPI
+        CALL    DOVAR
+        RET
+
 
         .ifeq   BAREBONES
 ;       VARIABLE        ( -- ; <string> )
@@ -4875,69 +4968,6 @@ WORS1:  CALL    AT              ; @ sets Z and N
 
 ;===============================================================
 
-        .ifne   WORDS_EXTRAMEM
-;       B! ( t a u -- )
-;       Set/reset bit #u (0..7) in the byte at address a to bool t
-;       Note: creates/executes BSER/BRES + RET code on Data Stack
-        .dw     LINK
-
-        LINK =  .
-        .db     (2)
-        .ascii  "B!"
-BRSS:
-        LD      A,#0x72         ; Opcode BSET/BRES
-        LD      (X),A
-        LD      A,(1,X)         ; 2nd byte of BSET/BRES
-        SLA     A               ; n *= 2 -> A
-        OR      A,#0x10
-        LDW     Y,X
-        LDW     Y,(4,Y)         ; bool b (0..15) -> Z
-        JRNE    1$              ; b!=0: BSET
-        INC     A               ; b==0: BRES
-1$:     LD      (1,X),A
-        LD      A,#EXIT_OPC     ; Opcode RET
-        LD      (4,X),A
-        LDW     Y,X
-        ADDW    X,#6
-        JP      (Y)
-
-
-;       2C!  ( n b -- )
-;       Store word C-wise to 16 bit HW registers "MSB first"
-        .dw     LINK
-
-        LINK =  .
-        .db     (3)
-        .ascii  "2C!"
-DCSTOR:
-        CALL    DDUP
-        LD      A,(2,X)
-        LD      (3,X),A
-        CALL    CSTOR
-        CALL    ONEP
-        JP      CSTOR
-
-
-;       2C@  ( a -- n )
-;       Fetch word C-wise from 16 bit HW config. registers "MSB first"
-        .dw     LINK
-
-        LINK =  .
-        .db     (3)
-        .ascii  "2C@"
-DCAT:
-        CALL    DOXCODE
-        LDW     Y,X
-        LD      A,(X)
-        LD      XH,A
-        LD      A,(1,Y)
-        LD      XL,A
-        RET
-        .endif
-
-
-;===============================================================
-
         .ifne   HAS_LED7SEG
 
 ;       7-seg LED patterns, "70s chique"
@@ -5073,8 +5103,8 @@ NOKEYB:
         ADC_CR1 = 0x5401
         ADC_CR2 = 0x5402
 ADCSTOR:
-        LD      A,(1,X)
         INCW    X
+        LD      A,(X)
         INCW    X
         AND     A,#0x0F
         LD      ADC_CSR,A       ; select channel
@@ -5241,19 +5271,9 @@ RESETT:
         JP      COLD
 
 
-;       HALT  ( -- )
-;       Issue the HALT instruction
-        .dw     LINK
-
-        LINK =  .
-        .db     (4)
-        .ascii  "HALT"
-HALTT:
-        HALT
-        RET
-
 ;       SAVEC ( -- )
-;       Minimal context switch for interrupt code without character I/O
+;       Minimal context switch for low level interrupt code
+;       This should be the first word called in the interrupt handler
         .dw     LINK
 
         LINK =  .
@@ -5262,40 +5282,23 @@ HALTT:
 SAVEC:
         LDW     X,YTEMP         ; Save context
         PUSHW   X
-        LDW     X,#(BSPP)       ; init data stack for interrupt BSPP
+        LDW     X,#(ISPP)       ; init data stack for interrupt ISPP
         RET
 
 
-;       RESTC ( -- )
-;       Restore context interrupt code
+;       IRET ( -- )
+;       Restore context and return from low level interrupt code
+;       This should be the last word called in the interrupt handler
         .dw     LINK
 
         LINK =  .
-        .db     (5)
-        .ascii  "RESTC"
+        .db     (4)
+        .ascii  "IRET"
 RESTC:
         POPW    X
-        LDW     YTEMP,x         ; Save context
-        IRET
+        LDW     YTEMP,X         ; restore context
+        IRET                    ; not "EXIT"
 
-
-;       IVEC! ( a n -- )
-;       Set interrupt vector n to a.
-;       Flash write protection needs to removed first
-        .dw     LINK
-
-        LINK =  .
-        .db     (5)
-        .ascii  "IVEC!"
-IVECST:
-        CALL    YFLAGS
-        SLAW    Y
-        SLAW    Y
-        ADDW    Y,#0x800A
-        LDW     YTEMP,Y
-        CALL    YFLAGS
-        LDW     [YTEMP],Y
-        RET
 
         .endif
 

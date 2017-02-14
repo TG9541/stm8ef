@@ -7,6 +7,7 @@
         HALF_DUPLEX      = 1    ; Use EMIT/?KEY in half duplex mode
         HAS_TXUART       = 0    ; No UART TXD, word TX!
         HAS_RXUART       = 0    ; No UART RXD, word ?RX
+        PSIM     = PORTD        ; Port for UART simulation
         HAS_TXSIM        = 1    ; Enable TxD via GPIO/TIM4, word TXGP!
         PNTX             = 6    ; Port GPIO# for HAS_TXDSIM
         HAS_RXSIM        = 1    ; Enable RxD via GPIO/TIM4, word ?RXGP

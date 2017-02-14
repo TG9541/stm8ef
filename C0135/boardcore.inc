@@ -15,6 +15,31 @@ BOARDINIT:
 
 ;===============================================================
 
+;      Dummy labels for PSIM interrupts declared in main.c
+
+        .ifne   PSIM-PORTA
+;       Dummy label for _EXTIA_IRQHandler
+_EXTI0_IRQHandler:
+        .endif
+
+        .ifne   PSIM-PORTB
+;       Dummy label for _EXTIB_IRQHandler
+_EXTI1_IRQHandler:
+        .endif
+
+        .ifne   PSIM-PORTC
+;       Dummy label for _EXTIC_IRQHandler
+_EXTI2_IRQHandler:
+        .endif
+
+        .ifne   PSIM-PORTD
+;       Dummy label for _EXTID_IRQHandler
+_EXTI3_IRQHandler:
+        .endif
+
+
+;===============================================================
+
         .ifne   HAS_LED7SEG
 ;       LED_MPX driver ( -- )
 ;       Code called from ISR for LED MPX
@@ -38,7 +63,7 @@ LED_MPX:
 OUTSTOR:
         INCW    X
         LD      A,(X)
-        LD      OUTPUTS,A
+        LD      OUTPUTS+1,A
         INCW    X
         XOR     A,#0x0F         ; C0135 Relay-4 Board
         RRC     A

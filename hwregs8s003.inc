@@ -1,16 +1,3 @@
-;       DOLITEXIT   ( -- w )    ( TOS STM8: -- Y,Z,N )
-;       Push an inline literal and exit
-
-DOLITEXIT:
-        DECW    X
-        DECW    X
-        EXGW    X,Y ; Y is discarded
-        POPW    X
-        LDW     X,(X)
-        EXGW    X,Y
-        LDW     (X),Y
-        RET
-
 ; STM8S003F3P6 and STM8S103F3P6 register addresses
 ; ***** 6.2.1 I/O port hardware register map
 ; ***** Port A
@@ -21,8 +8,8 @@ DOLITEXIT:
          .db     6
          .ascii  "PA_ODR"
 PAODR:
-         CALL    DOLITEXIT
-         .dw PA_ODR
+         DoLitW PA_ODR
+         RET
 
 ;       PA_IDR    ( -- a )
 ; Port A input pin value register (0xXX)
@@ -31,8 +18,8 @@ PAODR:
          .db     6
          .ascii  "PA_IDR"
 PAIDR:
-         CALL    DOLITEXIT
-         .dw PA_IDR
+         DoLitW PA_IDR
+         RET
 
 ;       PA_DDR    ( -- a )
 ; Port A data direction register (0x00)
@@ -41,8 +28,8 @@ PAIDR:
          .db     6
          .ascii  "PA_DDR"
 PADDR:
-         CALL    DOLITEXIT
-         .dw PA_DDR
+         DoLitW PA_DDR
+         RET
 
 ;       PA_CR1    ( -- a )
 ; Port A control register 1 (0x00)
@@ -51,8 +38,8 @@ PADDR:
          .db     6
          .ascii  "PA_CR1"
 PACR1:
-         CALL    DOLITEXIT
-         .dw PA_CR1
+         DoLitW PA_CR1
+         RET
 
 ;       PA_CR2    ( -- a )
 ; Port A control register 2 (0x00)
@@ -61,8 +48,8 @@ PACR1:
          .db     6
          .ascii  "PA_CR2"
 PACR2:
-         CALL    DOLITEXIT
-         .dw PA_CR2
+         DoLitW PA_CR2
+         RET
 
 ; ***** Port B
 ;       PB_ODR    ( -- a )
@@ -72,8 +59,8 @@ PACR2:
          .db     6
          .ascii  "PB_ODR"
 PBODR:
-         CALL    DOLITEXIT
-         .dw PB_ODR
+         DoLitW PB_ODR
+         RET
 
 ;       PB_IDR    ( -- a )
 ; Port B input pin value register (0xXX)
@@ -82,8 +69,8 @@ PBODR:
          .db     6
          .ascii  "PB_IDR"
 PBIDR:
-         CALL    DOLITEXIT
-         .dw PB_IDR
+         DoLitW PB_IDR
+         RET
 
 ;       PB_DDR    ( -- a )
 ; Port B data direction register (0x00)
@@ -92,8 +79,8 @@ PBIDR:
          .db     6
          .ascii  "PB_DDR"
 PBDDR:
-         CALL    DOLITEXIT
-         .dw PB_DDR
+         DoLitW PB_DDR
+         RET
 
 ;       PB_CR1    ( -- a )
 ; Port B control register 1 (0x00)
@@ -102,8 +89,8 @@ PBDDR:
          .db     6
          .ascii  "PB_CR1"
 PBCR1:
-         CALL    DOLITEXIT
-         .dw PB_CR1
+         DoLitW PB_CR1
+         RET
 
 ;       PB_CR2    ( -- a )
 ; Port B control register 2 (0x00)
@@ -112,8 +99,8 @@ PBCR1:
          .db     6
          .ascii  "PB_CR2"
 PBCR2:
-         CALL    DOLITEXIT
-         .dw PB_CR2
+         DoLitW PB_CR2
+         RET
 
 ; ***** Port C
 ;       PC_ODR    ( -- a )
@@ -123,8 +110,8 @@ PBCR2:
          .db     6
          .ascii  "PC_ODR"
 PCODR:
-         CALL    DOLITEXIT
-         .dw PC_ODR
+         DoLitW PC_ODR
+         RET
 
 ;       PC_IDR    ( -- a )
 ; Port C input pin value register (0xXX)
@@ -133,8 +120,8 @@ PCODR:
          .db     6
          .ascii  "PC_IDR"
 PCIDR:
-         CALL    DOLITEXIT
-         .dw PC_IDR
+         DoLitW PC_IDR
+         RET
 
 ;       PC_DDR    ( -- a )
 ; Port C data direction register (0x00)
@@ -143,8 +130,8 @@ PCIDR:
          .db     6
          .ascii  "PC_DDR"
 PCDDR:
-         CALL    DOLITEXIT
-         .dw PC_DDR
+         DoLitW PC_DDR
+         RET
 
 ;       PC_CR1    ( -- a )
 ; Port C control register 1 (0x00)
@@ -153,8 +140,8 @@ PCDDR:
          .db     6
          .ascii  "PC_CR1"
 PCCR1:
-         CALL    DOLITEXIT
-         .dw PC_CR1
+         DoLitW PC_CR1
+         RET
 
 ;       PC_CR2    ( -- a )
 ; Port C control register 2 (0x00)
@@ -163,8 +150,8 @@ PCCR1:
          .db     6
          .ascii  "PC_CR2"
 PCCR2:
-         CALL    DOLITEXIT
-         .dw PC_CR2
+         DoLitW PC_CR2
+         RET
 
 ; ***** Port D
 ;       PD_ODR    ( -- a )
@@ -174,8 +161,8 @@ PCCR2:
          .db     6
          .ascii  "PD_ODR"
 PDODR:
-         CALL    DOLITEXIT
-         .dw PD_ODR
+         DoLitW PD_ODR
+         RET
 
 ;       PD_IDR    ( -- a )
 ; Port D input pin value register (0xXX)
@@ -184,8 +171,8 @@ PDODR:
          .db     6
          .ascii  "PD_IDR"
 PDIDR:
-         CALL    DOLITEXIT
-         .dw PD_IDR
+         DoLitW PD_IDR
+         RET
 
 ;       PD_DDR    ( -- a )
 ; Port D data direction register (0x00)
@@ -194,8 +181,8 @@ PDIDR:
          .db     6
          .ascii  "PD_DDR"
 PDDDR:
-         CALL    DOLITEXIT
-         .dw PD_DDR
+         DoLitW PD_DDR
+         RET
 
 ;       PD_CR1    ( -- a )
 ; Port D control register 1 (0x02)
@@ -204,8 +191,8 @@ PDDDR:
          .db     6
          .ascii  "PD_CR1"
 PDCR1:
-         CALL    DOLITEXIT
-         .dw PD_CR1
+         DoLitW PD_CR1
+         RET
 
 ;       PD_CR2    ( -- a )
 ; Port D control register 2 (0x00)
@@ -214,8 +201,8 @@ PDCR1:
          .db     6
          .ascii  "PD_CR2"
 PDCR2:
-         CALL    DOLITEXIT
-         .dw PD_CR2
+         DoLitW PD_CR2
+         RET
 
 ; ***** Port E
         .ifne  0
@@ -227,8 +214,8 @@ PDCR2:
          .db     6
          .ascii  "PE_ODR"
 PEODR:
-         CALL    DOLITEXIT
-         .dw PE_ODR
+         DoLitW PE_ODR
+         RET
 
 ;       PE_IDR    ( -- a )
 ; Port E input pin value register (0xXX)
@@ -237,8 +224,8 @@ PEODR:
          .db     6
          .ascii  "PE_IDR"
 PEIDR:
-         CALL    DOLITEXIT
-         .dw PE_IDR
+         DoLitW PE_IDR
+         RET
 
 ;       PE_DDR    ( -- a )
 ; Port E data direction register (0x00)
@@ -247,8 +234,8 @@ PEIDR:
          .db     6
          .ascii  "PE_DDR"
 PEDDR:
-         CALL    DOLITEXIT
-         .dw PE_DDR
+         DoLitW PE_DDR
+         RET
 
 ;       PE_CR1    ( -- a )
 ; Port E control register 1 (0x00)
@@ -257,8 +244,8 @@ PEDDR:
          .db     6
          .ascii  "PE_CR1"
 PECR1:
-         CALL    DOLITEXIT
-         .dw PE_CR1
+         DoLitW PE_CR1
+         RET
 
 ;       PE_CR2    ( -- a )
 ; Port E control register 2 (0x00)
@@ -267,8 +254,8 @@ PECR1:
          .db     6
          .ascii  "PE_CR2"
 PECR2:
-         CALL    DOLITEXIT
-         .dw PE_CR2
+         DoLitW PE_CR2
+         RET
 
         .endif
 
@@ -282,8 +269,8 @@ PECR2:
          .db     6
          .ascii  "PF_ODR"
 PFODR:
-         CALL    DOLITEXIT
-         .dw PF_ODR
+         DoLitW PF_ODR
+         RET
 
 ;       PF_IDR    ( -- a )
 ; Port F input pin value register (0xXX)
@@ -292,8 +279,8 @@ PFODR:
          .db     6
          .ascii  "PF_IDR"
 PFIDR:
-         CALL    DOLITEXIT
-         .dw PF_IDR
+         DoLitW PF_IDR
+         RET
 
 ;       PF_DDR    ( -- a )
 ; Port F data direction register (0x00)
@@ -302,8 +289,8 @@ PFIDR:
          .db     6
          .ascii  "PF_DDR"
 PFDDR:
-         CALL    DOLITEXIT
-         .dw PF_DDR
+         DoLitW PF_DDR
+         RET
 
 ;       PF_CR1    ( -- a )
 ; Port F control register 1 (0x00)
@@ -312,8 +299,8 @@ PFDDR:
          .db     6
          .ascii  "PF_CR1"
 PFCR1:
-         CALL    DOLITEXIT
-         .dw PF_CR1
+         DoLitW PF_CR1
+         RET
 
 ;       PF_CR2    ( -- a )
 ; Port F control register 2 (0x00)
@@ -322,8 +309,8 @@ PFCR1:
          .db     6
          .ascii  "PF_CR2"
 PFCR2:
-         CALL    DOLITEXIT
-         .dw PF_CR2
+         DoLitW PF_CR2
+         RET
 
         .endif
 
@@ -338,8 +325,8 @@ PFCR2:
          .db     9
          .ascii  "FLASH_CR1"
 FLASHCR1:
-         CALL    DOLITEXIT
-         .dw FLASH_CR1
+         DoLitW FLASH_CR1
+         RET
 
 ;       FLASH_CR2    ( -- a )
 ; Flash control register 2 (0x00)
@@ -348,8 +335,8 @@ FLASHCR1:
          .db     9
          .ascii  "FLASH_CR2"
 FLASHCR2:
-         CALL    DOLITEXIT
-         .dw FLASH_CR2
+         DoLitW FLASH_CR2
+         RET
 
 ;       FLASH_NCR2    ( -- a )
 ; Flash complementary control register 2 (0xFF)
@@ -358,8 +345,8 @@ FLASHCR2:
          .db     10
          .ascii  "FLASH_NCR2"
 FLASHNCR2:
-         CALL    DOLITEXIT
-         .dw FLASH_NCR2
+         DoLitW FLASH_NCR2
+         RET
 
 ;       FLASH_FPR    ( -- a )
 ; Flash protection register (0x00)
@@ -368,8 +355,8 @@ FLASHNCR2:
          .db     9
          .ascii  "FLASH_FPR"
 FLASHFPR:
-         CALL    DOLITEXIT
-         .dw FLASH_FPR
+         DoLitW FLASH_FPR
+         RET
 
 ;       FLASH_NFPR    ( -- a )
 ; Flash complementary protection register (0xFF)
@@ -378,8 +365,8 @@ FLASHFPR:
          .db     10
          .ascii  "FLASH_NFPR"
 FLASHNFPR:
-         CALL    DOLITEXIT
-         .dw FLASH_NFPR
+         DoLitW FLASH_NFPR
+         RET
 
 ;       FLASH_IAPSR    ( -- a )
 ; Flash in-application programming status register (0x00)
@@ -388,8 +375,8 @@ FLASHNFPR:
          .db     11
          .ascii  "FLASH_IAPSR"
 FLASHIAPSR:
-         CALL    DOLITEXIT
-         .dw FLASH_IAPSR
+         DoLitW FLASH_IAPSR
+         RET
 
 ;       FLASH_PUKR    ( -- a )
 ; Flash Program memory unprotection register (0x00)
@@ -398,8 +385,8 @@ FLASHIAPSR:
          .db     10
          .ascii  "FLASH_PUKR"
 FLASHPUKR:
-         CALL    DOLITEXIT
-         .dw FLASH_PUKR
+         DoLitW FLASH_PUKR
+         RET
 
 ;       FLASH_DUKR    ( -- a )
 ; Data EEPROM unprotection register (0x00)
@@ -408,8 +395,8 @@ FLASHPUKR:
          .db     10
          .ascii  "FLASH_DUKR"
 FLASHDUKR:
-         CALL    DOLITEXIT
-         .dw FLASH_DUKR
+         DoLitW FLASH_DUKR
+         RET
 
         .endif
 
@@ -423,8 +410,8 @@ FLASHDUKR:
          .db     8
          .ascii  "EXTI_CR1"
 EXTICR1:
-         CALL    DOLITEXIT
-         .dw EXTI_CR1
+         DoLitW EXTI_CR1
+         RET
 
 ;       EXTI_CR2    ( -- a )
 ; External interrupt control register 2 (0x00)
@@ -433,8 +420,8 @@ EXTICR1:
          .db     8
          .ascii  "EXTI_CR2"
 EXTICR2:
-         CALL    DOLITEXIT
-         .dw EXTI_CR2
+         DoLitW EXTI_CR2
+         RET
 
         .endif
 
@@ -446,8 +433,8 @@ EXTICR2:
          .db     6
          .ascii  "RST_SR"
 RSTSR:
-         CALL    DOLITEXIT
-         .dw RST_SR
+         DoLitW RST_SR
+         RET
 
 ; ***** CLK
         .ifne  0
@@ -459,8 +446,8 @@ RSTSR:
          .db     8
          .ascii  "CLK_ICKR"
 CLKICKR:
-         CALL    DOLITEXIT
-         .dw CLK_ICKR
+         DoLitW CLK_ICKR
+         RET
 
 ;       CLK_ECKR    ( -- a )
 ; External clock control register (0x00)
@@ -469,8 +456,8 @@ CLKICKR:
          .db     8
          .ascii  "CLK_ECKR"
 CLKECKR:
-         CALL    DOLITEXIT
-         .dw CLK_ECKR
+         DoLitW CLK_ECKR
+         RET
 
 ;       CLK_CMSR    ( -- a )
 ; Clock master status register (0xE1)
@@ -479,8 +466,8 @@ CLKECKR:
          .db     8
          .ascii  "CLK_CMSR"
 CLKCMSR:
-         CALL    DOLITEXIT
-         .dw CLK_CMSR
+         DoLitW CLK_CMSR
+         RET
 
 ;       CLK_SWR    ( -- a )
 ; Clock master switch register (0xE1)
@@ -489,8 +476,8 @@ CLKCMSR:
          .db     7
          .ascii  "CLK_SWR"
 CLKSWR:
-         CALL    DOLITEXIT
-         .dw CLK_SWR
+         DoLitW CLK_SWR
+         RET
 
 ;       CLK_SWCR    ( -- a )
 ; Clock switch control register (0xXX)
@@ -499,8 +486,8 @@ CLKSWR:
          .db     8
          .ascii  "CLK_SWCR"
 CLKSWCR:
-         CALL    DOLITEXIT
-         .dw CLK_SWCR
+         DoLitW CLK_SWCR
+         RET
 
 ;       CLK_CKDIVR    ( -- a )
 ; Clock divider register (0x18)
@@ -509,8 +496,8 @@ CLKSWCR:
          .db     10
          .ascii  "CLK_CKDIVR"
 CLKCKDIVR:
-         CALL    DOLITEXIT
-         .dw CLK_CKDIVR
+         DoLitW CLK_CKDIVR
+         RET
 
 ;       CLK_PCKENR1    ( -- a )
 ; Peripheral clock gating register 1 (0xFF)
@@ -519,8 +506,8 @@ CLKCKDIVR:
          .db     11
          .ascii  "CLK_PCKENR1"
 CLKPCKENR1:
-         CALL    DOLITEXIT
-         .dw CLK_PCKENR1
+         DoLitW CLK_PCKENR1
+         RET
 
 ;       CLK_CSSR    ( -- a )
 ; Clock security system register (0x00)
@@ -529,8 +516,8 @@ CLKPCKENR1:
          .db     8
          .ascii  "CLK_CSSR"
 CLKCSSR:
-         CALL    DOLITEXIT
-         .dw CLK_CSSR
+         DoLitW CLK_CSSR
+         RET
 
 ;       CLK_CCOR    ( -- a )
 ; Configurable clock control register (0x00)
@@ -539,8 +526,8 @@ CLKCSSR:
          .db     8
          .ascii  "CLK_CCOR"
 CLKCCOR:
-         CALL    DOLITEXIT
-         .dw CLK_CCOR
+         DoLitW CLK_CCOR
+         RET
 
 ;       CLK_PCKENR2    ( -- a )
 ; Peripheral clock gating register 2 (0xFF)
@@ -549,8 +536,8 @@ CLKCCOR:
          .db     11
          .ascii  "CLK_PCKENR2"
 CLKPCKENR2:
-         CALL    DOLITEXIT
-         .dw CLK_PCKENR2
+         DoLitW CLK_PCKENR2
+         RET
 
 ;       CLK_HSITRIMR    ( -- a )
 ; HSI clock calibration trimming register (0x00)
@@ -559,8 +546,8 @@ CLKPCKENR2:
          .db     12
          .ascii  "CLK_HSITRIMR"
 CLKHSITRIMR:
-         CALL    DOLITEXIT
-         .dw CLK_HSITRIMR
+         DoLitW CLK_HSITRIMR
+         RET
 
         .endif
 
@@ -574,8 +561,8 @@ CLKHSITRIMR:
          .db     11
          .ascii  "CLK_SWIMCCR"
 CLKSWIMCCR:
-         CALL    DOLITEXIT
-         .dw CLK_SWIMCCR
+         DoLitW CLK_SWIMCCR
+         RET
 
         .endif
 
@@ -589,8 +576,8 @@ CLKSWIMCCR:
          .db     7
          .ascii  "WWDG_CR"
 WWDGCR:
-         CALL    DOLITEXIT
-         .dw WWDG_CR
+         DoLitW WWDG_CR
+         RET
 
 ;       WWDG_WR    ( -- a )
 ; WWDR window register (0x7F)
@@ -599,8 +586,8 @@ WWDGCR:
          .db     7
          .ascii  "WWDG_WR"
 WWDGWR:
-         CALL    DOLITEXIT
-         .dw WWDG_WR
+         DoLitW WWDG_WR
+         RET
 
         .endif
 
@@ -612,8 +599,8 @@ WWDGWR:
          .db     7
          .ascii  "IWDG_KR"
 IWDGKR:
-         CALL    DOLITEXIT
-         .dw IWDG_KR
+         DoLitW IWDG_KR
+         RET
 
 ;       IWDG_PR    ( -- a )
 ; IWDG prescaler register (0x00)
@@ -622,8 +609,8 @@ IWDGKR:
          .db     7
          .ascii  "IWDG_PR"
 IWDGPR:
-         CALL    DOLITEXIT
-         .dw IWDG_PR
+         DoLitW IWDG_PR
+         RET
 
 ;       IWDG_RLR    ( -- a )
 ; IWDG reload register (0xFF)
@@ -632,8 +619,8 @@ IWDGPR:
          .db     8
          .ascii  "IWDG_RLR"
 IWDGRLR:
-         CALL    DOLITEXIT
-         .dw IWDG_RLR
+         DoLitW IWDG_RLR
+         RET
 
 ; ***** AWU
 ;       AWU_CSR1    ( -- a )
@@ -643,8 +630,8 @@ IWDGRLR:
          .db     8
          .ascii  "AWU_CSR1"
 AWUCSR1:
-         CALL    DOLITEXIT
-         .dw AWU_CSR1
+         DoLitW AWU_CSR1
+         RET
 
 ;       AWU_APR    ( -- a )
 ; AWU asynchronous prescaler buffer register (0x3F)
@@ -653,8 +640,8 @@ AWUCSR1:
          .db     7
          .ascii  "AWU_APR"
 AWUAPR:
-         CALL    DOLITEXIT
-         .dw AWU_APR
+         DoLitW AWU_APR
+         RET
 
 ;       AWU_TBR    ( -- a )
 ; AWU timebase selection register (0x00)
@@ -663,8 +650,8 @@ AWUAPR:
          .db     7
          .ascii  "AWU_TBR"
 AWUTBR:
-         CALL    DOLITEXIT
-         .dw AWU_TBR
+         DoLitW AWU_TBR
+         RET
 
 ; ***** BEEP
 ;       BEEP_CSR    ( -- a )
@@ -674,8 +661,8 @@ AWUTBR:
          .db     8
          .ascii  "BEEP_CSR"
 BEEPCSR:
-         CALL    DOLITEXIT
-         .dw BEEP_CSR
+         DoLitW BEEP_CSR
+         RET
 
 ; ***** SPI
 ;       SPI_CR1    ( -- a )
@@ -685,8 +672,8 @@ BEEPCSR:
          .db     7
          .ascii  "SPI_CR1"
 SPICR1:
-         CALL    DOLITEXIT
-         .dw SPI_CR1
+         DoLitW SPI_CR1
+         RET
 
 ;       SPI_CR2    ( -- a )
 ; SPI control register 2 (0x00)
@@ -695,8 +682,8 @@ SPICR1:
          .db     7
          .ascii  "SPI_CR2"
 SPICR2:
-         CALL    DOLITEXIT
-         .dw SPI_CR2
+         DoLitW SPI_CR2
+         RET
 
 ;       SPI_ICR    ( -- a )
 ; SPI interrupt control register (0x00)
@@ -705,8 +692,8 @@ SPICR2:
          .db     7
          .ascii  "SPI_ICR"
 SPIICR:
-         CALL    DOLITEXIT
-         .dw SPI_ICR
+         DoLitW SPI_ICR
+         RET
 
 ;       SPI_SR    ( -- a )
 ; SPI status register (0x02)
@@ -715,8 +702,8 @@ SPIICR:
          .db     6
          .ascii  "SPI_SR"
 SPISR:
-         CALL    DOLITEXIT
-         .dw SPI_SR
+         DoLitW SPI_SR
+         RET
 
 ;       SPI_DR    ( -- a )
 ; SPI data register (0x00)
@@ -725,8 +712,8 @@ SPISR:
          .db     6
          .ascii  "SPI_DR"
 SPIDR:
-         CALL    DOLITEXIT
-         .dw SPI_DR
+         DoLitW SPI_DR
+         RET
 
 ;       SPI_CRCPR    ( -- a )
 ; SPI CRC polynomial register (0x07)
@@ -735,8 +722,8 @@ SPIDR:
          .db     9
          .ascii  "SPI_CRCPR"
 SPICRCPR:
-         CALL    DOLITEXIT
-         .dw SPI_CRCPR
+         DoLitW SPI_CRCPR
+         RET
 
 ;       SPI_RXCRCR    ( -- a )
 ; SPI Rx CRC register (0x00)
@@ -745,8 +732,8 @@ SPICRCPR:
          .db     10
          .ascii  "SPI_RXCRCR"
 SPIRXCRCR:
-         CALL    DOLITEXIT
-         .dw SPI_RXCRCR
+         DoLitW SPI_RXCRCR
+         RET
 
 ;       SPI_TXCRCR    ( -- a )
 ; SPI Tx CRC register (0x00)
@@ -755,8 +742,8 @@ SPIRXCRCR:
          .db     10
          .ascii  "SPI_TXCRCR"
 SPITXCRCR:
-         CALL    DOLITEXIT
-         .dw SPI_TXCRCR
+         DoLitW SPI_TXCRCR
+         RET
 
 ; ***** I2C
 ;       I2C_CR1    ( -- a )
@@ -766,8 +753,8 @@ SPITXCRCR:
          .db     7
          .ascii  "I2C_CR1"
 I2CCR1:
-         CALL    DOLITEXIT
-         .dw I2C_CR1
+         DoLitW I2C_CR1
+         RET
 
 ;       I2C_CR2    ( -- a )
 ; I2C control register 2 (0x00)
@@ -776,8 +763,8 @@ I2CCR1:
          .db     7
          .ascii  "I2C_CR2"
 I2CCR2:
-         CALL    DOLITEXIT
-         .dw I2C_CR2
+         DoLitW I2C_CR2
+         RET
 
 ;       I2C_FREQR    ( -- a )
 ; I2C frequency register (0x00)
@@ -786,8 +773,8 @@ I2CCR2:
          .db     9
          .ascii  "I2C_FREQR"
 I2CFREQR:
-         CALL    DOLITEXIT
-         .dw I2C_FREQR
+         DoLitW I2C_FREQR
+         RET
 
 ;       I2C_OARL    ( -- a )
 ; I2C own address register low (0x00)
@@ -796,8 +783,8 @@ I2CFREQR:
          .db     8
          .ascii  "I2C_OARL"
 I2COARL:
-         CALL    DOLITEXIT
-         .dw I2C_OARL
+         DoLitW I2C_OARL
+         RET
 
 ;       I2C_OARH    ( -- a )
 ; I2C own address register high (0x00)
@@ -806,8 +793,8 @@ I2COARL:
          .db     8
          .ascii  "I2C_OARH"
 I2COARH:
-         CALL    DOLITEXIT
-         .dw I2C_OARH
+         DoLitW I2C_OARH
+         RET
 
 ;       I2C_DR    ( -- a )
 ; I2C data register (0x00)
@@ -816,8 +803,8 @@ I2COARH:
          .db     6
          .ascii  "I2C_DR"
 I2CDR:
-         CALL    DOLITEXIT
-         .dw I2C_DR
+         DoLitW I2C_DR
+         RET
 
 ;       I2C_SR1    ( -- a )
 ; I2C status register 1 (0x00)
@@ -826,8 +813,8 @@ I2CDR:
          .db     7
          .ascii  "I2C_SR1"
 I2CSR1:
-         CALL    DOLITEXIT
-         .dw I2C_SR1
+         DoLitW I2C_SR1
+         RET
 
 ;       I2C_SR2    ( -- a )
 ; I2C status register 2 (0x00)
@@ -836,8 +823,8 @@ I2CSR1:
          .db     7
          .ascii  "I2C_SR2"
 I2CSR2:
-         CALL    DOLITEXIT
-         .dw I2C_SR2
+         DoLitW I2C_SR2
+         RET
 
 ;       I2C_SR3    ( -- a )
 ; I2C status register 3 (0x00)
@@ -846,8 +833,8 @@ I2CSR2:
          .db     7
          .ascii  "I2C_SR3"
 I2CSR3:
-         CALL    DOLITEXIT
-         .dw I2C_SR3
+         DoLitW I2C_SR3
+         RET
 
 ;       I2C_ITR    ( -- a )
 ; I2C interrupt control register (0x00)
@@ -856,8 +843,8 @@ I2CSR3:
          .db     7
          .ascii  "I2C_ITR"
 I2CITR:
-         CALL    DOLITEXIT
-         .dw I2C_ITR
+         DoLitW I2C_ITR
+         RET
 
 ;       I2C_CCRL    ( -- a )
 ; I2C clock control register low (0x00)
@@ -866,8 +853,8 @@ I2CITR:
          .db     8
          .ascii  "I2C_CCRL"
 I2CCCRL:
-         CALL    DOLITEXIT
-         .dw I2C_CCRL
+         DoLitW I2C_CCRL
+         RET
 
 ;       I2C_CCRH    ( -- a )
 ; I2C clock control register high (0x00)
@@ -876,8 +863,8 @@ I2CCCRL:
          .db     8
          .ascii  "I2C_CCRH"
 I2CCCRH:
-         CALL    DOLITEXIT
-         .dw I2C_CCRH
+         DoLitW I2C_CCRH
+         RET
 
 ;       I2C_TRISER    ( -- a )
 ; I2C TRISE register (0x02)
@@ -886,8 +873,8 @@ I2CCCRH:
          .db     10
          .ascii  "I2C_TRISER"
 I2CTRISER:
-         CALL    DOLITEXIT
-         .dw I2C_TRISER
+         DoLitW I2C_TRISER
+         RET
 
 ;       I2C_PECR    ( -- a )
 ; I2C packet error checking register (0x00)
@@ -896,8 +883,8 @@ I2CTRISER:
          .db     8
          .ascii  "I2C_PECR"
 I2CPECR:
-         CALL    DOLITEXIT
-         .dw I2C_PECR
+         DoLitW I2C_PECR
+         RET
 
 ; ***** UART1 
         .ifeq HAS_TXUART+HAS_RXUART
@@ -909,8 +896,8 @@ I2CPECR:
          .db     8
          .ascii  "UART1_SR"
 UART1SR:
-         CALL    DOLITEXIT
-         .dw UART1_SR
+         DoLitW UART1_SR
+         RET
 
 ;       UART1_DR    ( -- a )
 ; UART1 data register (0xXX)
@@ -919,8 +906,8 @@ UART1SR:
          .db     8
          .ascii  "UART1_DR"
 UART1DR:
-         CALL    DOLITEXIT
-         .dw UART1_DR
+         DoLitW UART1_DR
+         RET
 
 ;       UART1_BRR1    ( -- a )
 ; UART1 baud rate register 1 (0x00)
@@ -929,8 +916,8 @@ UART1DR:
          .db     10
          .ascii  "UART1_BRR1"
 UART1BRR1:
-         CALL    DOLITEXIT
-         .dw UART1_BRR1
+         DoLitW UART1_BRR1
+         RET
 
 ;       UART1_BRR2    ( -- a )
 ; UART1 baud rate register 2 (0x00)
@@ -939,8 +926,8 @@ UART1BRR1:
          .db     10
          .ascii  "UART1_BRR2"
 UART1BRR2:
-         CALL    DOLITEXIT
-         .dw UART1_BRR2
+         DoLitW UART1_BRR2
+         RET
 
 ;       UART1_CR1    ( -- a )
 ; UART1 control register 1 (0x00)
@@ -949,8 +936,8 @@ UART1BRR2:
          .db     9
          .ascii  "UART1_CR1"
 UART1CR1:
-         CALL    DOLITEXIT
-         .dw UART1_CR1
+         DoLitW UART1_CR1
+         RET
 
 ;       UART1_CR2    ( -- a )
 ; UART1 control register 2 (0x00)
@@ -959,8 +946,8 @@ UART1CR1:
          .db     9
          .ascii  "UART1_CR2"
 UART1CR2:
-         CALL    DOLITEXIT
-         .dw UART1_CR2
+         DoLitW UART1_CR2
+         RET
 
 ;       UART1_CR3    ( -- a )
 ; UART1 control register 3 (0x00)
@@ -969,8 +956,8 @@ UART1CR2:
          .db     9
          .ascii  "UART1_CR3"
 UART1CR3:
-         CALL    DOLITEXIT
-         .dw UART1_CR3
+         DoLitW UART1_CR3
+         RET
 
 ;       UART1_CR4    ( -- a )
 ; UART1 control register 4 (0x00)
@@ -979,8 +966,8 @@ UART1CR3:
          .db     9
          .ascii  "UART1_CR4"
 UART1CR4:
-         CALL    DOLITEXIT
-         .dw UART1_CR4
+         DoLitW UART1_CR4
+         RET
 
 ;       UART1_CR5    ( -- a )
 ; UART1 control register 5 (0x00)
@@ -989,8 +976,8 @@ UART1CR4:
          .db     9
          .ascii  "UART1_CR5"
 UART1CR5:
-         CALL    DOLITEXIT
-         .dw UART1_CR5
+         DoLitW UART1_CR5
+         RET
 
 ;       UART1_GTR    ( -- a )
 ; UART1 guard time register (0x00)
@@ -999,8 +986,8 @@ UART1CR5:
          .db     9
          .ascii  "UART1_GTR"
 UART1GTR:
-         CALL    DOLITEXIT
-         .dw UART1_GTR
+         DoLitW UART1_GTR
+         RET
 
 ;       UART1_PSCR    ( -- a )
 ; UART1 prescaler register (0x00)
@@ -1009,8 +996,8 @@ UART1GTR:
          .db     10
          .ascii  "UART1_PSCR"
 UART1PSCR:
-         CALL    DOLITEXIT
-         .dw UART1_PSCR
+         DoLitW UART1_PSCR
+         RET
 
         .endif
 
@@ -1022,8 +1009,8 @@ UART1PSCR:
          .db     8
          .ascii  "TIM1_CR1"
 TIM1CR1:
-         CALL    DOLITEXIT
-         .dw TIM1_CR1
+         DoLitW TIM1_CR1
+         RET
 
 ;       TIM1_CR2    ( -- a )
 ; TIM1 control register 2 (0x00)
@@ -1032,8 +1019,8 @@ TIM1CR1:
          .db     8
          .ascii  "TIM1_CR2"
 TIM1CR2:
-         CALL    DOLITEXIT
-         .dw TIM1_CR2
+         DoLitW TIM1_CR2
+         RET
 
 ;       TIM1_SMCR    ( -- a )
 ; TIM1 slave mode control register (0x00)
@@ -1042,8 +1029,8 @@ TIM1CR2:
          .db     9
          .ascii  "TIM1_SMCR"
 TIM1SMCR:
-         CALL    DOLITEXIT
-         .dw TIM1_SMCR
+         DoLitW TIM1_SMCR
+         RET
 
 ;       TIM1_ETR    ( -- a )
 ; TIM1 external trigger register (0x00)
@@ -1052,8 +1039,8 @@ TIM1SMCR:
          .db     8
          .ascii  "TIM1_ETR"
 TIM1ETR:
-         CALL    DOLITEXIT
-         .dw TIM1_ETR
+         DoLitW TIM1_ETR
+         RET
 
 ;       TIM1_IER    ( -- a )
 ; TIM1 Interrupt enable register (0x00)
@@ -1062,8 +1049,8 @@ TIM1ETR:
          .db     8
          .ascii  "TIM1_IER"
 TIM1IER:
-         CALL    DOLITEXIT
-         .dw TIM1_IER
+         DoLitW TIM1_IER
+         RET
 
 ;       TIM1_SR1    ( -- a )
 ; TIM1 status register 1 (0x00)
@@ -1072,8 +1059,8 @@ TIM1IER:
          .db     8
          .ascii  "TIM1_SR1"
 TIM1SR1:
-         CALL    DOLITEXIT
-         .dw TIM1_SR1
+         DoLitW TIM1_SR1
+         RET
 
 ;       TIM1_SR2    ( -- a )
 ; TIM1 status register 2 (0x00)
@@ -1082,8 +1069,8 @@ TIM1SR1:
          .db     8
          .ascii  "TIM1_SR2"
 TIM1SR2:
-         CALL    DOLITEXIT
-         .dw TIM1_SR2
+         DoLitW TIM1_SR2
+         RET
 
 ;       TIM1_EGR    ( -- a )
 ; TIM1 event generation register (0x00)
@@ -1092,8 +1079,8 @@ TIM1SR2:
          .db     8
          .ascii  "TIM1_EGR"
 TIM1EGR:
-         CALL    DOLITEXIT
-         .dw TIM1_EGR
+         DoLitW TIM1_EGR
+         RET
 
 ;       TIM1_CCMR1    ( -- a )
 ; TIM1 capture/compare mode register 1 (0x00)
@@ -1102,8 +1089,8 @@ TIM1EGR:
          .db     10
          .ascii  "TIM1_CCMR1"
 TIM1CCMR1:
-         CALL    DOLITEXIT
-         .dw TIM1_CCMR1
+         DoLitW TIM1_CCMR1
+         RET
 
 ;       TIM1_CCMR2    ( -- a )
 ; TIM1 capture/compare mode register 2 (0x00)
@@ -1112,8 +1099,8 @@ TIM1CCMR1:
          .db     10
          .ascii  "TIM1_CCMR2"
 TIM1CCMR2:
-         CALL    DOLITEXIT
-         .dw TIM1_CCMR2
+         DoLitW TIM1_CCMR2
+         RET
 
 ;       TIM1_CCMR3    ( -- a )
 ; TIM1 capture/compare mode register 3 (0x00)
@@ -1122,8 +1109,8 @@ TIM1CCMR2:
          .db     10
          .ascii  "TIM1_CCMR3"
 TIM1CCMR3:
-         CALL    DOLITEXIT
-         .dw TIM1_CCMR3
+         DoLitW TIM1_CCMR3
+         RET
 
 ;       TIM1_CCMR4    ( -- a )
 ; TIM1 capture/compare mode register 4 (0x00)
@@ -1132,8 +1119,8 @@ TIM1CCMR3:
          .db     10
          .ascii  "TIM1_CCMR4"
 TIM1CCMR4:
-         CALL    DOLITEXIT
-         .dw TIM1_CCMR4
+         DoLitW TIM1_CCMR4
+         RET
 
 ;       TIM1_CCER1    ( -- a )
 ; TIM1 capture/compare enable register 1 (0x00)
@@ -1142,8 +1129,8 @@ TIM1CCMR4:
          .db     10
          .ascii  "TIM1_CCER1"
 TIM1CCER1:
-         CALL    DOLITEXIT
-         .dw TIM1_CCER1
+         DoLitW TIM1_CCER1
+         RET
 
 ;       TIM1_CCER2    ( -- a )
 ; TIM1 capture/compare enable register 2 (0x00)
@@ -1152,8 +1139,8 @@ TIM1CCER1:
          .db     10
          .ascii  "TIM1_CCER2"
 TIM1CCER2:
-         CALL    DOLITEXIT
-         .dw TIM1_CCER2
+         DoLitW TIM1_CCER2
+         RET
 
 ;       TIM1_CNTRH    ( -- a )
 ; TIM1 counter high (0x00)
@@ -1162,8 +1149,8 @@ TIM1CCER2:
          .db     10
          .ascii  "TIM1_CNTRH"
 TIM1CNTRH:
-         CALL    DOLITEXIT
-         .dw TIM1_CNTRH
+         DoLitW TIM1_CNTRH
+         RET
 
 ;       TIM1_CNTRL    ( -- a )
 ; TIM1 counter low (0x00)
@@ -1172,8 +1159,8 @@ TIM1CNTRH:
          .db     10
          .ascii  "TIM1_CNTRL"
 TIM1CNTRL:
-         CALL    DOLITEXIT
-         .dw TIM1_CNTRL
+         DoLitW TIM1_CNTRL
+         RET
 
 ;       TIM1_PSCRH    ( -- a )
 ; TIM1 prescaler register high (0x00)
@@ -1182,8 +1169,8 @@ TIM1CNTRL:
          .db     10
          .ascii  "TIM1_PSCRH"
 TIM1PSCRH:
-         CALL    DOLITEXIT
-         .dw TIM1_PSCRH
+         DoLitW TIM1_PSCRH
+         RET
 
 ;       TIM1_PSCRL    ( -- a )
 ; TIM1 prescaler register low (0x00)
@@ -1192,8 +1179,8 @@ TIM1PSCRH:
          .db     10
          .ascii  "TIM1_PSCRL"
 TIM1PSCRL:
-         CALL    DOLITEXIT
-         .dw TIM1_PSCRL
+         DoLitW TIM1_PSCRL
+         RET
 
 ;       TIM1_ARRH    ( -- a )
 ; TIM1 auto-reload register high (0xFF)
@@ -1202,8 +1189,8 @@ TIM1PSCRL:
          .db     9
          .ascii  "TIM1_ARRH"
 TIM1ARRH:
-         CALL    DOLITEXIT
-         .dw TIM1_ARRH
+         DoLitW TIM1_ARRH
+         RET
 
 ;       TIM1_ARRL    ( -- a )
 ; TIM1 auto-reload register low (0xFF)
@@ -1212,8 +1199,8 @@ TIM1ARRH:
          .db     9
          .ascii  "TIM1_ARRL"
 TIM1ARRL:
-         CALL    DOLITEXIT
-         .dw TIM1_ARRL
+         DoLitW TIM1_ARRL
+         RET
 
 ;       TIM1_RCR    ( -- a )
 ; TIM1 repetition counter register (0x00)
@@ -1222,8 +1209,8 @@ TIM1ARRL:
          .db     8
          .ascii  "TIM1_RCR"
 TIM1RCR:
-         CALL    DOLITEXIT
-         .dw TIM1_RCR
+         DoLitW TIM1_RCR
+         RET
 
 ;       TIM1_CCR1H    ( -- a )
 ; TIM1 capture/compare register 1 high (0x00)
@@ -1232,8 +1219,8 @@ TIM1RCR:
          .db     10
          .ascii  "TIM1_CCR1H"
 TIM1CCR1H:
-         CALL    DOLITEXIT
-         .dw TIM1_CCR1H
+         DoLitW TIM1_CCR1H
+         RET
 
 ;       TIM1_CCR1L    ( -- a )
 ; TIM1 capture/compare register 1 low (0x00)
@@ -1242,8 +1229,8 @@ TIM1CCR1H:
          .db     10
          .ascii  "TIM1_CCR1L"
 TIM1CCR1L:
-         CALL    DOLITEXIT
-         .dw TIM1_CCR1L
+         DoLitW TIM1_CCR1L
+         RET
 
 ;       TIM1_CCR2H    ( -- a )
 ; TIM1 capture/compare register 2 high (0x00)
@@ -1252,8 +1239,8 @@ TIM1CCR1L:
          .db     10
          .ascii  "TIM1_CCR2H"
 TIM1CCR2H:
-         CALL    DOLITEXIT
-         .dw TIM1_CCR2H
+         DoLitW TIM1_CCR2H
+         RET
 
 ;       TIM1_CCR2L    ( -- a )
 ; TIM1 capture/compare register 2 low (0x00)
@@ -1262,8 +1249,8 @@ TIM1CCR2H:
          .db     10
          .ascii  "TIM1_CCR2L"
 TIM1CCR2L:
-         CALL    DOLITEXIT
-         .dw TIM1_CCR2L
+         DoLitW TIM1_CCR2L
+         RET
 
 ;       TIM1_CCR3H    ( -- a )
 ; TIM1 capture/compare register 3 high (0x00)
@@ -1272,8 +1259,8 @@ TIM1CCR2L:
          .db     10
          .ascii  "TIM1_CCR3H"
 TIM1CCR3H:
-         CALL    DOLITEXIT
-         .dw TIM1_CCR3H
+         DoLitW TIM1_CCR3H
+         RET
 
 ;       TIM1_CCR3L    ( -- a )
 ; TIM1 capture/compare register 3 low (0x00)
@@ -1282,8 +1269,8 @@ TIM1CCR3H:
          .db     10
          .ascii  "TIM1_CCR3L"
 TIM1CCR3L:
-         CALL    DOLITEXIT
-         .dw TIM1_CCR3L
+         DoLitW TIM1_CCR3L
+         RET
 
 ;       TIM1_CCR4H    ( -- a )
 ; TIM1 capture/compare register 4 high (0x00)
@@ -1292,8 +1279,8 @@ TIM1CCR3L:
          .db     10
          .ascii  "TIM1_CCR4H"
 TIM1CCR4H:
-         CALL    DOLITEXIT
-         .dw TIM1_CCR4H
+         DoLitW TIM1_CCR4H
+         RET
 
 ;       TIM1_CCR4L    ( -- a )
 ; TIM1 capture/compare register 4 low (0x00)
@@ -1302,8 +1289,8 @@ TIM1CCR4H:
          .db     10
          .ascii  "TIM1_CCR4L"
 TIM1CCR4L:
-         CALL    DOLITEXIT
-         .dw TIM1_CCR4L
+         DoLitW TIM1_CCR4L
+         RET
 
 ;       TIM1_BKR    ( -- a )
 ; TIM1 break register (0x00)
@@ -1312,8 +1299,8 @@ TIM1CCR4L:
          .db     8
          .ascii  "TIM1_BKR"
 TIM1BKR:
-         CALL    DOLITEXIT
-         .dw TIM1_BKR
+         DoLitW TIM1_BKR
+         RET
 
 ;       TIM1_DTR    ( -- a )
 ; TIM1 dead-time register (0x00)
@@ -1322,8 +1309,8 @@ TIM1BKR:
          .db     8
          .ascii  "TIM1_DTR"
 TIM1DTR:
-         CALL    DOLITEXIT
-         .dw TIM1_DTR
+         DoLitW TIM1_DTR
+         RET
 
 ;       TIM1_OISR    ( -- a )
 ; TIM1 output idle state register (0x00)
@@ -1332,8 +1319,8 @@ TIM1DTR:
          .db     9
          .ascii  "TIM1_OISR"
 TIM1OISR:
-         CALL    DOLITEXIT
-         .dw TIM1_OISR
+         DoLitW TIM1_OISR
+         RET
 
 ; ***** TIM2 
         .ifeq HAS_BACKGROUND
@@ -1345,8 +1332,8 @@ TIM1OISR:
          .db     8
          .ascii  "TIM2_CR1"
 TIM2CR1:
-         CALL    DOLITEXIT
-         .dw TIM2_CR1
+         DoLitW TIM2_CR1
+         RET
 
 ;       TIM2_IER    ( -- a )
 ; TIM2 interrupt enable register (0x00)
@@ -1355,8 +1342,8 @@ TIM2CR1:
          .db     8
          .ascii  "TIM2_IER"
 TIM2IER:
-         CALL    DOLITEXIT
-         .dw TIM2_IER
+         DoLitW TIM2_IER
+         RET
 
 ;       TIM2_SR1    ( -- a )
 ; TIM2 status register 1 (0x00)
@@ -1365,8 +1352,8 @@ TIM2IER:
          .db     8
          .ascii  "TIM2_SR1"
 TIM2SR1:
-         CALL    DOLITEXIT
-         .dw TIM2_SR1
+         DoLitW TIM2_SR1
+         RET
 
 ;       TIM2_SR2    ( -- a )
 ; TIM2 status register 2 (0x00)
@@ -1375,8 +1362,8 @@ TIM2SR1:
          .db     8
          .ascii  "TIM2_SR2"
 TIM2SR2:
-         CALL    DOLITEXIT
-         .dw TIM2_SR2
+         DoLitW TIM2_SR2
+         RET
 
 ;       TIM2_EGR    ( -- a )
 ; TIM2 event generation register (0x00)
@@ -1385,8 +1372,8 @@ TIM2SR2:
          .db     8
          .ascii  "TIM2_EGR"
 TIM2EGR:
-         CALL    DOLITEXIT
-         .dw TIM2_EGR
+         DoLitW TIM2_EGR
+         RET
 
 ;       TIM2_CCMR1    ( -- a )
 ; TIM2 capture/compare mode register 1 (0x00)
@@ -1395,8 +1382,8 @@ TIM2EGR:
          .db     10
          .ascii  "TIM2_CCMR1"
 TIM2CCMR1:
-         CALL    DOLITEXIT
-         .dw TIM2_CCMR1
+         DoLitW TIM2_CCMR1
+         RET
 
 ;       TIM2_CCMR2    ( -- a )
 ; TIM2 capture/compare mode register 2 (0x00)
@@ -1405,8 +1392,8 @@ TIM2CCMR1:
          .db     10
          .ascii  "TIM2_CCMR2"
 TIM2CCMR2:
-         CALL    DOLITEXIT
-         .dw TIM2_CCMR2
+         DoLitW TIM2_CCMR2
+         RET
 
 ;       TIM2_CCMR3    ( -- a )
 ; TIM2 capture/compare mode register 3 (0x00)
@@ -1415,8 +1402,8 @@ TIM2CCMR2:
          .db     10
          .ascii  "TIM2_CCMR3"
 TIM2CCMR3:
-         CALL    DOLITEXIT
-         .dw TIM2_CCMR3
+         DoLitW TIM2_CCMR3
+         RET
 
 ;       TIM2_CCER1    ( -- a )
 ; TIM2 capture/compare enable register 1 (0x00)
@@ -1425,8 +1412,8 @@ TIM2CCMR3:
          .db     10
          .ascii  "TIM2_CCER1"
 TIM2CCER1:
-         CALL    DOLITEXIT
-         .dw TIM2_CCER1
+         DoLitW TIM2_CCER1
+         RET
 
 ;       TIM2_CCER2    ( -- a )
 ; TIM2 capture/compare enable register 2 (0x00)
@@ -1435,8 +1422,8 @@ TIM2CCER1:
          .db     10
          .ascii  "TIM2_CCER2"
 TIM2CCER2:
-         CALL    DOLITEXIT
-         .dw TIM2_CCER2
+         DoLitW TIM2_CCER2
+         RET
 
 ;       TIM2_CNTRH    ( -- a )
 ; TIM2 counter high (0x00)
@@ -1445,8 +1432,8 @@ TIM2CCER2:
          .db     10
          .ascii  "TIM2_CNTRH"
 TIM2CNTRH:
-         CALL    DOLITEXIT
-         .dw TIM2_CNTRH
+         DoLitW TIM2_CNTRH
+         RET
 
 ;       TIM2_CNTRL    ( -- a )
 ; TIM2 counter low (0x00)
@@ -1455,8 +1442,8 @@ TIM2CNTRH:
          .db     10
          .ascii  "TIM2_CNTRL"
 TIM2CNTRL:
-         CALL    DOLITEXIT
-         .dw TIM2_CNTRL
+         DoLitW TIM2_CNTRL
+         RET
 
 ;       TIM2_PSCR    ( -- a )
 ; TIM2 prescaler register (0x00)
@@ -1465,8 +1452,8 @@ TIM2CNTRL:
          .db     9
          .ascii  "TIM2_PSCR"
 TIM2PSCR:
-         CALL    DOLITEXIT
-         .dw TIM2_PSCR
+         DoLitW TIM2_PSCR
+         RET
 
 ;       TIM2_ARRH    ( -- a )
 ; TIM2 auto-reload register high (0xFF)
@@ -1475,8 +1462,8 @@ TIM2PSCR:
          .db     9
          .ascii  "TIM2_ARRH"
 TIM2ARRH:
-         CALL    DOLITEXIT
-         .dw TIM2_ARRH
+         DoLitW TIM2_ARRH
+         RET
 
 ;       TIM2_ARRL    ( -- a )
 ; TIM2 auto-reload register low (0xFF)
@@ -1485,8 +1472,8 @@ TIM2ARRH:
          .db     9
          .ascii  "TIM2_ARRL"
 TIM2ARRL:
-         CALL    DOLITEXIT
-         .dw TIM2_ARRL
+         DoLitW TIM2_ARRL
+         RET
 
 ;       TIM2_CCR1H    ( -- a )
 ; TIM2 capture/compare register 1 high (0x00)
@@ -1495,8 +1482,8 @@ TIM2ARRL:
          .db     10
          .ascii  "TIM2_CCR1H"
 TIM2CCR1H:
-         CALL    DOLITEXIT
-         .dw TIM2_CCR1H
+         DoLitW TIM2_CCR1H
+         RET
 
 ;       TIM2_CCR1L    ( -- a )
 ; TIM2 capture/compare register 1 low (0x00)
@@ -1505,8 +1492,8 @@ TIM2CCR1H:
          .db     10
          .ascii  "TIM2_CCR1L"
 TIM2CCR1L:
-         CALL    DOLITEXIT
-         .dw TIM2_CCR1L
+         DoLitW TIM2_CCR1L
+         RET
 
 ;       TIM2_CCR2H    ( -- a )
 ; TIM2 capture/compare reg. 2 high (0x00)
@@ -1515,8 +1502,8 @@ TIM2CCR1L:
          .db     10
          .ascii  "TIM2_CCR2H"
 TIM2CCR2H:
-         CALL    DOLITEXIT
-         .dw TIM2_CCR2H
+         DoLitW TIM2_CCR2H
+         RET
 
 ;       TIM2_CCR2L    ( -- a )
 ; TIM2 capture/compare register 2 low (0x00)
@@ -1525,8 +1512,8 @@ TIM2CCR2H:
          .db     10
          .ascii  "TIM2_CCR2L"
 TIM2CCR2L:
-         CALL    DOLITEXIT
-         .dw TIM2_CCR2L
+         DoLitW TIM2_CCR2L
+         RET
 
 ;       TIM2_CCR3H    ( -- a )
 ; TIM2 capture/compare register 3 high (0x00)
@@ -1535,8 +1522,8 @@ TIM2CCR2L:
          .db     10
          .ascii  "TIM2_CCR3H"
 TIM2CCR3H:
-         CALL    DOLITEXIT
-         .dw TIM2_CCR3H
+         DoLitW TIM2_CCR3H
+         RET
 
 ;       TIM2_CCR3L    ( -- a )
 ; TIM2 capture/compare register 3 low (0x00)
@@ -1545,8 +1532,8 @@ TIM2CCR3H:
          .db     10
          .ascii  "TIM2_CCR3L"
 TIM2CCR3L:
-         CALL    DOLITEXIT
-         .dw TIM2_CCR3L
+         DoLitW TIM2_CCR3L
+         RET
 
         .endif
 
@@ -1560,8 +1547,8 @@ TIM2CCR3L:
          .db     8
          .ascii  "TIM4_CR1"
 TIM4CR1:
-         CALL    DOLITEXIT
-         .dw TIM4_CR1
+         DoLitW TIM4_CR1
+         RET
 
 ;       TIM4_IER    ( -- a )
 ; TIM4 interrupt enable register (0x00)
@@ -1570,8 +1557,8 @@ TIM4CR1:
          .db     8
          .ascii  "TIM4_IER"
 TIM4IER:
-         CALL    DOLITEXIT
-         .dw TIM4_IER
+         DoLitW TIM4_IER
+         RET
 
 ;       TIM4_SR    ( -- a )
 ; TIM4 status register (0x00)
@@ -1580,8 +1567,8 @@ TIM4IER:
          .db     7
          .ascii  "TIM4_SR"
 TIM4SR:
-         CALL    DOLITEXIT
-         .dw TIM4_SR
+         DoLitW TIM4_SR
+         RET
 
 ;       TIM4_EGR    ( -- a )
 ; TIM4 event generation register (0x00)
@@ -1590,8 +1577,8 @@ TIM4SR:
          .db     8
          .ascii  "TIM4_EGR"
 TIM4EGR:
-         CALL    DOLITEXIT
-         .dw TIM4_EGR
+         DoLitW TIM4_EGR
+         RET
 
 ;       TIM4_CNTR    ( -- a )
 ; TIM4 counter (0x00)
@@ -1600,8 +1587,8 @@ TIM4EGR:
          .db     9
          .ascii  "TIM4_CNTR"
 TIM4CNTR:
-         CALL    DOLITEXIT
-         .dw TIM4_CNTR
+         DoLitW TIM4_CNTR
+         RET
 
 ;       TIM4_PSCR    ( -- a )
 ; TIM4 prescaler register (0x00)
@@ -1610,8 +1597,8 @@ TIM4CNTR:
          .db     9
          .ascii  "TIM4_PSCR"
 TIM4PSCR:
-         CALL    DOLITEXIT
-         .dw TIM4_PSCR
+         DoLitW TIM4_PSCR
+         RET
 
 ;       TIM4_ARR    ( -- a )
 ; TIM4 auto-reload register (0xFF)
@@ -1620,8 +1607,8 @@ TIM4PSCR:
          .db     8
          .ascii  "TIM4_ARR"
 TIM4ARR:
-         CALL    DOLITEXIT
-         .dw TIM4_ARR
+         DoLitW TIM4_ARR
+         RET
 
         .endif
 
@@ -1635,8 +1622,8 @@ TIM4ARR:
          .db     8
          .ascii  "ADC_DBxR"
 ADCDBxR:
-         CALL    DOLITEXIT
-         .dw ADC_DBxR
+         DoLitW ADC_DBxR
+         RET
 
 ;       ADC_CSR    ( -- a )
 ; ADC control/status register (0x00)
@@ -1645,8 +1632,8 @@ ADCDBxR:
          .db     7
          .ascii  "ADC_CSR"
 ADCCSR:
-         CALL    DOLITEXIT
-         .dw ADC_CSR
+         DoLitW ADC_CSR
+         RET
 
 ;       ADC_CR1    ( -- a )
 ; ADC configuration register 1 (0x00)
@@ -1655,8 +1642,8 @@ ADCCSR:
          .db     7
          .ascii  "ADC_CR1"
 ADCCR1:
-         CALL    DOLITEXIT
-         .dw ADC_CR1
+         DoLitW ADC_CR1
+         RET
 
 ;       ADC_CR2    ( -- a )
 ; ADC configuration register 2 (0x00)
@@ -1665,8 +1652,8 @@ ADCCR1:
          .db     7
          .ascii  "ADC_CR2"
 ADCCR2:
-         CALL    DOLITEXIT
-         .dw ADC_CR2
+         DoLitW ADC_CR2
+         RET
 
 ;       ADC_CR3    ( -- a )
 ; ADC configuration register 3 (0x00)
@@ -1675,8 +1662,8 @@ ADCCR2:
          .db     7
          .ascii  "ADC_CR3"
 ADCCR3:
-         CALL    DOLITEXIT
-         .dw ADC_CR3
+         DoLitW ADC_CR3
+         RET
 
 ;       ADC_DRH    ( -- a )
 ; ADC data register high (0xXX)
@@ -1685,8 +1672,8 @@ ADCCR3:
          .db     7
          .ascii  "ADC_DRH"
 ADCDRH:
-         CALL    DOLITEXIT
-         .dw ADC_DRH
+         DoLitW ADC_DRH
+         RET
 
 ;       ADC_DRL    ( -- a )
 ; ADC data register low (0xXX)
@@ -1695,8 +1682,8 @@ ADCDRH:
          .db     7
          .ascii  "ADC_DRL"
 ADCDRL:
-         CALL    DOLITEXIT
-         .dw ADC_DRL
+         DoLitW ADC_DRL
+         RET
 
 ;       ADC_TDRH    ( -- a )
 ; ADC Schmitt trigger disable register high (0x00)
@@ -1705,8 +1692,8 @@ ADCDRL:
          .db     8
          .ascii  "ADC_TDRH"
 ADCTDRH:
-         CALL    DOLITEXIT
-         .dw ADC_TDRH
+         DoLitW ADC_TDRH
+         RET
 
 ;       ADC_TDRL    ( -- a )
 ; ADC Schmitt trigger disable register low (0x00)
@@ -1715,8 +1702,8 @@ ADCTDRH:
          .db     8
          .ascii  "ADC_TDRL"
 ADCTDRL:
-         CALL    DOLITEXIT
-         .dw ADC_TDRL
+         DoLitW ADC_TDRL
+         RET
 
 ;       ADC_HTRH    ( -- a )
 ; ADC high threshold register high (0x03)
@@ -1725,8 +1712,8 @@ ADCTDRL:
          .db     8
          .ascii  "ADC_HTRH"
 ADCHTRH:
-         CALL    DOLITEXIT
-         .dw ADC_HTRH
+         DoLitW ADC_HTRH
+         RET
 
 ;       ADC_HTRL    ( -- a )
 ; ADC high threshold register low (0xFF)
@@ -1735,8 +1722,8 @@ ADCHTRH:
          .db     8
          .ascii  "ADC_HTRL"
 ADCHTRL:
-         CALL    DOLITEXIT
-         .dw ADC_HTRL
+         DoLitW ADC_HTRL
+         RET
 
 ;       ADC_LTRH    ( -- a )
 ; ADC low threshold register high (0x00)
@@ -1745,8 +1732,8 @@ ADCHTRL:
          .db     8
          .ascii  "ADC_LTRH"
 ADCLTRH:
-         CALL    DOLITEXIT
-         .dw ADC_LTRH
+         DoLitW ADC_LTRH
+         RET
 
 ;       ADC_LTRL    ( -- a )
 ; ADC low threshold register low (0x00)
@@ -1755,8 +1742,8 @@ ADCLTRH:
          .db     8
          .ascii  "ADC_LTRL"
 ADCLTRL:
-         CALL    DOLITEXIT
-         .dw ADC_LTRL
+         DoLitW ADC_LTRL
+         RET
 
 ;       ADC_AWSRH    ( -- a )
 ; ADC analog watchdog status register high (0x00)
@@ -1765,8 +1752,8 @@ ADCLTRL:
          .db     9
          .ascii  "ADC_AWSRH"
 ADCAWSRH:
-         CALL    DOLITEXIT
-         .dw ADC_AWSRH
+         DoLitW ADC_AWSRH
+         RET
 
 ;       ADC_AWSRL    ( -- a )
 ; ADC analog watchdog status register low (0x00)
@@ -1775,8 +1762,8 @@ ADCAWSRH:
          .db     9
          .ascii  "ADC_AWSRL"
 ADCAWSRL:
-         CALL    DOLITEXIT
-         .dw ADC_AWSRL
+         DoLitW ADC_AWSRL
+         RET
 
 ;       ADC_AWCRH    ( -- a )
 ; ADC analog watchdog control register high (0x00)
@@ -1785,8 +1772,8 @@ ADCAWSRL:
          .db     9
          .ascii  "ADC_AWCRH"
 ADCAWCRH:
-         CALL    DOLITEXIT
-         .dw ADC_AWCRH
+         DoLitW ADC_AWCRH
+         RET
 
 ;       ADC_AWCRL    ( -- a )
 ; ADC analog watchdog control register low (0x00)
@@ -1795,8 +1782,8 @@ ADCAWCRH:
          .db     9
          .ascii  "ADC_AWCRL"
 ADCAWCRL:
-         CALL    DOLITEXIT
-         .dw ADC_AWCRL
+         DoLitW ADC_AWCRL
+         RET
 
         .endif
 
@@ -1811,8 +1798,8 @@ ADCAWCRL:
          .db     5
          .ascii  "CPU_A"
 CPUA:
-         CALL    DOLITEXIT
-         .dw CPU_A
+         DoLitW CPU_A
+         RET
 
 ;       CPU_PCE    ( -- a )
 ; Program counter extended (0x00)
@@ -1821,8 +1808,8 @@ CPUA:
          .db     7
          .ascii  "CPU_PCE"
 CPUPCE:
-         CALL    DOLITEXIT
-         .dw CPU_PCE
+         DoLitW CPU_PCE
+         RET
 
 ;       CPU_PCH    ( -- a )
 ; Program counter high (0x00)
@@ -1831,8 +1818,8 @@ CPUPCE:
          .db     7
          .ascii  "CPU_PCH"
 CPUPCH:
-         CALL    DOLITEXIT
-         .dw CPU_PCH
+         DoLitW CPU_PCH
+         RET
 
 ;       CPU_PCL    ( -- a )
 ; Program counter low (0x00)
@@ -1841,8 +1828,8 @@ CPUPCH:
          .db     7
          .ascii  "CPU_PCL"
 CPUPCL:
-         CALL    DOLITEXIT
-         .dw CPU_PCL
+         DoLitW CPU_PCL
+         RET
 
 ;       CPU_XH    ( -- a )
 ; X index register high (0x00)
@@ -1851,8 +1838,8 @@ CPUPCL:
          .db     6
          .ascii  "CPU_XH"
 CPUXH:
-         CALL    DOLITEXIT
-         .dw CPU_XH
+         DoLitW CPU_XH
+         RET
 
 ;       CPU_XL    ( -- a )
 ; X index register low (0x00)
@@ -1861,8 +1848,8 @@ CPUXH:
          .db     6
          .ascii  "CPU_XL"
 CPUXL:
-         CALL    DOLITEXIT
-         .dw CPU_XL
+         DoLitW CPU_XL
+         RET
 
 ;       CPU_YH    ( -- a )
 ; Y index register high (0x00)
@@ -1871,8 +1858,8 @@ CPUXL:
          .db     6
          .ascii  "CPU_YH"
 CPUYH:
-         CALL    DOLITEXIT
-         .dw CPU_YH
+         DoLitW CPU_YH
+         RET
 
 ;       CPU_YL    ( -- a )
 ; Y index register low (0x00)
@@ -1881,8 +1868,8 @@ CPUYH:
          .db     6
          .ascii  "CPU_YL"
 CPUYL:
-         CALL    DOLITEXIT
-         .dw CPU_YL
+         DoLitW CPU_YL
+         RET
 
 ;       CPU_SPH    ( -- a )
 ; Stack pointer high (0x03)
@@ -1891,8 +1878,8 @@ CPUYL:
          .db     7
          .ascii  "CPU_SPH"
 CPUSPH:
-         CALL    DOLITEXIT
-         .dw CPU_SPH
+         DoLitW CPU_SPH
+         RET
 
 ;       CPU_SPL    ( -- a )
 ; Stack pointer low (0xFF)
@@ -1901,8 +1888,8 @@ CPUSPH:
          .db     7
          .ascii  "CPU_SPL"
 CPUSPL:
-         CALL    DOLITEXIT
-         .dw CPU_SPL
+         DoLitW CPU_SPL
+         RET
 
 ;       CPU_CCR    ( -- a )
 ; Condition code register (0x28)
@@ -1911,8 +1898,8 @@ CPUSPL:
          .db     7
          .ascii  "CPU_CCR"
 CPUCCR:
-         CALL    DOLITEXIT
-         .dw CPU_CCR
+         DoLitW CPU_CCR
+         RET
 
         .endif
 
@@ -1924,11 +1911,11 @@ CPUCCR:
          .db     7
          .ascii  "CFG_GCR"
 CFGGCR:
-         CALL    DOLITEXIT
-         .dw CFG_GCR
+         DoLitW CFG_GCR
+         RET
 
 ; ***** ITC
-        .ifne  0
+        .ifne  HAS_CPNVM
 
 ;       ITC_SPR1    ( -- a )
 ; Interrupt software priority register 1 (0xFF)
@@ -1937,8 +1924,8 @@ CFGGCR:
          .db     8
          .ascii  "ITC_SPR1"
 ITCSPR1:
-         CALL    DOLITEXIT
-         .dw ITC_SPR1
+         DoLitW ITC_SPR1
+         RET
 
 ;       ITC_SPR2    ( -- a )
 ; Interrupt software priority register 2 (0xFF)
@@ -1947,8 +1934,8 @@ ITCSPR1:
          .db     8
          .ascii  "ITC_SPR2"
 ITCSPR2:
-         CALL    DOLITEXIT
-         .dw ITC_SPR2
+         DoLitW ITC_SPR2
+         RET
 
 ;       ITC_SPR3    ( -- a )
 ; Interrupt software priority register 3 (0xFF)
@@ -1957,8 +1944,8 @@ ITCSPR2:
          .db     8
          .ascii  "ITC_SPR3"
 ITCSPR3:
-         CALL    DOLITEXIT
-         .dw ITC_SPR3
+         DoLitW ITC_SPR3
+         RET
 
 ;       ITC_SPR4    ( -- a )
 ; Interrupt software priority register 4 (0xFF)
@@ -1967,8 +1954,8 @@ ITCSPR3:
          .db     8
          .ascii  "ITC_SPR4"
 ITCSPR4:
-         CALL    DOLITEXIT
-         .dw ITC_SPR4
+         DoLitW ITC_SPR4
+         RET
 
 ;       ITC_SPR5    ( -- a )
 ; Interrupt software priority register 5 (0xFF)
@@ -1977,8 +1964,8 @@ ITCSPR4:
          .db     8
          .ascii  "ITC_SPR5"
 ITCSPR5:
-         CALL    DOLITEXIT
-         .dw ITC_SPR5
+         DoLitW ITC_SPR5
+         RET
 
 ;       ITC_SPR6    ( -- a )
 ; Interrupt software priority register 6 (0xFF)
@@ -1987,8 +1974,8 @@ ITCSPR5:
          .db     8
          .ascii  "ITC_SPR6"
 ITCSPR6:
-         CALL    DOLITEXIT
-         .dw ITC_SPR6
+         DoLitW ITC_SPR6
+         RET
 
 ;       ITC_SPR7    ( -- a )
 ; Interrupt software priority register 7 (0xFF)
@@ -1997,8 +1984,8 @@ ITCSPR6:
          .db     8
          .ascii  "ITC_SPR7"
 ITCSPR7:
-         CALL    DOLITEXIT
-         .dw ITC_SPR7
+         DoLitW ITC_SPR7
+         RET
 
 ;       ITC_SPR8    ( -- a )
 ; Interrupt software priority register 8 (0xFF)
@@ -2007,8 +1994,8 @@ ITCSPR7:
          .db     8
          .ascii  "ITC_SPR8"
 ITCSPR8:
-         CALL    DOLITEXIT
-         .dw ITC_SPR8
+         DoLitW ITC_SPR8
+         RET
 
         .endif
 
@@ -2022,8 +2009,8 @@ ITCSPR8:
          .db     8
          .ascii  "SWIM_CSR"
 SWIMCSR:
-         CALL    DOLITEXIT
-         .dw SWIM_CSR
+         DoLitW SWIM_CSR
+         RET
 
         .endif
 
@@ -2037,8 +2024,8 @@ SWIMCSR:
          .db     8
          .ascii  "DM_BK1RE"
 DMBK1RE:
-         CALL    DOLITEXIT
-         .dw DM_BK1RE
+         DoLitW DM_BK1RE
+         RET
 
 ;       DM_BK1RH    ( -- a )
 ; DM breakpoint 1 register high byte (0xFF)
@@ -2047,8 +2034,8 @@ DMBK1RE:
          .db     8
          .ascii  "DM_BK1RH"
 DMBK1RH:
-         CALL    DOLITEXIT
-         .dw DM_BK1RH
+         DoLitW DM_BK1RH
+         RET
 
 ;       DM_BK1RL    ( -- a )
 ; DM breakpoint 1 register low byte (0xFF)
@@ -2057,8 +2044,8 @@ DMBK1RH:
          .db     8
          .ascii  "DM_BK1RL"
 DMBK1RL:
-         CALL    DOLITEXIT
-         .dw DM_BK1RL
+         DoLitW DM_BK1RL
+         RET
 
 ;       DM_BK2RE    ( -- a )
 ; DM breakpoint 2 register extended byte (0xFF)
@@ -2067,8 +2054,8 @@ DMBK1RL:
          .db     8
          .ascii  "DM_BK2RE"
 DMBK2RE:
-         CALL    DOLITEXIT
-         .dw DM_BK2RE
+         DoLitW DM_BK2RE
+         RET
 
 ;       DM_BK2RH    ( -- a )
 ; DM breakpoint 2 register high byte (0xFF)
@@ -2077,8 +2064,8 @@ DMBK2RE:
          .db     8
          .ascii  "DM_BK2RH"
 DMBK2RH:
-         CALL    DOLITEXIT
-         .dw DM_BK2RH
+         DoLitW DM_BK2RH
+         RET
 
 ;       DM_BK2RL    ( -- a )
 ; DM breakpoint 2 register low byte (0xFF)
@@ -2087,8 +2074,8 @@ DMBK2RH:
          .db     8
          .ascii  "DM_BK2RL"
 DMBK2RL:
-         CALL    DOLITEXIT
-         .dw DM_BK2RL
+         DoLitW DM_BK2RL
+         RET
 
 ;       DM_CR1    ( -- a )
 ; DM debug module control register 1 (0x00)
@@ -2097,8 +2084,8 @@ DMBK2RL:
          .db     6
          .ascii  "DM_CR1"
 DMCR1:
-         CALL    DOLITEXIT
-         .dw DM_CR1
+         DoLitW DM_CR1
+         RET
 
 ;       DM_CR2    ( -- a )
 ; DM debug module control register 2 (0x00)
@@ -2107,8 +2094,8 @@ DMCR1:
          .db     6
          .ascii  "DM_CR2"
 DMCR2:
-         CALL    DOLITEXIT
-         .dw DM_CR2
+         DoLitW DM_CR2
+         RET
 
 ;       DM_CSR1    ( -- a )
 ; DM debug module control/status register 1 (0x10)
@@ -2117,8 +2104,8 @@ DMCR2:
          .db     7
          .ascii  "DM_CSR1"
 DMCSR1:
-         CALL    DOLITEXIT
-         .dw DM_CSR1
+         DoLitW DM_CSR1
+         RET
 
 ;       DM_CSR2    ( -- a )
 ; DM debug module control/status register 2 (0x00)
@@ -2127,8 +2114,8 @@ DMCSR1:
          .db     7
          .ascii  "DM_CSR2"
 DMCSR2:
-         CALL    DOLITEXIT
-         .dw DM_CSR2
+         DoLitW DM_CSR2
+         RET
 
 ;       DM_ENFCTR    ( -- a )
 ; DM enable function register (0xFF)
@@ -2137,8 +2124,8 @@ DMCSR2:
          .db     9
          .ascii  "DM_ENFCTR"
 DMENFCTR:
-         CALL    DOLITEXIT
-         .dw DM_ENFCTR
+         DoLitW DM_ENFCTR
+         RET
 
         .endif
 

@@ -1,21 +1,4 @@
 #!/usr/bin/awk -f
-BEGIN {
-  print ";       DOLITEXIT   ( -- w )    ( TOS STM8: -- Y,Z,N )"
-  print ";       Push an inline literal and exit"
-  print ""
-  print "DOLITEXIT:"
-  print "        DECW    X"
-  print "        DECW    X"
-  print "        EXGW    X,Y ; Y is discarded"
-  print "        POPW    X"
-  print "        LDW     X,(X)"
-  print "        EXGW    X,Y"
-  print "        LDW     (X),Y"
-  print "        RET"
-  print ""
-
-
-}
 
 $1 ~ /^;\./ {
   sub(/;/,"") 
@@ -48,8 +31,8 @@ $1 ~ /_/  {
   print "         .db     " length(a)
   print "         .ascii  \"" a "\""
   print n ":"
-  print "         CALL    DOLITEXIT"
-  print "         .dw " a
+  print "         DoLitW " a
+  print "         RET"
   print ""
 
 }

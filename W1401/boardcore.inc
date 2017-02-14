@@ -17,6 +17,31 @@ BOARDINIT:
         MOV     PD_CR1,#0b00001110
         RET
 
+
+;===============================================================
+
+;      Dummy labels for PSIM interrupts declared in main.c
+
+        .ifne   PSIM-PORTA
+;       Dummy label for _EXTIA_IRQHandler
+_EXTI0_IRQHandler:
+        .endif
+
+        .ifne   PSIM-PORTB
+;       Dummy label for _EXTIB_IRQHandler
+_EXTI1_IRQHandler:
+        .endif
+
+        .ifne   PSIM-PORTC
+;       Dummy label for _EXTIC_IRQHandler
+_EXTI2_IRQHandler:
+        .endif
+
+        .ifne   PSIM-PORTD
+;       Dummy label for _EXTID_IRQHandler
+_EXTI3_IRQHandler:
+        .endif
+
 ;===============================================================
 
         .ifne   HAS_LED7SEG
@@ -25,21 +50,24 @@ BOARDINIT:
 
 LED_MPX:
 
-        BRES    PC_ODR,#7       ; Digit 1..... 
-        BRES    PC_ODR,#3       ; Digit .2.... 
+        BRES    PC_ODR,#7       ; Digit 1.....
+        BRES    PC_ODR,#3       ; Digit .2....
         BRES    PD_ODR,#3       ; Digit ..3...
-        BRES    PC_ODR,#4       ; Digit ...4.. 
-        BRES    PD_ODR,#2       ; Digit ....5. 
-        BRES    PC_ODR,#6       ; Digit .....6 
+        BRES    PC_ODR,#4       ; Digit ...4..
+        BRES    PD_ODR,#2       ; Digit ....5.
+        BRES    PC_ODR,#6       ; Digit .....6
+
+        LD      A,TICKCNT+1
+        AND     A,#HAS_LED7SEG
 
         ;CP      A,#0
         JRNE    1$
-        BSET    PC_ODR,#7       ; Digit 1..... 
+        BSET    PC_ODR,#7       ; Digit 1.....
         JRA     6$
 
 1$:     CP      A,#1
         JRNE    2$
-        BSET    PC_ODR,#3       ; Digit .2.... 
+        BSET    PC_ODR,#3       ; Digit .2....
         JRA     6$
 
 2$:     CP      A,#2
@@ -49,17 +77,17 @@ LED_MPX:
 
 3$:     CP      A,#3
         JRNE    4$
-        BSET    PC_ODR,#4       ; Digit ...4.. 
+        BSET    PC_ODR,#4       ; Digit ...4..
         JRA     6$
 
 4$:     CP      A,#4
         JRNE    5$
-        BSET    PD_ODR,#2       ; Digit ....5. 
+        BSET    PD_ODR,#2       ; Digit ....5.
         JRA     6$
 
 5$:     CP      A,#5
-        JRNE    LEDMPXEND 
-        BSET    PC_ODR,#6       ; Digit .....6 
+        JRNE    LEDMPXEND
+        BSET    PC_ODR,#6       ; Digit .....6
         ; fall through
 
 6$:     CLRW    X
@@ -89,7 +117,7 @@ LED_MPX:
         pop    A
         BSET   PD_CR2,#PNRX    ; enable PNRX external interrupt
 
-LEDMPXEND:        
+LEDMPXEND:
         RET
         .endif
 
@@ -106,7 +134,7 @@ LEDMPXEND:
 OUTSTOR:
         INCW    X
         LD      A,(X)
-        LD      OUTPUTS,A
+        LD      OUTPUTS+1,A
         INCW    X
         RRC     A
         BCCM    PA_ODR,#3       ; W1209 relay

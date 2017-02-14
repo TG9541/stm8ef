@@ -19,6 +19,31 @@ BOARDINIT:
 
 ;===============================================================
 
+;      Dummy labels for PSIM interrupts declared in main.c
+
+        .ifne   PSIM-PORTA
+;       Dummy label for _EXTIA_IRQHandler
+_EXTI0_IRQHandler:
+        .endif
+
+        .ifne   PSIM-PORTB
+;       Dummy label for _EXTIB_IRQHandler
+_EXTI1_IRQHandler:
+        .endif
+
+        .ifne   PSIM-PORTC
+;       Dummy label for _EXTIC_IRQHandler
+_EXTI2_IRQHandler:
+        .endif
+
+        .ifne   PSIM-PORTD
+;       Dummy label for _EXTID_IRQHandler
+_EXTI3_IRQHandler:
+        .endif
+
+
+;===============================================================
+
         .ifne   HAS_LED7SEG
 ;       LED_MPX driver ( -- )
 ;       Output bit pattern in A to 7S-LED digit hardware 
@@ -27,6 +52,9 @@ LED_MPX:
         BSET    PD_ODR,#4       ; Digit .3..
         BSET    PB_ODR,#5       ; Digit ..2.
         BSET    PB_ODR,#4       ; Digit ...1
+
+        LD      A,TICKCNT+1
+        AND     A,#HAS_LED7SEG
 
         JRNE    1$
         BRES    PD_ODR,#4       ; digit .3..
@@ -84,7 +112,7 @@ LED_MPX:
 OUTSTOR:
         INCW    X
         LD      A,(X)
-        LD      OUTPUTS,A
+        LD      OUTPUTS+1,A
         INCW    X
         RRC     A
         BCCM    PA_ODR,#3       ; W1209 relay
