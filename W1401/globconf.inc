@@ -1,15 +1,16 @@
 ; STM8EF Global Configuration File
-; Config for W1209 Thermostat Module
+; Config for W1401 Thermostat Module
 ; Clock: HSI (no crystal)
 
-        STM8S103F3       = 1
+        STM8S003F3       = 1
 
         HALF_DUPLEX      = 1    ; Use EMIT/?KEY in half duplex mode
         HAS_TXUART       = 0    ; No UART TXD, word TX!
         HAS_RXUART       = 0    ; No UART RXD, word ?RX
         HAS_TXSIM        = 1    ; Enable TxD via GPIO/TIM4, word TXGP!
-        PNTX             = 1    ; Port GPIO# for HAS_TXDSIM
         HAS_RXSIM        = 1    ; Enable RxD via GPIO/TIM4, word ?RXGP
+        PSIM     = PORTD        ; Port for UART simulation
+        PNTX             = 1    ; Port GPIO# for HAS_TXDSIM
         PNRX             = 1    ; Port GPIO# for HAS_RXDSIM
 
         EMIT_BG  = EMIT7S       ; 7S-LED background EMIT vector
@@ -42,5 +43,5 @@
         WORDS_EXTRACORE  = 1    ; Extra core words: =0 I
         WORDS_EXTRAMEM   = 1    ; Extra memory words: B! 2C@ 2C!
         WORDS_EXTRAEEPR  = 1    ; Extra EEPROM lock/unlock words: LOCK ULOCK ULOCKF LOCKF
-        WORDS_HWREG      = 0    ; Peripheral Register words
+        WORDS_HWREG      = 1    ; Peripheral Register words
 

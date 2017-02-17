@@ -1,4 +1,4 @@
-; XH-W1209 STM8S device dependent HW routines
+; XH-W1401 STM8S device dependent HW routines
 
 
 ;       BOARDINIT  ( -- )
@@ -60,7 +60,7 @@ LED_MPX:
         LD      A,TICKCNT+1
         AND     A,#HAS_LED7SEG
 
-        ;CP      A,#0
+        ; CC flags now correspond to A
         JRNE    1$
         BSET    PC_ODR,#7       ; Digit 1.....
         JRA     6$
@@ -113,8 +113,8 @@ LED_MPX:
         JRNE   7$
 
         BRES   PD_DDR,#PNRX
-        pop    A
-        pop    A
+        POP    A
+        POP    A
         BSET   PD_CR2,#PNRX    ; enable PNRX external interrupt
 
 LEDMPXEND:
@@ -137,7 +137,7 @@ OUTSTOR:
         LD      OUTPUTS+1,A
         INCW    X
         RRC     A
-        BCCM    PA_ODR,#3       ; W1209 relay
+        BCCM    PA_ODR,#3       ; W1401 relay
         RET
         .endif
 
