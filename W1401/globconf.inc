@@ -16,10 +16,10 @@
         EMIT_BG  = EMIT7S       ; 7S-LED background EMIT vector
         QKEY_BG  = QKEYB        ; Board keys background QKEY vector
 
-        HAS_LED7SEG      = 7    ; yes, 3 dig. 7-seg LED on module
-        HAS_KEYS         = 1    ; yes, 3 keys on module
-        HAS_OUTPUTS      = 0    ; yes, one LED
-        HAS_ADC          = 0    ; Analog input words
+        HAS_LED7SEG      = 7    ; yes, 6 dig. 7-seg LED on module
+        HAS_KEYS         = 4    ; yes, 4 keys on module
+        HAS_OUTPUTS      = 2    ; yes, relay, LED
+        HAS_ADC          = 1    ; Analog input words
 
         HAS_BACKGROUND   = 1    ; Background Forth task (TIM2 ticker)
         BG_TIM2_REL = 0x08FC    ; 1ms ticker for 7S-LED MPX
