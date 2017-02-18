@@ -3263,10 +3263,9 @@ UDOTR:
         CALLR   BDEDIGS
 RFROMTYPES:
         CALL    RFROM
-        LD      A,(1,X)
-        SUB     A,(3,X)         ;  OVER SUBS
-        LD      (1,X),A
-        CALL    SPACS
+        CALL    OVER
+        CALL    SUBB
+        CALLR   SPACS
         JRA     TYPES
 
 ;       TYPE    ( b u -- )
@@ -4972,7 +4971,7 @@ WORS1:  CALL    AT              ; @ sets Z and N
 
 ;       7-seg LED patterns, "70s chique"
 PAT7SM9:
-        .db     0x00, 0x40, 0x80, 0x52 ; ,,-,.,/ (',' as blank)
+        .db     0x00, 0x40, 0x80, 0x52 ; , - . / (',' as blank)
         .db     0x3F, 0x06, 0x5B, 0x4F ; 0,1,2,3
         .db     0x66, 0x6D, 0x7D, 0x07 ; 4,5,6,7
         .db     0x7F, 0x6F             ; 8,9
@@ -4995,7 +4994,7 @@ PAT7SAZ:
 EMIT7S:
         LD      A,(1,X)         ; c to A
 
-        CP      A,#32
+        CP      A,#' '
         JRNE    1$
 
         LDW     Y,#LED7FIRST
