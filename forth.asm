@@ -4997,7 +4997,7 @@ EMIT7S:
         CP      A,#' '
         JRNE    1$
 
-        LDW     Y,#LED7FIRST
+        LDW     Y,#LED7FIRST    ; DROP DOLIT LED7FIRST
         LDW     (X),Y
         DoLitC  (LED7LAST-LED7FIRST+1)
         JP    ERASE

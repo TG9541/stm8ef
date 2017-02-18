@@ -45,77 +45,95 @@ _EXTI3_IRQHandler:
 ;===============================================================
 
         .ifne   HAS_LED7SEG
+
+        RamByte TIMSERIAL       ; Timer: use PD1 for serial while > 0
+
 ;       LED_MPX driver ( -- )
 ;       Code called from ISR for LED MPX
 
 LED_MPX:
 
-        BRES    PC_ODR,#7       ; Digit 1.....
-        BRES    PC_ODR,#3       ; Digit .2....
+        LD      A,#0b00100111   ; Digits 16.42...
+        AND     A,PC_ODR
+        LD      PC_ODR,A
+        ;       PC_ODR,#7       ; Digit 1.....
+        ;       PC_ODR,#3       ; Digit .2....
         BRES    PD_ODR,#3       ; Digit ..3...
-        BRES    PC_ODR,#4       ; Digit ...4..
+        ;       PC_ODR,#4       ; Digit ...4..
         BRES    PD_ODR,#2       ; Digit ....5.
-        BRES    PC_ODR,#6       ; Digit .....6
+        ;       PC_ODR,#6       ; Digit .....6
 
         LD      A,TICKCNT+1
         AND     A,#HAS_LED7SEG
 
-        ; CC flags now correspond to A
-        JRNE    1$
-        BSET    PC_ODR,#7       ; Digit 1.....
-        JRA     6$
-
-1$:     CP      A,#1
-        JRNE    2$
-        BSET    PC_ODR,#3       ; Digit .2....
-        JRA     6$
-
-2$:     CP      A,#2
-        JRNE    3$
-        BSET    PD_ODR,#3       ; Digit ..3...
-        JRA     6$
-
-3$:     CP      A,#3
-        JRNE    4$
-        BSET    PC_ODR,#4       ; Digit ...4..
-        JRA     6$
-
-4$:     CP      A,#4
-        JRNE    5$
-        BSET    PD_ODR,#2       ; Digit ....5.
-        JRA     6$
-
-5$:     CP      A,#5
-        JRNE    LEDMPXEND
-        BSET    PC_ODR,#6       ; Digit .....6
-        ; fall through
-
-6$:     CLRW    X
+; 6$:
+        CLRW    X
         LD      XL,A
         LD      A,(LED7LAST-5,X)
         CPL     A
 
         TNZ     TIM4TCNT
+        JREQ    1$
+        MOV     TIMSERIAL,#0xFF
         JRNE    LEDMPXEND
+1$:     TNZ     TIMSERIAL
+        JREQ    LEDMPXGO
+        DEC     TIMSERIAL
+        JRA     LEDMPXEND
 
-        BRES   PD_CR2,#PNRX    ; disable PNRX external interrupt
-        push    A
+;       LED segment clock out while PD1/SWIM is not used as UART 
+LEDMPXGO:
+        BRES    PD_CR2,#PNRX    ; disable PNRX external interrupt
+        PUSH    A               ; LED pattern (2,SP)
         LD      A,#8
-        push    A
+        PUSH    A               ; set counter (1,SP)
 
-        LD     A,PD_ODR
-        BSET   PD_DDR,#PNRX
-7$:     SLL    (2,SP)
-        BCCM   PC_ODR,#5
-        BRES   PD_ODR,#PNRX
-        LD     PD_ODR,A
-        DEC    (1,SP)
-        JRNE   7$
+        LD      A,PD_ODR
+        BSET    PD_DDR,#PNRX
+7$:     SLL     (2,SP)
+        BCCM    PC_ODR,#5
+        BRES    PD_ODR,#PNRX    ; reset 74HC164 CLK (shared with PNRX)
+        LD      PD_ODR,A        ; 1 cycle CLK pulse w/ old PD_ODR value in A
+        DEC     (1,SP)
+        JRNE    7$
 
-        BRES   PD_DDR,#PNRX
-        POP    A
-        POP    A
-        BSET   PD_CR2,#PNRX    ; enable PNRX external interrupt
+        BRES    PD_DDR,#PNRX
+        BSET    PD_CR2,#PNRX    ; enable PNRX external interrupt
+        POP     A               ; remove counter
+        POP     A               ; remove LED pattern variable
+
+;       Set active LED digit
+        LD      A,XL            ; XL holds the digit number
+        TNZ     A
+
+        JRNE    1$
+        BSET    PC_ODR,#7       ; Digit 1.....
+        JRA     LEDMPXEND
+
+1$:     CP      A,#1
+        JRNE    2$
+        BSET    PC_ODR,#3       ; Digit .2....
+        JRA     LEDMPXEND
+
+2$:     CP      A,#2
+        JRNE    3$
+        BSET    PD_ODR,#3       ; Digit ..3...
+        JRA     LEDMPXEND
+
+3$:     CP      A,#3
+        JRNE    4$
+        BSET    PC_ODR,#4       ; Digit ...4..
+        JRA     LEDMPXEND
+
+4$:     CP      A,#4
+        JRNE    5$
+        BSET    PD_ODR,#2       ; Digit ....5.
+        JRA     LEDMPXEND
+
+5$:     CP      A,#5
+        JRNE    LEDMPXEND
+        BSET    PC_ODR,#6       ; Digit .....6
+        ; fall through
 
 LEDMPXEND:
         RET
