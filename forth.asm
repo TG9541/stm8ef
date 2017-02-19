@@ -168,6 +168,7 @@
 
         HAS_BACKGROUND   = 0    ; Background Forth task (TIM2 ticker)
         BG_TIM2_REL = 0x26DE    ; Reload value for TIM2 background ticker (default 0x26DE @ 5ms HSE)
+        BG_RUNMASK  =      0    ; BG task runs if "(BG_RUNMASK AND TICKCNT) equals 0"
         HAS_CPNVM        = 0    ; Can compile to Flash, always interpret to RAM
         HAS_DOES         = 0    ; DOES> extension
         HAS_DOLOOP       = 0    ; DO .. LOOP extension: DO LEAVE LOOP +LOOP
@@ -370,10 +371,17 @@ _TIM2_UO_IRQHandler:
         LDW     X,TICKCNT
         INCW    X
         LDW     TICKCNT,X
+        ; fall through
+
+        .ifne   BG_RUNMASK
+        LD      A,XL            ; Background task runs if "(BG_RUNMASK AND TICKCNT) equals 0"
+        AND     A,#BG_RUNMASK
+        JRNE    TIM2IRET
+        .endif
 
         LDW     Y,BGADDR        ; address of background task
         TNZW    Y               ; 0: background operation off
-        JREQ    1$
+        JREQ    TIM2IRET
 
         LDW     X,YTEMP         ; Save context
         PUSHW   X
@@ -412,7 +420,7 @@ _TIM2_UO_IRQHandler:
 
         POPW    X
         LDW     YTEMP,X
-1$:
+TIM2IRET:
         .endif
 
         IRET

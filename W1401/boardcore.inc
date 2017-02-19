@@ -90,7 +90,7 @@ LED_MPX:
 LEDMPXGO:
         BRES    PD_CR2,#PNRX    ; disable PNRX external interrupt
         PUSH    A               ; LED pattern (2,SP)
-        LD      A,#8
+        LD      A,#8            ; 8 clock pulses for 74HC164
         PUSH    A               ; set counter (1,SP)
 
         LD      A,PD_ODR
