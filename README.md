@@ -2,7 +2,7 @@
 
 This repository contains an extended version of [Dr. C.H. Ting's eForth for the *STM8S Discovery*](http://www.forth.org/svfig/kk/07-2010.html) that turns STM8S *Value Line* µCs boards into interactive Forth development environments. The [SDCC toolchain](http://sdcc.sourceforge.net/) makes mixing Forth, assembly, and C possible.
 
-The binary size of a basic interactive eForth system is below 3800 bytes (including the overhead from C startup code and interrupt table). A binary with a rich feature feature set (*Compile to Flash*, *Background Task*) and extenions (*DO-LEAVE-LOOP/+LOOP*, *CREATE-DOES>*, native bit set) uses less than 5000 bytes.  
+The binary size of a basic interactive eForth system is below 3800 bytes (including the overhead from C startup code and interrupt table). A binary with a rich feature feature set (*Compile to Flash*, *Background Task*) and extenions (*DO-LEAVE-LOOP/+LOOP*, *CREATE-DOES>*, native bit set) uses less than 5000 bytes.
 
 Please refer to the [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) for more information!
 
@@ -76,7 +76,8 @@ There is board support for some easily available "Chinese gadgets". For details,
 * `CORE` starting point for new boards, most extra feature words disabled
 * `SWIMCOM` communication through the SWIM interface for board exploration
 * `MINDEV` STM8S103F3 low cost "minimum development board"
-* `W1209` W1209 (also XH-W1209) low cost thermostat with LED display and half-duplex RS232 through sensor header (9600 baud)
+* `W1209` (also XH-W1209) low cost thermostat with 3 digit 7S-LED display and half-duplex RS232 through sensor header
+* `W1401` (also XH-W1401) thermostat with 3x2 digit 7S-LED display
 * `C0135` C0135 "Relay-4 Board" (can be used as a *Nano PLC*)
 
 Binaries for the listed targets are in the *Releases* section.
@@ -89,7 +90,7 @@ Currently, there is no support for the STM8S Discovery, since I don't have any S
 A plain STM8S003F3P6 eForth core with a very lean scripting oriented vocabulary (words like AHEAD or [COMPILE] not linked) with a minimal memory footprint (less than 4KiB Flash). CORE can be used as-is or as a starting point for configurations.
 
 * Selected features:
-  * 16MHz HSI 
+  * 16MHz HSI
   * compile to Flash
   * lightweight low-level interrupt handlers in Forth code
   * serial console with UART
@@ -190,6 +191,25 @@ Alternative solution: reconfigure to use PD1/SWIM (shared with 7S-LED segment `A
 
 Refer to the [wiki](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets#w1209).
 
+### 1401 Thermostat Module
+
+STM8S003F3P6-based thermostat board with 3x2 digit 7S-LED display, relay, LED, buzzer, 4 keys, and a 10k NTC sensor.
+A cheap board that, like the W1209, can be used for single input/single output control applications with a basic UI (e.g. timer, counter, dosing, monitoring).
+
+* Binary size below 5600 bytes
+* Selected feature set:
+  * Half-duplex serial interface through ICP header
+  * 7S-LED display and board keys (P7S E7S BKEY KEYB?)
+  * EEPROM access
+  * background task
+  * eForth extensions *CREATE-DOES>*, *DO-LEAVE-LOOP/+LOOP*
+  * I/O words
+  * bit addressing
+  * case-insensitive vocabulary
+* Binary size below 5600 bytes
+
+Run `make BOARD=W1401 flash` for building and flashing.
+
 ### Relay Board-4
 
 The board, sometimes labelled C0135 or "Relay Board-4" is a low cost PLC I/O expander with the following features:
@@ -210,7 +230,7 @@ Run `make BOARD=C0135 flash` for building and flashing.
 
 ## Steps for creating a new board variant
 
-For creating a variant, simply copy the base variant's folder (e.g. CORE). By running `make BOARD=<folderName> flash` will be compiled, and programmed to the target. Other STM8S variants can be supported by a putting a matching `stm8device.inc` file into the board folder. 
+For creating a variant, simply copy the base variant's folder (e.g. CORE). By running `make BOARD=<folderName> flash` will be compiled, and programmed to the target. Other STM8S variants can be supported by a putting a matching `stm8device.inc` file into the board folder.
 
 ## Disclaimer, copyright
 
