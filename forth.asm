@@ -300,6 +300,7 @@
 
         ; Null initialized core variables (growing down)
 
+        USRVAR  =    UPP+18     ; point to next free USR RAM location
         NVMCONTEXT = UPP+20     ; point to top of dictionary in Non Volatile Memory
         USRCONTEXT = UPP+22     ; start vocabulary search
         USRHLD  =    UPP+24     ; hold a pointer of output string
@@ -536,6 +537,13 @@ COLD:
         DoLitC  USRRAMINIT
         DoLitC  (ULAST-UZERO)
         CALL    CMOVE           ; initialize user area
+        
+        ; #16
+        LDW     Y,USRCP
+        LDW     USRVAR,Y
+        DoLitC  32
+        CALL    ALLOT
+        ; /#16
 
         .ifne   HAS_OUTPUTS
         CALL    ZERO
@@ -2605,6 +2613,22 @@ COUNT:
         CALL    SWAPP
         JP      CAT
 
+        ; #16
+;       THERE   ( -- a )      ( TOS STM8: -- A,Z,N )
+;       Return top of variable space.
+
+       .ifeq   BAREBONES
+        .dw     LINK
+
+        LINK =  .
+        .db     5
+        .ascii  "THERE"
+        .endif
+THERE: 
+        LDW     Y,USRVAR
+        JP     YSTOR
+        ; /#16
+
 ;       HERE    ( -- a )      ( TOS STM8: -- A,Z,N )
 ;       Return  top of  code dictionary.
 
@@ -4040,8 +4064,14 @@ TICK:
         .db     5
         .ascii  "ALLOT"
 ALLOT:
-        CALL    CPP
-        JP      PSTOR
+        ; #16
+        CALL    NVMQ
+        JREQ    1$              ; NVM: allocate space in RAM
+        CALL    THERE
+        JRA     2$
+        ; #16
+1$:     CALL    CPP
+2$:     JP      PSTOR
 
 ;       ,       ( w -- )
 ;       Compile an integer into
@@ -4751,8 +4781,16 @@ CREAT:
         .ascii  "VARIABLE"
 VARIA:
         CALL    CREAT
-        CALL    ZERO
-        JP      COMMA
+        ; #16
+        CALL    NVMQ
+        JREQ    1$              ; NVM: allocate space in RAM
+        CALL    THERE
+        DoLitC  2
+        CALL    ALLOT
+        JRA     2$
+        ; /#16
+1$:     CALL    ZERO
+2$:     JP      COMMA
         .endif
 
 ; Tools
