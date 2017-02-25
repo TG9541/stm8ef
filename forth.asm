@@ -4784,7 +4784,6 @@ VARIA:
         ; #16
         CALL    NVMQ
         JREQ    1$              ; NVM: allocate space in RAM
-        CALL    THERE
         DoLitC  2
         CALL    ALLOT
         JRA     2$
