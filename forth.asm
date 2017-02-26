@@ -300,6 +300,7 @@
 
         ; Null initialized core variables (growing down)
 
+        USRCTOP  =   UPP+16     ; point to the start of RAM dictionary
         USRVAR  =    UPP+18     ; point to next free USR RAM location
         NVMCONTEXT = UPP+20     ; point to top of dictionary in Non Volatile Memory
         USRCONTEXT = UPP+22     ; start vocabulary search
@@ -543,6 +544,8 @@ COLD:
         LDW     USRVAR,Y
         DoLitC  32
         CALL    ALLOT
+        LDW     Y,USRCP
+        LDW     USRCTOP,Y       ; store new CTOP
         ; /#16
 
         .ifne   HAS_OUTPUTS
@@ -590,6 +593,7 @@ TBOOT:
         .dw     BASEE           ; BASE
         .dw     INTER           ; 'EVAL
         .dw     DOTOK           ; 'PROMPT
+        COLDCTOP = .
         .dw     CTOP            ; CP in RAM
         COLDCONTEXT = .
         .dw     LASTN           ; USRLAST
@@ -1258,6 +1262,14 @@ PUSHJPYTEMP:
         DECW    X
         LDW     (X),Y
         JP      [YTEMP]
+
+
+;       doVARPTR core ( -- a )    ( TOS STM8: -- Y,Z,N )
+DOVARPTR:
+        POPW    Y               ; get return addr (pfa)
+        LDW     Y,(Y)
+        JRA     YSTOR
+
 
 ;       doVAR   ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Code for VARIABLE and CREATE.
@@ -4067,7 +4079,7 @@ ALLOT:
         ; #16
         CALL    NVMQ
         JREQ    1$              ; NVM: allocate space in RAM
-        CALL    THERE
+        DoLitW  USRVAR
         JRA     2$
         ; #16
 1$:     CALL    CPP
@@ -4560,7 +4572,12 @@ OVERT:
 
         LDW     NVMCONTEXT,Y    ; update NVMCONTEXT
 
-        DoLitC  CTOP            ; is there any vocabulary in RAM?
+        ; /#16
+        LDW     Y,USRCTOP
+        CALL    YSTOR
+        ;DoLitC  CTOP            ; is there any vocabulary in RAM?
+        ; /#16
+
         CALL    DUPP
         CALL    AT
         CALL    QBRAN
@@ -4784,6 +4801,11 @@ VARIA:
         ; #16
         CALL    NVMQ
         JREQ    1$              ; NVM: allocate space in RAM
+        DoLitW  DOVARPTR
+        CALL    HERECP
+        CALL    CELLM
+        CALL    STORE 
+        CALL    THERE
         DoLitC  2
         CALL    ALLOT
         JRA     2$
@@ -5286,6 +5308,10 @@ RAMM:
         JREQ    1$
         CALLR   SWAPCP          ; Switch back to mode RAM
 
+        ; #16
+        MOV     COLDCTOP,USRVAR
+        MOV     COLDCTOP+1,USRVAR+1
+        ; /#16
         MOV     COLDNVMCP,NVMCP ; Store NCM pointers for init in COLD
         MOV     COLDNVMCP+1,NVMCP+1
         MOV     COLDCONTEXT,NVMCONTEXT
