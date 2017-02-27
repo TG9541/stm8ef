@@ -301,10 +301,8 @@
 
         ; Null initialized core variables (growing down)
 
-        .ifeq   NO_VARIABLE
         USRCTOP  =   UPP+16     ; point to the start of RAM dictionary
         USRVAR  =    UPP+18     ; point to next free USR RAM location
-        .endif
         NVMCONTEXT = UPP+20     ; point to top of dictionary in Non Volatile Memory
         USRCONTEXT = UPP+22     ; start vocabulary search
         USRHLD  =    UPP+24     ; hold a pointer of output string
@@ -542,7 +540,7 @@ COLD:
         DoLitC  (ULAST-UZERO)
         CALL    CMOVE           ; initialize user area
 
-        .ifeq   NO_VARIABLE
+        .ifne  HAS_CPNVM
         EXGW    X,Y
         LDW     X,USRCP         ; reserve some space for user variable
         LDW     USRVAR,X
@@ -1268,7 +1266,7 @@ PUSHJPYTEMP:
         JP      [YTEMP]
 
 
-        .ifeq   NO_VARIABLE
+        .ifne  HAS_CPNVM
 ;       doVARPTR core ( -- a )    ( TOS STM8: -- Y,Z,N )
 DOVARPTR:
         POPW    Y               ; get return addr (pfa)
@@ -1424,6 +1422,20 @@ OVER:
         LDW     Y,(2,Y)
         JRA     YSTOR
 
+;       UM+     ( u u -- udsum )
+;       Add two unsigned single
+;       and return a double sum.
+
+        .dw     LINK
+        LINK =  .
+        .db     3
+        .ascii  "UM+"
+UPLUS:
+        CALLR   PLUS
+        CLR     A
+        RLC     A
+        JP      ASTOR
+
 ;       +       ( w w -- sum ) ( TOS STM8: -- Y,Z,N )
 ;       Add top two items.
 
@@ -1531,29 +1543,6 @@ SUBB:
         CALL    NEGAT           ; (15 cy)
         JRA     PLUS            ; 25 cy (15+10)
         .endif
-
-;       UM+     ( u u -- udsum )
-;       Add two unsigned single
-;       and return a double sum.
-
-        .dw     LINK
-        LINK =  .
-        .db     3
-        .ascii  "UM+"
-UPLUS:
-        LD      A,#1
-        LDW     Y,X
-        LDW     Y,(2,Y)
-        LDW     YTEMP,Y
-        LDW     Y,X
-        LDW     Y,(Y)
-        ADDW    Y,YTEMP
-        LDW     (2,X),Y
-        JRC     UPL1
-        CLR     A
-UPL1:   LD      (1,X),A
-        CLR     (X)
-        RET
 
 ;       SP!     ( a -- )
 ;       Set data stack pointer.
@@ -1685,10 +1674,10 @@ HLD:
         LINK =  .
         .db     5
         .ascii  "'EMIT"
-        .endif
 TEMIT:
         LD      A,#(USREMIT)
         JRA     ASTOR
+        .endif
 
 
 ;       '?KEY   ( -- a )     ( TOS STM8: -- A,Z,N )
@@ -1699,10 +1688,10 @@ TEMIT:
         LINK =  .
         .db     5
         .ascii  "'?KEY"
-        .endif
 TQKEY:
         LD      A,#(USRQKEY)
         JRA     ASTOR
+        .endif
 
 
 ;       LAST    ( -- a )        ( TOS STM8: -- Y,Z,N )
@@ -1881,6 +1870,7 @@ PACEE:
         .ascii  "HAND"
 HANDD:
         LDW     Y,#(DOTOK)
+YPROMPT:
         LDW     USRPROMPT,Y
         RET
 
@@ -1894,8 +1884,7 @@ HANDD:
         .ascii  "FILE"
 FILEE:
         LDW     Y,#(PACEE)
-        LDW     USRPROMPT,Y
-        RET
+        JRA     YPROMPT
         .endif
 
 
@@ -2370,6 +2359,7 @@ STASL:
 ; Miscellaneous
 
 
+        .ifeq   BAREBONES
 ;       EXG      ( n -- n )      ( TOS STM8: -- Y,Z,N )
 ;       Exchange high with low byte of n.
 
@@ -2382,6 +2372,7 @@ EXG:
         CALLR   DOXCODE
         SWAPW   X
         RET
+        .endif
 
 ;       2/      ( n -- n )      ( TOS STM8: -- Y,Z,N )
 ;       Multiply tos by 2.
@@ -2633,13 +2624,11 @@ COUNT:
 ;       HERE    ( -- a )      ( TOS STM8: -- A,Z,N )
 ;       Return  top of  code dictionary.
 
-        .ifeq   BAREBONES
         .dw     LINK
 
         LINK =  .
         .db     4
         .ascii  "HERE"
-        .endif
 HERE:
 
         .ifne  HAS_CPNVM
@@ -4567,13 +4556,8 @@ OVERT:
         JREQ    1$
 
         LDW     NVMCONTEXT,Y    ; update NVMCONTEXT
-
-        .ifeq   NO_VARIABLE
         LDW     Y,USRCTOP
         CALL    YSTOR
-        .else
-        DoLitC  CTOP            ; is there any vocabulary in RAM?
-        .endif
 
         CALL    DUPP
         CALL    AT
@@ -4789,7 +4773,7 @@ VARIA:
         .ascii  "ALLOT"
 ALLOT:
         CALL    CPP
-        .ifeq   NO_VARIABLE*HAS_CPNVM
+        .ifne   HAS_CPNVM
         CALL    NVMQ
         JREQ    1$              ; NVM: allocate space in RAM
         LD      A,#(USRVAR)
@@ -5291,10 +5275,8 @@ RAMM:
         JREQ    1$
         CALLR   SWAPCP          ; Switch back to mode RAM
 
-        .ifeq   NO_VARIABLE
         MOV     COLDCTOP,USRVAR
         MOV     COLDCTOP+1,USRVAR+1
-        .endif
         MOV     COLDNVMCP,NVMCP ; Store NCM pointers for init in COLD
         MOV     COLDNVMCP+1,NVMCP+1
         MOV     COLDCONTEXT,NVMCONTEXT
