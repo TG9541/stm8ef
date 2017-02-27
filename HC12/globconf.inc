@@ -8,4 +8,3 @@
         WORDS_EXTRACORE  = 1    ; Extra core words: =0 I
         TERM_LINUX       = 0
 		HAS_DOLOOP       = 1
-
