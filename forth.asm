@@ -177,6 +177,7 @@
         CASEINSENSITIVE  = 0    ; Case insensitive dictionary search
         SPEEDOVERSIZE    = 0    ; Speed-over-size in core words ROT - = < -1 0 1
         BAREBONES        = 0    ; Remove or unlink some more: hi HERE .R U.R SPACES @EXECUTE AHEAD CALL, EXIT COMPILE [COMPILE] DEPTH
+        NO_VARIABLE      = 0    ; Disable VARIABLE and feature "VARIABLE in Flash allocates RAM"
 
         WORDS_LINKINTER  = 0    ; Link interpreter words: ACCEPT QUERY TAP kTAP hi 'BOOT tmp >IN 'TIB #TIB eval CONTEXT pars PARSE NUMBER? DIGIT? WORD TOKEN NAME> SAME? find ABORT aborq $INTERPRET INTER? .OK ?STACK EVAL PRESET QUIT $COMPILE
         WORDS_LINKCOMP   = 0    ; Link compiler words: cp last OVERT $"| ."| $,n
@@ -300,8 +301,10 @@
 
         ; Null initialized core variables (growing down)
 
+        .ifeq   NO_VARIABLE
         USRCTOP  =   UPP+16     ; point to the start of RAM dictionary
         USRVAR  =    UPP+18     ; point to next free USR RAM location
+        .endif
         NVMCONTEXT = UPP+20     ; point to top of dictionary in Non Volatile Memory
         USRCONTEXT = UPP+22     ; start vocabulary search
         USRHLD  =    UPP+24     ; hold a pointer of output string
@@ -538,15 +541,16 @@ COLD:
         DoLitC  USRRAMINIT
         DoLitC  (ULAST-UZERO)
         CALL    CMOVE           ; initialize user area
-        
-        ; #16
-        LDW     Y,USRCP
-        LDW     USRVAR,Y
-        DoLitC  32
-        CALL    ALLOT
-        LDW     Y,USRCP
-        LDW     USRCTOP,Y       ; store new CTOP
-        ; /#16
+
+        .ifeq   NO_VARIABLE
+        EXGW    X,Y
+        LDW     X,USRCP         ; reserve some space for user variable
+        LDW     USRVAR,X
+        ADDW    X,#32
+        LDW     USRCP,X
+        LDW     USRCTOP,X       ; store new CTOP
+        EXGW    X,Y
+        .endif
 
         .ifne   HAS_OUTPUTS
         CALL    ZERO
@@ -1264,12 +1268,13 @@ PUSHJPYTEMP:
         JP      [YTEMP]
 
 
+        .ifeq   NO_VARIABLE
 ;       doVARPTR core ( -- a )    ( TOS STM8: -- Y,Z,N )
 DOVARPTR:
         POPW    Y               ; get return addr (pfa)
         LDW     Y,(Y)
         JRA     YSTOR
-
+        .endif
 
 ;       doVAR   ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Code for VARIABLE and CREATE.
@@ -1827,7 +1832,7 @@ AYSTOR:
         .ascii  "TIM"
 TIMM:
         LDW     Y,TICKCNT
-        JP      AYSTOR
+        JRA     AYSTOR
 
 
 ;       BG      ( -- a)     ( TOS STM8: -- Y,Z,N )
@@ -2121,7 +2126,7 @@ WITHI:
         CALL    TOR
         CALL    SUBB
         CALL    RFROM
-        JP      ULESS
+        JRA     ULESS
 
 ; Divide
 
@@ -2257,46 +2262,46 @@ SLASH:
         .db     3
         .ascii  "UM*"
 UMSTA:                          ; stack have 4 bytes u1=a,b u2=c,d
-        LD      A,(2,X) ; b
+        LD      A,(2,X)         ; b
         LD      YL,A
-        LD      A,(X)   ; d
+        LD      A,(X)           ; d
         MUL     Y,A
-        PUSHW   Y       ; PROD1 temp storage
-        LD      A,(3,X) ; a
+        PUSHW   Y               ; PROD1 temp storage
+        LD      A,(3,X)         ; a
         LD      YL,A
-        LD      A,(X)   ; d
+        LD      A,(X)           ; d
         MUL     Y,A
-        PUSHW   Y       ; PROD2 temp storage
-        LD      A,(2,X) ; b
+        PUSHW   Y               ; PROD2 temp storage
+        LD      A,(2,X)         ; b
         LD      YL,A
-        LD      A,(1,X) ; c
+        LD      A,(1,X)         ; c
         MUL     Y,A
-        PUSHW   Y       ; PROD3,CARRY temp storage
-        LD      A,(3,X) ; a
+        PUSHW   Y               ; PROD3,CARRY temp storage
+        LD      A,(3,X)         ; a
         LD      YL,A
-        LD      A,(1,X) ; c
-        MUL     Y,A     ; least signifiant product
+        LD      A,(1,X)         ; c
+        MUL     Y,A             ; least signifiant product
         CLR     A
         RRWA    Y
-        LD      (3,X),A ; store least significant byte
-        ADDW    Y,(1,SP); PROD3
+        LD      (3,X),A         ; store least significant byte
+        ADDW    Y,(1,SP)        ; PROD3
         CLR     A
-        ADC     A,#0    ; save carry
-        LD      (1,SP),A; CARRY
-        ADDW    Y,(3,SP); PROD2
-        LD      A,(1,SP); CARRY
-        ADC     A,#0    ; add 2nd carry
-        LD      (1,SP),A; CARRY
+        ADC     A,#0            ; save carry
+        LD      (1,SP),A        ; CARRY
+        ADDW    Y,(3,SP)        ; PROD2
+        LD      A,(1,SP)        ; CARRY
+        ADC     A,#0            ; add 2nd carry
+        LD      (1,SP),A        ; CARRY
         CLR     A
         RRWA    Y
-        LD      (2,X),A ; 2nd product byte
-        ADDW    Y,(5,SP); PROD1
+        LD      (2,X),A         ; 2nd product byte
+        ADDW    Y,(5,SP)        ; PROD1
         RRWA    Y
-        LD      (1,X),A ; 3rd product byte
+        LD      (1,X),A         ; 3rd product byte
         RRWA    Y               ; 4th product byte now in A
-        ADC     A,(1,SP); CARRY
+        ADC     A,(1,SP)        ; CARRY
         LD      (X),A
-        ADDW    SP,#6   ; drop temp storage
+        ADDW    SP,#6           ; drop temp storage
         RET
 
 ;       *       ( n n -- n )    ( TOS STM8: -- Y,Z,N )
@@ -2508,8 +2513,8 @@ NEGAT:
         .ascii  "ABS"
 ABSS:
         CALLR   DOXCODE
-        JRPL    1$      ;positive?
-        NEGW    X       ;else negate
+        JRPL    1$              ; positive?
+        NEGW    X               ; else negate
 1$:     RET
 
         .ifne   WORDS_EXTRACORE
@@ -2526,7 +2531,7 @@ ZEQUAL:
         JREQ    1$
         CLRW    X
         RET
-1$:     CPLW    X               ;else -1
+1$:     CPLW    X               ; else -1
         RET
 
 ;       PICK    ( ... +n -- ... w )      ( TOS STM8: -- Y,Z,N )
@@ -2624,22 +2629,6 @@ COUNT:
         CALL    ONEP
         CALL    SWAPP
         JP      CAT
-
-        ; #16
-;       THERE   ( -- a )      ( TOS STM8: -- A,Z,N )
-;       Return top of variable space.
-
-       .ifeq   BAREBONES
-        .dw     LINK
-
-        LINK =  .
-        .db     5
-        .ascii  "THERE"
-        .endif
-THERE: 
-        LDW     Y,USRVAR
-        JP     YSTOR
-        ; /#16
 
 ;       HERE    ( -- a )      ( TOS STM8: -- A,Z,N )
 ;       Return  top of  code dictionary.
@@ -2855,13 +2844,14 @@ BDIGS:
         .ascii  "HOLD"
         .endif
 HOLD:
-        LDW     Y,USRHLD
-        DECW    Y
-        LDW     USRHLD,Y
         LD      A,(1,X)
-        LD      (Y),A
+        EXGW    X,Y
+        LDW     X,USRHLD
+        DECW    X
+        LDW     USRHLD,X
+        LD      (X),A
+        EXGW    X,Y
         JP      DROP
-
 
 ;       #       ( u -- u )    ( TOS STM8: -- Y,Z,N )
 ;       Extract one digit from u and
@@ -3479,8 +3469,6 @@ PARSEND:
 SUBPARS:
         JP      SUBB
 
-
-
 ;       PARSE   ( c -- b u ; <string> )
 ;       Scan input stream and return
 ;       counted string delimited by c.
@@ -3877,7 +3865,7 @@ QUERY:
         .ascii  "ABORT"
         .endif
 ABORT:
-        CALL    PRESE
+        CALLR   PRESE
         JP      QUIT
 
 ;       abort"  ( f -- )
@@ -3903,6 +3891,23 @@ ABOR1:  CALL    SPACE
         JRA     ABORT   ;pass error string
 ABOR2:  CALL    DOSTR
         JP      DROP
+
+;       PRESET  ( -- )
+;       Reset data stack pointer and
+;       terminal input buffer.
+
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+
+        LINK =  .
+        .db     6
+        .ascii  "PRESET"
+        .endif
+PRESE:
+        CLR     USRNTIB
+        CLR     USRNTIB+1
+        LDW     X,#SPP          ; initialize data stack
+        RET
 
 ; The text interpreter
 
@@ -4014,23 +4019,6 @@ EVAL2:
         INCW    X
         JP      [USRPROMPT]     ; DOTOK or PACE
 
-;       PRESET  ( -- )
-;       Reset data stack pointer and
-;       terminal input buffer.
-
-        .ifne   WORDS_LINKINTER
-        .dw     LINK
-
-        LINK =  .
-        .db     6
-        .ascii  "PRESET"
-        .endif
-PRESE:
-        CLR     USRNTIB
-        CLR     USRNTIB+1
-        LDW     X,#SPP          ; initialize data stack
-        RET
-
 ;       QUIT    ( -- )
 ;       Reset return stack pointer
 ;       and start text interpreter.
@@ -4045,7 +4033,7 @@ PRESE:
 QUIT:
         LDW     Y,#RPP          ; initialize return stack
         LDW     SP,Y
-QUIT1:  CALL    LBRAC           ; start interpretation
+QUIT1:  CALLR   LBRAC           ; start interpretation
 QUIT2:  CALL    QUERY           ; get input
         CALLR   EVAL
         JRA     QUIT2           ; continue till error
@@ -4068,23 +4056,6 @@ TICK:
         .dw     ABOR1
         RET     ;yes, push code address
 
-;       Allocate n bytes to code DICTIONARY.
-
-        .dw     LINK
-
-        LINK =  .
-        .db     5
-        .ascii  "ALLOT"
-ALLOT:
-        ; #16
-        CALL    NVMQ
-        JREQ    1$              ; NVM: allocate space in RAM
-        DoLitW  USRVAR
-        JRA     2$
-        ; #16
-1$:     CALL    CPP
-2$:     JP      PSTOR
-
 ;       ,       ( w -- )
 ;       Compile an integer into
 ;       code dictionary.
@@ -4095,11 +4066,8 @@ ALLOT:
         .db     1
         .ascii  ","
 COMMA:
-        CALL    HERECP                    ; directly write to CP
-        CALL    DUPP
-        CALL    CELLP   ;cell boundary
-        CALL    CPP
-        CALL    STORE
+        DoLitC  2
+        CALLR   OMMA
         JP      STORE
 
 ;       C,      ( c -- )
@@ -4111,12 +4079,67 @@ COMMA:
         .db     2
         .ascii  "C,"
 CCOMMA:
-        CALL    HERECP                    ; directly write to CP
-        CALL    DUPP
-        CALL    ONEP
-        CALL    CPP
-        CALL    STORE
+        CALL    ONE
+        CALLR   OMMA
         JP      CSTOR
+
+;       common part of COMMA and CCOMMA
+OMMA:
+        CALL    HERECP
+        CALL    SWAPP
+        CALL    CPP
+        JP      PSTOR
+
+;       CALL,   ( ca -- )
+;       Compile a subroutine call.
+
+        .ifeq   BAREBONES
+        .dw     LINK
+
+        LINK =  .
+        .db     5
+        .ascii  "CALL,"
+        .endif
+JSRC:
+        CALL    DUPP
+        CALL    HERE
+        CALL    CELLP
+        CALL    SUBB            ; Y now contains the relative call address
+        LD      A,YH
+        INC     A
+        JRNE    1$              ; YH must be 0XFF
+        LD      A,YL
+        TNZ     A
+        JRPL    1$              ; YL must be negative
+        LD      A,#CALLR_OPC
+        LD      YH,A            ; replace YH with opcode CALLR
+        LDW     (2,X),Y
+        JRA     2$
+1$:
+        CALL    CCOMMALIT
+        .db     CALL_OPC         ; opcode CALL
+2$:
+        CALL    DROP             ; drop relative address
+        JRA     COMMA            ; store absolute address or "CALLR reladdr"
+
+;       LITERAL ( w -- )
+;       Compile tos to dictionary
+;       as an integer literal.
+
+        .dw     LINK
+
+        LINK =  .
+        .db     (IMEDD+7)
+        .ascii  "LITERAL"
+LITER:
+        .ifne  USE_CALLDOLIT
+        CALLR   COMPI
+        CALL    DOLIT
+        .else
+        CALL    CCOMMALIT
+        .db     DOLIT_OPC
+        .endif
+        JRA      COMMA
 
 ;       [COMPILE]       ( -- ; <string> )
 ;       Compile next immediate
@@ -4130,8 +4153,8 @@ CCOMMA:
         .ascii  "[COMPILE]"
         .endif
 BCOMP:
-        CALL    TICK
-        JP      JSRC
+        CALLR   TICK
+        JRA     JSRC
 
 ;       COMPILE ( -- )
 ;       Compile next jsr in
@@ -4149,29 +4172,10 @@ COMPI:
         CALL    ONEP
         CALL    DUPP
         CALL    AT
-        CALL    JSRC            ; compile subroutine
+        CALLR   JSRC            ; compile subroutine
         CALL    CELLP
-        CALL    TOR       ; this was a JP - a serious bug that took a while to find
+        CALL    TOR             ; this was a JP - a serious bug that took a while to find
         RET
-
-;       LITERAL ( w -- )
-;       Compile tos to dictionary
-;       as an integer literal.
-
-        .dw     LINK
-
-        LINK =  .
-        .db     (IMEDD+7)
-        .ascii  "LITERAL"
-LITER:
-        .ifne  USE_CALLDOLIT
-        CALL    COMPI
-        CALL    DOLIT
-        .else
-        CALL    CCOMMALIT
-        .db     DOLIT_OPC
-        .endif
-        JP      COMMA
 
 ;       $,"     ( -- )
 ;       Compile a literal string
@@ -4183,13 +4187,13 @@ LITER:
         .db     3
         .ascii  '$,"'
 STRCQ:
-        DoLitC  34      ; "
+        DoLitC  34              ; "
         CALL    PARSE
         CALL    HERECP
-        CALL    PACKS   ;string to code dictionary
+        CALL    PACKS           ; string to code dictionary
 CNTPCPPSTORE:
         CALL    COUNT
-        CALL    PLUS    ;calculate aligned end of string
+        CALL    PLUS            ; calculate aligned end of string
         CALL    CPP
         JP      STORE
 
@@ -4205,7 +4209,7 @@ CNTPCPPSTORE:
         .db     (IMEDD+3)
         .ascii  "FOR"
 FOR:
-        CALL    COMPI
+        CALLR   COMPI
         CALL    TOR
         JP      HERE
 
@@ -4218,7 +4222,7 @@ FOR:
         .db     (IMEDD+4)
         .ascii  "NEXT"
 NEXT:
-        CALL    COMPI
+        CALLR   COMPI
         CALL    DONXT
         JP      COMMA
 
@@ -4235,13 +4239,12 @@ NEXT:
 DOO:
         CALL    CCOMMALIT
         .db     DOLIT_OPC       ; LOOP address cell for usage by LEAVE at runtime
-        CALL    ZERO            ; changes here require an offset adjustment in PLOOP
-        CALL    COMMA           ; this placeholder cell gets patched at compile time
-        CALL    COMPI
+        CALL    ZEROCOMMA       ; changes here require an offset adjustment in PLOOP
+        CALLR   COMPI
         CALL    TOR
-        CALL    COMPI
+        CALLR   COMPI
         CALL    SWAPP
-        CALL    COMPI
+        CALLR   COMPI
         CALL    TOR
         JRA     FOR
 
@@ -4328,9 +4331,7 @@ AGAIN:
 IFF:
         CALL    COMPI
         CALL    QBRAN
-        CALL    HERE
-        CALL    ZERO
-        JP      COMMA
+        JRA     HERE0COMMA
 
 ;       THEN    ( A -- )
 ;       Terminate a conditional branch structure.
@@ -4356,9 +4357,7 @@ THENN:
 ELSEE:
         CALLR   AHEAD
         CALLR   SWAPLOC
-        CALL    HERE
-        CALLR   SWAPLOC
-        JP      STORE
+        JRA     THENN
 
 ;       AHEAD   ( -- A )
 ;       Compile a forward branch instruction.
@@ -4373,11 +4372,11 @@ ELSEE:
 AHEAD:
         CALL    CCOMMALIT
         .db     BRAN_OPC
+HERE0COMMA:
         CALL    HERE
+ZEROCOMMA:
         CALL    ZERO
         JP      COMMA
-
-
 
 ;       WHILE   ( a -- A a )
 ;       Conditional branch out of a BEGIN-WHILE-REPEAT loop.
@@ -4402,9 +4401,7 @@ SWAPLOC:
         .ascii  "REPEAT"
 REPEA:
         CALLR   AGAIN
-        CALL    HERE
-        CALLR   SWAPLOC
-        JP      STORE
+        JRA     THENN
 
 ;       AFT     ( a -- a A )
 ;       Jump to THEN in a FOR-AFT-THEN-NEXT loop the first time through.
@@ -4416,7 +4413,7 @@ REPEA:
         .ascii  "AFT"
 AFT:
         CALL    DROP
-        CALL    AHEAD
+        CALLR   AHEAD
         CALL    HERE
         JRA     SWAPLOC
 
@@ -4478,14 +4475,14 @@ DOTQ:
         .endif
 UNIQU:
         CALL    DUPP
-        CALL    NAMEQ   ;?name exists
+        CALL    NAMEQ           ; ?name exists
         CALL    QBRAN
         .dw     UNIQ1
-        CALL    DOTQP   ;redef are OK
+        CALL    DOTQP           ; redef are OK
         .db     7
         .ascii  " reDef "
         CALL    OVER
-        CALL    COUNTTYPES   ;just in case
+        CALL    COUNTTYPES      ; just in case
 UNIQ1:  JP      DROP
 
 ;       $,n     ( na -- )
@@ -4503,21 +4500,20 @@ SNAME:
         CALL    DUPPCAT         ; ?null input
         CALL    QBRAN
         .dw     PNAM1
-        CALL    UNIQU   ;?redefinition
+        CALL    UNIQU           ; ?redefinition
         CALL    DUPP
         CALL    CNTPCPPSTORE
         CALL    DUPP
         CALL    LAST
-        CALL    STORE   ;save na for vocabulary link
-        CALL    CELLM   ;link address
+        CALL    STORE           ; save na for vocabulary link
+        CALL    CELLM           ; link address
         CALL    CNTXT
         CALL    AT
         CALL    SWAPP
-        CALL    STORE
-        RET     ;save code pointer
+        JP      STORE           ; save code pointer
 PNAM1:  CALL    STRQP
         .db     5
-        .ascii  " name" ;null input
+        .ascii  " name"         ; null input
         JP      ABOR1
 
 ; FORTH compiler
@@ -4572,21 +4568,23 @@ OVERT:
 
         LDW     NVMCONTEXT,Y    ; update NVMCONTEXT
 
-        ; /#16
+        .ifeq   NO_VARIABLE
         LDW     Y,USRCTOP
         CALL    YSTOR
-        ;DoLitC  CTOP            ; is there any vocabulary in RAM?
-        ; /#16
+        .else
+        DoLitC  CTOP            ; is there any vocabulary in RAM?
+        .endif
 
         CALL    DUPP
         CALL    AT
         CALL    QBRAN
         .dw     2$
-        JP      STORE           ; link dictionary in RAM
+        JRA     OVSTORE         ; link dictionary in RAM
 2$:
         CALL    DROP
 1$:
         DoLitC  USRCONTEXT
+OVSTORE:
         JP      STORE           ; or update USRCONTEXT
 
         .else
@@ -4608,53 +4606,7 @@ SEMIS:
         CALL    CCOMMALIT
         .db     EXIT_OPC
         CALL    LBRAC
-        JP      OVERT
-
-;       ]       ( -- )
-;       Start compiling words in
-;       input stream.
-
-        .dw     LINK
-
-        LINK =  .
-        .db     1
-        .ascii  "]"
-RBRAC:
-        LDW     Y,#SCOMP
-        LDW     USREVAL,Y
-        RET
-
-;       CALL,   ( ca -- )
-;       Compile a subroutine call.
-
-        .ifeq   BAREBONES
-        .dw     LINK
-
-        LINK =  .
-        .db     5
-        .ascii  "CALL,"
-        .endif
-JSRC:
-        CALL    DUPP
-        CALL    HERE
-        CALL    CELLP
-        CALL    SUBB
-        LD      A,YH
-        INC     A
-        JRNE    1$
-        LD      A,YL
-        TNZ     A
-        JRPL    1$
-        LD      A,#CALLR_OPC
-        LD      YH,A
-        LDW     (2,X),Y
-        JRA     2$
-1$:
-        CALL    CCOMMALIT
-        .db     CALL_OPC         ; opcode CALL
-2$:
-        CALL    DROP
-        JP      COMMA
+        JRA     OVERT
 
 
 ;       :       ( -- ; <string> )
@@ -4667,7 +4619,7 @@ JSRC:
         .db     1
         .ascii  ":"
 COLON:
-        CALL    RBRAC           ; do "]" first to set HERE to compile state
+        CALLR   RBRAC           ; do "]" first to set HERE to compile state
         CALL    TOKEN
         JP      SNAME
 
@@ -4685,6 +4637,20 @@ IMMED:
         LD      A,[USRLAST]
         OR      A,#IMEDD
         LD      [USRLAST],A
+        RET
+
+;       ]       ( -- )
+;       Start compiling words in
+;       input stream.
+
+        .dw     LINK
+
+        LINK =  .
+        .db     1
+        .ascii  "]"
+RBRAC:
+        LDW     Y,#SCOMP
+        LDW     USREVAL,Y
         RET
 
 
@@ -4765,10 +4731,9 @@ DODOES:
         .ascii  "CREATE"
 CREAT:
         .ifne   HAS_CPNVM
-        CALL    TEVAL
-        CALL    AT
-        CALL    TOR             ; save TEVAL
-        CALL    RBRAC           ; "]" make HERE return CP even in INTERPRETER mode
+        LDW     Y,USREVAL
+        PUSHW   Y               ; save TEVAL
+        CALLR   RBRAC           ; "]" make HERE return CP even in INTERPRETER mode
         .endif
 
         CALL    TOKEN
@@ -4776,9 +4741,8 @@ CREAT:
         CALL    OVERT
 
         .ifne   HAS_CPNVM
-        CALL    RFROM
-        CALL    TEVAL           ; restore TEVAL
-        CALL    STORE           ; from here on ',', 'C,', '$,"' and 'ALLOT' write to CP
+        POPW    Y               ; restore TEVAL
+        LDW     USREVAL,Y       ; from here on ',', 'C,', '$,"' and 'ALLOT' write to CP
         .endif
 
         CALL    COMPI
@@ -4786,7 +4750,7 @@ CREAT:
         RET
 
 
-        .ifeq   BAREBONES
+        .ifeq   NO_VARIABLE
 ;       VARIABLE        ( -- ; <string> )
 ;       Compile a new variable
 ;       initialized to 0.
@@ -4797,22 +4761,42 @@ CREAT:
         .db     8
         .ascii  "VARIABLE"
 VARIA:
-        CALL    CREAT
-        ; #16
+        CALLR   CREAT
+        CALL    ZERO
+        .ifne   HAS_CPNVM
         CALL    NVMQ
         JREQ    1$              ; NVM: allocate space in RAM
-        DoLitW  DOVARPTR
+        DoLitW  DOVARPTR        ; overwrite call address "DOVAR" with "DOVARPTR"
         CALL    HERECP
         CALL    CELLM
-        CALL    STORE 
-        CALL    THERE
-        DoLitC  2
-        CALL    ALLOT
-        JRA     2$
-        ; /#16
-1$:     CALL    ZERO
-2$:     JP      COMMA
+        CALL    STORE
+        LDW     Y,USRVAR
+        LDW     (X),Y           ; overwrite ZERO with RAM address RAM for COMMA
+        DoLitC  2               ; Allocate space for variable in RAM
+        CALLR   ALLOT
         .endif
+1$:     JP      COMMA
+        .endif
+
+
+;       ALLOT   ( n -- )
+;       Allocate n bytes to code DICTIONARY.
+
+        .dw     LINK
+
+        LINK =  .
+        .db     5
+        .ascii  "ALLOT"
+ALLOT:
+        CALL    CPP
+        .ifeq   NO_VARIABLE*HAS_CPNVM
+        CALL    NVMQ
+        JREQ    1$              ; NVM: allocate space in RAM
+        LD      A,#(USRVAR)
+        LD      (1,X),A
+1$:
+        .endif
+        JP      PSTOR
 
 ; Tools
 
@@ -4875,22 +4859,21 @@ PDUM2:  CALL    DONXT
         .ascii  "DUMP"
 DUMP:
         PUSH    USRBASE+1       ; BASE AT TOR save radix
-        LD      A,#16           ; DOLITC 16
-        LD      USRBASE+1,A     ; set hex
+        CALL    HEX
         CALL    YFLAGS
         DIV     Y,A             ; / change count to lines
         PUSHW   Y               ; start count down loop
 DUMP1:  CALL    CR
         DoLitC  16
         CALL    DDUP
-        CALLR   DUMPP   ;display numeric
+        CALLR   DUMPP           ; display numeric
         CALL    ROT
         CALL    ROT
         CALL    SPACE
         CALL    SPACE
-        CALLR   UTYPE   ;display printable characters
+        CALLR   UTYPE           ; display printable characters
         CALL    DONXT
-        .dw     DUMP1   ;loop till done
+        .dw     DUMP1           ; loop till done
 DUMP3:
         POP     USRBASE+1       ; restore radix
         JP      DROP
@@ -4905,15 +4888,15 @@ DUMP3:
         .ascii  ".S"
 DOTS:
         CALL    CR
-        CALL    DEPTH   ;stack depth
-        CALL    TOR     ;start count down loop
-        JRA     DOTS2   ;skip first pass
+        CALL    DEPTH           ; stack depth
+        CALL    TOR             ; start count down loop
+        JRA     DOTS2           ; skip first pass
 DOTS1:  CALL    RAT
         CALL    ONEP
         CALL    PICK
-        CALL    DOT     ;index stack, display contents
+        CALL    DOT             ; index stack, display contents
 DOTS2:  CALL    DONXT
-        .dw     DOTS1   ;loop till done
+        .dw     DOTS1           ; loop till done
         CALL    DOTQP
         .db     5
         .ascii  " <sp "
@@ -4930,11 +4913,11 @@ DOTS2:  CALL    DONXT
         .ascii  ".ID"
         .endif
 DOTID:
-        CALL    QDQBRAN ;if zero no name
+        CALL    QDQBRAN         ; if zero no name
         .dw     DOTI1
         CALL    COUNT
         DoLitC  0x01F
-        CALL    ANDD    ;mask lexicon bits
+        CALL    ANDD            ; mask lexicon bits
         JP      UTYPE
 DOTI1:  CALL    DOTQP
         .db     9
@@ -4959,17 +4942,17 @@ DUPPCAT:
         .ascii  ">NAME"
         .endif
 TNAME:
-        CALL    CNTXT   ;vocabulary link
+        CALL    CNTXT           ; vocabulary link
 TNAM2:  CALL    AT
-        CALL    DUPP    ;?last word in a vocabulary
+        CALL    DUPP            ; ?last word in a vocabulary
         CALL    QBRAN
         .dw     TNAM4
         CALL    DDUP
         CALL    NAMET
-        CALL    XORR    ;compare
+        CALL    XORR            ; compare
         CALL    QBRAN
         .dw     TNAM3
-        CALL    CELLM   ;continue with next word
+        CALL    CELLM           ; continue with next word
         JRA     TNAM2
 TNAM3:  JP      NIP
 TNAM4:  CALL    DDROP
@@ -5308,10 +5291,10 @@ RAMM:
         JREQ    1$
         CALLR   SWAPCP          ; Switch back to mode RAM
 
-        ; #16
+        .ifeq   NO_VARIABLE
         MOV     COLDCTOP,USRVAR
         MOV     COLDCTOP+1,USRVAR+1
-        ; /#16
+        .endif
         MOV     COLDNVMCP,NVMCP ; Store NCM pointers for init in COLD
         MOV     COLDNVMCP+1,NVMCP+1
         MOV     COLDCONTEXT,NVMCONTEXT

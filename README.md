@@ -16,7 +16,9 @@ Features:
   * relative CALL with two bytes where possible
   * pseudo-opcode for DOLIT using TRAP: compiled literals 3 instead of 5 bytes
 * compile Forth to NVM (Non Volatile Memory with Flash IAP)
-* autostart feature for embedded applications
+  * Words `NVM` and `RAM` switch between volatile (RAM) and non volatile (NVM) modes
+  * transparent RAM allocation for `VARIABLE` and `ALLOT` in NVM mode
+  * autostart feature for embedded applications
 * preemptive background tasks with fixed cycle time (default 5ms)
   * robust and fast context switch with "clean stack" approach
   * allows `INPUT-PROCESS-OUTPUT` processing indepent from the Forth console
