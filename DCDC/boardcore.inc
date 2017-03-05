@@ -43,33 +43,28 @@ _EXTI3_IRQHandler:
 
 ;===============================================================
 
-        RamWord TIMSERIAL       ; Timer: use PC7 for serial while > 0
         .ifne   HAS_LED7SEG
+        RamWord TIMSERIAL       ; Timer: use PC7 for serial while > 0
 
 ;       LED_MPX driver ( -- )
 ;       Output bit pattern in A to 7S-LED digit hardware
 LED_MPX:
 
 ;       PD1/SWIM dual use as SWIM and as segment C
-;       enable use as SWIM when segment C is off
-
+;       enable use as SWIM when segment C is inactive
         BRES    PD_DDR,#1       ; port PD1=SWIM to input
 
-;       PNRX=PC7 dual use for simulated serial port and DP
-;       When using as DP: enable COM interrupt while DP is off
+;       PNRX=PC7 dual use for simulated serial port and segment DP
+;       disaable DP while the simulated COM port is active (with time delay)
 
-        TNZ     TIM4TCNT        ; active sim COM: disable DP for 1 minute
+        TNZ     TIM4TCNT        ; active sim COM: disable DP for some time
         JREQ    LMPX1
-        MOV     TIMSERIAL,#(60000/256)
+        MOV     TIMSERIAL,#(60000/256); load MSB msec ticker
 LMPX1:
         LDW     X,TIMSERIAL     ; decrement COM use timer
-        JREQ    LMPX2           ; no COM: use DP
+        JREQ    LMPX3           ; no COM: use DP
         DECW    X               ; active COM: don't change PNRX properties
         LDW     TIMSERIAL,X
-        JRA     LMPX3
-LMPX2:
-        BRES    PC_DDR,#7       ; DP off: port to input
-        BSET    PC_CR2,#7       ; enable PNRX external interrupt
 
 LMPX3:
         BSET    PA_ODR,#3       ; Digit .3..
@@ -78,24 +73,37 @@ LMPX3:
 
         LD      A,TICKCNT+1
         AND     A,#HAS_LED7SEG
+        LD      YL,A
+        CLRW    X
+        LD      XL,A
+        LD      A,(LED7LAST-2,X)
+        EXG     A,YL
+        JREQ    LMPXSEGS
+
+        TNZ     A
         JRNE    1$
         BRES    PA_ODR,#3       ; digit .3..
-        JRA     3$
+        JRA     LMPXSEGS
 
 1$:     CP      A,#1
         JRNE    2$
         BRES    PD_ODR,#6       ; digit ..2.
-        JRA     3$
+        JRA     LMPXSEGS
 
 2$:     CP      A,#2
-        JRNE    4$
+        JRNE    LMPXEXIT
         BRES    PD_ODR,#5       ; digit ...1
         ; fall through
 
-3$:     CLRW    X
-        LD      XL,A
-        LD      A,(LED7LAST-2,X)
+LMPXSEGS:
+        LD      A,YL
+        TNZ     TIMSERIAL
+        JREQ    1$
+        CP      A,#0x40        ; sign ("-")
+        JRNE    1$
+        OR      A,#0x02        ; set one more segment, or else sim COM won't work
 
+1$:
         ; DCDC 7S LED display row
         ; bit 76453210 input (parameter A)
         ;  PA -----AF-
@@ -119,15 +127,22 @@ LMPX3:
         BCCM    PA_ODR,#1       ; F
         RRC     A
         BCCM    PD_ODR,#2       ; G
-        RRC     A
-        JRNC    4$
-        TNZ     TIMSERIAL
-        JRNE    4$
-        BRES    PC_CR2,#7       ; disable PNRX external interrupt
-        BSET    PC_DDR,#7       ; port to output
-        BSET    PC_ODR,#7       ; P
 
-4$:     RET
+;       handle DP / sim. COM port
+        TNZ     TIMSERIAL
+        JRNE    LMPXEXIT
+
+        RRC     A
+        JRC     LMPXDP
+        BRES    PSIM+DDR,#PNRX  ; DP off: port to input
+        BSET    PSIM+CR2,#PNRX  ; enable PNRX external interrupt
+        JRA     LMPXEXIT
+LMPXDP:
+        BRES    PSIM+CR2,#PNRX  ; disable PNRX external interrupt
+        BSET    PSIM+DDR,#PNRX  ; serial interface port to output
+        BSET    PSIM+ODR,#PNRX  ; use port for 7S-LED
+LMPXEXIT:
+        RET
         .endif
 
 ;===============================================================
