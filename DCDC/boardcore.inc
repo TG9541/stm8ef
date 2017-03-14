@@ -45,6 +45,7 @@ _EXTI3_IRQHandler:
 
         .ifne   HAS_LED7SEG
         RamWord TIMSERIAL       ; Timer: use PC7 for serial while > 0
+        RamByte BKEYLMPX        ; status of board keys
 
 ;       LED_MPX driver ( -- )
 ;       Output bit pattern in A to 7S-LED digit hardware
@@ -91,17 +92,17 @@ LMPX3:
         JRA     LMPXSEGS
 
 2$:     CP      A,#2
-        JRNE    LMPXEXIT
+        JRNE    LMPXKEY
         BRES    PD_ODR,#5       ; digit ...1
         ; fall through
 
 LMPXSEGS:
-        LD      A,YL
+        LD      A,YL           ; 8 bit LED pattern
         TNZ     TIMSERIAL
         JREQ    1$
-        CP      A,#0x40        ; sign ("-")
+        CP      A,#0x40        ; compare patter with sign ("-", segment G set)
         JRNE    1$
-        OR      A,#0x02        ; set one more segment, or else sim COM won't work
+        OR      A,#0x02        ; set one more segment, or else COM simulation won't work
 
 1$:
         ; DCDC 7S LED display row
@@ -141,6 +142,29 @@ LMPXDP:
         BRES    PSIM+CR2,#PNRX  ; disable PNRX external interrupt
         BSET    PSIM+DDR,#PNRX  ; serial interface port to output
         BSET    PSIM+ODR,#PNRX  ; use port for 7S-LED
+        JRA     LMPXEXIT
+
+LMPXKEY:
+        ; due to the puculiar design, reading the board keys is tricky
+        ; pre-load GPIO - the weak pull-up isn't fast enough
+        ; Keys "IN" (1), "OUT" (2)
+        BSET    PD_ODR,#2       ; key "OUT"
+        BRES    PD_DDR,#2
+        BTJT    PD_IDR,#2,1$
+1$:     RLC     A
+        BRES    PD_ODR,#2
+        BSET    PD_DDR,#2
+        BSET    PC_ODR,#5       ; key "IN"
+        BRES    PC_DDR,#5
+        BTJT    PC_IDR,#5,2$
+2$:     RLC     A
+        BRES    PC_ODR,#5
+        BSET    PC_DDR,#5
+        CPL     A
+        AND     A,#0x03
+        LD      BKEYLMPX,A      ; status of board keys
+        ; fall through
+
 LMPXEXIT:
         RET
         .endif
@@ -162,9 +186,7 @@ OUTSTOR:
         INCW    X
         CPL     A
         RRC     A
-        ;BCCM    PC_ODR,#3       ; DCDC LED in
-        RRC     A
-        BCCM    PB_ODR,#4       ; DCDC LED out
+        BCCM    PB_ODR,#4       ; DCDC LED out (or LM2596 !ON/OFF)
         RET
         .endif
 
@@ -179,12 +201,7 @@ OUTSTOR:
         .db     (4)
         .ascii  "BKEY"
 BKEY:
-        ; Keys "set" (1), "+" (2), and "-" (4) on PC.3:5
-        LD      A,PC_IDR
-        SLA     A
-        SWAP    A
-        CPL     A
-        AND     A,#0x07
+        LD      A,BKEYLMPX      ; status of board keys
         JP      ASTOR
 
 ;       BKEYC  ( -- c )   ( TOS STM8: -- A,Z,N )
