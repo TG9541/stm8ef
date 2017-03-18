@@ -1,7 +1,6 @@
 # STM8S eForth (stm8ef)
 
-TG9541/STM8EF is an extended version of Dr. C.H.Ting's eForth demo for the STM8S Discovery that aims to be a very lightweight embedded "untethered" Forth system for low-end STM8 µCs with a maximum "feature-to-binary-size" ratio. With the kind permission of the original author, TG9541/STM8EF is published as Free Open Source Software (see license).
-This is an extended version of [Dr. C.H. Ting's eForth for the *STM8S Discovery*](http://www.forth.org/svfig/kk/07-2010.html) forlow-end STM8 µCs.
+TG9541/STM8EF is an extended version of [Dr. C.H. Ting's eForth for the *STM8S Discovery*](http://www.forth.org/svfig/kk/07-2010.html). It aims to be a very lightweight embedded "untethered" Forth system for low-end STM8 µCs with a maximum "feature-to-binary-size" ratio. With the kind permission of the original author, TG9541/STM8EF is published as Free Open Source Software (see license).
 
 The project has the following goals:
 
