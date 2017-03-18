@@ -1,15 +1,15 @@
 # STM8S eForth (stm8ef)
 
-TG9541/STM8EF is an extended version of [Dr. C.H. Ting's eForth for the *STM8S Discovery*](http://www.forth.org/svfig/kk/07-2010.html). It aims to be a very lightweight embedded "untethered" Forth system for low-end STM8 µCs with a maximum "feature-to-binary-size" ratio. With the kind permission of the original author, TG9541/STM8EF is published as Free Open Source Software (see license).
+TG9541/STM8EF is an extended version of [Dr. C.H. Ting's eForth for the *STM8S Discovery*](http://www.forth.org/svfig/kk/07-2010.html). It aims to be a very lightweight embedded "untethered" Forth system for low-end STM8 µCs with a maximum "feature-to-binary-size" ratio. TG9541/STM8EF is published as Free Open Source Software ([license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md)) with the kind permission of the original author.
 
 The project has the following goals:
 
 1. provide an easy to use [Forth kit](https://github.com/TG9541/stm8ef/wiki/STM8S-eForth-Programming) for STM8 µCs
 2. provide board support for a variety of [common low-cost Chinese control boards](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets)
-3. maximize the product *features* * *free space* for low-end STM8 *Value Line* µCs (e.g. STM8S003F3P6)
+3. maximize the product *features* * *free space* for low-end STM8 *Value Line* µCs (see below)
 
 
-The binary size of a basic interactive Forth system is below 3800 bytes. A self-contained programming kit with a rich feature feature set (e.g. *Compile to Flash*, *Background Task*, *DO-LEAVE-LOOP/+LOOP*, *CREATE-DOES>*, native bit set) uses less than 5000 bytes. The application of the [SDCC toolchain](http://sdcc.sourceforge.net/) makes mixing Forth, assembly, and C possible.
+The binary size of a basic interactive Forth is below 3700 bytes, and a self-contained programming kit with a rich feature set (e.g. *Compile to Flash*, *Background Task*, *DO-LEAVE-LOOP/+LOOP*, *CREATE-DOES>*, native bit set) uses less than 5000 bytes.
 
 Please refer to the [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) for more information!
 
@@ -17,7 +17,6 @@ Please refer to the [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) for 
 
 Features:
 
-* configurable vocabulary subsets for binary size optimizations
 * Subroutine Threaded Code (STC) with improved code density
   * native BRANCH (JP), and EXIT (RET)
   * relative CALL with two bytes where possiblet
@@ -33,7 +32,7 @@ Features:
   * robust and fast context switch with "clean stack" approach
   * allows `INPUT-PROCESS-OUTPUT` processing indepent from the Forth console
   * allows setting process parameters through interactive console
-  * in background tasks `?KEY` can read board keys, and [boards with 7Seg-LED UI](https://github.com/TG9541/stm8ef/wiki/eForth-Background-Task) can emit to the LED display
+  * in background tasks `?KEY` can read board keys, and [boards with 7Seg-LED UI](https://github.com/TG9541/stm8ef/wiki/eForth-Background-Task) can simply output to the LED display
 * configuration options for serial console or dual serial interface
   * UART: ?RX TX!
   * any GPIO or pair of GPIOs from ports PA through PD can be used as a simulated COM port
@@ -46,32 +45,34 @@ Features:
   * C0135 Relay-4 Board
   * configuration folders for easy application to other boards
 * Extended vocabulary:
-  * *CREATE-DOES>* for defining *defining words*
+  * `CREATE ... DOES>` for defining *defining words*
   * Vectored I/O: 'KEY? 'EMIT
   * Loop structure words: DO LEAVE LOOP +LOOP
   * STM8 ADC control: ADC! ADC@
   * board keys, outputs, LEDs: BKEY KEYB? EMIT7S OUT OUT!
   * EEPROM, FLASH lock/unlock: LOCK ULOCK LOCKF ULOCKF
   * native bit set/reset: B! (b a u -- )
-  * inverted byte order 16bit register access (e.g. timer registers): 2C@ 2C!
+  * 16bit register access with reversed byte order (e.g. timer registers): 2C@ 2C!
   * compile to Flash memory: NVR RAM RESET
   * autostart applications: 'BOOT
   * ASCII file transfer: FILE HAND
+* configurable vocabulary subsets for binary size optimization
 
 Other changes to the original code:
 
 * use of the free SDCC tool chain ("ASxxxx V2.0" syntax, SDCC linker with declaration of ISR routines in `main.c`)
+* the [SDCC toolchain](http://sdcc.sourceforge.net/) allows mixing Forth, assembly, and C
 * removal of hard STM8S105C6 dependencies (e.g. RAM layout, UART2)
 * flexible RAM layout, meaningful symbols for RAM locations
 * conditional code for different target boards with a subdirectory based configuration framework
 * bug fixes (e.g. COMPILE, DEPTH, R!)
-* major binary size reduction
+* significant binary size reduction
 
 ## Support for STM8S Value Line µC
 
 The availability of low-cost boards (e.g. thermostats, power supplies, WIFI modules) makes the *STM8S003F3P6* the main target.
 
-The main differences between STM8S003F3P6 and STM8S105C6T6 (*STM8S Discovery*) are:
+Differences between STM8S003F3P6 and STM8S105C6T6 (*STM8S Discovery*) are:
 
 * 8 KiB Flash instead of 32 KiB
 * 1 KiB RAM instead of 2 KiB
@@ -81,7 +82,7 @@ The main differences between STM8S003F3P6 and STM8S105C6T6 (*STM8S Discovery*) a
 
 ## Board support:
 
-There is board support for some easily available "Chinese gadgets". For details, refer to [STM8S-Value-Line-Gadgets][WG1] in the Wiki.
+TG9541/STM8EF provides board support for several common "Chinese gadgets":
 
 * `CORE` starting point for new boards, most extra feature words disabled
 * `SWIMCOM` communication through the SWIM interface for board exploration
@@ -90,14 +91,13 @@ There is board support for some easily available "Chinese gadgets". For details,
 * `W1401` (also XH-W1401) thermostat with 3x2 digit 7S-LED display
 * `C0135` C0135 "Relay-4 Board" (can be used as a *Nano PLC*)
 
-Binaries for the listed targets are in the *Releases* section.
+Refer to [STM8S-Value-Line-Gadgets][WG1] in the Wiki. Binaries for the listed targets are in the *Releases* section.
 
-Currently, there is no support for the STM8S Discovery, since I don't have any STM8S105C6T6 based boards for testing.
-
+Currently, there is no support for the STM8S Discovery, since I don't have STM8S105C6T6 based boards for testing.
 
 ### STM8S003F3 Core
 
-A plain STM8S003F3P6 eForth core with a very lean scripting oriented vocabulary (words like AHEAD or [COMPILE] not linked) with a minimal memory footprint (less than 4KiB Flash). CORE can be used as-is or as a starting point for configurations.
+A plain STM8S003F3P6 eForth core with a lean scripting oriented vocabulary (words like AHEAD or [COMPILE] not linked), and a minimal memory footprint (less than 4KiB Flash). CORE can be used as-is or as a starting point for new configurations.
 
 * Selected features:
   * 16MHz HSI
@@ -148,9 +148,9 @@ It's advisable to have at least two boards for reverse engineering: one in origi
 
 **Warning**:  the original ROM contents of most boards is read-protected and can't be read, and once erased the original function can't be restored (your board will be useless unless you write your own code).
 
-**Warning**: if your target board is designed to supply or control connected devices (e.g. a power supply unit) don't assume any fail-safe properties of the board (e.g. the output voltage of a power supply board might rise to the maximum without the proper software). Disconnect any connected equipment, and if possible only supply the µC with a current limiting power supply!
+**Warning**: if your target board is designed to supply or control connected devices (e.g. a power supply unit) it's recommended not to assume fail-safe properties of the board (e.g. the output voltage of a power supply board might rise to the maximum without the proper software). Disconnect any connected equipment, and if possible only supply the µC with a current limiting power supply!
 
-**Warning**: when working with unknown boards make sure to have at least a basic understanding of the schematics and workings of the board! The author(s) of this software can't help you reverse-engineering an unsupported board. Working knowledge of electronics engineering is assumed. Use common sense!
+**Warning**: when working with unknown boards make sure to have at least a basic understanding of the schematics and workings of the board! The author(s) of this software can't help you reverse-engineering an unsupported board. Working knowledge of electronics engineering is assumed.
 
 Run `make BOARD=SWIMCOM flash` for building and flashing.
 
@@ -240,11 +240,11 @@ Run `make BOARD=C0135 flash` for building and flashing.
 
 ## Steps for creating a new board variant
 
-For creating a variant, simply copy the base variant's folder (e.g. CORE). By running `make BOARD=<folderName> flash` will be compiled, and programmed to the target. Other STM8S variants can be supported by a putting a matching `stm8device.inc` file into the board folder.
+For creating a variant, copy and rename a base variant folder (e.g. CORE). By running `make BOARD=<folderName> flash` will be compiled and programmed to the target. Other STM8 variants can be supported by a putting a matching `stm8device.inc` file into the board folder.
 
 ## Disclaimer, copyright
 
-TL;DR: This is a hobby project! Don't use the code for any application that requires support, correctness, or dependability. Please note that different licenses may apply to the code, some of which might requirement that derived work is made publically available!
+TL;DR: This is a hobby project! Don't use the code for any application that requires support, correctness, or dependability. Please note that different licenses may apply to the code, some of which might require that derived work is to be made public!
 
 Please refer to LICENSE.md for details.
 
