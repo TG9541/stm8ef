@@ -1,8 +1,16 @@
 # STM8S eForth (stm8ef)
 
-This repository contains an extended version of [Dr. C.H. Ting's eForth for the *STM8S Discovery*](http://www.forth.org/svfig/kk/07-2010.html) that turns STM8S *Value Line* µCs boards into interactive Forth development environments. The [SDCC toolchain](http://sdcc.sourceforge.net/) makes mixing Forth, assembly, and C possible.
+TG9541/STM8EF is an extended version of Dr. C.H.Ting's eForth demo for the STM8S Discovery that aims to be a very lightweight embedded "untethered" Forth system for low-end STM8 µCs with a maximum "feature-to-binary-size" ratio. With the kind permission of the original author, TG9541/STM8EF is published as Free Open Source Software (see license).
+This is an extended version of [Dr. C.H. Ting's eForth for the *STM8S Discovery*](http://www.forth.org/svfig/kk/07-2010.html) forlow-end STM8 µCs.
 
-The binary size of a basic interactive eForth system is below 3800 bytes (including the overhead from C startup code and interrupt table). A binary with a rich feature feature set (*Compile to Flash*, *Background Task*) and extenions (*DO-LEAVE-LOOP/+LOOP*, *CREATE-DOES>*, native bit set) uses less than 5000 bytes.
+The project has the following goals:
+
+1. provide an easy to use [Forth kit](https://github.com/TG9541/stm8ef/wiki/STM8S-eForth-Programming) for STM8 µCs
+2. provide board support for a variety of [common low-cost Chinese control boards](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets)
+3. maximize the product *features* * *free space* for low-end STM8 *Value Line* µCs (e.g. STM8S003F3P6)
+
+
+The binary size of a basic interactive Forth system is below 3800 bytes. A self-contained programming kit with a rich feature feature set (e.g. *Compile to Flash*, *Background Task*, *DO-LEAVE-LOOP/+LOOP*, *CREATE-DOES>*, native bit set) uses less than 5000 bytes. The application of the [SDCC toolchain](http://sdcc.sourceforge.net/) makes mixing Forth, assembly, and C possible.
 
 Please refer to the [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) for more information!
 
@@ -13,29 +21,30 @@ Features:
 * configurable vocabulary subsets for binary size optimizations
 * Subroutine Threaded Code (STC) with improved code density
   * native BRANCH (JP), and EXIT (RET)
-  * relative CALL with two bytes where possible
+  * relative CALL with two bytes where possiblet
   * pseudo-opcode for DOLIT using TRAP: compiled literals 3 instead of 5 bytes
 * compile Forth to NVM (Non Volatile Memory with Flash IAP)
   * Words `NVM` and `RAM` switch between volatile (RAM) and non volatile (NVM) modes
-  * transparent RAM allocation for `VARIABLE` and `ALLOT` in NVM mode
+  * RAM allocation for `VARIABLE` and `ALLOT` fully transparent in NVM mode
   * autostart feature for embedded applications
+* Low-level interrupts in Forth
+  * lightweight context switch with `SAVEC` and `IRET`
+  * example code for HALT is in the [Wiki](https://github.com/TG9541/stm8ef/wiki/STM8S-eForth-Programming#low-level-interrupts-in-forth)
 * preemptive background tasks with fixed cycle time (default 5ms)
   * robust and fast context switch with "clean stack" approach
   * allows `INPUT-PROCESS-OUTPUT` processing indepent from the Forth console
   * allows setting process parameters through interactive console
   * in background tasks `?KEY` can read board keys, and [boards with 7Seg-LED UI](https://github.com/TG9541/stm8ef/wiki/eForth-Background-Task) can emit to the LED display
-* Low-level interrupts in Forth
-  * lightweight context switch with `SAVEC` and `IRET`
-  * example code for HALT is in the [Wiki](https://github.com/TG9541/stm8ef/wiki/STM8S-eForth-Programming#low-level-interrupts-in-forth)
 * configuration options for serial console or dual serial interface
   * UART: ?RX TX!
   * any GPIO or pair of GPIOs from ports PA through PD can be used as a simulated COM port
   * GPIO w/ Port edge & Timer4 interrupts: ?RXP TXP!
   * half-duplex "bus style" communication with a single GPIO (e.g. PD1/SWIM)
 * board support for Chinese made [STM8S based very low cost boards][WG1]:
-  * W1209 LED display & half-duplex with SW TX
-  * C0135 Relay-4 Board
   * STM8S103F3 "$0.70" breakout board
+  * Termostats, e.g. W1209, W1401
+  * Low cost power supply boards, e.g. XH-M188, DCDC w/ voltmeter
+  * C0135 Relay-4 Board
   * configuration folders for easy application to other boards
 * Extended vocabulary:
   * *CREATE-DOES>* for defining *defining words*
@@ -56,7 +65,7 @@ Other changes to the original code:
 * removal of hard STM8S105C6 dependencies (e.g. RAM layout, UART2)
 * flexible RAM layout, meaningful symbols for RAM locations
 * conditional code for different target boards with a subdirectory based configuration framework
-* bugfixes (e.g. COMPILE, DEPTH, R!)
+* bug fixes (e.g. COMPILE, DEPTH, R!)
 * major binary size reduction
 
 ## Support for STM8S Value Line µC
