@@ -15,7 +15,14 @@ BOARDINIT:
         MOV     PC_CR1,#0b11101000
         MOV     PD_DDR,#0b01110110 ; -21B.GC- PD2:G/keyOut PD3:Vout
         MOV     PD_CR1,#0b01110110
-        RET
+
+        CALL    PRESE           ; initialize data stack, TIB
+
+        DoLitW  1000
+        CALL    INITPWM
+
+        CALL    ZERO
+        JP      PWMM
 
 ;===============================================================
 
@@ -145,7 +152,7 @@ LMPXDP:
         JRA     LMPXEXIT
 
 LMPXKEY:
-        ; due to the puculiar design, reading the board keys is tricky
+        ; pressing a board key connects the segment E or G to GND
         ; pre-load GPIO - the weak pull-up isn't fast enough
         ; Keys "IN" (1), "OUT" (2)
         BSET    PD_ODR,#2       ; key "OUT"
@@ -201,7 +208,7 @@ OUTSTOR:
         .db     (4)
         .ascii  "BKEY"
 BKEY:
-        LD      A,BKEYLMPX      ; status of board keys
+        LD      A,BKEYLMPX      ; status of board keys from LMPXKEY
         JP      ASTOR
 
 ;       BKEYC  ( -- c )   ( TOS STM8: -- A,Z,N )
@@ -210,8 +217,37 @@ BKEY:
 BKEYCHAR:
         CALLR   BKEY
         JREQ    1$
-        ADD     A,#'@'
+        ADD     A,#'@' ; map keys to 'A' (IN), 'B' (OUT) or 'C' (IN+OUT)
         LD      (1,X),A
 1$:     RET
        .endif
+
+;       INITPWM  ( n -- )
+;       set DCDC bias PWM (e.g. 1000)
+        .dw     LINK
+
+        LINK =  .
+        .db     (7)
+        .ascii  "INITPWM"
+INITPWM:
+        DOLitW  TIM1_ARRH
+        CALL    DCSTOR
+        CALL    ONE
+        MOV     TIM1_CCER2,#1
+        MOV     TIM1_BKR,#0x80
+        MOV     TIM1_CCMR3,#0x60
+        MOV     TIM1_CR1,#1
+        RET
+
+;       PWM  ( n -- )
+;       set DCDC bias PWM (e.g 0..999)
+        .dw     LINK
+
+        LINK =  .
+        .db     (3)
+        .ascii  "PWM"
+PWMM:
+        DoLitW  TIM1_CCR3H
+        JP      DCSTOR
+
 

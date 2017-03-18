@@ -530,9 +530,6 @@ COLD:
         BSET    PSIM+CR2,#PNRX    ; enable PNRX external interrupt
         .endif
 
-        ; Hardware initialization complete
-        RIM                     ; enable interrupts
-
         CALL    PRESE           ; initialize data stack, TIB
 
         DoLitW  UZERO
@@ -554,6 +551,9 @@ COLD:
         CALL    ZERO
         CALL    OUTSTOR
         .endif
+
+        ; Hardware initialization complete
+        RIM                     ; enable interrupts
 
         CALL    [TBOOT+3]       ; application boot
         CALL    OVERT           ; initialize CONTEXT from USRLAST
