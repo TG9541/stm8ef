@@ -2691,7 +2691,7 @@ ATEXE:
 
 ;       CMOVE   ( b1 b2 u -- )
 ;       Copy u bytes from b1 to b2.
-; 37 bytes
+
         .dw     LINK
 
         LINK =  .

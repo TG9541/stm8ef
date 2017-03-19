@@ -4,9 +4,9 @@ ifeq ($(BOARD),)
 all: zip
 
 zip: build
-	find out/ -name "*.ihx" -print | zip out/stm8ef-bin -@
+	find out/ -name "*.ihx" -print | zip out/stm8ef-bin docs/words.md -@
 
-build:
+build: words
 	make BOARD=CORE
 	make BOARD=W1209
 	make BOARD=W1401
@@ -17,6 +17,9 @@ build:
 
 clean:
 	rm -rf out/*
+
+words:
+	awk 'BEGIN { print "# STM8EF Words"} /^; +[^ ]+ +.+--/&&!p {p=1;print "```"} !/^;/&&p {p=0; print "```\n"} p' forth.asm > docs/words.md
 
 defaults:
 	stm8flash -c stlinkv2 -p stm8s103f3 -s opt -w tools/stm8s103FactoryDefaults.bin
