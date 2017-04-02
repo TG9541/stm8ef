@@ -49,7 +49,7 @@ _EXTI3_IRQHandler:
 
         .ifne   HAS_LED7SEG
 
-        RamByte TIMSERIAL       ; Timer: use PD1 for serial while > 0
+        RamWord TIMSERIAL       ; Timer: use PD1 for serial while > 0
 
 ;       LED_MPX driver ( -- )
 ;       Code called from ISR for LED MPX
@@ -79,11 +79,13 @@ LED_MPX:
 
         TNZ     TIM4TCNT
         JREQ    1$
-        MOV     TIMSERIAL,#0xFF
+        MOV     TIMSERIAL,#(1000/256); load MSB msec ticker
         JRNE    LEDMPXEND
-1$:     TNZ     TIMSERIAL
+1$:
+        LDW     Y,TIMSERIAL     ; decrement COM use timer
         JREQ    LEDMPXGO
-        DEC     TIMSERIAL
+        DECW    Y               ; active COM: don't change PNRX properties
+        LDW     TIMSERIAL,Y
         JRA     LEDMPXEND
 
 ;       LED segment clock out while PD1/SWIM is not used as UART
