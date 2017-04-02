@@ -152,16 +152,6 @@
 ```
 
 ```
-;       RP@     ( -- a )     ( TOS STM8: -- Y,Z,N )
-;       Push current RP to data stack.
-```
-
-```
-;       RP!     ( a -- )
-;       Set return stack pointer.
-```
-
-```
 ;       R>      ( -- w )     ( TOS STM8: -- Y,Z,N )
 ;       Pop return stack to data stack.
 ```
@@ -188,11 +178,6 @@
 ```
 ;       >R      ( w -- )      ( TOS STM8: -- Y,Z,N )
 ;       Push data stack to return stack.
-```
-
-```
-;       SP@     ( -- a )        ( TOS STM8: -- Y,Z,N )
-;       Push current stack pointer.
 ```
 
 ```
@@ -259,11 +244,6 @@
 ```
 ;       -   ( n1 n2 -- n1-n2 )  ( TOS STM8: -- Y,Z,N )
 ;       Subtraction.
-```
-
-```
-;       SP!     ( a -- )
-;       Set data stack pointer.
 ```
 
 ```
@@ -1211,6 +1191,26 @@
 ```
 ;       ADC@  ( -- w )
 ;       start ADC conversion, read result
+```
+
+```
+;       SP!     ( a -- )
+;       Set data stack pointer.
+```
+
+```
+;       SP@     ( -- a )        ( TOS STM8: -- Y,Z,N )
+;       Push current stack pointer.
+```
+
+```
+;       RP@     ( -- a )     ( TOS STM8: -- Y,Z,N )
+;       Push current RP to data stack.
+```
+
+```
+;       RP!     ( a -- )
+;       Set return stack pointer.
 ```
 
 ```

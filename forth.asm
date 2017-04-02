@@ -133,12 +133,23 @@
         BRAN_OPC =    0xCC      ; JP opcode
         CALL_OPC =    0xCD      ; CALL opcode
 
+        STM8S003F3       = 103  ; 8K flash, 1K RAM, 128 EEPROM, UART1
+        STM8S103F3       = 103  ; like STM8S003F3, 640 EEPROM
+        STM8S105K4       = 105  ; 16K flash, 2K RAM, 1K EEPROM, UART2
+        STM8S105C6       = 105  ; 32K flash, 2K RAM, 1K EEPROM, UART2
+
         ;********************************************
         ;******  2) Device hardware addresses  ******
         ;********************************************
 
+        ;******  STM8S memory addresses ******
+        RAMBASE =       0x0000  ; STM8S RAM start
+        EEPROMBASE =    0x4000  ; STM8S EEPROM start
 
-        ; STM8 device specific include (can be replaced by file in board folder)
+        ; STM8 device specific include (provided by file in board folder)
+        .include        "target.inc"
+
+        ; STM8 unified register addresses (depends on TARGET)
         .include        "stm8device.inc"
 
         ;**********************************
@@ -196,19 +207,6 @@
         ;******  4) Device dependent features  ******
         ;**********************************************
         ; Define memory location for device dependent features here
-
-        .ifne   (STM8S003F3 + STM8S103F3)
-        ;******  STM8SF103 Memory Layout ******
-
-        FORTHRAM =      0x0040  ; Start of RAM controlled by Forth
-        UPPLOC  =       0x0060  ; UPP (user/system area) location for 1K RAM
-        CTOPLOC =       0x0080  ; CTOP (user dictionary) location for 1K RAM
-        SPPLOC  =       0x0350  ; SPP (data stack top), TIB start
-        RPPLOC  =       RAMEND  ; RPP (return stack top)
-
-        RAMEND =        0x03FF  ; system (return) stack, growing down
-        FLASHEND =      0x9FFF  ; 8K devices
-        .endif
 
         .include "globconf.inc"
 
@@ -474,15 +472,15 @@ COLD:
         ; Init RS232 communication port
         ; STM8S[01]003F3 init UART
         LDW     X,#0x6803              ; 9600 baud
-        LDW     UART1_BRR1,X           ;
+        LDW     UART_BRR1,X           ;
         .ifne   HAS_RXUART*HAS_TXUART
-        MOV     UART1_CR2,#0x0C        ; Use UART1 full duplex
+        MOV     UART_CR2,#0x0C        ; Use UART1 full duplex
         .else
         .ifne   HAS_TXUART
-        MOV     UART1_CR2,#0x08        ; UART1 enable tx
+        MOV     UART_CR2,#0x08        ; UART1 enable tx
         .endif
         .ifne   HAS_RXUART
-        MOV     UART1_CR2,#0x04        ; UART1 enable rx
+        MOV     UART_CR2,#0x04        ; UART1 enable rx
         .endif
         .endif
         .endif
@@ -670,8 +668,8 @@ HI:
         .endif
 QRX:
         CLR     A               ; A: flag false
-        BTJF    UART1_SR,#5,1$
-        LD      A,UART1_DR      ; get char in A
+        BTJF    UART_SR,#5,1$
+        LD      A,UART_DR      ; get char in A
 1$:     JP      ATOKEY          ; push char or flag false
         .endif
 
@@ -693,14 +691,14 @@ TXSTOR:
 
         .ifne   HALF_DUPLEX * (1-HAS_TXSIM)
         ; HALF_DUPLEX with normal UART (e.g. wired-or Rx and Tx)
-        BRES    UART1_CR2,#2    ; disable rx
-1$:     BTJF    UART1_SR,#7,1$  ; loop until tdre
-        LD      UART1_DR,A      ; send A
-2$:     BTJF    UART1_SR,#6,2$  ; loop until tc
-        BSET    UART1_CR2,#2    ; enable rx
+        BRES    UART_CR2,#2    ; disable rx
+1$:     BTJF    UART_SR,#7,1$  ; loop until tdre
+        LD      UART_DR,A      ; send A
+2$:     BTJF    UART_SR,#6,2$  ; loop until tc
+        BSET    UART_CR2,#2    ; enable rx
         .else                   ; not HALF_DUPLEX
-1$:     BTJF    UART1_SR,#7,1$  ; loop until tdre
-        LD      UART1_DR,A      ; send A
+1$:     BTJF    UART_SR,#7,1$  ; loop until tdre
+        LD      UART_DR,A      ; send A
         .endif
         RET
         .endif
@@ -1216,38 +1214,6 @@ IGET:
         JRA     RAT
         .endif
 
-        .ifne   WORDS_EXTRASTACK
-;       RP@     ( -- a )     ( TOS STM8: -- Y,Z,N )
-;       Push current RP to data stack.
-
-        .dw     LINK
-        LINK =  .
-        .db     3
-        .ascii  "rp@"
-RPAT:
-        LDW     Y,SP            ; save return addr
-        JRA     YSTOR
-        .endif
-
-;       RP!     ( a -- )
-;       Set return stack pointer.
-
-        .ifne   ( WORDS_EXTRASTACK)
-        .dw     LINK
-        LINK =  .
-        .db     (COMPO+3)
-        .ascii  "rp!"
-RPSTO:
-        POPW    Y
-        LDW     YTEMP,Y
-        LDW     Y,X
-        INCW    X               ; fixed error: TOS not consumed
-        INCW    X
-        LDW     Y,(Y)
-        LDW     SP,Y
-        JP      [YTEMP]
-        .endif
-
 ;       R>      ( -- w )     ( TOS STM8: -- Y,Z,N )
 ;       Pop return stack to data stack.
 
@@ -1324,19 +1290,6 @@ TOR:
         PUSHW   X
         LDW     X,Y
         JRA     DROP
-
-;       SP@     ( -- a )        ( TOS STM8: -- Y,Z,N )
-;       Push current stack pointer.
-
-        .ifne   WORDS_EXTRASTACK
-        .dw     LINK
-        LINK =  .
-        .db     3
-        .ascii  "sp@"
-SPAT:
-        LDW     Y,X
-        JRA     YSTOR
-        .endif
 
 
 ;       NIP     ( n1 n2 -- n2 )
@@ -1542,19 +1495,6 @@ SUBB:
         .else
         CALL    NEGAT           ; (15 cy)
         JRA     PLUS            ; 25 cy (15+10)
-        .endif
-
-;       SP!     ( a -- )
-;       Set data stack pointer.
-
-        .ifne   WORDS_EXTRASTACK
-        .dw     LINK
-        LINK =  .
-        .db     3
-        .ascii  "sp!"
-SPSTO:
-        LDW     X,(X)   ;X = a
-        RET
         .endif
 
 
@@ -5166,6 +5106,61 @@ ADCAT:
         .endif
 
 ;===============================================================
+        .ifne   WORDS_EXTRASTACK
+
+;       SP!     ( a -- )
+;       Set data stack pointer.
+
+        .dw     LINK
+        LINK =  .
+        .db     3
+        .ascii  "sp!"
+SPSTO:
+        LDW     X,(X)   ;X = a
+        RET
+
+;       SP@     ( -- a )        ( TOS STM8: -- Y,Z,N )
+;       Push current stack pointer.
+
+        .dw     LINK
+        LINK =  .
+        .db     3
+        .ascii  "sp@"
+SPAT:
+        LDW     Y,X
+        JP      YSTOR
+
+;       RP@     ( -- a )     ( TOS STM8: -- Y,Z,N )
+;       Push current RP to data stack.
+
+        .dw     LINK
+        LINK =  .
+        .db     3
+        .ascii  "rp@"
+RPAT:
+        LDW     Y,SP            ; save return addr
+        JP      YSTOR
+
+;       RP!     ( a -- )
+;       Set return stack pointer.
+
+        .dw     LINK
+        LINK =  .
+        .db     (COMPO+3)
+        .ascii  "rp!"
+RPSTO:
+        POPW    Y
+        LDW     YTEMP,Y
+        LDW     Y,X
+        INCW    X               ; fixed error: TOS not consumed
+        INCW    X
+        LDW     Y,(Y)
+        LDW     SP,Y
+        JP      [YTEMP]
+
+        .endif
+
+;===============================================================
 
         .ifne   WORDS_EXTRAEEPR
 ;       ULOCK  ( -- )
@@ -5340,8 +5335,10 @@ RESTC:
 ;===============================================================
 
 
-        .ifne WORDS_HWREG * (STM8S003F3 + STM8S103F3)
+        .ifne WORDS_HWREG 
+        .ifne (TARGET - STM8S103F3)
           .include "hwregs8s003.inc"
+        .endif
         .endif
 
 

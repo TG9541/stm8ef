@@ -1,19 +1,4 @@
 ; STM8S003F3P6 and STM8S103F3P6 register addresses
-        STM8S003F3       = 1    ; 8K flash, 1K RAM, 128 EEPROM, UART1
-        STM8S103F3       = 0    ; like STM8S003F3, 640 EEPROM
-        STM8S105C6       = 0    ; 32K flash, 2K RAM, 1K EEPROM, UART2
-
-        ;******  STM8S memory addresses ******
-        RAMBASE =       0x0000  ; STM8S RAM start
-        EEPROMBASE =    0x4000  ; STM8S EEPROM start
-
-        .ifne   STM8S003F3
-        EEPROMEND =     0x407F  ; STM8S003F3: 128 bytes EEPROM
-        .endif
-
-        .ifne   STM8S103F3
-        EEPROMEND =     0x427F  ; STM8S103F3: 640 bytes EEPROM
-        .endif
 
 ; ***** 6.2.1 I/O port hardware register map
 
@@ -21,7 +6,12 @@
         PORTB        = PB_ODR
         PORTC        = PC_ODR
         PORTD        = PD_ODR
-        PORTX        = 0
+        PORTE        = PE_ODR
+        PORTF        = PF_ODR
+        PORTG        = PG_ODR
+        PORTH        = PH_ODR
+        PORTI        = PI_ODR
+PORTX        = 0
 
         ODR          = 0
         IDR          = 1
@@ -79,6 +69,33 @@
         PF_CR2       = 0x501D   ; Port F control register 2             (0x00)
 ;.endif
 
+; ***** Port G
+;.ifne  0
+        PG_ODR       = 0x501E   ; Port G data output latch register     (0x00)
+        PG_IDR       = 0x501F   ; Port G input pin value register       (0xXX)
+        PG_DDR       = 0x5020   ; Port G data direction register        (0x00)
+        PG_CR1       = 0x5021   ; Port G control register 1             (0x00)
+        PG_CR2       = 0x5022   ; Port G control register 2             (0x00)
+;.endif
+
+; ***** Port H
+;.ifne  0
+        PH_ODR       = 0x5023   ; Port H data output latch register     (0x00)
+        PH_IDR       = 0x5024   ; Port H input pin value register       (0xXX)
+        PH_DDR       = 0x5025   ; Port H data direction register        (0x00)
+        PH_CR1       = 0x5026   ; Port H control register 1             (0x00)
+        PH_CR2       = 0x5027   ; Port H control register 2             (0x00)
+;.endif
+
+; ***** Port I
+;.ifne  0
+        PI_ODR       = 0x5028   ; Port I data output latch register     (0x00)
+        PI_IDR       = 0x5029   ; Port I input pin value register       (0xXX)
+        PI_DDR       = 0x502A   ; Port I data direction register        (0x00)
+        PI_CR1       = 0x502B   ; Port I control register 1             (0x00)
+        PI_CR2       = 0x502C   ; Port I control register 2             (0x00)
+;.endif
+
 ; ***** 6.2.2 General hardware register map
 
 ; ***** Flash
@@ -117,7 +134,8 @@
         CLK_CSSR     = 0x50C8   ; Clock security system register        (0x00)
         CLK_CCOR     = 0x50C9   ; Configurable clock control register   (0x00)
         CLK_PCKENR2  = 0x50CA   ; Peripheral clock gating register 2    (0xFF)
-        CLK_HSITRIMR = 0x50CC   ; HSI clock calibration trimming register  (0x00)
+        CLK_HSITRIMR = 0x50CC   ; HSI clock calibration trimming register (0x00)
+        CLK_SWIMCCR  = 0x50CD   ; SWIM clock control register     (0bXXXXXXX0)
 ;.endif
 
 ; ***** SWIM
@@ -191,6 +209,31 @@
         UART1_CR5    = 0x5238   ; UART1 control register 5              (0x00)
         UART1_GTR    = 0x5239   ; UART1 guard time register             (0x00)
         UART1_PSCR   = 0x523A   ; UART1 prescaler register              (0x00)
+
+        UART2_SR     = 0x5240   ; UART1 status register                 (0xC0)
+        UART2_DR     = 0x5241   ; UART1 data register                   (0xXX)
+        UART2_BRR1   = 0x5242   ; UART1 baud rate register 1            (0x00)
+        UART2_BRR2   = 0x5243   ; UART1 baud rate register 2            (0x00)
+        UART2_CR1    = 0x5244   ; UART1 control register 1              (0x00)
+        UART2_CR2    = 0x5245   ; UART1 control register 2              (0x00)
+        UART2_CR3    = 0x5246   ; UART1 control register 3              (0x00)
+        UART2_CR4    = 0x5247   ; UART1 control register 4              (0x00)
+        UART2_CR5    = 0x5248   ; UART1 control register 5              (0x00)
+        UART2_CR6    = 0x5249   ; UART1 control register 6              (0x00)
+        UART2_GTR    = 0x524A   ; UART1 guard time register             (0x00)
+        UART2_PSCR   = 0x524B   ; UART1 prescaler register              (0x00)
+
+        .ifeq   (TARGET - STM8S105K4)
+        UART_DR   = UART2_DR
+        UART_SR   = UART2_SR
+        UART_BRR1 = UART2_BRR1
+        UART_CR2  = UART2_CR2
+        .else
+        UART_DR   = UART1_DR
+        UART_SR   = UART1_SR
+        UART_BRR1 = UART1_BRR1
+        UART_CR2  = UART1_CR2
+        .endif
 ;.endif
 
 ; ***** TIM1
@@ -232,6 +275,28 @@
 ;.ifeq HAS_BACKGROUND
 
         TIM2_CR1     = 0x5300   ; TIM2 control register 1               (0x00)
+        .ifeq   (TARGET - STM8S105K4)
+        TIM2_IER     = 0x5301   ; TIM2 interrupt enable register        (0x00)
+        TIM2_SR1     = 0x5302   ; TIM2 status register 1                (0x00)
+        TIM2_SR2     = 0x5303   ; TIM2 status register 2                (0x00)
+        TIM2_EGR     = 0x5304   ; TIM2 event generation register        (0x00)
+        TIM2_CCMR1   = 0x5305   ; TIM2 capture/compare mode register 1  (0x00)
+        TIM2_CCMR2   = 0x5306   ; TIM2 capture/compare mode register 2  (0x00)
+        TIM2_CCMR3   = 0x5307   ; TIM2 capture/compare mode register 3  (0x00)
+        TIM2_CCER1   = 0x5308   ; TIM2 capture/compare enable register 1 (0x00)
+        TIM2_CCER2   = 0x5309   ; TIM2 capture/compare enable register 2 (0x00)
+        TIM2_CNTRH   = 0x530A   ; TIM2 counter high                     (0x00)
+        TIM2_CNTRL   = 0x530B   ; TIM2 counter low                      (0x00)
+        TIM2_PSCR    = 0x530C   ; TIM2 prescaler register               (0x00)
+        TIM2_ARRH    = 0x530D   ; TIM2 auto-reload register high        (0xFF)
+        TIM2_ARRL    = 0x530E   ; TIM2 auto-reload register low         (0xFF)
+        TIM2_CCR1H   = 0x530F   ; TIM2 capture/compare register 1 high  (0x00)
+        TIM2_CCR1L   = 0x5310   ; TIM2 capture/compare register 1 low   (0x00)
+        TIM2_CCR2H   = 0x5311   ; TIM2 capture/compare reg. 2 high      (0x00)
+        TIM2_CCR2L   = 0x5312   ; TIM2 capture/compare register 2 low   (0x00)
+        TIM2_CCR3H   = 0x5313   ; TIM2 capture/compare register 3 high  (0x00)
+        TIM2_CCR3L   = 0x5314   ; TIM2 capture/compare register 3 low   (0x00)
+        .else
         TIM2_IER     = 0x5303   ; TIM2 interrupt enable register        (0x00)
         TIM2_SR1     = 0x5304   ; TIM2 status register 1                (0x00)
         TIM2_SR2     = 0x5305   ; TIM2 status register 2                (0x00)
@@ -252,6 +317,7 @@
         TIM2_CCR2L   = 0x5314   ; TIM2 capture/compare register 2 low   (0x00)
         TIM2_CCR3H   = 0x5315   ; TIM2 capture/compare register 3 high  (0x00)
         TIM2_CCR3L   = 0x5316   ; TIM2 capture/compare register 3 low   (0x00)
+        .endif
 ;.endif
 
 ; ***** TIM4
@@ -259,12 +325,21 @@
 ;.ifeq HAS_TXSIM+HAS_RXSIM
 
         TIM4_CR1     = 0x5340   ; TIM4 control register 1               (0x00)
+        .ifeq   (TARGET - STM8S105K4)
+        TIM4_IER     = 0x5341   ; TIM4 interrupt enable register        (0x00)
+        TIM4_SR      = 0x5342   ; TIM4 status register                  (0x00)
+        TIM4_EGR     = 0x5343   ; TIM4 event generation register        (0x00)
+        TIM4_CNTR    = 0x5344   ; TIM4 counter                          (0x00)
+        TIM4_PSCR    = 0x5345   ; TIM4 prescaler register               (0x00)
+        TIM4_ARR     = 0x5346   ; TIM4 auto-reload register             (0xFF)
+        .else
         TIM4_IER     = 0x5343   ; TIM4 interrupt enable register        (0x00)
         TIM4_SR      = 0x5344   ; TIM4 status register                  (0x00)
         TIM4_EGR     = 0x5345   ; TIM4 event generation register        (0x00)
         TIM4_CNTR    = 0x5346   ; TIM4 counter                          (0x00)
         TIM4_PSCR    = 0x5347   ; TIM4 prescaler register               (0x00)
         TIM4_ARR     = 0x5348   ; TIM4 auto-reload register             (0xFF)
+        .endif
 ;.endif
 
 ; ***** ADC1

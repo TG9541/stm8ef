@@ -24,11 +24,15 @@ words:
 defaults:
 	stm8flash -c stlinkv2 -p stm8s103f3 -s opt -w tools/stm8s103FactoryDefaults.bin
 
+defaults105:
+	stm8flash -c stlinkv2 -p stm8s105k4 -s opt -w tools/stm8s105FactoryDefaults.bin
+
 else
 
 MDEPS = forth.rel forth.h
 FDEPS = hwregs8s003.inc
 MKDIR_P = mkdir -p out
+TARGET = `[ -f $(BOARD)/target.inc ] && awk '/TARGET/ {print tolower($$3)}' $(BOARD)/target.inc || echo "stm8s103f3"`
 
 all: directories main.ihx
 
@@ -40,7 +44,7 @@ forth.rel: forth.asm $(FDEPS)
 	sdasstm8 -I. -I./$(BOARD) -plosgffw out/$(BOARD)/forth.rel forth.asm
 
 flash: main.ihx
-	stm8flash -c stlinkv2 -p stm8s103f3 -w out/$(BOARD)/$(BOARD).ihx
+	stm8flash -c stlinkv2 -p $(TARGET) -w out/$(BOARD)/$(BOARD).ihx
 
 directories: out
 

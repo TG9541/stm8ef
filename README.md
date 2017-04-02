@@ -19,7 +19,7 @@ Features:
 
 * Subroutine Threaded Code (STC) with improved code density
   * native BRANCH (JP), and EXIT (RET)
-  * relative CALL with two bytes where possiblet
+  * relative CALL with two bytes where possible
   * pseudo-opcode for DOLIT using TRAP: compiled literals 3 instead of 5 bytes
 * compile Forth to NVM (Non Volatile Memory with Flash IAP)
   * Words `NVM` and `RAM` switch between volatile (RAM) and non volatile (NVM) modes
@@ -85,15 +85,25 @@ Differences between STM8S003F3P6 and STM8S105C6T6 (*STM8S Discovery*) are:
 TG9541/STM8EF provides board support for several common "Chinese gadgets":
 
 * `CORE` starting point for new boards, most extra feature words disabled
+* [C0135](https://github.com/TG9541/stm8ef/wiki/Board-C0135) "Relay-4 Board" (can be used as a *Nano PLC*)
+* [DCDC](https://github.com/TG9541/stm8ef/wiki/Board-CN2596) hacked DCDC converter with voltmeter
+* [MINDEV](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets#stm8s103f3p6-breakout-board)` STM8S103F3 low cost "minimum development board"
 * `SWIMCOM` communication through the SWIM interface for board exploration
-* `MINDEV` STM8S103F3 low cost "minimum development board"
-* `W1209` (also XH-W1209) low cost thermostat with 3 digit 7S-LED display and half-duplex RS232 through sensor header
-* `W1401` (also XH-W1401) thermostat with 3x2 digit 7S-LED display
-* `C0135` C0135 "Relay-4 Board" (can be used as a *Nano PLC*)
+* [W1209](https://github.com/TG9541/stm8ef/wiki/Board-W1209) (also XH-W1209) low cost thermostat with 3 digit 7S-LED display, half-duplex RS232 through sensor header
+* `W1219` low cost thermostat with 2x3 digit 7S-LED display, half-duplex RS232 through SWIM
+* [W1401](https://github.com/TG9541/stm8ef/wiki/Board-W1401) (also XH-W1401) thermostat with 3x2 digit 7S-LED display, half-duplex RS232 through SWIM
 
-Refer to [STM8S-Value-Line-Gadgets][WG1] in the Wiki. Binaries for the listed targets are in the *Releases* section.
+Please refer to [STM8S-Value-Line-Gadgets][WG1] in the Wiki. Binaries for the listed targets are in the *Releases* section.
 
-Currently, there is no support for the STM8S Discovery, since I don't have STM8S105C6T6 based boards for testing.
+There is limited support for the STM8S Discovery, and for Access Line devices with 2KiB RAM (tested on a STM8S105K4T6 breakout board).
+
+It's advisable to have at least two boards for reverse engineering: one in original state, and one for testing new code. Please [open a ticket here](https://github.com/TG9541/stm8ef/issues), or contact the STM8EF [Hackaday.io project](https://hackaday.io/project/16097-eforth-for-cheap-stm8s-value-line-gadgets) before you start working on a new board!
+
+**Warning**:  the original ROM contents of most boards is read-protected and can't be read, and once erased the original function can't be restored (your board will be useless unless you write your own code).
+
+**Warning**: if your target board is designed to supply or control connected devices (e.g. a power supply unit) it's recommended not to assume fail-safe properties of the board (e.g. the output voltage of a power supply board might rise to the maximum without the proper software). Disconnect any connected equipment, and if possible only supply the µC with a current limiting power supply!
+
+**Warning**: when working with unknown boards make sure to have at least a basic understanding of the schematics and workings of the board! The author(s) of this software can't help you reverse-engineering an unsupported board. Working knowledge of electronics engineering is assumed.
 
 ### STM8S003F3 Core
 
@@ -143,14 +153,6 @@ GND------------>>-----*----o ST-LINK GND
                .      |
 ................      .----o serial GND
 ```
-
-It's advisable to have at least two boards for reverse engineering: one in original state, and one for testing new code. Please [open a ticket here](https://github.com/TG9541/stm8ef/issues), or contact the STM8EF [Hackaday.io project](https://hackaday.io/project/16097-eforth-for-cheap-stm8s-value-line-gadgets) before you start working on a new board!
-
-**Warning**:  the original ROM contents of most boards is read-protected and can't be read, and once erased the original function can't be restored (your board will be useless unless you write your own code).
-
-**Warning**: if your target board is designed to supply or control connected devices (e.g. a power supply unit) it's recommended not to assume fail-safe properties of the board (e.g. the output voltage of a power supply board might rise to the maximum without the proper software). Disconnect any connected equipment, and if possible only supply the µC with a current limiting power supply!
-
-**Warning**: when working with unknown boards make sure to have at least a basic understanding of the schematics and workings of the board! The author(s) of this software can't help you reverse-engineering an unsupported board. Working knowledge of electronics engineering is assumed.
 
 Run `make BOARD=SWIMCOM flash` for building and flashing.
 

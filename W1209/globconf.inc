@@ -2,8 +2,6 @@
 ; Config for W1209 Thermostat Module
 ; Clock: HSI (no crystal)
 
-        STM8S103F3       = 1
-
         HALF_DUPLEX      = 1    ; Use EMIT/?KEY in half duplex mode
         HAS_TXUART       = 0    ; No UART TXD, word TX!
         HAS_RXUART       = 0    ; No UART RXD, word ?RX
