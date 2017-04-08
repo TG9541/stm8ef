@@ -147,9 +147,10 @@
         EEPROMBASE =    0x4000  ; STM8S EEPROM start
 
         ; STM8 device specific include (provided by file in board folder)
+        ; sets "TARGET" and memory layout
         .include        "target.inc"
 
-        ; STM8 unified register addresses (depends on TARGET)
+        ; STM8 unified register addresses (depends on "TARGET")
         .include        "stm8device.inc"
 
         ;**********************************
