@@ -1,4 +1,5 @@
-; STM8S103F3 device and memory layout configuration
+;       STM8S103F3 device and memory layout configuration
+
         TARGET = STM8S103F3
 
         RAMEND =        0x03FF  ; system (return) stack, growing down
