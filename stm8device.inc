@@ -1,4 +1,4 @@
-; STM8S003F3P6 and STM8S103F3P6 register addresses
+; STM8S register addresses
 
 ; ***** 6.2.1 I/O port hardware register map
 

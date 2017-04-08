@@ -1,5 +1,4 @@
 ; STM8EF Global Configuration File
-; STM8S003F3P6 generic SWIM single pin communication
 ; Clock: HSI (no crystal)
 
         HALF_DUPLEX      = 0    ; Use EMIT/?KEY in half duplex mode

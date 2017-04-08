@@ -14,7 +14,7 @@ build: words
 	make BOARD=DCDC
 	make BOARD=MINDEV
 	make BOARD=SWIMCOM
-	make BOARD=STM8105K4
+	make BOARD=STM8S105K4
 
 clean:
 	rm -rf out/*
