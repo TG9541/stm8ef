@@ -4959,10 +4959,14 @@ EMIT7S:
         CP      A,#' '
         JRNE    1$
 
-        LDW     Y,#LED7FIRST    ; DROP DOLIT LED7FIRST
+        CALLR   XGRPADD
+        EXGW    X,Y
+        ; CALL    YSTOR
+        ; LDW     Y,#LED7FIRST    ; DROP DOLIT LED7FIRST
         LDW     (X),Y
-        DoLitC  (LED7LAST-LED7FIRST+1)
-        JP    ERASE
+        ;DoLitC  (LED7LAST-LED7FIRST+1)
+        DoLitC  HAS_LED7LEN
+        JP      ERASE
 
 1$:     CP      A,#'.'
         JREQ    E7DOT
@@ -4998,6 +5002,15 @@ E7DOT:
 E7END:
         JP      DROP
 
+;       Helper routine for calculating LED group start adress
+XGRPADD:
+        EXGW    X,Y
+        LD      A,LED7GROUP
+        LD      XL,A
+        LD      A,#HAS_LED7LEN
+        MUL     X,A
+        ADDW    X,#LED7FIRST
+        RET
 
 ;       P7S  ( c -- )
 ;       Insert 7-seg pattern at left side of LED display buffer, rotate buffer left
@@ -5008,14 +5021,7 @@ E7END:
         .ascii  "P7S"
 PUT7S:
         .if     gt,(HAS_LED7SEG-1)
-        EXGW    X,Y
-        LD      A,LED7GROUP
-
-        LD      XL,A
-        LD      A,#HAS_LED7LEN
-        MUL     X,A
-        ADDW    X,#LED7FIRST
-
+        CALLR   XGRPADD 
         DEC     A
         PUSH    A
 1$:     LD      A,(1,X)
