@@ -14,7 +14,8 @@
         EMIT_BG  = EMIT7S       ; 7S-LED background EMIT vector
         QKEY_BG  = QKEYB        ; Board keys background QKEY vector
 
-        HAS_LED7SEG      = 7    ; yes, 3 dig. 7-seg LED on module
+        HAS_LED7SEG      = 1    ; yes, 1*3 dig. 7-seg LED on module
+
         HAS_KEYS         = 2    ; yes, 3 keys on module
         HAS_OUTPUTS      = 1    ; yes, power on/off
         HAS_ADC          = 1    ; Analog input words

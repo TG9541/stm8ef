@@ -54,7 +54,7 @@ LED_MPX:
         BSET    PB_ODR,#4       ; Digit ...1
 
         LD      A,TICKCNT+1
-        AND     A,#HAS_LED7SEG
+        AND     A,#(HAS_LED7SEG*HAS_LED7LEN)
 
         JRNE    1$
         BRES    PD_ODR,#4       ; digit .3..

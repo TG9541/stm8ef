@@ -3,7 +3,7 @@
 ; This is derived work based on
 ; http://www.forth.org/svfig/kk/07-2010.html
 ;
-; Refer to LICENSE.md for license information.
+; Please refer to LICENSE.md for more information.
 ;
 ;--------------------------------------------------------
 ; Original author, and copyright:
@@ -25,34 +25,10 @@
 ; The latest version of this code is available at
 ; https://github.com/TG9541/stm8ef
 ;
-; Non-functional changes and code refactoring:
-; * SDCC tool chain "ASxxxx V2.0" syntax
-; * STM8S105C6 dependencies removed (e.g. UART2)
-; * support for different target boards
-; * configuration files for code options
-; * 1K RAM layout, symbols for RAM loc. ROM size options
-; * binary size optimization
 ;
-; New features, e.g.:
-; * board support:
-;       - W1209 LED display & half-duplex with SW TX
-;       - C0135 Relay-4 Board
-;       - STM8S103F3 "$0.70" breakout board
-; * preemptive background operation with fixed cycle time
-; * configurable startup & default constants: 'BOOT
-; * configurable vocabulary subsets for binary size reduction
-; * CREATE-DOES> for defining words
-; * New loop structure words: DO LEAVE LOOP +LOOP
-; * native BRANCH and EXIT
-; * words for STM8 ADC control: ADC! ADC@
-; * words for board keys, outputs, LEDs: OUT OUT!
-; * words for EEPROM, FLASH lock/unlock: LOCK ULOCK LOCKF ULOCKF
-; * words for bit operations, inv. order word access: B! 2C@ 2C!
-; * words for compile to Flash memory: NVR RAM RESET
-; * words for ASCII file transfer: FILE HAND
-;
-; Docs for the SDCC integrated assembler are scarce, and
-; hence SDCC was used to create a template for this file:
+; Docs for the SDCC integrated assembler are scarce, thus
+; SDCC was used to write the sceleton for this file.
+; Hoever, the assembly doesn't constitue SDCC code.
 ;--------------------------------------------------------
 ; File Created by SDCC : free open source ANSI-C Compiler
 ; Version 3.6.0 #9615 (Linux)
@@ -173,6 +149,8 @@
         QKEY_BG  = ZERO         ; TODO: NUL background QKEY vector
 
         HAS_LED7SEG      = 0    ; 7-seg LED on board
+        HAS_LED7LEN      = 3    ; default: 3 dig. 7-seg LED
+
         HAS_KEYS         = 0    ; Board has keys
         HAS_OUTPUTS      = 0    ; Board outputs, e.g. relays
         HAS_INPUTS       = 0    ; Board digital inputs
@@ -246,8 +224,12 @@
         .endif
 
         .ifne   HAS_LED7SEG
-        RamBlck LED7FIRST,5     ; leftmost 7S-LED digit  6.....
-        RamByte LED7LAST        ; rightmost 7S-LED digit .....1
+        .if     gt,(HAS_LED7SEG-1) 
+        RamByte LED7GROUP       ; index [0..(HAS_LED7SEG-1)] of 7-SEG digit group
+        .endif
+        DIGITS = HAS_LED7SEG*HAS_LED7LEN
+        RamBlck LED7FIRST,DIGITS ; leftmost 7S-LED digit  
+        LED7LAST = RAMPOOL-1    ; save memory location of rightmost 7S-LED digit 
         .endif
         .ifne   HAS_BACKGROUND
 
@@ -551,6 +533,18 @@ COLD:
         CALL    OUTSTOR
         .endif
 
+        .ifne   HAS_LED7SEG
+
+        .if     gt,(HAS_LED7SEG-1) 
+        MOV     LED7GROUP,#0     ; one of position HAS_LED7SEG 7-SEG digit groups
+        .endif
+        
+        MOV     LED7LAST-2,#0x66 ; 7S LEDs .4.. 
+        MOV     LED7LAST-1,#0x78 ; 7S LEDs ..t.
+        MOV     LED7LAST-0,#0x74 ; 7S LEDs ...h
+
+        .endif
+
         ; Hardware initialization complete
         RIM                     ; enable interrupts
 
@@ -635,13 +629,6 @@ TBOOT:
         .ascii  "hi"
         .endif
 HI:
-        ; TODO: move to board initialization?
-        .ifne   HAS_LED7SEG
-        MOV     LED7LAST-2,#0x66 ; 7S LEDs .4..
-        MOV     LED7LAST-1,#0x78 ; 7S LEDs ..t.
-        MOV     LED7LAST-0,#0x74 ; 7S LEDs ...h
-        .endif
-
         CALLR   1$              ; CR
         CALL    DOTQP           ; initialize I/O
         .db     15
@@ -5020,12 +5007,36 @@ E7END:
         .db     (3)
         .ascii  "P7S"
 PUT7S:
+        .if     gt,(HAS_LED7SEG-1)
+        EXGW    X,Y
+        LD      A,LED7GROUP
+
+        LD      XL,A
+        LD      A,#HAS_LED7LEN
+        MUL     X,A
+        ADDW    X,#LED7FIRST
+
+        DEC     A
+        PUSH    A
+1$:     LD      A,(1,X)
+        LD      (X),A
+        INCW    X
+        DEC     (1,SP)
+        JRNE    1$    
+        POP     A
+
+        EXGW    X,Y
+        CALL    AFLAGS
+        LD      (Y),A
+        .else
         DoLitC  LED7FIRST+1
         DoLitC  LED7FIRST
-        DoLitC  LED7LAST-LED7FIRST
+        DoLitC  (HAS_LED7LEN-1)
         CALL    CMOVE
         CALL    AFLAGS
         LD      LED7LAST,A
+        .endif
+
         RET
 
         .endif
