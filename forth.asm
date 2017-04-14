@@ -224,12 +224,12 @@
         .endif
 
         .ifne   HAS_LED7SEG
-        .if     gt,(HAS_LED7SEG-1) 
+        .if     gt,(HAS_LED7SEG-1)
         RamByte LED7GROUP       ; index [0..(HAS_LED7SEG-1)] of 7-SEG digit group
         .endif
         DIGITS = HAS_LED7SEG*HAS_LED7LEN
-        RamBlck LED7FIRST,DIGITS ; leftmost 7S-LED digit  
-        LED7LAST = RAMPOOL-1    ; save memory location of rightmost 7S-LED digit 
+        RamBlck LED7FIRST,DIGITS ; leftmost 7S-LED digit
+        LED7LAST = RAMPOOL-1    ; save memory location of rightmost 7S-LED digit
         .endif
         .ifne   HAS_BACKGROUND
 
@@ -535,13 +535,13 @@ COLD:
 
         .ifne   HAS_LED7SEG
 
-        .if     gt,(HAS_LED7SEG-1) 
+        .if     gt,(HAS_LED7SEG-1)
         MOV     LED7GROUP,#0     ; one of position HAS_LED7SEG 7-SEG digit groups
         .endif
-        
-        MOV     LED7LAST-2,#0x66 ; 7S LEDs .4.. 
-        MOV     LED7LAST-1,#0x78 ; 7S LEDs ..t.
-        MOV     LED7LAST-0,#0x74 ; 7S LEDs ...h
+
+        MOV     LED7FIRST  ,#0x66 ; 7S LEDs 4..
+        MOV     LED7FIRST+1,#0x78 ; 7S LEDs .t.
+        MOV     LED7FIRST+2,#0x74 ; 7S LEDs ..h
 
         .endif
 
@@ -4957,18 +4957,36 @@ EMIT7S:
         LD      A,(1,X)         ; c to A
 
         CP      A,#' '
-        JRNE    1$
+        JRNE    E7SNOBLK
 
-        CALLR   XGRPADD
+        .if     gt,(HAS_LED7SEG-1)
+        LD      A,LED7GROUP
+        INC     A
+        CP      A,#HAS_LED7SEG
+        JRULT   1$
+        CLR     A
+1$:     LD      LED7GROUP,A
+
+        CALLR   XLEDGROUP
         EXGW    X,Y
-        ; CALL    YSTOR
-        ; LDW     Y,#LED7FIRST    ; DROP DOLIT LED7FIRST
+        .else
+        LDW     Y,#LED7FIRST    ; DROP DOLIT LED7FIRST
+        .endif
         LDW     (X),Y
-        ;DoLitC  (LED7LAST-LED7FIRST+1)
         DoLitC  HAS_LED7LEN
         JP      ERASE
 
-1$:     CP      A,#'.'
+E7SNOBLK:
+
+        .if     gt,(HAS_LED7SEG-1)
+        CP      A,#LF
+        JRNE    E7SNOLF
+        MOV     LED7GROUP,#(HAS_LED7SEG-1)
+        JRA     E7END
+        .endif
+
+E7SNOLF:
+        CP      A,#'.'
         JREQ    E7DOT
         CP      A,#','
         JRMI    E7END
@@ -4994,16 +5012,27 @@ E7LOOKA:
         JP      PUT7S
 
 E7DOT:
+        .if     gt,(HAS_LED7SEG-1)
+        CALL    XLEDGROUP
+        LD      A,((HAS_LED7LEN-1),X)
+        OR      A,#0x80
+        LD      ((HAS_LED7LEN-1),X),A
+        EXGW    X,Y
+        ; fall trough
+
+        .else
         LD      A,#0x80         ; 7-seg P (dot)
         OR      A,LED7LAST
         LD      LED7LAST,A
-        JRA     E7END
+        .endif
+        ; fall trough
 
 E7END:
         JP      DROP
 
+        .if     gt,(HAS_LED7SEG-1)
 ;       Helper routine for calculating LED group start adress
-XGRPADD:
+XLEDGROUP:
         EXGW    X,Y
         LD      A,LED7GROUP
         LD      XL,A
@@ -5011,6 +5040,7 @@ XGRPADD:
         MUL     X,A
         ADDW    X,#LED7FIRST
         RET
+        .endif
 
 ;       P7S  ( c -- )
 ;       Insert 7-seg pattern at left side of LED display buffer, rotate buffer left
@@ -5021,14 +5051,14 @@ XGRPADD:
         .ascii  "P7S"
 PUT7S:
         .if     gt,(HAS_LED7SEG-1)
-        CALLR   XGRPADD 
+        CALLR   XLEDGROUP
         DEC     A
         PUSH    A
 1$:     LD      A,(1,X)
         LD      (X),A
         INCW    X
         DEC     (1,SP)
-        JRNE    1$    
+        JRNE    1$
         POP     A
 
         EXGW    X,Y
@@ -5353,7 +5383,7 @@ RESTC:
 ;===============================================================
 
 
-        .ifne WORDS_HWREG 
+        .ifne WORDS_HWREG
         .ifne (TARGET - STM8S103F3)
           .include "hwregs8s003.inc"
         .endif

@@ -107,32 +107,32 @@ LEDMPXGO:
 
         TNZ     A
         JRNE    1$
-        BRES    PC_ODR,#4       ; Digit ..1...
+        BRES    PC_ODR,#7       ; Digit 1.....
         JRA     LEDMPXEND
 
 1$:     CP      A,#1
         JRNE    2$
-        BRES    PC_ODR,#3       ; Digit .2....
+        BRES    PC_ODR,#6       ; Digit .2....
         JRA     LEDMPXEND
 
 2$:     CP      A,#2
         JRNE    3$
-        BRES    PB_ODR,#4       ; Digit 3.....
+        BRES    PC_ODR,#5       ; Digit ..3...
         JRA     LEDMPXEND
 
 3$:     CP      A,#3
         JRNE    4$
-        BRES    PC_ODR,#7       ; Digit .....4
+        BRES    PC_ODR,#4       ; Digit ...4..
         JRA     LEDMPXEND
 
 4$:     CP      A,#4
         JRNE    5$
-        BRES    PC_ODR,#6       ; Digit ....5.
+        BRES    PC_ODR,#3       ; Digit ....5.
         JRA     LEDMPXEND
 
 5$:     CP      A,#5
         JRNE    LEDMPXEND
-        BRES    PC_ODR,#5       ; Digit ...6..
+        BRES    PB_ODR,#4       ; Digit .....6
         ; fall through
 
 LEDMPXEND:
