@@ -4961,13 +4961,15 @@ EMIT7S:
 
         .if     gt,(HAS_LED7SEG-1)
         LD      A,LED7GROUP
+        JRMI    2$              ; B7 means "no-tab"
         INC     A
         CP      A,#HAS_LED7SEG
         JRULT   1$
         CLR     A
-1$:     LD      LED7GROUP,A
+1$:     OR      A,#0x80
+        LD      LED7GROUP,A
 
-        CALLR   XLEDGROUP
+2$:     CALLR   XLEDGROUP
         EXGW    X,Y
         .else
         LDW     Y,#LED7FIRST    ; DROP DOLIT LED7FIRST
@@ -4981,11 +4983,15 @@ E7SNOBLK:
         .if     gt,(HAS_LED7SEG-1)
         CP      A,#LF
         JRNE    E7SNOLF
-        MOV     LED7GROUP,#(HAS_LED7SEG-1)
+        MOV     LED7GROUP,#0x80 ; go to first group and set the no-tab marker
         JRA     E7END
         .endif
 
 E7SNOLF:
+        .if     gt,(HAS_LED7SEG-1)
+        BRES    LED7GROUP,#7    ; clear the no-tab marker
+        .endif
+
         CP      A,#'.'
         JREQ    E7DOT
         CP      A,#','
@@ -5035,6 +5041,7 @@ E7END:
 XLEDGROUP:
         EXGW    X,Y
         LD      A,LED7GROUP
+        AND     A,#0x7F
         LD      XL,A
         LD      A,#HAS_LED7LEN
         MUL     X,A
