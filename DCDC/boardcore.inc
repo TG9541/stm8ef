@@ -80,7 +80,7 @@ LMPX3:
         BSET    PD_ODR,#5       ; Digit ...1
 
         LD      A,TICKCNT+1
-        AND     A,#HAS_LED7SEG
+        AND     A,#0x03         ; 3 digits MPX
         LD      YL,A
         CLRW    X
         LD      XL,A

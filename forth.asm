@@ -148,8 +148,8 @@
         EMIT_BG  = DROP         ; TODO: vectored NUL background EMIT vector
         QKEY_BG  = ZERO         ; TODO: NUL background QKEY vector
 
-        HAS_LED7SEG      = 0    ; 7-seg LED on board
-        HAS_LED7LEN      = 3    ; default: 3 dig. 7-seg LED
+        HAS_LED7SEG      = 0    ; 7-seg LED display, number of groups (0: none)
+        LEN_7SGROUP      = 3    ; default: 3 dig. 7-seg LED
 
         HAS_KEYS         = 0    ; Board has keys
         HAS_OUTPUTS      = 0    ; Board outputs, e.g. relays
@@ -223,15 +223,17 @@
         RamByte TIM4RXBUF       ; TIM4 RX receive buffer
         .endif
 
+        .ifne   HAS_BACKGROUND
+
         .ifne   HAS_LED7SEG
         .if     gt,(HAS_LED7SEG-1)
         RamByte LED7GROUP       ; index [0..(HAS_LED7SEG-1)] of 7-SEG digit group
         .endif
-        DIGITS = HAS_LED7SEG*HAS_LED7LEN
+
+        DIGITS = HAS_LED7SEG*LEN_7SGROUP
         RamBlck LED7FIRST,DIGITS ; leftmost 7S-LED digit
         LED7LAST = RAMPOOL-1    ; save memory location of rightmost 7S-LED digit
         .endif
-        .ifne   HAS_BACKGROUND
 
         RamWord BGADDR          ; address of background routine (0: off)
         RamWord TICKCNT         ; 16 bit ticker (counts up)
@@ -4961,35 +4963,35 @@ EMIT7S:
 
         .if     gt,(HAS_LED7SEG-1)
         LD      A,LED7GROUP
-        JRMI    2$              ; B7 means "no-tab"
+        JRMI    2$              ; test LED7GROUP.7 "no-tab flag"
         INC     A
         CP      A,#HAS_LED7SEG
         JRULT   1$
         CLR     A
-1$:     OR      A,#0x80
+1$:     OR      A,#0x80         ; only one tab action, set "no-tab flag"
         LD      LED7GROUP,A
 
 2$:     CALLR   XLEDGROUP
-        EXGW    X,Y
+        EXGW    X,Y             ; restore X/Y after XLEDGROUP
         .else
         LDW     Y,#LED7FIRST    ; DROP DOLIT LED7FIRST
         .endif
         LDW     (X),Y
-        DoLitC  HAS_LED7LEN
+        DoLitC  LEN_7SGROUP
         JP      ERASE
 
 E7SNOBLK:
 
         .if     gt,(HAS_LED7SEG-1)
-        CP      A,#LF
+        CP      A,#LF           ; test for c ~ /[<CR><LF>]/
         JRNE    E7SNOLF
-        MOV     LED7GROUP,#0x80 ; go to first group and set the no-tab marker
+        MOV     LED7GROUP,#0x80 ; go to first LED group, set "no-tab flag"
         JRA     E7END
         .endif
 
 E7SNOLF:
         .if     gt,(HAS_LED7SEG-1)
-        BRES    LED7GROUP,#7    ; clear the no-tab marker
+        BRES    LED7GROUP,#7    ; on char output: clear "no-tab flag"
         .endif
 
         CP      A,#'.'
@@ -5020,10 +5022,10 @@ E7LOOKA:
 E7DOT:
         .if     gt,(HAS_LED7SEG-1)
         CALL    XLEDGROUP
-        LD      A,((HAS_LED7LEN-1),X)
+        LD      A,((LEN_7SGROUP-1),X)
         OR      A,#0x80
-        LD      ((HAS_LED7LEN-1),X),A
-        EXGW    X,Y
+        LD      ((LEN_7SGROUP-1),X),A
+        EXGW    X,Y             ; restore X/Y after XLEDGROUP
         ; fall trough
 
         .else
@@ -5038,19 +5040,21 @@ E7END:
 
         .if     gt,(HAS_LED7SEG-1)
 ;       Helper routine for calculating LED group start adress
+;       return: X: LED group addr, Y: DSP, A: LEN_7SGROUP
+;       caution: caller must restore X/Y!
 XLEDGROUP:
-        EXGW    X,Y
+        EXGW    X,Y             ; use X to save memory
         LD      A,LED7GROUP
-        AND     A,#0x7F
+        AND     A,#0x7F         ; ignore "no-tab flag"
         LD      XL,A
-        LD      A,#HAS_LED7LEN
+        LD      A,#LEN_7SGROUP
         MUL     X,A
         ADDW    X,#LED7FIRST
         RET
         .endif
 
 ;       P7S  ( c -- )
-;       Insert 7-seg pattern at left side of LED display buffer, rotate buffer left
+;       Right aligned 7S-LED pattern output, rotates LED group buffer
         .dw     LINK
 
         LINK =  .
@@ -5068,13 +5072,13 @@ PUT7S:
         JRNE    1$
         POP     A
 
-        EXGW    X,Y
+        EXGW    X,Y             ; restore X/Y after XLEDGROUP
         CALL    AFLAGS
         LD      (Y),A
         .else
         DoLitC  LED7FIRST+1
         DoLitC  LED7FIRST
-        DoLitC  (HAS_LED7LEN-1)
+        DoLitC  (LEN_7SGROUP-1)
         CALL    CMOVE
         CALL    AFLAGS
         LD      LED7LAST,A

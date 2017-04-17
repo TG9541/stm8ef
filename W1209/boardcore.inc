@@ -46,7 +46,7 @@ _EXTI3_IRQHandler:
 
         .ifne   HAS_LED7SEG
 ;       LED_MPX driver ( -- )
-;       Output bit pattern in A to 7S-LED digit hardware 
+;       Output bit pattern in A to 7S-LED digit hardware
 
 LED_MPX:
         BSET    PD_ODR,#4       ; Digit .3..
@@ -54,7 +54,7 @@ LED_MPX:
         BSET    PB_ODR,#4       ; Digit ...1
 
         LD      A,TICKCNT+1
-        AND     A,#(HAS_LED7SEG*HAS_LED7LEN)
+        AND     A,#0x03         ; 3 digits MPX
 
         JRNE    1$
         BRES    PD_ODR,#4       ; digit .3..
@@ -73,7 +73,7 @@ LED_MPX:
 3$:     CLRW    X
         LD      XL,A
         LD      A,(LED7LAST-2,X)
-        
+
         ; W1209 7S LED display row
         ; bit 76453210 input (parameter A)
         ;  PA .....FB.

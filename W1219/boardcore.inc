@@ -62,7 +62,7 @@ LED_MPX:
 
 ;       Get MPX digit number
         LD      A,TICKCNT+1
-        AND     A,#7
+        AND     A,#7            ; 6 digits MPX
         CP      A,#6
         JRUGE   LEDMPXEND
 

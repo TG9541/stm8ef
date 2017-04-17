@@ -68,7 +68,7 @@ LED_MPX:
         ;       PC_ODR,#6       ; Digit .....6
 
         LD      A,TICKCNT+1
-        AND     A,#7
+        AND     A,#7            ; 6 digits MPX
         CP      A,#6
         JRUGE   LEDMPXEND
 
