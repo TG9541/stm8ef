@@ -801,8 +801,8 @@ _TIM4_IRQHandler:
 
 TIM4_OFF:
         .ifne   HALF_DUPLEX_SIM
-        BSET    PSIM+CR2,#PNRX    ; enable PNRX external interrupt
-        BRES    PSIM+DDR,#PNRX    ; set shared GPIO to input
+        BSET    PSIM+CR2,#PNRX  ; enable PNRX external interrupt
+        BRES    PSIM+DDR,#PNRX  ; set shared GPIO to input
         .endif
         BRES    TIM4_IER,#0     ; disable TIM4 interrupt
         IRET
@@ -813,21 +813,21 @@ TIM4_RECVE:
         JRNE    TIM4_END
         MOV     TIM4RXBUF,TIM4RXREG ; save result (CF is now start-bit)
         .ifeq   HALF_DUPLEX_SIM
-        BSET    PSIM+CR2,#PNRX    ; enable PNRX external interrupt
+        BSET    PSIM+CR2,#PNRX  ; enable PNRX external interrupt
         .endif
         JRA     TIM4_OFF
 TIM4_TRANS:
         CP      A,#10           ; test if startbit (coincidentially set CF)
         JRNE    TIM4_SER
         .ifne   HALF_DUPLEX_SIM
-        BSET    PSIM+DDR,#PNRX    ; port PD1=PNRX to output
+        BSET    PSIM+DDR,#PNRX  ; port PD1=PNRX to output
         .endif
         JRA     TIM4_BIT        ; emit start bit (CF=0 from CP)
 TIM4_SER:
         RRC     TIM4TXREG       ; get data bit, shift in stop bit (CF=1 from CP)
         ; fall through
 TIM4_BIT:
-        BCCM    PSIM+ODR,#PNTX    ; Set GPIO to CF
+        BCCM    PSIM+ODR,#PNTX  ; Set GPIO to CF
         DEC     TIM4TCNT        ; next TXD TIM4 state
         JREQ    TIM4_OFF        ; complete when TIM4CNT is zero
         ; fall through
@@ -5131,9 +5131,7 @@ NOKEYB:
         LINK =  .
         .db     (4)
         .ascii  "ADC!"
-        ADC_CSR = 0x5400
-        ADC_CR1 = 0x5401
-        ADC_CR2 = 0x5402
+
 ADCSTOR:
         INCW    X
         LD      A,(X)
@@ -5152,7 +5150,6 @@ ADCSTOR:
         .db     (4)
         .ascii  "ADC@"
 
-        ADC_DRH = 0x5404
 ADCAT:
         BRES    ADC_CSR,#7      ; reset EOC
         BSET    ADC_CR1,#0      ; start ADC
