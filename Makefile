@@ -9,6 +9,7 @@ zip: build
 build: words
 	make BOARD=CORE
 	make BOARD=W1209
+	make BOARD=W1219
 	make BOARD=W1401
 	make BOARD=C0135
 	make BOARD=DCDC

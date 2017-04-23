@@ -1175,7 +1175,7 @@
 
 ```
 ;       P7S  ( c -- )
-;       Insert 7-seg pattern at left side of LED display buffer, rotate buffer left
+;       Right aligned 7S-LED pattern output, rotates LED group buffer
 ```
 
 ```
