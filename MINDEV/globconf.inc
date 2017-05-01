@@ -2,8 +2,6 @@
 ; Config for STM8S103F3P6 Minmal Development Board
 ; Clock: HSI (no crystal)
 
-        STM8S103F3       = 1    ; STM8S103F3 "minimum development board"
-
         HALF_DUPLEX      = 0    ; Use EMIT/?KEY in half duplex mode
         HAS_TXUART       = 1    ; No UART TXD, word TX!
         HAS_RXUART       = 1    ; No UART RXD, word ?RX

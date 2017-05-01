@@ -2,8 +2,6 @@
 ; Config for W1209 Thermostat Module
 ; Clock: HSI (no crystal)
 
-        STM8S103F3       = 1
-
         HALF_DUPLEX      = 1    ; Use EMIT/?KEY in half duplex mode
         HAS_TXUART       = 0    ; No UART TXD, word TX!
         HAS_RXUART       = 0    ; No UART RXD, word ?RX
@@ -16,13 +14,15 @@
         EMIT_BG  = EMIT7S       ; 7S-LED background EMIT vector
         QKEY_BG  = QKEYB        ; Board keys background QKEY vector
 
-        HAS_LED7SEG      = 7    ; yes, 3 dig. 7-seg LED on module
+        HAS_LED7SEG      = 1    ; yes, 1*3 dig. 7-seg LED on module
+
         HAS_KEYS         = 2    ; yes, 3 keys on module
         HAS_OUTPUTS      = 1    ; yes, power on/off
         HAS_ADC          = 1    ; Analog input words
 
         HAS_BACKGROUND   = 1    ; Background Forth task (TIM2 ticker)
         BG_TIM2_REL = 0x08FC    ; 1ms ticker for 7S-LED MPX
+        BG_RUNMASK  =      0    ; BG task runs if "(BG_RUNMASK AND TICKCNT) equals 0"
         HAS_CPNVM        = 1    ; Can compile to Flash, always interpret to RAM
         HAS_DOES         = 1    ; CREATE-DOES> extension
         HAS_DOLOOP       = 1    ; DO .. LOOP extension: DO LEAVE LOOP +LOOP
@@ -43,5 +43,5 @@
         WORDS_EXTRACORE  = 1    ; Extra core words: =0 I
         WORDS_EXTRAMEM   = 1    ; Extra memory words: B! 2C@ 2C!
         WORDS_EXTRAEEPR  = 1    ; Extra EEPROM lock/unlock words: LOCK ULOCK ULOCKF LOCKF
-        WORDS_HWREG      = 1    ; Peripheral Register words
+        WORDS_HWREG      = 0    ; Peripheral Register words
 

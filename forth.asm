@@ -3,7 +3,7 @@
 ; This is derived work based on
 ; http://www.forth.org/svfig/kk/07-2010.html
 ;
-; Refer to LICENSE.md for license information.
+; Please refer to LICENSE.md for more information.
 ;
 ;--------------------------------------------------------
 ; Original author, and copyright:
@@ -25,34 +25,10 @@
 ; The latest version of this code is available at
 ; https://github.com/TG9541/stm8ef
 ;
-; Non-functional changes and code refactoring:
-; * SDCC tool chain "ASxxxx V2.0" syntax
-; * STM8S105C6 dependencies removed (e.g. UART2)
-; * support for different target boards
-; * configuration files for code options
-; * 1K RAM layout, symbols for RAM loc. ROM size options
-; * binary size optimization
 ;
-; New features, e.g.:
-; * board support:
-;       - W1209 LED display & half-duplex with SW TX
-;       - C0135 Relay-4 Board
-;       - STM8S103F3 "$0.70" breakout board
-; * preemptive background operation with fixed cycle time
-; * configurable startup & default constants: 'BOOT
-; * configurable vocabulary subsets for binary size reduction
-; * CREATE-DOES> for defining words
-; * New loop structure words: DO LEAVE LOOP +LOOP
-; * native BRANCH and EXIT
-; * words for STM8 ADC control: ADC! ADC@
-; * words for board keys, outputs, LEDs: OUT OUT!
-; * words for EEPROM, FLASH lock/unlock: LOCK ULOCK LOCKF ULOCKF
-; * words for bit operations, inv. order word access: B! 2C@ 2C!
-; * words for compile to Flash memory: NVR RAM RESET
-; * words for ASCII file transfer: FILE HAND
-;
-; Docs for the SDCC integrated assembler are scarce, and
-; hence SDCC was used to create a template for this file:
+; Docs for the SDCC integrated assembler are scarce, thus
+; SDCC was used to write the sceleton for this file.
+; Hoever, the assembly doesn't constitue SDCC code.
 ;--------------------------------------------------------
 ; File Created by SDCC : free open source ANSI-C Compiler
 ; Version 3.6.0 #9615 (Linux)
@@ -133,12 +109,24 @@
         BRAN_OPC =    0xCC      ; JP opcode
         CALL_OPC =    0xCD      ; CALL opcode
 
+        STM8S003F3       = 103  ; 8K flash, 1K RAM, 128 EEPROM, UART1
+        STM8S103F3       = 103  ; like STM8S003F3, 640 EEPROM
+        STM8S105K4       = 105  ; 16K flash, 2K RAM, 1K EEPROM, UART2
+        STM8S105C6       = 105  ; 32K flash, 2K RAM, 1K EEPROM, UART2
+
         ;********************************************
         ;******  2) Device hardware addresses  ******
         ;********************************************
 
+        ;******  STM8S memory addresses ******
+        RAMBASE =       0x0000  ; STM8S RAM start
+        EEPROMBASE =    0x4000  ; STM8S EEPROM start
 
-        ; STM8 device specific include (can be replaced by file in board folder)
+        ; STM8 device specific include (provided by file in board folder)
+        ; sets "TARGET" and memory layout
+        .include        "target.inc"
+
+        ; STM8 unified register addresses (depends on "TARGET")
         .include        "stm8device.inc"
 
         ;**********************************
@@ -160,7 +148,9 @@
         EMIT_BG  = DROP         ; TODO: vectored NUL background EMIT vector
         QKEY_BG  = ZERO         ; TODO: NUL background QKEY vector
 
-        HAS_LED7SEG      = 0    ; 7-seg LED on board
+        HAS_LED7SEG      = 0    ; 7-seg LED display, number of groups (0: none)
+        LEN_7SGROUP      = 3    ; default: 3 dig. 7-seg LED
+
         HAS_KEYS         = 0    ; Board has keys
         HAS_OUTPUTS      = 0    ; Board outputs, e.g. relays
         HAS_INPUTS       = 0    ; Board digital inputs
@@ -168,6 +158,7 @@
 
         HAS_BACKGROUND   = 0    ; Background Forth task (TIM2 ticker)
         BG_TIM2_REL = 0x26DE    ; Reload value for TIM2 background ticker (default 0x26DE @ 5ms HSE)
+        BG_RUNMASK  =      0    ; BG task runs if "(BG_RUNMASK AND TICKCNT) equals 0"
         HAS_CPNVM        = 0    ; Can compile to Flash, always interpret to RAM
         HAS_DOES         = 0    ; DOES> extension
         HAS_DOLOOP       = 0    ; DO .. LOOP extension: DO LEAVE LOOP +LOOP
@@ -176,6 +167,7 @@
         CASEINSENSITIVE  = 0    ; Case insensitive dictionary search
         SPEEDOVERSIZE    = 0    ; Speed-over-size in core words ROT - = < -1 0 1
         BAREBONES        = 0    ; Remove or unlink some more: hi HERE .R U.R SPACES @EXECUTE AHEAD CALL, EXIT COMPILE [COMPILE] DEPTH
+        NO_VARIABLE      = 0    ; Disable VARIABLE and feature "VARIABLE in Flash allocates RAM"
 
         WORDS_LINKINTER  = 0    ; Link interpreter words: ACCEPT QUERY TAP kTAP hi 'BOOT tmp >IN 'TIB #TIB eval CONTEXT pars PARSE NUMBER? DIGIT? WORD TOKEN NAME> SAME? find ABORT aborq $INTERPRET INTER? .OK ?STACK EVAL PRESET QUIT $COMPILE
         WORDS_LINKCOMP   = 0    ; Link compiler words: cp last OVERT $"| ."| $,n
@@ -194,19 +186,6 @@
         ;******  4) Device dependent features  ******
         ;**********************************************
         ; Define memory location for device dependent features here
-
-        .ifne   (STM8S003F3 + STM8S103F3)
-        ;******  STM8SF103 Memory Layout ******
-
-        FORTHRAM =      0x0040  ; Start of RAM controlled by Forth
-        UPPLOC  =       0x0060  ; UPP (user/system area) location for 1K RAM
-        CTOPLOC =       0x0080  ; CTOP (user dictionary) location for 1K RAM
-        SPPLOC  =       0x0350  ; SPP (data stack top), TIB start
-        RPPLOC  =       RAMEND  ; RPP (return stack top)
-
-        RAMEND =        0x03FF  ; system (return) stack, growing down
-        FLASHEND =      0x9FFF  ; 8K devices
-        .endif
 
         .include "globconf.inc"
 
@@ -244,11 +223,17 @@
         RamByte TIM4RXBUF       ; TIM4 RX receive buffer
         .endif
 
-        .ifne   HAS_LED7SEG
-        RamBlck LED7FIRST,5     ; leftmost 7S-LED digit  6.....
-        RamByte LED7LAST        ; rightmost 7S-LED digit .....1
-        .endif
         .ifne   HAS_BACKGROUND
+
+        .ifne   HAS_LED7SEG
+        .if     gt,(HAS_LED7SEG-1)
+        RamByte LED7GROUP       ; index [0..(HAS_LED7SEG-1)] of 7-SEG digit group
+        .endif
+
+        DIGITS = HAS_LED7SEG*LEN_7SGROUP
+        RamBlck LED7FIRST,DIGITS ; leftmost 7S-LED digit
+        LED7LAST = RAMPOOL-1    ; save memory location of rightmost 7S-LED digit
+        .endif
 
         RamWord BGADDR          ; address of background routine (0: off)
         RamWord TICKCNT         ; 16 bit ticker (counts up)
@@ -299,6 +284,8 @@
 
         ; Null initialized core variables (growing down)
 
+        USRCTOP  =   UPP+16     ; point to the start of RAM dictionary
+        USRVAR  =    UPP+18     ; point to next free USR RAM location
         NVMCONTEXT = UPP+20     ; point to top of dictionary in Non Volatile Memory
         USRCONTEXT = UPP+22     ; start vocabulary search
         USRHLD  =    UPP+24     ; hold a pointer of output string
@@ -370,10 +357,17 @@ _TIM2_UO_IRQHandler:
         LDW     X,TICKCNT
         INCW    X
         LDW     TICKCNT,X
+        ; fall through
+
+        .ifne   BG_RUNMASK
+        LD      A,XL            ; Background task runs if "(BG_RUNMASK AND TICKCNT) equals 0"
+        AND     A,#BG_RUNMASK
+        JRNE    TIM2IRET
+        .endif
 
         LDW     Y,BGADDR        ; address of background task
         TNZW    Y               ; 0: background operation off
-        JREQ    1$
+        JREQ    TIM2IRET
 
         LDW     X,YTEMP         ; Save context
         PUSHW   X
@@ -412,7 +406,7 @@ _TIM2_UO_IRQHandler:
 
         POPW    X
         LDW     YTEMP,X
-1$:
+TIM2IRET:
         .endif
 
         IRET
@@ -463,15 +457,15 @@ COLD:
         ; Init RS232 communication port
         ; STM8S[01]003F3 init UART
         LDW     X,#0x6803              ; 9600 baud
-        LDW     UART1_BRR1,X           ;
+        LDW     UART_BRR1,X           ;
         .ifne   HAS_RXUART*HAS_TXUART
-        MOV     UART1_CR2,#0x0C        ; Use UART1 full duplex
+        MOV     UART_CR2,#0x0C        ; Use UART1 full duplex
         .else
         .ifne   HAS_TXUART
-        MOV     UART1_CR2,#0x08        ; UART1 enable tx
+        MOV     UART_CR2,#0x08        ; UART1 enable tx
         .endif
         .ifne   HAS_RXUART
-        MOV     UART1_CR2,#0x04        ; UART1 enable rx
+        MOV     UART_CR2,#0x04        ; UART1 enable rx
         .endif
         .endif
         .endif
@@ -519,9 +513,6 @@ COLD:
         BSET    PSIM+CR2,#PNRX    ; enable PNRX external interrupt
         .endif
 
-        ; Hardware initialization complete
-        RIM                     ; enable interrupts
-
         CALL    PRESE           ; initialize data stack, TIB
 
         DoLitW  UZERO
@@ -529,10 +520,35 @@ COLD:
         DoLitC  (ULAST-UZERO)
         CALL    CMOVE           ; initialize user area
 
+        .ifne  HAS_CPNVM
+        EXGW    X,Y
+        LDW     X,USRCP         ; reserve some space for user variable
+        LDW     USRVAR,X
+        ADDW    X,#32
+        LDW     USRCP,X
+        LDW     USRCTOP,X       ; store new CTOP
+        EXGW    X,Y
+        .endif
+
         .ifne   HAS_OUTPUTS
         CALL    ZERO
         CALL    OUTSTOR
         .endif
+
+        .ifne   HAS_LED7SEG
+
+        .if     gt,(HAS_LED7SEG-1)
+        MOV     LED7GROUP,#0     ; one of position HAS_LED7SEG 7-SEG digit groups
+        .endif
+
+        MOV     LED7FIRST  ,#0x66 ; 7S LEDs 4..
+        MOV     LED7FIRST+1,#0x78 ; 7S LEDs .t.
+        MOV     LED7FIRST+2,#0x74 ; 7S LEDs ..h
+
+        .endif
+
+        ; Hardware initialization complete
+        RIM                     ; enable interrupts
 
         CALL    [TBOOT+3]       ; application boot
         CALL    OVERT           ; initialize CONTEXT from USRLAST
@@ -574,6 +590,7 @@ TBOOT:
         .dw     BASEE           ; BASE
         .dw     INTER           ; 'EVAL
         .dw     DOTOK           ; 'PROMPT
+        COLDCTOP = .
         .dw     CTOP            ; CP in RAM
         COLDCONTEXT = .
         .dw     LASTN           ; USRLAST
@@ -614,13 +631,6 @@ TBOOT:
         .ascii  "hi"
         .endif
 HI:
-        ; TODO: move to board initialization?
-        .ifne   HAS_LED7SEG
-        MOV     LED7LAST-2,#0x66 ; 7S LEDs .4..
-        MOV     LED7LAST-1,#0x78 ; 7S LEDs ..t.
-        MOV     LED7LAST-0,#0x74 ; 7S LEDs ...h
-        .endif
-
         CALLR   1$              ; CR
         CALL    DOTQP           ; initialize I/O
         .db     15
@@ -648,8 +658,8 @@ HI:
         .endif
 QRX:
         CLR     A               ; A: flag false
-        BTJF    UART1_SR,#5,1$
-        LD      A,UART1_DR      ; get char in A
+        BTJF    UART_SR,#5,1$
+        LD      A,UART_DR      ; get char in A
 1$:     JP      ATOKEY          ; push char or flag false
         .endif
 
@@ -671,14 +681,14 @@ TXSTOR:
 
         .ifne   HALF_DUPLEX * (1-HAS_TXSIM)
         ; HALF_DUPLEX with normal UART (e.g. wired-or Rx and Tx)
-        BRES    UART1_CR2,#2    ; disable rx
-1$:     BTJF    UART1_SR,#7,1$  ; loop until tdre
-        LD      UART1_DR,A      ; send A
-2$:     BTJF    UART1_SR,#6,2$  ; loop until tc
-        BSET    UART1_CR2,#2    ; enable rx
+        BRES    UART_CR2,#2    ; disable rx
+1$:     BTJF    UART_SR,#7,1$  ; loop until tdre
+        LD      UART_DR,A      ; send A
+2$:     BTJF    UART_SR,#6,2$  ; loop until tc
+        BSET    UART_CR2,#2    ; enable rx
         .else                   ; not HALF_DUPLEX
-1$:     BTJF    UART1_SR,#7,1$  ; loop until tdre
-        LD      UART1_DR,A      ; send A
+1$:     BTJF    UART_SR,#7,1$  ; loop until tdre
+        LD      UART_DR,A      ; send A
         .endif
         RET
         .endif
@@ -791,8 +801,8 @@ _TIM4_IRQHandler:
 
 TIM4_OFF:
         .ifne   HALF_DUPLEX_SIM
-        BSET    PSIM+CR2,#PNRX    ; enable PNRX external interrupt
-        BRES    PSIM+DDR,#PNRX    ; set shared GPIO to input
+        BSET    PSIM+CR2,#PNRX  ; enable PNRX external interrupt
+        BRES    PSIM+DDR,#PNRX  ; set shared GPIO to input
         .endif
         BRES    TIM4_IER,#0     ; disable TIM4 interrupt
         IRET
@@ -803,21 +813,21 @@ TIM4_RECVE:
         JRNE    TIM4_END
         MOV     TIM4RXBUF,TIM4RXREG ; save result (CF is now start-bit)
         .ifeq   HALF_DUPLEX_SIM
-        BSET    PSIM+CR2,#PNRX    ; enable PNRX external interrupt
+        BSET    PSIM+CR2,#PNRX  ; enable PNRX external interrupt
         .endif
         JRA     TIM4_OFF
 TIM4_TRANS:
         CP      A,#10           ; test if startbit (coincidentially set CF)
         JRNE    TIM4_SER
         .ifne   HALF_DUPLEX_SIM
-        BSET    PSIM+DDR,#PNRX    ; port PD1=PNRX to output
+        BSET    PSIM+DDR,#PNRX  ; port PD1=PNRX to output
         .endif
         JRA     TIM4_BIT        ; emit start bit (CF=0 from CP)
 TIM4_SER:
         RRC     TIM4TXREG       ; get data bit, shift in stop bit (CF=1 from CP)
         ; fall through
 TIM4_BIT:
-        BCCM    PSIM+ODR,#PNTX    ; Set GPIO to CF
+        BCCM    PSIM+ODR,#PNTX  ; Set GPIO to CF
         DEC     TIM4TCNT        ; next TXD TIM4 state
         JREQ    TIM4_OFF        ; complete when TIM4CNT is zero
         ; fall through
@@ -1194,38 +1204,6 @@ IGET:
         JRA     RAT
         .endif
 
-        .ifne   WORDS_EXTRASTACK
-;       RP@     ( -- a )     ( TOS STM8: -- Y,Z,N )
-;       Push current RP to data stack.
-
-        .dw     LINK
-        LINK =  .
-        .db     3
-        .ascii  "rp@"
-RPAT:
-        LDW     Y,SP            ; save return addr
-        JRA     YSTOR
-        .endif
-
-;       RP!     ( a -- )
-;       Set return stack pointer.
-
-        .ifne   ( WORDS_EXTRASTACK)
-        .dw     LINK
-        LINK =  .
-        .db     (COMPO+3)
-        .ascii  "rp!"
-RPSTO:
-        POPW    Y
-        LDW     YTEMP,Y
-        LDW     Y,X
-        INCW    X               ; fixed error: TOS not consumed
-        INCW    X
-        LDW     Y,(Y)
-        LDW     SP,Y
-        JP      [YTEMP]
-        .endif
-
 ;       R>      ( -- w )     ( TOS STM8: -- Y,Z,N )
 ;       Pop return stack to data stack.
 
@@ -1242,6 +1220,15 @@ PUSHJPYTEMP:
         DECW    X
         LDW     (X),Y
         JP      [YTEMP]
+
+
+        .ifne  HAS_CPNVM
+;       doVARPTR core ( -- a )    ( TOS STM8: -- Y,Z,N )
+DOVARPTR:
+        POPW    Y               ; get return addr (pfa)
+        LDW     Y,(Y)
+        JRA     YSTOR
+        .endif
 
 ;       doVAR   ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Code for VARIABLE and CREATE.
@@ -1293,19 +1280,6 @@ TOR:
         PUSHW   X
         LDW     X,Y
         JRA     DROP
-
-;       SP@     ( -- a )        ( TOS STM8: -- Y,Z,N )
-;       Push current stack pointer.
-
-        .ifne   WORDS_EXTRASTACK
-        .dw     LINK
-        LINK =  .
-        .db     3
-        .ascii  "sp@"
-SPAT:
-        LDW     Y,X
-        JRA     YSTOR
-        .endif
 
 
 ;       NIP     ( n1 n2 -- n2 )
@@ -1390,6 +1364,20 @@ OVER:
         LDW     Y,X
         LDW     Y,(2,Y)
         JRA     YSTOR
+
+;       UM+     ( u u -- udsum )
+;       Add two unsigned single
+;       and return a double sum.
+
+        .dw     LINK
+        LINK =  .
+        .db     3
+        .ascii  "UM+"
+UPLUS:
+        CALLR   PLUS
+        CLR     A
+        RLC     A
+        JP      ASTOR
 
 ;       +       ( w w -- sum ) ( TOS STM8: -- Y,Z,N )
 ;       Add top two items.
@@ -1497,42 +1485,6 @@ SUBB:
         .else
         CALL    NEGAT           ; (15 cy)
         JRA     PLUS            ; 25 cy (15+10)
-        .endif
-
-;       UM+     ( u u -- udsum )
-;       Add two unsigned single
-;       and return a double sum.
-
-        .dw     LINK
-        LINK =  .
-        .db     3
-        .ascii  "UM+"
-UPLUS:
-        LD      A,#1
-        LDW     Y,X
-        LDW     Y,(2,Y)
-        LDW     YTEMP,Y
-        LDW     Y,X
-        LDW     Y,(Y)
-        ADDW    Y,YTEMP
-        LDW     (2,X),Y
-        JRC     UPL1
-        CLR     A
-UPL1:   LD      (1,X),A
-        CLR     (X)
-        RET
-
-;       SP!     ( a -- )
-;       Set data stack pointer.
-
-        .ifne   WORDS_EXTRASTACK
-        .dw     LINK
-        LINK =  .
-        .db     3
-        .ascii  "sp!"
-SPSTO:
-        LDW     X,(X)   ;X = a
-        RET
         .endif
 
 
@@ -1652,10 +1604,10 @@ HLD:
         LINK =  .
         .db     5
         .ascii  "'EMIT"
-        .endif
 TEMIT:
         LD      A,#(USREMIT)
         JRA     ASTOR
+        .endif
 
 
 ;       '?KEY   ( -- a )     ( TOS STM8: -- A,Z,N )
@@ -1666,10 +1618,10 @@ TEMIT:
         LINK =  .
         .db     5
         .ascii  "'?KEY"
-        .endif
 TQKEY:
         LD      A,#(USRQKEY)
         JRA     ASTOR
+        .endif
 
 
 ;       LAST    ( -- a )        ( TOS STM8: -- Y,Z,N )
@@ -1799,7 +1751,7 @@ AYSTOR:
         .ascii  "TIM"
 TIMM:
         LDW     Y,TICKCNT
-        JP      AYSTOR
+        JRA     AYSTOR
 
 
 ;       BG      ( -- a)     ( TOS STM8: -- Y,Z,N )
@@ -1848,6 +1800,7 @@ PACEE:
         .ascii  "HAND"
 HANDD:
         LDW     Y,#(DOTOK)
+YPROMPT:
         LDW     USRPROMPT,Y
         RET
 
@@ -1861,8 +1814,7 @@ HANDD:
         .ascii  "FILE"
 FILEE:
         LDW     Y,#(PACEE)
-        LDW     USRPROMPT,Y
-        RET
+        JRA     YPROMPT
         .endif
 
 
@@ -2093,7 +2045,7 @@ WITHI:
         CALL    TOR
         CALL    SUBB
         CALL    RFROM
-        JP      ULESS
+        JRA     ULESS
 
 ; Divide
 
@@ -2229,46 +2181,46 @@ SLASH:
         .db     3
         .ascii  "UM*"
 UMSTA:                          ; stack have 4 bytes u1=a,b u2=c,d
-        LD      A,(2,X) ; b
+        LD      A,(2,X)         ; b
         LD      YL,A
-        LD      A,(X)   ; d
+        LD      A,(X)           ; d
         MUL     Y,A
-        PUSHW   Y       ; PROD1 temp storage
-        LD      A,(3,X) ; a
+        PUSHW   Y               ; PROD1 temp storage
+        LD      A,(3,X)         ; a
         LD      YL,A
-        LD      A,(X)   ; d
+        LD      A,(X)           ; d
         MUL     Y,A
-        PUSHW   Y       ; PROD2 temp storage
-        LD      A,(2,X) ; b
+        PUSHW   Y               ; PROD2 temp storage
+        LD      A,(2,X)         ; b
         LD      YL,A
-        LD      A,(1,X) ; c
+        LD      A,(1,X)         ; c
         MUL     Y,A
-        PUSHW   Y       ; PROD3,CARRY temp storage
-        LD      A,(3,X) ; a
+        PUSHW   Y               ; PROD3,CARRY temp storage
+        LD      A,(3,X)         ; a
         LD      YL,A
-        LD      A,(1,X) ; c
-        MUL     Y,A     ; least signifiant product
+        LD      A,(1,X)         ; c
+        MUL     Y,A             ; least signifiant product
         CLR     A
         RRWA    Y
-        LD      (3,X),A ; store least significant byte
-        ADDW    Y,(1,SP); PROD3
+        LD      (3,X),A         ; store least significant byte
+        ADDW    Y,(1,SP)        ; PROD3
         CLR     A
-        ADC     A,#0    ; save carry
-        LD      (1,SP),A; CARRY
-        ADDW    Y,(3,SP); PROD2
-        LD      A,(1,SP); CARRY
-        ADC     A,#0    ; add 2nd carry
-        LD      (1,SP),A; CARRY
+        ADC     A,#0            ; save carry
+        LD      (1,SP),A        ; CARRY
+        ADDW    Y,(3,SP)        ; PROD2
+        LD      A,(1,SP)        ; CARRY
+        ADC     A,#0            ; add 2nd carry
+        LD      (1,SP),A        ; CARRY
         CLR     A
         RRWA    Y
-        LD      (2,X),A ; 2nd product byte
-        ADDW    Y,(5,SP); PROD1
+        LD      (2,X),A         ; 2nd product byte
+        ADDW    Y,(5,SP)        ; PROD1
         RRWA    Y
-        LD      (1,X),A ; 3rd product byte
+        LD      (1,X),A         ; 3rd product byte
         RRWA    Y               ; 4th product byte now in A
-        ADC     A,(1,SP); CARRY
+        ADC     A,(1,SP)        ; CARRY
         LD      (X),A
-        ADDW    SP,#6   ; drop temp storage
+        ADDW    SP,#6           ; drop temp storage
         RET
 
 ;       *       ( n n -- n )    ( TOS STM8: -- Y,Z,N )
@@ -2337,6 +2289,7 @@ STASL:
 ; Miscellaneous
 
 
+        .ifeq   BAREBONES
 ;       EXG      ( n -- n )      ( TOS STM8: -- Y,Z,N )
 ;       Exchange high with low byte of n.
 
@@ -2349,6 +2302,7 @@ EXG:
         CALLR   DOXCODE
         SWAPW   X
         RET
+        .endif
 
 ;       2/      ( n -- n )      ( TOS STM8: -- Y,Z,N )
 ;       Multiply tos by 2.
@@ -2480,8 +2434,8 @@ NEGAT:
         .ascii  "ABS"
 ABSS:
         CALLR   DOXCODE
-        JRPL    1$      ;positive?
-        NEGW    X       ;else negate
+        JRPL    1$              ; positive?
+        NEGW    X               ; else negate
 1$:     RET
 
         .ifne   WORDS_EXTRACORE
@@ -2498,7 +2452,7 @@ ZEQUAL:
         JREQ    1$
         CLRW    X
         RET
-1$:     CPLW    X               ;else -1
+1$:     CPLW    X               ; else -1
         RET
 
 ;       PICK    ( ... +n -- ... w )      ( TOS STM8: -- Y,Z,N )
@@ -2600,13 +2554,11 @@ COUNT:
 ;       HERE    ( -- a )      ( TOS STM8: -- A,Z,N )
 ;       Return  top of  code dictionary.
 
-        .ifeq   BAREBONES
         .dw     LINK
 
         LINK =  .
         .db     4
         .ascii  "HERE"
-        .endif
 HERE:
 
         .ifne  HAS_CPNVM
@@ -2669,7 +2621,7 @@ ATEXE:
 
 ;       CMOVE   ( b1 b2 u -- )
 ;       Copy u bytes from b1 to b2.
-; 37 bytes
+
         .dw     LINK
 
         LINK =  .
@@ -2811,13 +2763,14 @@ BDIGS:
         .ascii  "HOLD"
         .endif
 HOLD:
-        LDW     Y,USRHLD
-        DECW    Y
-        LDW     USRHLD,Y
         LD      A,(1,X)
-        LD      (Y),A
+        EXGW    X,Y
+        LDW     X,USRHLD
+        DECW    X
+        LDW     USRHLD,X
+        LD      (X),A
+        EXGW    X,Y
         JP      DROP
-
 
 ;       #       ( u -- u )    ( TOS STM8: -- Y,Z,N )
 ;       Extract one digit from u and
@@ -3263,10 +3216,9 @@ UDOTR:
         CALLR   BDEDIGS
 RFROMTYPES:
         CALL    RFROM
-        LD      A,(1,X)
-        SUB     A,(3,X)         ;  OVER SUBS
-        LD      (1,X),A
-        CALL    SPACS
+        CALL    OVER
+        CALL    SUBB
+        CALLR   SPACS
         JRA     TYPES
 
 ;       TYPE    ( b u -- )
@@ -3435,8 +3387,6 @@ PARSEND:
         POP     A               ; discard TEMP
 SUBPARS:
         JP      SUBB
-
-
 
 ;       PARSE   ( c -- b u ; <string> )
 ;       Scan input stream and return
@@ -3834,7 +3784,7 @@ QUERY:
         .ascii  "ABORT"
         .endif
 ABORT:
-        CALL    PRESE
+        CALLR   PRESE
         JP      QUIT
 
 ;       abort"  ( f -- )
@@ -3860,6 +3810,23 @@ ABOR1:  CALL    SPACE
         JRA     ABORT   ;pass error string
 ABOR2:  CALL    DOSTR
         JP      DROP
+
+;       PRESET  ( -- )
+;       Reset data stack pointer and
+;       terminal input buffer.
+
+        .ifne   WORDS_LINKINTER
+        .dw     LINK
+
+        LINK =  .
+        .db     6
+        .ascii  "PRESET"
+        .endif
+PRESE:
+        CLR     USRNTIB
+        CLR     USRNTIB+1
+        LDW     X,#SPP          ; initialize data stack
+        RET
 
 ; The text interpreter
 
@@ -3971,23 +3938,6 @@ EVAL2:
         INCW    X
         JP      [USRPROMPT]     ; DOTOK or PACE
 
-;       PRESET  ( -- )
-;       Reset data stack pointer and
-;       terminal input buffer.
-
-        .ifne   WORDS_LINKINTER
-        .dw     LINK
-
-        LINK =  .
-        .db     6
-        .ascii  "PRESET"
-        .endif
-PRESE:
-        CLR     USRNTIB
-        CLR     USRNTIB+1
-        LDW     X,#SPP          ; initialize data stack
-        RET
-
 ;       QUIT    ( -- )
 ;       Reset return stack pointer
 ;       and start text interpreter.
@@ -4002,7 +3952,7 @@ PRESE:
 QUIT:
         LDW     Y,#RPP          ; initialize return stack
         LDW     SP,Y
-QUIT1:  CALL    LBRAC           ; start interpretation
+QUIT1:  CALLR   LBRAC           ; start interpretation
 QUIT2:  CALL    QUERY           ; get input
         CALLR   EVAL
         JRA     QUIT2           ; continue till error
@@ -4025,17 +3975,6 @@ TICK:
         .dw     ABOR1
         RET     ;yes, push code address
 
-;       Allocate n bytes to code DICTIONARY.
-
-        .dw     LINK
-
-        LINK =  .
-        .db     5
-        .ascii  "ALLOT"
-ALLOT:
-        CALL    CPP
-        JP      PSTOR
-
 ;       ,       ( w -- )
 ;       Compile an integer into
 ;       code dictionary.
@@ -4046,11 +3985,8 @@ ALLOT:
         .db     1
         .ascii  ","
 COMMA:
-        CALL    HERECP                    ; directly write to CP
-        CALL    DUPP
-        CALL    CELLP   ;cell boundary
-        CALL    CPP
-        CALL    STORE
+        DoLitC  2
+        CALLR   OMMA
         JP      STORE
 
 ;       C,      ( c -- )
@@ -4062,12 +3998,67 @@ COMMA:
         .db     2
         .ascii  "C,"
 CCOMMA:
-        CALL    HERECP                    ; directly write to CP
-        CALL    DUPP
-        CALL    ONEP
-        CALL    CPP
-        CALL    STORE
+        CALL    ONE
+        CALLR   OMMA
         JP      CSTOR
+
+;       common part of COMMA and CCOMMA
+OMMA:
+        CALL    HERECP
+        CALL    SWAPP
+        CALL    CPP
+        JP      PSTOR
+
+;       CALL,   ( ca -- )
+;       Compile a subroutine call.
+
+        .ifeq   BAREBONES
+        .dw     LINK
+
+        LINK =  .
+        .db     5
+        .ascii  "CALL,"
+        .endif
+JSRC:
+        CALL    DUPP
+        CALL    HERE
+        CALL    CELLP
+        CALL    SUBB            ; Y now contains the relative call address
+        LD      A,YH
+        INC     A
+        JRNE    1$              ; YH must be 0XFF
+        LD      A,YL
+        TNZ     A
+        JRPL    1$              ; YL must be negative
+        LD      A,#CALLR_OPC
+        LD      YH,A            ; replace YH with opcode CALLR
+        LDW     (2,X),Y
+        JRA     2$
+1$:
+        CALL    CCOMMALIT
+        .db     CALL_OPC         ; opcode CALL
+2$:
+        CALL    DROP             ; drop relative address
+        JRA     COMMA            ; store absolute address or "CALLR reladdr"
+
+;       LITERAL ( w -- )
+;       Compile tos to dictionary
+;       as an integer literal.
+
+        .dw     LINK
+
+        LINK =  .
+        .db     (IMEDD+7)
+        .ascii  "LITERAL"
+LITER:
+        .ifne  USE_CALLDOLIT
+        CALLR   COMPI
+        CALL    DOLIT
+        .else
+        CALL    CCOMMALIT
+        .db     DOLIT_OPC
+        .endif
+        JRA      COMMA
 
 ;       [COMPILE]       ( -- ; <string> )
 ;       Compile next immediate
@@ -4081,8 +4072,8 @@ CCOMMA:
         .ascii  "[COMPILE]"
         .endif
 BCOMP:
-        CALL    TICK
-        JP      JSRC
+        CALLR   TICK
+        JRA     JSRC
 
 ;       COMPILE ( -- )
 ;       Compile next jsr in
@@ -4100,29 +4091,10 @@ COMPI:
         CALL    ONEP
         CALL    DUPP
         CALL    AT
-        CALL    JSRC            ; compile subroutine
+        CALLR   JSRC            ; compile subroutine
         CALL    CELLP
-        CALL    TOR       ; this was a JP - a serious bug that took a while to find
+        CALL    TOR             ; this was a JP - a serious bug that took a while to find
         RET
-
-;       LITERAL ( w -- )
-;       Compile tos to dictionary
-;       as an integer literal.
-
-        .dw     LINK
-
-        LINK =  .
-        .db     (IMEDD+7)
-        .ascii  "LITERAL"
-LITER:
-        .ifne  USE_CALLDOLIT
-        CALL    COMPI
-        CALL    DOLIT
-        .else
-        CALL    CCOMMALIT
-        .db     DOLIT_OPC
-        .endif
-        JP      COMMA
 
 ;       $,"     ( -- )
 ;       Compile a literal string
@@ -4134,13 +4106,13 @@ LITER:
         .db     3
         .ascii  '$,"'
 STRCQ:
-        DoLitC  34      ; "
+        DoLitC  34              ; "
         CALL    PARSE
         CALL    HERECP
-        CALL    PACKS   ;string to code dictionary
+        CALL    PACKS           ; string to code dictionary
 CNTPCPPSTORE:
         CALL    COUNT
-        CALL    PLUS    ;calculate aligned end of string
+        CALL    PLUS            ; calculate aligned end of string
         CALL    CPP
         JP      STORE
 
@@ -4156,7 +4128,7 @@ CNTPCPPSTORE:
         .db     (IMEDD+3)
         .ascii  "FOR"
 FOR:
-        CALL    COMPI
+        CALLR   COMPI
         CALL    TOR
         JP      HERE
 
@@ -4169,7 +4141,7 @@ FOR:
         .db     (IMEDD+4)
         .ascii  "NEXT"
 NEXT:
-        CALL    COMPI
+        CALLR   COMPI
         CALL    DONXT
         JP      COMMA
 
@@ -4186,13 +4158,12 @@ NEXT:
 DOO:
         CALL    CCOMMALIT
         .db     DOLIT_OPC       ; LOOP address cell for usage by LEAVE at runtime
-        CALL    ZERO            ; changes here require an offset adjustment in PLOOP
-        CALL    COMMA           ; this placeholder cell gets patched at compile time
-        CALL    COMPI
+        CALL    ZEROCOMMA       ; changes here require an offset adjustment in PLOOP
+        CALLR   COMPI
         CALL    TOR
-        CALL    COMPI
+        CALLR   COMPI
         CALL    SWAPP
-        CALL    COMPI
+        CALLR   COMPI
         CALL    TOR
         JRA     FOR
 
@@ -4279,9 +4250,7 @@ AGAIN:
 IFF:
         CALL    COMPI
         CALL    QBRAN
-        CALL    HERE
-        CALL    ZERO
-        JP      COMMA
+        JRA     HERE0COMMA
 
 ;       THEN    ( A -- )
 ;       Terminate a conditional branch structure.
@@ -4307,9 +4276,7 @@ THENN:
 ELSEE:
         CALLR   AHEAD
         CALLR   SWAPLOC
-        CALL    HERE
-        CALLR   SWAPLOC
-        JP      STORE
+        JRA     THENN
 
 ;       AHEAD   ( -- A )
 ;       Compile a forward branch instruction.
@@ -4324,11 +4291,11 @@ ELSEE:
 AHEAD:
         CALL    CCOMMALIT
         .db     BRAN_OPC
+HERE0COMMA:
         CALL    HERE
+ZEROCOMMA:
         CALL    ZERO
         JP      COMMA
-
-
 
 ;       WHILE   ( a -- A a )
 ;       Conditional branch out of a BEGIN-WHILE-REPEAT loop.
@@ -4353,9 +4320,7 @@ SWAPLOC:
         .ascii  "REPEAT"
 REPEA:
         CALLR   AGAIN
-        CALL    HERE
-        CALLR   SWAPLOC
-        JP      STORE
+        JRA     THENN
 
 ;       AFT     ( a -- a A )
 ;       Jump to THEN in a FOR-AFT-THEN-NEXT loop the first time through.
@@ -4367,7 +4332,7 @@ REPEA:
         .ascii  "AFT"
 AFT:
         CALL    DROP
-        CALL    AHEAD
+        CALLR   AHEAD
         CALL    HERE
         JRA     SWAPLOC
 
@@ -4429,14 +4394,14 @@ DOTQ:
         .endif
 UNIQU:
         CALL    DUPP
-        CALL    NAMEQ   ;?name exists
+        CALL    NAMEQ           ; ?name exists
         CALL    QBRAN
         .dw     UNIQ1
-        CALL    DOTQP   ;redef are OK
+        CALL    DOTQP           ; redef are OK
         .db     7
         .ascii  " reDef "
         CALL    OVER
-        CALL    COUNTTYPES   ;just in case
+        CALL    COUNTTYPES      ; just in case
 UNIQ1:  JP      DROP
 
 ;       $,n     ( na -- )
@@ -4454,21 +4419,20 @@ SNAME:
         CALL    DUPPCAT         ; ?null input
         CALL    QBRAN
         .dw     PNAM1
-        CALL    UNIQU   ;?redefinition
+        CALL    UNIQU           ; ?redefinition
         CALL    DUPP
         CALL    CNTPCPPSTORE
         CALL    DUPP
         CALL    LAST
-        CALL    STORE   ;save na for vocabulary link
-        CALL    CELLM   ;link address
+        CALL    STORE           ; save na for vocabulary link
+        CALL    CELLM           ; link address
         CALL    CNTXT
         CALL    AT
         CALL    SWAPP
-        CALL    STORE
-        RET     ;save code pointer
+        JP      STORE           ; save code pointer
 PNAM1:  CALL    STRQP
         .db     5
-        .ascii  " name" ;null input
+        .ascii  " name"         ; null input
         JP      ABOR1
 
 ; FORTH compiler
@@ -4522,17 +4486,19 @@ OVERT:
         JREQ    1$
 
         LDW     NVMCONTEXT,Y    ; update NVMCONTEXT
+        LDW     Y,USRCTOP
+        CALL    YSTOR
 
-        DoLitC  CTOP            ; is there any vocabulary in RAM?
         CALL    DUPP
         CALL    AT
         CALL    QBRAN
         .dw     2$
-        JP      STORE           ; link dictionary in RAM
+        JRA     OVSTORE         ; link dictionary in RAM
 2$:
         CALL    DROP
 1$:
         DoLitC  USRCONTEXT
+OVSTORE:
         JP      STORE           ; or update USRCONTEXT
 
         .else
@@ -4554,53 +4520,7 @@ SEMIS:
         CALL    CCOMMALIT
         .db     EXIT_OPC
         CALL    LBRAC
-        JP      OVERT
-
-;       ]       ( -- )
-;       Start compiling words in
-;       input stream.
-
-        .dw     LINK
-
-        LINK =  .
-        .db     1
-        .ascii  "]"
-RBRAC:
-        LDW     Y,#SCOMP
-        LDW     USREVAL,Y
-        RET
-
-;       CALL,   ( ca -- )
-;       Compile a subroutine call.
-
-        .ifeq   BAREBONES
-        .dw     LINK
-
-        LINK =  .
-        .db     5
-        .ascii  "CALL,"
-        .endif
-JSRC:
-        CALL    DUPP
-        CALL    HERE
-        CALL    CELLP
-        CALL    SUBB
-        LD      A,YH
-        INC     A
-        JRNE    1$
-        LD      A,YL
-        TNZ     A
-        JRPL    1$
-        LD      A,#CALLR_OPC
-        LD      YH,A
-        LDW     (2,X),Y
-        JRA     2$
-1$:
-        CALL    CCOMMALIT
-        .db     CALL_OPC         ; opcode CALL
-2$:
-        CALL    DROP
-        JP      COMMA
+        JRA     OVERT
 
 
 ;       :       ( -- ; <string> )
@@ -4613,7 +4533,7 @@ JSRC:
         .db     1
         .ascii  ":"
 COLON:
-        CALL    RBRAC           ; do "]" first to set HERE to compile state
+        CALLR   RBRAC           ; do "]" first to set HERE to compile state
         CALL    TOKEN
         JP      SNAME
 
@@ -4631,6 +4551,20 @@ IMMED:
         LD      A,[USRLAST]
         OR      A,#IMEDD
         LD      [USRLAST],A
+        RET
+
+;       ]       ( -- )
+;       Start compiling words in
+;       input stream.
+
+        .dw     LINK
+
+        LINK =  .
+        .db     1
+        .ascii  "]"
+RBRAC:
+        LDW     Y,#SCOMP
+        LDW     USREVAL,Y
         RET
 
 
@@ -4711,10 +4645,9 @@ DODOES:
         .ascii  "CREATE"
 CREAT:
         .ifne   HAS_CPNVM
-        CALL    TEVAL
-        CALL    AT
-        CALL    TOR             ; save TEVAL
-        CALL    RBRAC           ; "]" make HERE return CP even in INTERPRETER mode
+        LDW     Y,USREVAL
+        PUSHW   Y               ; save TEVAL
+        CALLR   RBRAC           ; "]" make HERE return CP even in INTERPRETER mode
         .endif
 
         CALL    TOKEN
@@ -4722,9 +4655,8 @@ CREAT:
         CALL    OVERT
 
         .ifne   HAS_CPNVM
-        CALL    RFROM
-        CALL    TEVAL           ; restore TEVAL
-        CALL    STORE           ; from here on ',', 'C,', '$,"' and 'ALLOT' write to CP
+        POPW    Y               ; restore TEVAL
+        LDW     USREVAL,Y       ; from here on ',', 'C,', '$,"' and 'ALLOT' write to CP
         .endif
 
         CALL    COMPI
@@ -4732,7 +4664,7 @@ CREAT:
         RET
 
 
-        .ifeq   BAREBONES
+        .ifeq   NO_VARIABLE
 ;       VARIABLE        ( -- ; <string> )
 ;       Compile a new variable
 ;       initialized to 0.
@@ -4743,10 +4675,42 @@ CREAT:
         .db     8
         .ascii  "VARIABLE"
 VARIA:
-        CALL    CREAT
+        CALLR   CREAT
         CALL    ZERO
-        JP      COMMA
+        .ifne   HAS_CPNVM
+        CALL    NVMQ
+        JREQ    1$              ; NVM: allocate space in RAM
+        DoLitW  DOVARPTR        ; overwrite call address "DOVAR" with "DOVARPTR"
+        CALL    HERECP
+        CALL    CELLM
+        CALL    STORE
+        LDW     Y,USRVAR
+        LDW     (X),Y           ; overwrite ZERO with RAM address RAM for COMMA
+        DoLitC  2               ; Allocate space for variable in RAM
+        CALLR   ALLOT
         .endif
+1$:     JP      COMMA
+        .endif
+
+
+;       ALLOT   ( n -- )
+;       Allocate n bytes to code DICTIONARY.
+
+        .dw     LINK
+
+        LINK =  .
+        .db     5
+        .ascii  "ALLOT"
+ALLOT:
+        CALL    CPP
+        .ifne   HAS_CPNVM
+        CALL    NVMQ
+        JREQ    1$              ; NVM: allocate space in RAM
+        LD      A,#(USRVAR)
+        LD      (1,X),A
+1$:
+        .endif
+        JP      PSTOR
 
 ; Tools
 
@@ -4809,22 +4773,21 @@ PDUM2:  CALL    DONXT
         .ascii  "DUMP"
 DUMP:
         PUSH    USRBASE+1       ; BASE AT TOR save radix
-        LD      A,#16           ; DOLITC 16
-        LD      USRBASE+1,A     ; set hex
+        CALL    HEX
         CALL    YFLAGS
         DIV     Y,A             ; / change count to lines
         PUSHW   Y               ; start count down loop
 DUMP1:  CALL    CR
         DoLitC  16
         CALL    DDUP
-        CALLR   DUMPP   ;display numeric
+        CALLR   DUMPP           ; display numeric
         CALL    ROT
         CALL    ROT
         CALL    SPACE
         CALL    SPACE
-        CALLR   UTYPE   ;display printable characters
+        CALLR   UTYPE           ; display printable characters
         CALL    DONXT
-        .dw     DUMP1   ;loop till done
+        .dw     DUMP1           ; loop till done
 DUMP3:
         POP     USRBASE+1       ; restore radix
         JP      DROP
@@ -4839,15 +4802,15 @@ DUMP3:
         .ascii  ".S"
 DOTS:
         CALL    CR
-        CALL    DEPTH   ;stack depth
-        CALL    TOR     ;start count down loop
-        JRA     DOTS2   ;skip first pass
+        CALL    DEPTH           ; stack depth
+        CALL    TOR             ; start count down loop
+        JRA     DOTS2           ; skip first pass
 DOTS1:  CALL    RAT
         CALL    ONEP
         CALL    PICK
-        CALL    DOT     ;index stack, display contents
+        CALL    DOT             ; index stack, display contents
 DOTS2:  CALL    DONXT
-        .dw     DOTS1   ;loop till done
+        .dw     DOTS1           ; loop till done
         CALL    DOTQP
         .db     5
         .ascii  " <sp "
@@ -4864,11 +4827,11 @@ DOTS2:  CALL    DONXT
         .ascii  ".ID"
         .endif
 DOTID:
-        CALL    QDQBRAN ;if zero no name
+        CALL    QDQBRAN         ; if zero no name
         .dw     DOTI1
         CALL    COUNT
         DoLitC  0x01F
-        CALL    ANDD    ;mask lexicon bits
+        CALL    ANDD            ; mask lexicon bits
         JP      UTYPE
 DOTI1:  CALL    DOTQP
         .db     9
@@ -4893,17 +4856,17 @@ DUPPCAT:
         .ascii  ">NAME"
         .endif
 TNAME:
-        CALL    CNTXT   ;vocabulary link
+        CALL    CNTXT           ; vocabulary link
 TNAM2:  CALL    AT
-        CALL    DUPP    ;?last word in a vocabulary
+        CALL    DUPP            ; ?last word in a vocabulary
         CALL    QBRAN
         .dw     TNAM4
         CALL    DDUP
         CALL    NAMET
-        CALL    XORR    ;compare
+        CALL    XORR            ; compare
         CALL    QBRAN
         .dw     TNAM3
-        CALL    CELLM   ;continue with next word
+        CALL    CELLM           ; continue with next word
         JRA     TNAM2
 TNAM3:  JP      NIP
 TNAM4:  CALL    DDROP
@@ -4972,7 +4935,7 @@ WORS1:  CALL    AT              ; @ sets Z and N
 
 ;       7-seg LED patterns, "70s chique"
 PAT7SM9:
-        .db     0x00, 0x40, 0x80, 0x52 ; ,,-,.,/ (',' as blank)
+        .db     0x00, 0x40, 0x80, 0x52 ; , - . / (',' as blank)
         .db     0x3F, 0x06, 0x5B, 0x4F ; 0,1,2,3
         .db     0x66, 0x6D, 0x7D, 0x07 ; 4,5,6,7
         .db     0x7F, 0x6F             ; 8,9
@@ -4995,15 +4958,43 @@ PAT7SAZ:
 EMIT7S:
         LD      A,(1,X)         ; c to A
 
-        CP      A,#32
-        JRNE    1$
+        CP      A,#' '
+        JRNE    E7SNOBLK
 
-        LDW     Y,#LED7FIRST
+        .if     gt,(HAS_LED7SEG-1)
+        LD      A,LED7GROUP
+        JRMI    2$              ; test LED7GROUP.7 "no-tab flag"
+        INC     A
+        CP      A,#HAS_LED7SEG
+        JRULT   1$
+        CLR     A
+1$:     OR      A,#0x80         ; only one tab action, set "no-tab flag"
+        LD      LED7GROUP,A
+
+2$:     CALLR   XLEDGROUP
+        EXGW    X,Y             ; restore X/Y after XLEDGROUP
+        .else
+        LDW     Y,#LED7FIRST    ; DROP DOLIT LED7FIRST
+        .endif
         LDW     (X),Y
-        DoLitC  (LED7LAST-LED7FIRST+1)
-        JP    ERASE
+        DoLitC  LEN_7SGROUP
+        JP      ERASE
 
-1$:     CP      A,#'.'
+E7SNOBLK:
+
+        .if     gt,(HAS_LED7SEG-1)
+        CP      A,#LF           ; test for c ~ /[<CR><LF>]/
+        JRNE    E7SNOLF
+        MOV     LED7GROUP,#0x80 ; go to first LED group, set "no-tab flag"
+        JRA     E7END
+        .endif
+
+E7SNOLF:
+        .if     gt,(HAS_LED7SEG-1)
+        BRES    LED7GROUP,#7    ; on char output: clear "no-tab flag"
+        .endif
+
+        CP      A,#'.'
         JREQ    E7DOT
         CP      A,#','
         JRMI    E7END
@@ -5029,29 +5020,70 @@ E7LOOKA:
         JP      PUT7S
 
 E7DOT:
+        .if     gt,(HAS_LED7SEG-1)
+        CALL    XLEDGROUP
+        LD      A,((LEN_7SGROUP-1),X)
+        OR      A,#0x80
+        LD      ((LEN_7SGROUP-1),X),A
+        EXGW    X,Y             ; restore X/Y after XLEDGROUP
+        ; fall trough
+
+        .else
         LD      A,#0x80         ; 7-seg P (dot)
         OR      A,LED7LAST
         LD      LED7LAST,A
-        JRA     E7END
+        .endif
+        ; fall trough
 
 E7END:
         JP      DROP
 
+        .if     gt,(HAS_LED7SEG-1)
+;       Helper routine for calculating LED group start adress
+;       return: X: LED group addr, Y: DSP, A: LEN_7SGROUP
+;       caution: caller must restore X/Y!
+XLEDGROUP:
+        EXGW    X,Y             ; use X to save memory
+        LD      A,LED7GROUP
+        AND     A,#0x7F         ; ignore "no-tab flag"
+        LD      XL,A
+        LD      A,#LEN_7SGROUP
+        MUL     X,A
+        ADDW    X,#LED7FIRST
+        RET
+        .endif
 
 ;       P7S  ( c -- )
-;       Insert 7-seg pattern at left side of LED display buffer, rotate buffer left
+;       Right aligned 7S-LED pattern output, rotates LED group buffer
         .dw     LINK
 
         LINK =  .
         .db     (3)
         .ascii  "P7S"
 PUT7S:
+        .if     gt,(HAS_LED7SEG-1)
+        CALLR   XLEDGROUP
+        DEC     A
+        PUSH    A
+1$:     LD      A,(1,X)
+        LD      (X),A
+        INCW    X
+        DEC     (1,SP)
+        JRNE    1$
+        POP     A
+
+        EXGW    X,Y             ; restore X/Y after XLEDGROUP
+        CALL    AFLAGS
+        LD      (Y),A
+        .else
         DoLitC  LED7FIRST+1
         DoLitC  LED7FIRST
-        DoLitC  LED7LAST-LED7FIRST
+        DoLitC  (LEN_7SGROUP-1)
         CALL    CMOVE
         CALL    AFLAGS
         LD      LED7LAST,A
+        .endif
+
         RET
 
         .endif
@@ -5099,9 +5131,7 @@ NOKEYB:
         LINK =  .
         .db     (4)
         .ascii  "ADC!"
-        ADC_CSR = 0x5400
-        ADC_CR1 = 0x5401
-        ADC_CR2 = 0x5402
+
 ADCSTOR:
         INCW    X
         LD      A,(X)
@@ -5120,7 +5150,6 @@ ADCSTOR:
         .db     (4)
         .ascii  "ADC@"
 
-        ADC_DRH = 0x5404
 ADCAT:
         BRES    ADC_CSR,#7      ; reset EOC
         BSET    ADC_CR1,#0      ; start ADC
@@ -5130,6 +5159,61 @@ ADCAT:
         LDW     Y,ADC_DRH       ; read ADC
         LDW     (X),Y
         RET
+        .endif
+
+;===============================================================
+        .ifne   WORDS_EXTRASTACK
+
+;       SP!     ( a -- )
+;       Set data stack pointer.
+
+        .dw     LINK
+        LINK =  .
+        .db     3
+        .ascii  "sp!"
+SPSTO:
+        LDW     X,(X)   ;X = a
+        RET
+
+;       SP@     ( -- a )        ( TOS STM8: -- Y,Z,N )
+;       Push current stack pointer.
+
+        .dw     LINK
+        LINK =  .
+        .db     3
+        .ascii  "sp@"
+SPAT:
+        LDW     Y,X
+        JP      YSTOR
+
+;       RP@     ( -- a )     ( TOS STM8: -- Y,Z,N )
+;       Push current RP to data stack.
+
+        .dw     LINK
+        LINK =  .
+        .db     3
+        .ascii  "rp@"
+RPAT:
+        LDW     Y,SP            ; save return addr
+        JP      YSTOR
+
+;       RP!     ( a -- )
+;       Set return stack pointer.
+
+        .dw     LINK
+        LINK =  .
+        .db     (COMPO+3)
+        .ascii  "rp!"
+RPSTO:
+        POPW    Y
+        LDW     YTEMP,Y
+        LDW     Y,X
+        INCW    X               ; fixed error: TOS not consumed
+        INCW    X
+        LDW     Y,(Y)
+        LDW     SP,Y
+        JP      [YTEMP]
+
         .endif
 
 ;===============================================================
@@ -5242,6 +5326,8 @@ RAMM:
         JREQ    1$
         CALLR   SWAPCP          ; Switch back to mode RAM
 
+        MOV     COLDCTOP,USRVAR
+        MOV     COLDCTOP+1,USRVAR+1
         MOV     COLDNVMCP,NVMCP ; Store NCM pointers for init in COLD
         MOV     COLDNVMCP+1,NVMCP+1
         MOV     COLDCONTEXT,NVMCONTEXT
@@ -5305,8 +5391,10 @@ RESTC:
 ;===============================================================
 
 
-        .ifne WORDS_HWREG * (STM8S003F3 + STM8S103F3)
+        .ifne WORDS_HWREG
+        .ifne (TARGET - STM8S103F3)
           .include "hwregs8s003.inc"
+        .endif
         .endif
 
 

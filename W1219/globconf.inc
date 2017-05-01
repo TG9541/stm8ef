@@ -1,5 +1,5 @@
 ; STM8EF Global Configuration File
-; Config for W1401 Thermostat Module
+; Config for W1219 Thermostat Module
 ; Clock: HSI (no crystal)
 
         HALF_DUPLEX      = 1    ; Use EMIT/?KEY in half duplex mode
@@ -14,8 +14,7 @@
         EMIT_BG  = EMIT7S       ; 7S-LED background EMIT vector
         QKEY_BG  = QKEYB        ; Board keys background QKEY vector
 
-        HAS_LED7SEG      = 3    ; yes, 3*2 dig. 7-seg LED on module
-        LEN_7SGROUP      = 2    ; 2 dig. 7-seg LED
+        HAS_LED7SEG      = 2    ; yes, 2*3 dig. 7-seg LED on module
 
         HAS_KEYS         = 4    ; yes, 4 keys on module
         HAS_OUTPUTS      = 2    ; yes, relay, LED
@@ -28,7 +27,6 @@
         HAS_CPNVM        = 1    ; Can compile to Flash, always interpret to RAM
         HAS_DOES         = 1    ; CREATE-DOES> extension
         HAS_DOLOOP       = 1    ; DO .. LOOP extension: DO LEAVE LOOP +LOOP
-
 
         CASEINSENSITIVE  = 1    ; Case insensitive dictionary search
         SPEEDOVERSIZE    = 0    ; Speed-over-size in core words: ROT - = <
