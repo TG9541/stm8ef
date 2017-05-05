@@ -4946,7 +4946,7 @@ PAT7SAZ:
         .db     0x38, 0x55, 0x54, 0x5C ; L,M,N,O
         .db     0x73, 0x67, 0x50, 0x6D ; P,Q,R,S
         .db     0x78, 0x3E, 0x1C, 0x1D ; T,U,V,W
-        .db     0x76, 0x6E, 0x6D       ; X,Y,Z
+        .db     0x76, 0x6E, 0x5B       ; X,Y,Z
 
 ;       E7S  ( c -- )
 ;       Convert char to 7-seg LED pattern, and insert it in display buffer
