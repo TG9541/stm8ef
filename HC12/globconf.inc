@@ -14,7 +14,7 @@
 
         HAS_LED7SEG      = 0    ; no 7S-Display
         HAS_KEYS         = 0    ; no keys on module
-        HAS_OUTPUTS      = 1    ; yes, one LED
+        HAS_OUTPUTS      = 0    ; no outputs
         HAS_ADC          = 1    ; Analog input words
 
         HAS_BACKGROUND   = 1    ; Background Forth task (TIM2 ticker)
