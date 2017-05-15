@@ -1,7 +1,44 @@
 file
 nvm \ make comment to just create in ram
 
+\ the following words replicate the assembler versions in forth.asm
+\  for output and stack effects, but are not necessarily as 
+\  efficient as might be coded without that constraint
 
+\ to see >CHAR, WORDS_LINKMISC = 1
+: _TYPE   ( a u -- )
+  \ Display u characters starting at address a
+  \ Filter non-printing characters.
+  0 DO
+    DUP I + C@ >CHAR EMIT LOOP DROP ;
+
+: dm+     ( a u -- a+u )
+  \ Display u bytes starting at address a
+  OVER 4 U.R SPACE \ display address
+  DUP >R
+  0 DO 
+    DUP I + C@  3 U.R  LOOP 
+  R> + ;
+  
+: DUMP    ( a u -- )
+  \ Display u bytes from a, both bytes and chars
+  BASE @ >R  HEX \ save base and change to base 16
+  BEGIN
+    OVER 16  DUP >R ( a u a n ) \ always 16 bytes/line
+    CR dm+ ( a u a+n ) ROT ROT ( a+n a u ) 
+    SPACE SPACE SWAP R> _TYPE 
+    16 - DUP 0< UNTIL
+  2DROP
+  R> BASE ! \ restore base
+  ;
+        
+: .S ( -- )
+  \ Display contents of stack.
+  1 DEPTH 1- DO
+    I PICK . -1 +LOOP
+  SPACE ." <sp"
+  ;
+  
 : .ID ( na -- )
   \ Display name at address.
   ?DUP IF

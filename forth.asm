@@ -4786,6 +4786,7 @@ ALLOT:
 
 ; Tools
 
+        .ifeq	BAREBONES
 ;       _TYPE   ( b u -- )
 ;       Display a string. Filter
 ;       non-printing characters.
@@ -4863,7 +4864,9 @@ DUMP1:  CALL    CR
 DUMP3:
         POP     USRBASE+1       ; restore radix
         JP      DROP
+        .endif
 
+        .ifeq	BAREBONES
 ;       .S      ( ... -- ... )
 ;       Display contents of stack.
 
@@ -4887,6 +4890,7 @@ DOTS2:  CALL    DONXT
         .db     5
         .ascii  " <sp "
         RET
+        .endif
 
         .ifeq	BAREBONES
 ;       .ID     ( na -- )
