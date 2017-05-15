@@ -3,7 +3,7 @@
 ; This is derived work based on
 ; http://www.forth.org/svfig/kk/07-2010.html
 ;
-; Please refer to LICENSE.md for more information.
+; Refer to LICENSE.md for license information.
 ;
 ;--------------------------------------------------------
 ; Original author, and copyright:
@@ -24,11 +24,37 @@
 ;--------------------------------------------------------
 ; The latest version of this code is available at
 ; https://github.com/TG9541/stm8ef
+; 2017May13mrw: removed lots more words for BAREBONES
+;  Anything removed is available in Forth code: barebones.f
 ;
+; Non-functional changes and code refactoring:
+; * SDCC tool chain "ASxxxx V2.0" syntax
+; * STM8S105C6 dependencies removed (e.g. UART2)
+; * support for different target boards
+; * configuration files for code options
+; * 1K RAM layout, symbols for RAM loc. ROM size options
+; * binary size optimization
 ;
-; Docs for the SDCC integrated assembler are scarce, thus
-; SDCC was used to write the sceleton for this file.
-; Hoever, the assembly doesn't constitue SDCC code.
+; New features, e.g.:
+; * board support:
+;       - W1209 LED display & half-duplex with SW TX
+;       - C0135 Relay-4 Board
+;       - STM8S103F3 "$0.70" breakout board
+; * preemptive background operation with fixed cycle time
+; * configurable startup & default constants: 'BOOT
+; * configurable vocabulary subsets for binary size reduction
+; * CREATE-DOES> for defining words
+; * New loop structure words: DO LEAVE LOOP +LOOP
+; * native BRANCH and EXIT
+; * words for STM8 ADC control: ADC! ADC@
+; * words for board keys, outputs, LEDs: OUT OUT!
+; * words for EEPROM, FLASH lock/unlock: LOCK ULOCK LOCKF ULOCKF
+; * words for bit operations, inv. order word access: B! 2C@ 2C!
+; * words for compile to Flash memory: NVR RAM RESET
+; * words for ASCII file transfer: FILE HAND
+;
+; Docs for the SDCC integrated assembler are scarce, and
+; hence SDCC was used to create a template for this file:
 ;--------------------------------------------------------
 ; File Created by SDCC : free open source ANSI-C Compiler
 ; Version 3.6.0 #9615 (Linux)
@@ -109,24 +135,12 @@
         BRAN_OPC =    0xCC      ; JP opcode
         CALL_OPC =    0xCD      ; CALL opcode
 
-        STM8S003F3       = 103  ; 8K flash, 1K RAM, 128 EEPROM, UART1
-        STM8S103F3       = 103  ; like STM8S003F3, 640 EEPROM
-        STM8S105K4       = 105  ; 16K flash, 2K RAM, 1K EEPROM, UART2
-        STM8S105C6       = 105  ; 32K flash, 2K RAM, 1K EEPROM, UART2
-
         ;********************************************
         ;******  2) Device hardware addresses  ******
         ;********************************************
 
-        ;******  STM8S memory addresses ******
-        RAMBASE =       0x0000  ; STM8S RAM start
-        EEPROMBASE =    0x4000  ; STM8S EEPROM start
 
-        ; STM8 device specific include (provided by file in board folder)
-        ; sets "TARGET" and memory layout
-        .include        "target.inc"
-
-        ; STM8 unified register addresses (depends on "TARGET")
+        ; STM8 device specific include (can be replaced by file in board folder)
         .include        "stm8device.inc"
 
         ;**********************************
@@ -148,9 +162,7 @@
         EMIT_BG  = DROP         ; TODO: vectored NUL background EMIT vector
         QKEY_BG  = ZERO         ; TODO: NUL background QKEY vector
 
-        HAS_LED7SEG      = 0    ; 7-seg LED display, number of groups (0: none)
-        LEN_7SGROUP      = 3    ; default: 3 dig. 7-seg LED
-
+        HAS_LED7SEG      = 0    ; 7-seg LED on board
         HAS_KEYS         = 0    ; Board has keys
         HAS_OUTPUTS      = 0    ; Board outputs, e.g. relays
         HAS_INPUTS       = 0    ; Board digital inputs
@@ -186,6 +198,19 @@
         ;******  4) Device dependent features  ******
         ;**********************************************
         ; Define memory location for device dependent features here
+
+        .ifne   (STM8S003F3 + STM8S103F3)
+        ;******  STM8SF103 Memory Layout ******
+
+        FORTHRAM =      0x0040  ; Start of RAM controlled by Forth
+        UPPLOC  =       0x0060  ; UPP (user/system area) location for 1K RAM
+        CTOPLOC =       0x0080  ; CTOP (user dictionary) location for 1K RAM
+        SPPLOC  =       0x0350  ; SPP (data stack top), TIB start
+        RPPLOC  =       RAMEND  ; RPP (return stack top)
+
+        RAMEND =        0x03FF  ; system (return) stack, growing down
+        FLASHEND =      0x9FFF  ; 8K devices
+        .endif
 
         .include "globconf.inc"
 
@@ -223,17 +248,11 @@
         RamByte TIM4RXBUF       ; TIM4 RX receive buffer
         .endif
 
-        .ifne   HAS_BACKGROUND
-
         .ifne   HAS_LED7SEG
-        .if     gt,(HAS_LED7SEG-1)
-        RamByte LED7GROUP       ; index [0..(HAS_LED7SEG-1)] of 7-SEG digit group
+        RamBlck LED7FIRST,5     ; leftmost 7S-LED digit  6.....
+        RamByte LED7LAST        ; rightmost 7S-LED digit .....1
         .endif
-
-        DIGITS = HAS_LED7SEG*LEN_7SGROUP
-        RamBlck LED7FIRST,DIGITS ; leftmost 7S-LED digit
-        LED7LAST = RAMPOOL-1    ; save memory location of rightmost 7S-LED digit
-        .endif
+        .ifne   HAS_BACKGROUND
 
         RamWord BGADDR          ; address of background routine (0: off)
         RamWord TICKCNT         ; 16 bit ticker (counts up)
@@ -457,15 +476,15 @@ COLD:
         ; Init RS232 communication port
         ; STM8S[01]003F3 init UART
         LDW     X,#0x6803              ; 9600 baud
-        LDW     UART_BRR1,X           ;
+        LDW     UART1_BRR1,X           ;
         .ifne   HAS_RXUART*HAS_TXUART
-        MOV     UART_CR2,#0x0C        ; Use UART1 full duplex
+        MOV     UART1_CR2,#0x0C        ; Use UART1 full duplex
         .else
         .ifne   HAS_TXUART
-        MOV     UART_CR2,#0x08        ; UART1 enable tx
+        MOV     UART1_CR2,#0x08        ; UART1 enable tx
         .endif
         .ifne   HAS_RXUART
-        MOV     UART_CR2,#0x04        ; UART1 enable rx
+        MOV     UART1_CR2,#0x04        ; UART1 enable rx
         .endif
         .endif
         .endif
@@ -533,18 +552,6 @@ COLD:
         .ifne   HAS_OUTPUTS
         CALL    ZERO
         CALL    OUTSTOR
-        .endif
-
-        .ifne   HAS_LED7SEG
-
-        .if     gt,(HAS_LED7SEG-1)
-        MOV     LED7GROUP,#0     ; one of position HAS_LED7SEG 7-SEG digit groups
-        .endif
-
-        MOV     LED7FIRST  ,#0x66 ; 7S LEDs 4..
-        MOV     LED7FIRST+1,#0x78 ; 7S LEDs .t.
-        MOV     LED7FIRST+2,#0x74 ; 7S LEDs ..h
-
         .endif
 
         ; Hardware initialization complete
@@ -631,6 +638,13 @@ TBOOT:
         .ascii  "hi"
         .endif
 HI:
+        ; TODO: move to board initialization?
+        .ifne   HAS_LED7SEG
+        MOV     LED7LAST-2,#0x66 ; 7S LEDs .4..
+        MOV     LED7LAST-1,#0x78 ; 7S LEDs ..t.
+        MOV     LED7LAST-0,#0x74 ; 7S LEDs ...h
+        .endif
+
         CALLR   1$              ; CR
         CALL    DOTQP           ; initialize I/O
         .db     15
@@ -658,8 +672,8 @@ HI:
         .endif
 QRX:
         CLR     A               ; A: flag false
-        BTJF    UART_SR,#5,1$
-        LD      A,UART_DR      ; get char in A
+        BTJF    UART1_SR,#5,1$
+        LD      A,UART1_DR      ; get char in A
 1$:     JP      ATOKEY          ; push char or flag false
         .endif
 
@@ -681,14 +695,14 @@ TXSTOR:
 
         .ifne   HALF_DUPLEX * (1-HAS_TXSIM)
         ; HALF_DUPLEX with normal UART (e.g. wired-or Rx and Tx)
-        BRES    UART_CR2,#2    ; disable rx
-1$:     BTJF    UART_SR,#7,1$  ; loop until tdre
-        LD      UART_DR,A      ; send A
-2$:     BTJF    UART_SR,#6,2$  ; loop until tc
-        BSET    UART_CR2,#2    ; enable rx
+        BRES    UART1_CR2,#2    ; disable rx
+1$:     BTJF    UART1_SR,#7,1$  ; loop until tdre
+        LD      UART1_DR,A      ; send A
+2$:     BTJF    UART1_SR,#6,2$  ; loop until tc
+        BSET    UART1_CR2,#2    ; enable rx
         .else                   ; not HALF_DUPLEX
-1$:     BTJF    UART_SR,#7,1$  ; loop until tdre
-        LD      UART_DR,A      ; send A
+1$:     BTJF    UART1_SR,#7,1$  ; loop until tdre
+        LD      UART1_DR,A      ; send A
         .endif
         RET
         .endif
@@ -801,8 +815,8 @@ _TIM4_IRQHandler:
 
 TIM4_OFF:
         .ifne   HALF_DUPLEX_SIM
-        BSET    PSIM+CR2,#PNRX  ; enable PNRX external interrupt
-        BRES    PSIM+DDR,#PNRX  ; set shared GPIO to input
+        BSET    PSIM+CR2,#PNRX    ; enable PNRX external interrupt
+        BRES    PSIM+DDR,#PNRX    ; set shared GPIO to input
         .endif
         BRES    TIM4_IER,#0     ; disable TIM4 interrupt
         IRET
@@ -813,21 +827,21 @@ TIM4_RECVE:
         JRNE    TIM4_END
         MOV     TIM4RXBUF,TIM4RXREG ; save result (CF is now start-bit)
         .ifeq   HALF_DUPLEX_SIM
-        BSET    PSIM+CR2,#PNRX  ; enable PNRX external interrupt
+        BSET    PSIM+CR2,#PNRX    ; enable PNRX external interrupt
         .endif
         JRA     TIM4_OFF
 TIM4_TRANS:
         CP      A,#10           ; test if startbit (coincidentially set CF)
         JRNE    TIM4_SER
         .ifne   HALF_DUPLEX_SIM
-        BSET    PSIM+DDR,#PNRX  ; port PD1=PNRX to output
+        BSET    PSIM+DDR,#PNRX    ; port PD1=PNRX to output
         .endif
         JRA     TIM4_BIT        ; emit start bit (CF=0 from CP)
 TIM4_SER:
         RRC     TIM4TXREG       ; get data bit, shift in stop bit (CF=1 from CP)
         ; fall through
 TIM4_BIT:
-        BCCM    PSIM+ODR,#PNTX  ; Set GPIO to CF
+        BCCM    PSIM+ODR,#PNTX    ; Set GPIO to CF
         DEC     TIM4TCNT        ; next TXD TIM4 state
         JREQ    TIM4_OFF        ; complete when TIM4CNT is zero
         ; fall through
@@ -1204,6 +1218,38 @@ IGET:
         JRA     RAT
         .endif
 
+        .ifne   WORDS_EXTRASTACK
+;       RP@     ( -- a )     ( TOS STM8: -- Y,Z,N )
+;       Push current RP to data stack.
+
+        .dw     LINK
+        LINK =  .
+        .db     3
+        .ascii  "rp@"
+RPAT:
+        LDW     Y,SP            ; save return addr
+        JRA     YSTOR
+        .endif
+
+;       RP!     ( a -- )
+;       Set return stack pointer.
+
+        .ifne   ( WORDS_EXTRASTACK)
+        .dw     LINK
+        LINK =  .
+        .db     (COMPO+3)
+        .ascii  "rp!"
+RPSTO:
+        POPW    Y
+        LDW     YTEMP,Y
+        LDW     Y,X
+        INCW    X               ; fixed error: TOS not consumed
+        INCW    X
+        LDW     Y,(Y)
+        LDW     SP,Y
+        JP      [YTEMP]
+        .endif
+
 ;       R>      ( -- w )     ( TOS STM8: -- Y,Z,N )
 ;       Pop return stack to data stack.
 
@@ -1280,6 +1326,19 @@ TOR:
         PUSHW   X
         LDW     X,Y
         JRA     DROP
+
+;       SP@     ( -- a )        ( TOS STM8: -- Y,Z,N )
+;       Push current stack pointer.
+
+        .ifne   WORDS_EXTRASTACK
+        .dw     LINK
+        LINK =  .
+        .db     3
+        .ascii  "sp@"
+SPAT:
+        LDW     Y,X
+        JRA     YSTOR
+        .endif
 
 
 ;       NIP     ( n1 n2 -- n2 )
@@ -1485,6 +1544,19 @@ SUBB:
         .else
         CALL    NEGAT           ; (15 cy)
         JRA     PLUS            ; 25 cy (15+10)
+        .endif
+
+;       SP!     ( a -- )
+;       Set data stack pointer.
+
+        .ifne   WORDS_EXTRASTACK
+        .dw     LINK
+        LINK =  .
+        .db     3
+        .ascii  "sp!"
+SPSTO:
+        LDW     X,(X)   ;X = a
+        RET
         .endif
 
 
@@ -4816,6 +4888,7 @@ DOTS2:  CALL    DONXT
         .ascii  " <sp "
         RET
 
+        .ifeq	BAREBONES
 ;       .ID     ( na -- )
 ;       Display name at address.
 
@@ -4837,6 +4910,7 @@ DOTI1:  CALL    DOTQP
         .db     9
         .ascii  " (noName)"
         RET
+        .endif
 
 DUPPCAT:
         CALL    DUPP
@@ -4844,6 +4918,7 @@ DUPPCAT:
 
 
         .ifne   WORDS_EXTRADEBUG
+        .ifeq	BAREBONES
 ;       >NAME   ( ca -- na | F )
 ;       Convert code address
 ;       to a name address.
@@ -4871,7 +4946,9 @@ TNAM2:  CALL    AT
 TNAM3:  JP      NIP
 TNAM4:  CALL    DDROP
         JP      ZERO
+        .endif
 
+        .ifeq	BAREBONES
 ;       SEE     ( -- ; <string> )
 ;       A simple decompiler.
 ;       Updated for byte machines.
@@ -4906,7 +4983,10 @@ SEE4:   CALL    NUFQ    ;user control
         .dw     SEE1
         JP      DROP
         .endif
+        .endif
+        
 
+        .ifeq	BAREBONES
 ;       WORDS   ( -- )
 ;       Display names in vocabulary.
 
@@ -4926,7 +5006,7 @@ WORS1:  CALL    AT              ; @ sets Z and N
         CALL    CELLM
         JRA     WORS1
 1$:     JP      DROP
-
+	.endif
 
 
 ;===============================================================
@@ -4946,7 +5026,7 @@ PAT7SAZ:
         .db     0x38, 0x55, 0x54, 0x5C ; L,M,N,O
         .db     0x73, 0x67, 0x50, 0x6D ; P,Q,R,S
         .db     0x78, 0x3E, 0x1C, 0x1D ; T,U,V,W
-        .db     0x76, 0x6E, 0x6D       ; X,Y,Z
+        .db     0x76, 0x6E, 0x5B       ; X,Y,Z
 
 ;       E7S  ( c -- )
 ;       Convert char to 7-seg LED pattern, and insert it in display buffer
@@ -4959,42 +5039,14 @@ EMIT7S:
         LD      A,(1,X)         ; c to A
 
         CP      A,#' '
-        JRNE    E7SNOBLK
+        JRNE    1$
 
-        .if     gt,(HAS_LED7SEG-1)
-        LD      A,LED7GROUP
-        JRMI    2$              ; test LED7GROUP.7 "no-tab flag"
-        INC     A
-        CP      A,#HAS_LED7SEG
-        JRULT   1$
-        CLR     A
-1$:     OR      A,#0x80         ; only one tab action, set "no-tab flag"
-        LD      LED7GROUP,A
-
-2$:     CALLR   XLEDGROUP
-        EXGW    X,Y             ; restore X/Y after XLEDGROUP
-        .else
         LDW     Y,#LED7FIRST    ; DROP DOLIT LED7FIRST
-        .endif
         LDW     (X),Y
-        DoLitC  LEN_7SGROUP
-        JP      ERASE
+        DoLitC  (LED7LAST-LED7FIRST+1)
+        JP    ERASE
 
-E7SNOBLK:
-
-        .if     gt,(HAS_LED7SEG-1)
-        CP      A,#LF           ; test for c ~ /[<CR><LF>]/
-        JRNE    E7SNOLF
-        MOV     LED7GROUP,#0x80 ; go to first LED group, set "no-tab flag"
-        JRA     E7END
-        .endif
-
-E7SNOLF:
-        .if     gt,(HAS_LED7SEG-1)
-        BRES    LED7GROUP,#7    ; on char output: clear "no-tab flag"
-        .endif
-
-        CP      A,#'.'
+1$:     CP      A,#'.'
         JREQ    E7DOT
         CP      A,#','
         JRMI    E7END
@@ -5020,70 +5072,29 @@ E7LOOKA:
         JP      PUT7S
 
 E7DOT:
-        .if     gt,(HAS_LED7SEG-1)
-        CALL    XLEDGROUP
-        LD      A,((LEN_7SGROUP-1),X)
-        OR      A,#0x80
-        LD      ((LEN_7SGROUP-1),X),A
-        EXGW    X,Y             ; restore X/Y after XLEDGROUP
-        ; fall trough
-
-        .else
         LD      A,#0x80         ; 7-seg P (dot)
         OR      A,LED7LAST
         LD      LED7LAST,A
-        .endif
-        ; fall trough
+        JRA     E7END
 
 E7END:
         JP      DROP
 
-        .if     gt,(HAS_LED7SEG-1)
-;       Helper routine for calculating LED group start adress
-;       return: X: LED group addr, Y: DSP, A: LEN_7SGROUP
-;       caution: caller must restore X/Y!
-XLEDGROUP:
-        EXGW    X,Y             ; use X to save memory
-        LD      A,LED7GROUP
-        AND     A,#0x7F         ; ignore "no-tab flag"
-        LD      XL,A
-        LD      A,#LEN_7SGROUP
-        MUL     X,A
-        ADDW    X,#LED7FIRST
-        RET
-        .endif
 
 ;       P7S  ( c -- )
-;       Right aligned 7S-LED pattern output, rotates LED group buffer
+;       Insert 7-seg pattern at left side of LED display buffer, rotate buffer left
         .dw     LINK
 
         LINK =  .
         .db     (3)
         .ascii  "P7S"
 PUT7S:
-        .if     gt,(HAS_LED7SEG-1)
-        CALLR   XLEDGROUP
-        DEC     A
-        PUSH    A
-1$:     LD      A,(1,X)
-        LD      (X),A
-        INCW    X
-        DEC     (1,SP)
-        JRNE    1$
-        POP     A
-
-        EXGW    X,Y             ; restore X/Y after XLEDGROUP
-        CALL    AFLAGS
-        LD      (Y),A
-        .else
         DoLitC  LED7FIRST+1
         DoLitC  LED7FIRST
-        DoLitC  (LEN_7SGROUP-1)
+        DoLitC  LED7LAST-LED7FIRST
         CALL    CMOVE
         CALL    AFLAGS
         LD      LED7LAST,A
-        .endif
-
         RET
 
         .endif
@@ -5131,7 +5142,9 @@ NOKEYB:
         LINK =  .
         .db     (4)
         .ascii  "ADC!"
-
+        ADC_CSR = 0x5400
+        ADC_CR1 = 0x5401
+        ADC_CR2 = 0x5402
 ADCSTOR:
         INCW    X
         LD      A,(X)
@@ -5150,6 +5163,7 @@ ADCSTOR:
         .db     (4)
         .ascii  "ADC@"
 
+        ADC_DRH = 0x5404
 ADCAT:
         BRES    ADC_CSR,#7      ; reset EOC
         BSET    ADC_CR1,#0      ; start ADC
@@ -5159,61 +5173,6 @@ ADCAT:
         LDW     Y,ADC_DRH       ; read ADC
         LDW     (X),Y
         RET
-        .endif
-
-;===============================================================
-        .ifne   WORDS_EXTRASTACK
-
-;       SP!     ( a -- )
-;       Set data stack pointer.
-
-        .dw     LINK
-        LINK =  .
-        .db     3
-        .ascii  "sp!"
-SPSTO:
-        LDW     X,(X)   ;X = a
-        RET
-
-;       SP@     ( -- a )        ( TOS STM8: -- Y,Z,N )
-;       Push current stack pointer.
-
-        .dw     LINK
-        LINK =  .
-        .db     3
-        .ascii  "sp@"
-SPAT:
-        LDW     Y,X
-        JP      YSTOR
-
-;       RP@     ( -- a )     ( TOS STM8: -- Y,Z,N )
-;       Push current RP to data stack.
-
-        .dw     LINK
-        LINK =  .
-        .db     3
-        .ascii  "rp@"
-RPAT:
-        LDW     Y,SP            ; save return addr
-        JP      YSTOR
-
-;       RP!     ( a -- )
-;       Set return stack pointer.
-
-        .dw     LINK
-        LINK =  .
-        .db     (COMPO+3)
-        .ascii  "rp!"
-RPSTO:
-        POPW    Y
-        LDW     YTEMP,Y
-        LDW     Y,X
-        INCW    X               ; fixed error: TOS not consumed
-        INCW    X
-        LDW     Y,(Y)
-        LDW     SP,Y
-        JP      [YTEMP]
-
         .endif
 
 ;===============================================================
@@ -5391,10 +5350,8 @@ RESTC:
 ;===============================================================
 
 
-        .ifne WORDS_HWREG
-        .ifne (TARGET - STM8S103F3)
+        .ifne WORDS_HWREG * (STM8S003F3 + STM8S103F3)
           .include "hwregs8s003.inc"
-        .endif
         .endif
 
 
