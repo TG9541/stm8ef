@@ -1,0 +1,107 @@
+for standard install on W1209
+
+make BOARD=W1209 flash
+mkdir -p out/W1209
+sdasstm8 -I. -I./W1209 -plosgffw out/W1209/forth.rel forth.asm
+sdcc -mstm8 -oout/W1209/W1209.ihx main.c out/W1209/forth.rel
+stm8flash -c stlinkv2 -p `[ -f W1209/target.inc ] && awk '/TARGET/ {print tolower($3)}' W1209/target.inc || echo "stm8s103f3"` -w out/W1209/W1209.ihx
+Determine FLASH area
+Writing Intel hex file 5397 bytes at 0x8000... OK
+Bytes written: 5397
+
+\ BAREBONES        = 1    ; Remove or unlink some more: HERE
+\  Removes: 'EMIT '?KEY EXG @EXECUTE NUF?  
+\    SPACES .R U.R U. . ? .( ( [COMPILE] 
+\    FOR NEXT DO LOOP +LOOP BEGIN UNTIL AGAIN IF THEN ELSE 
+\    AHEAD WHILE REPEAT AFT ." _TYPE dm+ DUMP .S .ID >NAME 
+\    SEE WORDS ABORT" >CHAR 2* 2/ MIN MAX < = UM+
+\    2@ 2! (+loop) LEAVE OR EXIT
+\  Makes headerless: hi ?RX TX! ?RXP TXP! DEPTH COUNT 
+\   ERASE SPACES 
+\  Adds headers: donxt ?branch CONTEXT >CHAR ."| PARSE 
+\  Adds words: D+
+\  drops support for entry of binary (%) and decimal (&)
+
+\ for ERASE, E7S references ERASE:
+\  so reduced scope of BAREBONES to just ERASE header
+
+\ for CONTEXT, WORDS_LINKINTER  = 0 removes header
+\  but need header for WORDS >NAME
+\  so enable CONTEXT header when BAREBONES = 1
+
+\ for >CHAR, WORDS_LINKMISC = 0 removes header
+\  but need header for _TYPE
+\  so enable >CHAR header when BAREBONES = 1
+
+\ for ."|, WORDS_LINKRUNTI = 1 shows header
+\  but also need header for ."
+\  so add BAREBONES to compile-time test
+\  costs 6 bytes
+
+\ for COMPILE, BAREBONES = 0 shows header
+\  but need header for IF
+\  so remove BAREBONES compile-time test
+\  costs 10 bytes
+
+\ for donxt, WORDS_LINKRUNTI = 1 shows header
+\  but need header for NEXT
+\  so add BAREBONES to compile-time test
+
+\ for ?BRANCH, WORDS_LINKRUNTI = 1 shows header
+\  but need header for IF
+\  so add BAREBONES to compile-time test
+
+\ for CALL, , BAREBONES = 0 shows header
+\  but need header for [COMPILE]
+\  so remove BAREBONES compile-time test
+
+\ for PARSE, WORDS_LINKRUNTI = 1 shows header
+\  but need header for (
+\  so add BAREBONES to compile-time test
+
+\ for str, WORDS_LINKRUNTI = 1 shows header
+\  but need header for .R .
+\  so add BAREBONES to compile-time test
+
+\ for <#, WORDS_LINKRUNTI = 1 shows header
+\  but need header for U. U.R
+\  so add BAREBONES to compile-time test
+
+\ for #S, WORDS_LINKRUNTI = 1 shows header
+\  but need header for U. U.R
+\  so add BAREBONES to compile-time test
+
+\ for #>, WORDS_LINKRUNTI = 1 shows header
+\  but need header for U. U.R
+\  so add BAREBONES to compile-time test
+
+\ for DEPTH, BAREBONES = 0 hides the header
+\  but need header for .S
+\  so removed the compiletime test altogether
+
+\ for aborq, WORDS_LINKRUNTI = 1 shows header
+\  but need header for ABORT"
+\  so add BAREBONES to compile-time test
+
+\ for 0=, WORDS_EXTRACORE = 1 shows header
+\ but need header for WORDS =
+\ so added BAREBONES to compile-time test
+
+\ D+ was added because UM+ needed it
+
+make BOARD=W1209 flash
+mkdir -p out/W1209
+sdasstm8 -I. -I./W1209 -plosgffw out/W1209/forth.rel forth.asm
+sdcc -mstm8 -oout/W1209/W1209.ihx main.c out/W1209/forth.rel
+stm8flash -c stlinkv2 -p `[ -f W1209/target.inc ] && awk '/TARGET/ {print tolower($3)}' W1209/target.inc || echo "stm8s103f3"` -w out/W1209/W1209.ihx
+Determine FLASH area
+Writing Intel hex file 3867 bytes at 0x8000... OK
+Bytes written: 3867
+
+
+hex $6e @ <# #S #> space type
+ 8F1B ok
+ 
+ 
+ 
+
