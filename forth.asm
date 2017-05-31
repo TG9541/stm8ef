@@ -905,6 +905,7 @@ DOLIT:
         JRA     POPYJPY
         .endif
 
+	.ifeq	BAREBONES
         .ifne   HAS_DOLOOP
         ;       (+loop) ( +n -- )
         ;       Add n to index R@ and test for lower than limit (R-CELL)@.
@@ -949,11 +950,12 @@ LEAVE:
         POPW    Y               ; DO leaves the address of +loop on the R-stack
         JP      (2,Y)
         .endif
+        .endif
 
 ;       next    ( -- )
 ;       Code for single index loop.
 
-        .ifne   WORDS_LINKRUNTI
+        .ifne   WORDS_LINKRUNTI + BAREBONES
         .dw     LINK
         LINK =  .
         .db     (COMPO+5)
@@ -979,7 +981,7 @@ QDQBRAN:
 ;       ?branch ( f -- )
 ;       Branch if flag is zero.
 
-        .ifne   WORDS_LINKRUNTI
+        .ifne   WORDS_LINKRUNTI + BAREBONES
         .dw     LINK
         LINK =  .
         .db     (COMPO+7)
@@ -1024,6 +1026,7 @@ EXECU:
         INCW    X
         JRA     YJPIND
 
+        .ifeq	BAREBONES
 ;       EXIT    ( -- )
 ;       Terminate a colon definition.
 
@@ -1066,6 +1069,7 @@ DAT:
         CALLR   AT
         CALL    SWAPP
         JRA     AT
+        .endif
 
 
         .ifne   WORDS_EXTRAMEM
@@ -1192,6 +1196,7 @@ CSTOR:
         LD      (Y),A           ; store c at b
         JRA     DDROP
 
+        .ifeq	BAREBONES
         .ifne   WORDS_EXTRACORE
 ;       I       ( -- n )     ( TOS STM8: -- Y,Z,N )
 ;       Get inner FOR-NEXT or DO-LOOP index value
@@ -1202,6 +1207,7 @@ CSTOR:
         .ascii  "I"
 IGET:
         JRA     RAT
+        .endif
         .endif
 
 ;       R>      ( -- w )     ( TOS STM8: -- Y,Z,N )
@@ -1365,6 +1371,7 @@ OVER:
         LDW     Y,(2,Y)
         JRA     YSTOR
 
+        .ifeq	BAREBONES
 ;       UM+     ( u u -- udsum )
 ;       Add two unsigned single
 ;       and return a double sum.
@@ -1378,6 +1385,7 @@ UPLUS:
         CLR     A
         RLC     A
         JP      ASTOR
+        .endif
 
 ;       +       ( w w -- sum ) ( TOS STM8: -- Y,Z,N )
 ;       Add top two items.
@@ -1428,6 +1436,7 @@ ANDD:
         AND     A,(2,X)
         JRA     LDADROP
 
+        .ifeq	BAREBONES
 ;       OR      ( w w -- w )    ( TOS STM8: -- immediate Y,Z,N )
 ;       Bitwise inclusive OR.
 
@@ -1443,6 +1452,7 @@ ORR:
         LD      A,(X)
         OR      A,(2,X)
         JRA     LDADROP
+        .endif
 
 ;       0<      ( n -- t ) ( TOS STM8: -- A,Z )
 ;       Return true if n is negative.
@@ -1460,7 +1470,7 @@ ZLESS:
 ZL1:    LD      (X),A
         LD      (1,X),A
         RET
-
+        
 ;       -   ( n1 n2 -- n1-n2 )  ( TOS STM8: -- Y,Z,N )
 ;       Subtraction.
 
@@ -1508,6 +1518,7 @@ CNTXT:
         JRA     ASTOR
 1$:
         .endif
+CNTXT_FIND:
         LD      A,#(RAMBASE+USRCONTEXT)
         JRA     ASTOR
 
@@ -1622,7 +1633,6 @@ TQKEY:
         LD      A,#(USRQKEY)
         JRA     ASTOR
         .endif
-
 
 ;       LAST    ( -- a )        ( TOS STM8: -- Y,Z,N )
 ;       Point to last name in dictionary.
@@ -1883,6 +1893,7 @@ DDUP:
 1$:
         JP      OVER
 
+        .ifeq	BAREBONES
 ;       DNEGATE ( d -- -d )     ( TOS STM8: -- Y,Z,N )
 ;       Two's complement of top double.
 
@@ -1905,7 +1916,9 @@ DNEGA:
         INCW    Y
 DN1:    LDW     (X),Y
         RET
+        .endif
 
+	.ifeq	BAREBONES
 ;       =       ( w w -- t )    ( TOS STM8: -- Y,Z,N )
 ;       Return true if top two are equal.
 
@@ -1936,6 +1949,7 @@ EQ1:    LD      (X),A
         CALL    XORR
         JP      ZEQUAL                 ; 31 cy= (18+13)
         .endif
+        .endif
 
 
 ;       U<      ( u u -- t )    ( TOS STM8: -- Y,Z,N )
@@ -1956,6 +1970,7 @@ ULESS:
         LDW     (X),Y
         RET
 
+        .ifeq	BAREBONES
 ;       <       ( n1 n2 -- t )
 ;       Signed compare of top two items.
 
@@ -1986,6 +2001,7 @@ LESS:
         CALL    SUBB             ; (29cy)
         JP      ZLESS            ; 41 cy (12+29)
         .endif
+        .endif
 
 ;       YTEMPCMP       ( n n -- n )      ( TOS STM8: -- Y,Z,N )
 ;       Load (TOS) to YTEMP and (TOS-1) to Y, DROP, CMP to STM8 flags
@@ -2000,6 +2016,7 @@ YTEMPCMP:
         CPW     Y,YTEMP
         RET
 
+        .ifeq	BAREBONES
 ;       MAX     ( n n -- n )    ( TOS STM8: -- Y,Z,N )
 ;       Return greater of two top items.
 
@@ -2029,6 +2046,7 @@ MIN:
         CALLR   YTEMPCMP
         JRSLT   MMEXIT
         JRA     YTEMPTOS
+        .endif
 
 ;       WITHIN ( u ul uh -- t ) ( TOS STM8: -- Y,Z,N )
 ;       Return true if u is within
@@ -2098,6 +2116,7 @@ MMSM4:
         LDW     (2,X),Y
         RET
 
+	.ifeq	BAREBONES
 ;       M/MOD   ( d n -- r q )
 ;       Signed floored divide of double by
 ;       single. Return mod and quotient.
@@ -2169,6 +2188,7 @@ MODD:
 SLASH:
         CALLR   SLMOD
         JP      NIP
+        .endif
 
 ; Multiply
 
@@ -2235,6 +2255,7 @@ STAR:
         CALLR   UMSTA
         JP      DROP
 
+	.ifeq	BAREBONES
 ;       M*      ( n n -- d )
 ;       Signed multiply. Return double product.
 
@@ -2285,6 +2306,7 @@ SSMOD:
 STASL:
         CALLR   SSMOD
         JP      NIP
+        .endif
 
 ; Miscellaneous
 
@@ -2304,8 +2326,9 @@ EXG:
         RET
         .endif
 
+	.ifeq	BAREBONES
 ;       2/      ( n -- n )      ( TOS STM8: -- Y,Z,N )
-;       Multiply tos by 2.
+;       Divide tos by 2.
 
         .dw     LINK
 
@@ -2329,6 +2352,7 @@ CELLS:
         CALLR   DOXCODE
         SLAW    X
         RET
+        .endif
 
 ;       2-      ( a -- a )      ( TOS STM8: -- Y,Z,N )
 ;       Subtract 2 from tos.
@@ -2438,7 +2462,7 @@ ABSS:
         NEGW    X               ; else negate
 1$:     RET
 
-        .ifne   WORDS_EXTRACORE
+        .ifne   WORDS_EXTRACORE + BAREBONES
 ;       0=      ( n -- t )      ( TOS STM8: -- Y,Z,N ))
 ;       Return true if n is equal to 0
         .dw     LINK
@@ -2470,6 +2494,7 @@ PICK:
         LDW     X,(X)
         RET
 
+	.ifeq	BAREBONES
  ;      >CHAR   ( c -- c )      ( TOS STM8: -- A,Z,N )
 ;       Filter non-printing characters.
 
@@ -2490,17 +2515,16 @@ TCHAR:
 1$:     LD      A,#('_')
 2$:     LD      (1,X),A
         RET
+        .endif
 
 ;       DEPTH   ( -- n )      ( TOS STM8: -- Y,Z,N )
 ;       Return  depth of data stack.
 
-        .ifeq   BAREBONES
         .dw     LINK
 
         LINK =  .
         .db     5
         .ascii  "DEPTH"
-        .endif
 DEPTH:
         LDW     Y,X
         NEGW    X
@@ -2740,7 +2764,7 @@ EXTRC:
 ;       <#      ( -- )   ( TOS STM8: -- Y,Z,N )
 ;       Initiate numeric output process.
 
-        .ifne   WORDS_LINKCHAR
+        .ifne   WORDS_LINKCHAR + BAREBONES
         .dw     LINK
 
         LINK =  .
@@ -2792,7 +2816,7 @@ DIG:
 ;       Convert u until all digits
 ;       are added to output string.
 
-        .ifne   WORDS_LINKCHAR
+        .ifne   WORDS_LINKCHAR + BAREBONES
         .dw     LINK
 
         LINK =  .
@@ -2826,7 +2850,7 @@ SIGN1:  JP      DROP
 ;       #>      ( w -- b u )
 ;       Prepare output string.
 
-        .ifne   WORDS_LINKCHAR
+        .ifne   WORDS_LINKCHAR + BAREBONES
         .dw     LINK
 
         LINK =  .
@@ -2844,7 +2868,7 @@ EDIGS:
 ;       Convert a signed integer
 ;       to a numeric string.
 
-        .ifne   WORDS_LINKCHAR
+        .ifne   WORDS_LINKCHAR + BAREBONES
         .dw     LINK
 
         LINK =  .
@@ -3092,10 +3116,10 @@ SPACE:
         CALL    BLANK
         JP      [USREMIT]
 
+        .ifeq   BAREBONES
 ;       SPACES  ( +n -- )
 ;       Send n spaces to output device.
 
-        .ifeq   BAREBONES
         .dw     LINK
 
         LINK =  .
@@ -3104,15 +3128,13 @@ SPACE:
 SPACS:
         CALL    ZERO
         CALL    MAX
-        .else
-SPACS:
-        .endif
         CALL    TOR
         JRA     CHAR2
 CHAR1:  CALLR   SPACE
 CHAR2:  CALL    DONXT
         .dw     CHAR1
         RET
+        .endif
 
 ;       CR      ( -- )
 ;       Output a carriage return
@@ -3200,7 +3222,6 @@ DOTR:
         CALL    TOR
         CALL    STR
         JRA     RFROMTYPES
-        .endif
 
 ;       U.R     ( u +n -- )
 ;       Display an unsigned integer
@@ -3220,6 +3241,7 @@ RFROMTYPES:
         CALL    SUBB
         CALLR   SPACS
         JRA     TYPES
+        .endif
 
 ;       TYPE    ( b u -- )
 ;       Output u characters from b.
@@ -3240,6 +3262,7 @@ TYPE2:
         .dw     TYPE1
         JP      DROP
 
+	.ifeq	BAREBONES
 ;       U.      ( u -- )
 ;       Display an unsigned integer
 ;       in free format.
@@ -3277,7 +3300,9 @@ DOT:
 1$:     CALL    STR
         CALL    SPACE
         JRA     TYPES
+        .endif
 
+	.ifeq	BAREBONES
 ;       ?       ( a -- )
 ;       Display contents in memory cell.
 
@@ -3289,6 +3314,7 @@ DOT:
 QUEST:
         CALL    AT
         JRA     DOT
+        .endif
 
 
 ; Parsing
@@ -3392,7 +3418,7 @@ SUBPARS:
 ;       Scan input stream and return
 ;       counted string delimited by c.
 
-        .ifne   WORDS_LINKINTER
+        .ifne   WORDS_LINKINTER + BAREBONES
         .dw     LINK
 
         LINK =  .
@@ -3411,6 +3437,7 @@ PARSE:
         CALL    INN
         JP      PSTOR
 
+	.ifeq	BAREBONES
 ;       .(      ( -- )
 ;       Output following string up to next ) .
 
@@ -3437,6 +3464,7 @@ PAREN:
         DoLitC  41      ; ")"
         CALLR   PARSE
         JP      DDROP
+        .endif
 
 ;       \       ( -- )
 ;       Ignore following text till
@@ -3485,12 +3513,11 @@ TOKEN:
         JRA     WORDD
 
 ; Dictionary search
-
 ;       NAME>   ( na -- ca )
 ;       Return a code address given
 ;       a name address.
 
-        .ifne   WORDS_LINKINTER
+        .ifeq   BAREBONES
         .dw     LINK
 
         LINK =  .
@@ -3501,7 +3528,14 @@ NAMET:
         CALL    COUNT
         DoLitC  31
         CALL    ANDD
-        JP      PLUS
+        CALL    PLUS
+        LD      A,(Y)           ; DUP C@
+        CP      A,#0xCC         ; $CC =
+        JRNE    1$              ; IF
+        INCW    Y               ; 1+ 
+        LDW     Y,(Y)           ; @
+        LDW     (X),Y
+1$:     RET                     ; THEN
 
 
 ;       R@ indexed char lookup for SAME?
@@ -3575,7 +3609,7 @@ CUPPER:
         .ascii  "NAME?"
         .endif
 NAMEQ:
-        CALL    CNTXT
+        CALL    CNTXT_FIND
         JRA     FIND
 
 ;       find    ( a va -- ca na | a F )
@@ -3791,7 +3825,7 @@ ABORT:
 ;       Run time routine of ABORT".
 ;       Abort with a message.
 
-        .ifne   WORDS_LINKINTER
+        .ifne   WORDS_LINKINTER + BAREBONES
         .dw     LINK
 
         LINK =  .
@@ -4012,13 +4046,11 @@ OMMA:
 ;       CALL,   ( ca -- )
 ;       Compile a subroutine call.
 
-        .ifeq   BAREBONES
         .dw     LINK
 
         LINK =  .
         .db     5
         .ascii  "CALL,"
-        .endif
 JSRC:
         CALL    DUPP
         CALL    HERE
@@ -4060,32 +4092,30 @@ LITER:
         .endif
         JRA      COMMA
 
+	.ifeq	BAREBONES
 ;       [COMPILE]       ( -- ; <string> )
 ;       Compile next immediate
 ;       word into code dictionary.
 
-        .ifeq   BAREBONES
         .dw     LINK
 
         LINK =  .
         .db     (IMEDD+9)
         .ascii  "[COMPILE]"
-        .endif
 BCOMP:
         CALLR   TICK
         JRA     JSRC
+        .endif
 
 ;       COMPILE ( -- )
 ;       Compile next jsr in
 ;       colon list to code dictionary.
 
-        .ifeq   BAREBONES
         .dw     LINK
 
         LINK =  .
         .db     (COMPO+7)
         .ascii  "COMPILE"
-        .endif
 COMPI:
         CALL    RFROM
         CALL    ONEP
@@ -4118,6 +4148,7 @@ CNTPCPPSTORE:
 
 ; Structures
 
+	.ifeq	BAREBONES
 ;       FOR     ( -- a )
 ;       Start a FOR-NEXT loop
 ;       structure in a colon definition.
@@ -4144,7 +4175,9 @@ NEXT:
         CALLR   COMPI
         CALL    DONXT
         JP      COMMA
+        .endif
 
+	.ifeq	BAREBONES
         .ifne   HAS_DOLOOP
 ;       DO      ( -- a )
 ;       Start a DO LOOP loop
@@ -4198,7 +4231,9 @@ PLOOP:
         CALL    STORE           ; patch DO runtime code for LEAVE
         JP      COMMA
         .endif
+        .endif
 
+	.ifeq	BAREBONES
 ;       BEGIN   ( -- a )
 ;       Start an infinite or
 ;       indefinite loop structure.
@@ -4281,22 +4316,22 @@ ELSEE:
 ;       AHEAD   ( -- A )
 ;       Compile a forward branch instruction.
 
-        .ifeq   BAREBONES
         .dw     LINK
 
         LINK =  .
         .db     (IMEDD+5)
         .ascii  "AHEAD"
-        .endif
 AHEAD:
         CALL    CCOMMALIT
         .db     BRAN_OPC
 HERE0COMMA:
         CALL    HERE
+        .endif
 ZEROCOMMA:
         CALL    ZERO
         JP      COMMA
 
+	.ifeq	BAREBONES
 ;       WHILE   ( a -- A a )
 ;       Conditional branch out of a BEGIN-WHILE-REPEAT loop.
 
@@ -4335,7 +4370,9 @@ AFT:
         CALLR   AHEAD
         CALL    HERE
         JRA     SWAPLOC
+        .endif
 
+	.ifeq	BAREBONES
 ;       ABORT"  ( -- ; <string> )
 ;       Conditional abort with an error message.
 
@@ -4349,6 +4386,7 @@ ABRTQ:
         CALL    COMPI
         CALL    ABORQ
         JRA     STRCQLOC
+        .endif
 
 ;       $"      ( -- ; <string> )
 ;       Compile an inline string literal.
@@ -4524,7 +4562,6 @@ SEMIS:
         CALL    LBRAC
         JRA     OVERT
 
-
 ;       :       ( -- ; <string> )
 ;       Start a new colon definition
 ;       using next word as its name.
@@ -4538,7 +4575,7 @@ COLON:
         CALLR   RBRAC           ; do "]" first to set HERE to compile state
         CALL    TOKEN
         JP      SNAME
-
+	
 
 ;       IMMEDIATE       ( -- )
 ;       Make last compiled word
@@ -4847,8 +4884,8 @@ DUPPCAT:
         JP      CAT
 
 
-        .ifne   WORDS_EXTRADEBUG
         .ifeq   BAREBONES
+        .ifne   WORDS_EXTRADEBUG
 ;       >NAME   ( ca -- na | F )
 ;       Convert code address
 ;       to a name address.
@@ -4911,9 +4948,7 @@ SEE4:   CALL    NUFQ    ;user control
         .dw     SEE1
         JP      DROP
         .endif
-        .endif
 
-        .ifeq   BAREBONES
 ;       WORDS   ( -- )
 ;       Display names in vocabulary.
 
