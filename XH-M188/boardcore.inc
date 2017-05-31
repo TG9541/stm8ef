@@ -111,6 +111,7 @@ BKEYCHAR:
 
 ; PWM! ( pwm -- ) 
 ; Set PWM duty cycle
+; Max seems to be around 3300 (3583 is full on)
 	.dw    LINK
 
 	LINK =  .
@@ -119,6 +120,5 @@ BKEYCHAR:
 PWMSET:
         DoLitW  TIM1_CCR1H
         JP      DCSTOR
-	RET
 
 
