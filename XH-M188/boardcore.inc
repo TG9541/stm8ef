@@ -106,4 +106,19 @@ PWMSET:
         DoLitW  TIM1_CCR1H
         JP      DCSTOR
 
+; MV! ( millivolts -- ) 
+; Set PWM duty cycle
+; Trim until it matches, or until 1024 PWM! just gives 5.000 volts
+	.dw    LINK
+
+	LINK =  .
+        .db     (3)
+        .ascii  "MV!"
+MVSET:
+        DoLitW  1024  ; scaling factor: PWM @ volts (below)
+        CALL    SWAPP
+        DoLitW  5000  ; 5 volts 
+        CALL    STASL ; *\ 
+	JP      PWMSET 
+
 
