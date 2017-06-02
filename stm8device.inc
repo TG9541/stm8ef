@@ -19,6 +19,11 @@ PORTX        = 0
         CR1          = 3
         CR2          = 4
 
+; ***** Option Bytes in EEPROM
+
+        OPT2         = 0x4803   ; Alternate Function Mapping            (0x00)
+        NOPT2        = 0x4804   ; Alternate Function Mapping            (0xFF)
+
 ; ***** Port A
 
         PA_ODR       = 0x5000   ; Port A data output latch register     (0x00)
