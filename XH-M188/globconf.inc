@@ -2,8 +2,8 @@
 ; Config for XH-M188 Board
 ; Clock: HSI (no crystal)
 
-        HAS_KEYS         = 0    ; yes, 3 keys on module
-        HAS_OUTPUTS      = 0    ; yes, one LED
+        HAS_KEYS         = 3    ; yes, 3 keys on module
+        HAS_OUTPUTS      = 0    ; nope
         HAS_ADC          = 1    ; Analog input words
 
         HAS_BACKGROUND   = 1    ; Background Forth task (TIM2 ticker)

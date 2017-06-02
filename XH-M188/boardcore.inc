@@ -60,6 +60,38 @@ _EXTI2_IRQHandler:
 _EXTI3_IRQHandler:
         .endif
 
+;===============================================================
+
+        .ifne   HAS_KEYS
+;       BKEY  ( -- c )     ( TOS STM8: -- A,Z,N )
+;       Read board key state as a bitfield
+        .dw     LINK
+
+        LINK =  .
+        .db     (4)
+        .ascii  "BKEY"
+BKEY:
+        ; Keys "minus" (1), "plus" (2), "on/off" (4)
+        CLR     A
+        BTJT    PB_IDR,#4,1$    ; test "minus"
+        OR      A,#0x01
+1$:     BTJT    PB_IDR,#5,2$    ; test "plus"
+        OR      A,#0x02
+2$:     BTJT    PC_IDR,#4,3$    ; test "on/off"
+        OR      A,#0x04
+3$:     JP      ASTOR
+
+;       BKEYC  ( -- c )   ( TOS STM8: -- A,Z,N )
+;       Read and translate board dependent key bitmap into char
+
+BKEYCHAR:
+        CALLR   BKEY
+        JREQ    1$
+        ADD     A,#'@'
+        LD      (1,X),A
+1$:     RET
+       .endif
+
 ; ============================================================
 
 ; PWM! ( pwm -- ) 
