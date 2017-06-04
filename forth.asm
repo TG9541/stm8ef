@@ -1627,7 +1627,7 @@ TQKEY:
 ;       LAST    ( -- a )        ( TOS STM8: -- Y,Z,N )
 ;       Point to last name in dictionary.
 
-        .ifne   WORDS_LINKCOMP
+        .ifeq   BAREBONES
         .dw     LINK
 
         LINK =  .
@@ -3490,7 +3490,7 @@ TOKEN:
 ;       Return a code address given
 ;       a name address.
 
-        .ifne   WORDS_LINKINTER
+        .ifeq   BAREBONES
         .dw     LINK
 
         LINK =  .
