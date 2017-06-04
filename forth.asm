@@ -1,4 +1,4 @@
-; STM8EF for STM8S003F3 (Value pine) devices
+; STM8EF for STM8S (Value line and Access Line devices)
 ;
 ; This is derived work based on
 ; http://www.forth.org/svfig/kk/07-2010.html
@@ -162,6 +162,7 @@
         HAS_CPNVM        = 0    ; Can compile to Flash, always interpret to RAM
         HAS_DOES         = 0    ; DOES> extension
         HAS_DOLOOP       = 0    ; DO .. LOOP extension: DO LEAVE LOOP +LOOP
+        HAS_ALIAS        = 0    ; NAME> resolves "alias" (RigTig style), aliases can be in RAM
 
         USE_CALLDOLIT    = 0    ; use CALL DOLIT instead of the DOLIT TRAP handler (deprecated)
         CASEINSENSITIVE  = 0    ; Case insensitive dictionary search
@@ -1508,6 +1509,7 @@ CNTXT:
         JRA     ASTOR
 1$:
         .endif
+CNTXT_ALIAS:
         LD      A,#(RAMBASE+USRCONTEXT)
         JRA     ASTOR
 
@@ -3501,7 +3503,19 @@ NAMET:
         CALL    COUNT
         DoLitC  31
         CALL    ANDD
+        .ifeq   HAS_ALIAS
         JP      PLUS
+        .else
+        CALL    PLUS
+        LD      A,(Y)           ; DUP C@
+        CP      A,#0xCC         ; $CC =
+        JRNE    1$              ; IF
+        INCW    Y               ; 1+
+        LDW     Y,(Y)           ; @
+        LDW     (X),Y
+1$:     RET                     ; THEN
+
+        .endif
 
 
 ;       R@ indexed char lookup for SAME?
@@ -3575,7 +3589,12 @@ CUPPER:
         .ascii  "NAME?"
         .endif
 NAMEQ:
+        .ifne   HAS_ALIAS
+        CALL    CNTXT_ALIAS
+        .else
         CALL    CNTXT
+        .endif
+
         JRA     FIND
 
 ;       find    ( a va -- ca na | a F )
@@ -4469,7 +4488,7 @@ SCOM2:  CALL    NUMBQ   ;try to convert to number
 ;       OVERT   ( -- )
 ;       Link a new word into vocabulary.
 
-        .ifne   WORDS_LINKCOMP
+        .ifne   WORDS_LINKCOMP + HAS_ALIAS
         .dw     LINK
 
         LINK =  .
