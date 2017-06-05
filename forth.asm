@@ -5392,9 +5392,9 @@ RESTC:
 
 
         .ifne WORDS_HWREG
-        .ifne (TARGET - STM8S103F3)
+;        .ifne (TARGET - STM8S103F3)
           .include "hwregs8s003.inc"
-        .endif
+;        .endif
         .endif
 
 
