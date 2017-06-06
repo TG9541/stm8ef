@@ -11,20 +11,23 @@
 
 BOARDINIT:
         ; Board I/O initialization
-	; Init Timer for PWM
-	; Unlock EEPROM and set AFR0 flag
+        MOV     PD_DDR,#0b00000000
+        MOV     PD_CR1,#0b01111110
+
+        ; Init Timer for PWM
+        ; Unlock EEPROM and set AFR0 flag
         CALL    ULOCK
         MOV     FLASH_CR2, #0b10000000
         MOV     FLASH_NCR2,#0b01111111
-	MOV     OPT2, #0b00000001
-	MOV     NOPT2,#0b11111110
-; should wait for EOP bit here...meh, seems to work
-; then re-lock
+        MOV     OPT2, #0b00000001
+        MOV     NOPT2,#0b11111110
+        ; should wait for EOP bit here...meh, seems to work
+        ; then re-lock
         MOV     FLASH_CR2, #0b00000000
         MOV     FLASH_NCR2,#0b11111111
-	CALL LOCK
+        CALL LOCK
 
-	; Set voltage-control PWM timers
+        ; Set voltage-control PWM timers
         MOV     TIM1_ARRH,#0x0D ; approx 4.5 kHz
         MOV     TIM1_ARRL,#0xFF 
         MOV     TIM1_CCR1H,#0x00 ; Start PWM off
@@ -32,7 +35,7 @@ BOARDINIT:
         MOV     TIM1_CCER1,#0x01 ; output on chan 1 
         MOV     TIM1_CCMR1,#0x60 ; count-up mode
         MOV     TIM1_BKR,#0b10000000 ; output enable
-	MOV     TIM1_CR1,#0b00000001 ; enable timer
+        MOV     TIM1_CR1,#0b00000001 ; enable timer
 
         RET
 
