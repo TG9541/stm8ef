@@ -112,12 +112,12 @@ PWMSET:
 	.dw    LINK
 
 	LINK =  .
-        .db     (3)
-        .ascii  "MV!"
+        .db     (2)
+        .ascii  "MV"
 MVSET:
-        DoLitW  1024  ; scaling factor: PWM @ volts (below)
+        DoLitW  1024  ; PWM @ calibration point 
         CALL    SWAPP
-        DoLitW  5000  ; 5 volts 
+        DoLitW  5000  ; 5.000 volts @ cal point 
         CALL    STASL ; *\ 
 	JP      PWMSET 
 
