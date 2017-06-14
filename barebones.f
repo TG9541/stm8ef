@@ -83,7 +83,7 @@ NVM \ make comment to just create in ram
     DUP 1+ C@ DUP $80 - 0< NOT IF $FF00 + THEN + 2+ THEN
   CALL, 2+ >R ;
 
-: FOR     ( -- a )$FF00 + 
+: FOR     ( -- a )
   \ Start a FOR-NEXT loop structure in a colon definition.
   COMPILE >R HERE ;
   IMMEDIATE 

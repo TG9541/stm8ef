@@ -1,4 +1,4 @@
-; STM8EF for STM8S003F3 (Value pine) devices
+; STM8EF for STM8S (Value line and Access Line devices)
 ;
 ; This is derived work based on
 ; http://www.forth.org/svfig/kk/07-2010.html
@@ -162,7 +162,8 @@
         HAS_CPNVM        = 0    ; Can compile to Flash, always interpret to RAM
         HAS_DOES         = 0    ; DOES> extension
         HAS_DOLOOP       = 0    ; DO .. LOOP extension: DO LEAVE LOOP +LOOP
-
+        HAS_ALIAS        = 0    ; NAME> resolves "alias" (RigTig style), aliases can be in RAM
+        
         USE_CALLDOLIT    = 0    ; use CALL DOLIT instead of the DOLIT TRAP handler (deprecated)
         CASEINSENSITIVE  = 0    ; Case insensitive dictionary search
         SPEEDOVERSIZE    = 0    ; Speed-over-size in core words ROT - = < -1 0 1
@@ -1557,7 +1558,7 @@ CNTXT:
         JRA     ASTOR
 1$:
         .endif
-CNTXT_FIND:
+CNTXT_ALIAS:
         LD      A,#(RAMBASE+USRCONTEXT)
         JRA     ASTOR
 
@@ -1687,7 +1688,7 @@ TQKEY:
 ;       LAST    ( -- a )        ( TOS STM8: -- Y,Z,N )
 ;       Point to last name in dictionary.
 
-        .ifne   WORDS_LINKCOMP
+        .ifeq   BAREBONES
         .ifeq	UNLINKCORE
         .dw     LINK
 
@@ -3645,7 +3646,7 @@ TOKEN:
 ;       NAME>   ( na -- ca )
 ;       Return a code address given
 ;       a name address.
-	.ifne   WORDS_LINKINTER
+	.ifeq   BAREBONES
         .ifeq   UNLINKCORE
         .dw     LINK
 
@@ -3658,6 +3659,9 @@ NAMET:
         CALL    COUNT
         DoLitC  31
         CALL    ANDD
+        .ifeq   HAS_ALIAS
+        JP      PLUS
+        .else
         CALL    PLUS
         LD      A,(Y)           ; DUP C@
         CP      A,#0xCC         ; $CC =
@@ -3666,6 +3670,7 @@ NAMET:
         LDW     Y,(Y)           ; @
         LDW     (X),Y
 1$:     RET                     ; THEN
+	.endif
 
 
 ;       R@ indexed char lookup for SAME?
@@ -3745,7 +3750,11 @@ CUPPER:
         .endif
         .endif
 NAMEQ:
-        CALL    CNTXT_FIND
+        .ifne   HAS_ALIAS
+        CALL    CNTXT_ALIAS
+        .else
+        CALL    CNTXT
+        .endif
         JRA     FIND
 
 ;       find    ( a va -- ca na | a F )
@@ -4682,7 +4691,7 @@ SCOM2:  CALL    NUMBQ   ;try to convert to number
 ;       OVERT   ( -- )
 ;       Link a new word into vocabulary.
 
-        .ifne   WORDS_LINKCOMP
+        .ifne   WORDS_LINKCOMP + HAS_ALIAS
         .ifeq	UNLINKCORE
         .dw     LINK
 
@@ -5643,9 +5652,9 @@ RESTC:
 
 
         .ifne WORDS_HWREG
-        .ifne (TARGET - STM8S103F3)
+;        .ifne (TARGET - STM8S103F3)
           .include "hwregs8s003.inc"
-        .endif
+;        .endif
         .endif
 
 
