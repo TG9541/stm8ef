@@ -1160,7 +1160,7 @@ STORE:
         LDW     X,(2,X)
         LDW     [YTEMP],X
         EXGW    X,Y
-        JRA     DDROP
+        JP      DDROP
 
 ;       C@      ( b -- c )      ( TOS STM8: -- A,Z,N )
 ;       Push byte in memory to stack.
@@ -3730,8 +3730,8 @@ KTAP:
         .dw     KTAP1
 
         CALL    BLANK
-        JP      TAP
-KTAP1:  JP      BKSP
+        JRA     TAP
+KTAP1:  JRA     BKSP
 KTAP2:  CALL    DROP
         CALL    NIP
         JP      DUPP
@@ -3762,9 +3762,9 @@ ACCP1:  CALL    DDUP
         CALL    WITHI
         CALL    QBRAN
         .dw     ACCP2
-        CALL    TAP
+        CALLR   TAP
         JRA     ACCP3
-ACCP2:  CALL    KTAP
+ACCP2:  CALLR   KTAP
 ACCP3:  JRA     ACCP1
 ACCP4:  CALL    DROP
         CALL    OVER
@@ -3784,7 +3784,7 @@ ACCP4:  CALL    DROP
 QUERY:
         DoLitW  TIBB
         DoLitC  TIBLENGTH
-        CALL    ACCEP
+        CALLR   ACCEP
         CALL    NTIB
         CALL    STORE
         CLR     USR_IN
@@ -3867,7 +3867,7 @@ INTER:
         CALL    AT
         DoLitW  0x04000         ; COMPO*256
         CALL    ANDD            ; ?compile only lexicon bits
-        CALL    ABORQ
+        CALLR   ABORQ
         .db     13
         .ascii  " compile only"
         JP      EXECU
@@ -4325,7 +4325,7 @@ ZEROCOMMA:
         .db     (IMEDD+5)
         .ascii  "WHILE"
 WHILE:
-        CALL    IFF
+        CALLR   IFF
 SWAPLOC:
         JP      SWAPP
 
@@ -4438,7 +4438,7 @@ SNAME:
         CALL    DUPPCAT         ; ?null input
         CALL    QBRAN
         .dw     PNAM1
-        CALL    UNIQU           ; ?redefinition
+        CALLR   UNIQU           ; ?redefinition
         CALL    DUPP
         CALL    CNTPCPPSTORE
         CALL    DUPP
@@ -4911,7 +4911,7 @@ SEE1:
         CALL    DUPP    ;?does it contain a zero
         CALL    QBRAN
         .dw     SEE2
-        CALL    TNAME   ;?is it a name
+        CALLR   TNAME   ;?is it a name
 SEE2:   CALL    QDQBRAN ;name address or zero
         .dw     SEE3
         CALL    SPACE
@@ -5328,7 +5328,7 @@ NVMM:
         MOV     USRLAST,NVMCONTEXT
         MOV     USRLAST+1,NVMCONTEXT+1
         CALLR   SWAPCP
-        CALL    UNLOCK_FLASH
+        CALLR   UNLOCK_FLASH
 1$:
         RET
 
