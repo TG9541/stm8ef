@@ -4105,14 +4105,33 @@ BCOMP:
         .ascii  "COMPILE"
         .endif
 COMPI:
-        CALL    RFROM
-        CALL    ONEP
-        CALL    DUPP
-        CALL    AT
-        CALLR   JSRC            ; compile subroutine
-        CALL    CELLP
-        CALL    TOR             ; this was a JP - a serious bug that took a while to find
-        RET
+        EXGW    X,Y
+        POPW    X
+        LD      A,(X)
+        INCW    X
+        CP      A,#CALL_OPC
+        JRNE    COMPIO1
+        LDW     YTEMP,X         ; COMPILE CALL address
+        INCW    X
+        INCW    X
+        PUSHW   X
+        LDW     X,[YTEMP]
+        JRA     COMPIO2
+COMPIO1:
+        LD      A,(X)           ; COMPILE CALLR offset
+        INCW    X
+        PUSHW   X               ; return address
+        CLRW    X               ; offset i8_t to i16_t
+        TNZ     A
+        JRPL    1$
+        DECW    X
+1$:     LD      XL,A
+        ADDW    X,(1,SP)        ; add offset in X to address of next instruction
+COMPIO2:
+        EXGW    X,Y
+        CALL    YSTOR
+        JRA     JSRC            ; compile subroutine
+
 
 ;       $,"     ( -- )
 ;       Compile a literal string
@@ -4600,7 +4619,7 @@ RBRAC:
         .ascii  "DOES>"
 DOESS:
         CALL    COMPI
-        CALL    DODOES          ; 3 CALL dodoes>
+        CALLR   DODOES          ; 3 CALL dodoes>
         CALL    HERECP
         .ifne  USE_CALLDOLIT
         DoLitC  9
