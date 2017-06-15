@@ -163,12 +163,16 @@
         HAS_DOES         = 0    ; DOES> extension
         HAS_DOLOOP       = 0    ; DO .. LOOP extension: DO LEAVE LOOP +LOOP
         HAS_ALIAS        = 0    ; NAME> resolves "alias" (RigTig style), aliases can be in RAM
-        
+
         USE_CALLDOLIT    = 0    ; use CALL DOLIT instead of the DOLIT TRAP handler (deprecated)
         CASEINSENSITIVE  = 0    ; Case insensitive dictionary search
         SPEEDOVERSIZE    = 0    ; Speed-over-size in core words ROT - = < -1 0 1
-        BAREBONES        = 0    ; Remove or unlink some more: hi HERE .R U.R SPACES @EXECUTE AHEAD CALL, EXIT COMPILE [COMPILE] DEPTH
-        UNLINKCORE       = 0    ; Remove or unlink some more: hi HERE .R U.R SPACES @EXECUTE AHEAD CALL, EXIT COMPILE [COMPILE] DEPTH
+        BAREBONES        = 0    ; Removes words: '?KEY 'EMIT ( (+loop) +LOOP . ." .( .ID .R .S 2! 2* 2/ 2@ < = >CHAR >NAME ? 
+				; ABORT" AFT AGAIN AHEAD BEGIN DO DUMP ELSE EXG FOR IF LEAVE LOOP MAX MIN NEXT 
+				; OR REPEAT SEE SPACES THEN U. U.R UM+ UNTIL WHILE WORDS [COMPILE] _TYPE dm+ 
+				; Drops headers: ?RX TX! ?RXP ?RX TXP! TX! LAST ERASE
+				; Drops support for entry of binary (%) and decimal (&)
+        UNLINKCORE       = 0    ; Drops headers on everything except: (TODO)
         NO_VARIABLE      = 0    ; Disable VARIABLE and feature "VARIABLE in Flash allocates RAM"
 
         WORDS_LINKINTER  = 0    ; Link interpreter words: ACCEPT QUERY TAP kTAP hi 'BOOT tmp >IN 'TIB #TIB eval CONTEXT pars PARSE NUMBER? DIGIT? WORD TOKEN NAME> SAME? find ABORT aborq $INTERPRET INTER? .OK ?STACK EVAL PRESET QUIT $COMPILE
@@ -915,16 +919,18 @@ DOLIT:
         JRA     POPYJPY
         .endif
 
-	.ifeq	UNLINKCORE
+	.ifeq	BAREBONES
         .ifne   HAS_DOLOOP
         ;       (+loop) ( +n -- )
         ;       Add n to index R@ and test for lower than limit (R-CELL)@.
 
         .ifne   WORDS_LINKRUNTI
+	.ifeq	UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     (COMPO+7)
         .ascii  "(+loop)"
+        .endif
         .endif
 DOPLOOP:
         LDW     Y,(5,SP)
@@ -950,11 +956,13 @@ DOPLOOP:
 ;       LEAVE   ( -- )
 ;       Leave a DO .. LOOP/+LOOP loop.
 
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     (COMPO+5)
         .ascii  "LEAVE"
+        .endif
 LEAVE:
         ADDW    SP,#6
         POPW    Y               ; DO leaves the address of +loop on the R-stack
@@ -1042,26 +1050,17 @@ EXECU:
         INCW    X
         JRA     YJPIND
 
-        .ifeq	UNLINKCORE
-;       EXIT    ( -- )
-;       Terminate a colon definition.
-
-        .dw     LINK
-        LINK =  .
-        .db     4
-        .ascii  "EXIT"
-EXIT:
-        POPW    Y
-        RET
-
+        .ifeq	BAREBONES
 ;       2!      ( d a -- )      ( TOS STM8: -- Y,Z,N )
 ;       Store double integer to address a.
 
+        .ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     2
         .ascii  "2!"
+        .endif
 DSTOR:
         CALL    SWAPP
         CALL    OVER
@@ -1072,11 +1071,13 @@ DSTOR:
 ;       2@      ( a -- d )
 ;       Fetch double integer from address a.
 
+        .ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     2
         .ascii  "2@"
+        .endif
 DAT:
         CALL    DUPP
         CALL    CELLP
@@ -1406,14 +1407,16 @@ OVER:
         LDW     Y,(2,Y)
         JRA     YSTOR
 
-        .ifeq	UNLINKCORE
+        .ifeq	BAREBONES
 ;       UM+     ( u u -- udsum )
 ;       Add two unsigned single
 ;       and return a double sum.
+        .ifeq	UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     3
         .ascii  "UM+"
+        .endif
 UPLUS:
         CALLR   PLUS
         CLR     A
@@ -1473,14 +1476,16 @@ ANDD:
         AND     A,(2,X)
         JRA     LDADROP
 
-        .ifeq	UNLINKCORE
+        .ifeq	BAREBONES
 ;       OR      ( w w -- w )    ( TOS STM8: -- immediate Y,Z,N )
 ;       Bitwise inclusive OR.
+        .ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     2
         .ascii  "OR"
+        .endif
 ORR:
         LD      A,(1,X)         ; D=w
         OR      A,(3,X)
@@ -1988,15 +1993,17 @@ DN1:    LDW     (X),Y
         RET
         .endif
 
-	.ifeq	UNLINKCORE
+	.ifeq	BAREBONES
 ;       =       ( w w -- t )    ( TOS STM8: -- Y,Z,N )
 ;       Return true if top two are equal.
 
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     1
         .ascii  "="
+        .endif
 EQUAL:
         .ifne   SPEEDOVERSIZE
         LD      A,#0x0FF        ;true
@@ -2041,15 +2048,17 @@ ULESS:
         LDW     (X),Y
         RET
 
-        .ifeq	UNLINKCORE
+        .ifeq	BAREBONES
 ;       <       ( n1 n2 -- t )
 ;       Signed compare of top two items.
 
+        .ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     1
         .ascii  "<"
+        .endif
 LESS:
         .ifne   SPEEDOVERSIZE
         CLR     A
@@ -2087,15 +2096,17 @@ YTEMPCMP:
         CPW     Y,YTEMP
         RET
 
-        .ifeq	UNLINKCORE
+        .ifeq	BAREBONES
 ;       MAX     ( n n -- n )    ( TOS STM8: -- Y,Z,N )
 ;       Return greater of two top items.
 
+        .ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     3
         .ascii  "MAX"
+        .endif
 MAX:
         CALLR   YTEMPCMP
         JRSGT   MMEXIT
@@ -2108,11 +2119,13 @@ MMEXIT:
 ;       MIN     ( n n -- n )    ( TOS STM8: -- Y,Z,N )
 ;       Return smaller of top two items.
 
+        .ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     3
         .ascii  "MIN"
+        .endif
 MIN:
         CALLR   YTEMPCMP
         JRSLT   MMEXIT
@@ -2398,15 +2411,17 @@ EXG:
         RET
         .endif
 
-	.ifeq	UNLINKCORE
+	.ifeq	BAREBONES
 ;       2/      ( n -- n )      ( TOS STM8: -- Y,Z,N )
 ;       Divide tos by 2.
 
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     2
         .ascii  "2/"
+        .endif
 TWOSL:
         CALLR   DOXCODE
         SRAW    X
@@ -2415,11 +2430,13 @@ TWOSL:
 ;       2*      ( n -- n )      ( TOS STM8: -- Y,Z,N )
 ;       Multiply tos by 2.
 
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     2
         .ascii  "2*"
+        .endif
 CELLS:
         CALLR   DOXCODE
         SLAW    X
@@ -2576,16 +2593,18 @@ PICK:
         LDW     X,(X)
         RET
 
-	.ifeq	UNLINKCORE
+	.ifeq	BAREBONES
  ;      >CHAR   ( c -- c )      ( TOS STM8: -- A,Z,N )
 ;       Filter non-printing characters.
 
         .ifne   WORDS_LINKMISC
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     5
         .ascii  ">CHAR"
+        .endif
         .endif
 TCHAR:
         LD      A,(1,X)
@@ -2601,7 +2620,7 @@ TCHAR:
 
 ;       DEPTH   ( -- n )      ( TOS STM8: -- Y,Z,N )
 ;       Return  depth of data stack.
-	.ifeq	BAREBONES
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2646,7 +2665,7 @@ PSTOR:
 ;       Return count byte of a string
 ;       and add 1 to byte address.
 
-        .ifeq   BAREBONES
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2713,23 +2732,6 @@ PAD:
         DoLitC  PADOFFS
         JP      PLUS
 
-;       @EXECUTE        ( a -- )  ( TOS STM8: undefined )
-;       Execute vector stored in address a.
-
-        .ifeq   BAREBONES
-        .dw     LINK
-
-        LINK =  .
-        .db     8
-        .ascii  "@EXECUTE"
-ATEXE:
-        CALL    YFLAGS
-        LDW     Y,(Y)
-        JREQ    1$
-        JP      (Y)
-1$:     RET
-        .endif
-
 ;       CMOVE   ( b1 b2 u -- )
 ;       Copy u bytes from b1 to b2.
 	.ifeq	UNLINKCORE
@@ -2777,12 +2779,14 @@ FILL2:  CALL    DONXT
 
 ;       ERASE   ( b u -- )
 ;       Erase u bytes beginning at b.
+	.ifeq	BAREBONES
 	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     5
         .ascii  "ERASE"
+        .endif
         .endif
 ERASE:
         CALL    ZERO
@@ -3183,40 +3187,6 @@ KEY1:   CALL    [USRQKEY]
         .dw     KEY1
         RET
 
-        .ifeq   BAREBONES
-;       NUF?    ( -- t )
-;       Return false if no input,
-;       else pause and if CR return true.
-
-        .dw     LINK
-
-        LINK =  .
-        .db     4
-        .ascii  "NUF?"
-NUFQ:
-        .ifne   HALF_DUPLEX
-        ; slow EMIT down to free the line for RX
-        .ifne   HAS_BACKGROUND * HALF_DUPLEX
-        LD      A,TICKCNT+1
-        ADD     A,#3
-1$:     CP      A,TICKCNT+1
-        JRNE    1$
-        .else
-        CLRW    Y
-1$:     DECW    Y
-        JRNE    1$
-        .endif
-        .endif
-        CALL    [USRQKEY]
-        LD      A,(1,X)
-        JREQ    NUFQ1
-        CALL    DDROP
-        CALLR   KEY
-        DoLitC  CRR
-        JP      EQUAL
-NUFQ1:  RET
-        .endif
-
 ;       SPACE   ( -- )
 ;       Send    blank character to
 ;       output device.
@@ -3232,14 +3202,16 @@ SPACE:
         CALL    BLANK
         JP      [USREMIT]
 
-        .ifeq   UNLINKCORE
+	.ifeq	BAREBONES
 ;       SPACES  ( +n -- )
 ;       Send n spaces to output device.
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     6
         .ascii  "SPACES"
+        .endif
 SPACS:
         CALL    ZERO
         CALL    MAX
@@ -3385,15 +3357,17 @@ TYPE2:
         .dw     TYPE1
         JP      DROP
 
-	.ifeq	UNLINKCORE
+        .ifeq	BAREBONES
 ;       U.      ( u -- )
 ;       Display an unsigned integer
 ;       in free format.
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     2
         .ascii  "U."
+        .endif
 UDOT:
         CALLR   BDEDIGS
         CALL    SPACE
@@ -3404,15 +3378,19 @@ BDEDIGS:
         CALL    BDIGS
         CALL    DIGS
         JP      EDIGS
+        .endif
 
+        .ifeq	BAREBONES
 ;       .       ( w -- )
 ;       Display an integer in free
 ;       format, preceeded by a space.
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     1
         .ascii  "."
+        .endif
 DOT:
         LD      A,USRBASE+1
         XOR     A,#10
@@ -3423,15 +3401,17 @@ DOT:
         JRA     TYPES
         .endif
 
-	.ifeq	UNLINKCORE
+	.ifeq	BAREBONES
 ;       ?       ( a -- )
 ;       Display contents in memory cell.
 
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     1
         .ascii  "?"
+        .endif
 QUEST:
         CALL    AT
         JRA     DOT
@@ -3562,15 +3542,17 @@ PARSE:
         CALL    INN
         JP      PSTOR
 
-	.ifeq	UNLINKCORE
+	.ifeq	BAREBONES
 ;       .(      ( -- )
 ;       Output following string up to next ) .
 
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     (IMEDD+2)
         .ascii  ".("
+        .endif
 DOTPR:
         DoLitC  41      ; ")"
         CALLR   PARSE
@@ -3580,11 +3562,13 @@ DOTPR:
 ;       Ignore following string up to next ).
 ;       A comment.
 
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     (IMEDD+1)
         .ascii  "("
+        .endif
 PAREN:
         DoLitC  41      ; ")"
         CALLR   PARSE
@@ -3646,14 +3630,13 @@ TOKEN:
 ;       NAME>   ( na -- ca )
 ;       Return a code address given
 ;       a name address.
-	.ifeq   BAREBONES
+
         .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     5
         .ascii  "NAME>"
-        .endif
         .endif
 NAMET:
         CALL    COUNT
@@ -3670,7 +3653,7 @@ NAMET:
         LDW     Y,(Y)           ; @
         LDW     (X),Y
 1$:     RET                     ; THEN
-	.endif
+        .endif
 
 
 ;       R@ indexed char lookup for SAME?
@@ -3755,6 +3738,7 @@ NAMEQ:
         .else
         CALL    CNTXT
         .endif
+
         JRA     FIND
 
 ;       find    ( a va -- ca na | a F )
@@ -4216,7 +4200,7 @@ OMMA:
 
 ;       CALL,   ( ca -- )
 ;       Compile a subroutine call.
-	.ifeq	BAREBONES
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4265,16 +4249,18 @@ LITER:
         .endif
         JRA      COMMA
 
-	.ifeq	UNLINKCORE
+	.ifeq BAREBONES
 ;       [COMPILE]       ( -- ; <string> )
 ;       Compile next immediate
 ;       word into code dictionary.
 
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     (IMEDD+9)
         .ascii  "[COMPILE]"
+        .endif
 BCOMP:
         CALLR   TICK
         JRA     JSRC
@@ -4283,7 +4269,7 @@ BCOMP:
 ;       COMPILE ( -- )
 ;       Compile next jsr in
 ;       colon list to code dictionary.
-	.ifeq	BAREBONES
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4323,15 +4309,17 @@ CNTPCPPSTORE:
 
 ; Structures
 
-	.ifeq	UNLINKCORE
+	.ifeq	BAREBONES
 ;       FOR     ( -- a )
 ;       Start a FOR-NEXT loop
 ;       structure in a colon definition.
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     (IMEDD+3)
         .ascii  "FOR"
+        .endif
 FOR:
         CALLR   COMPI
         CALL    TOR
@@ -4340,28 +4328,32 @@ FOR:
 ;       NEXT    ( a -- )
 ;       Terminate a FOR-NEXT loop.
 
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     (IMEDD+4)
         .ascii  "NEXT"
+        .endif
 NEXT:
         CALLR   COMPI
         CALL    DONXT
         JP      COMMA
         .endif
 
-	.ifeq	UNLINKCORE
         .ifne   HAS_DOLOOP
+	.ifeq	BAREBONES
 ;       DO      ( -- a )
 ;       Start a DO LOOP loop
 ;       structure in a colon definition.
 
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     (IMEDD+2)
         .ascii  "DO"
+        .endif
 DOO:
         CALL    CCOMMALIT
         .db     DOLIT_OPC       ; LOOP address cell for usage by LEAVE at runtime
@@ -4377,11 +4369,13 @@ DOO:
 ;       LOOP    ( a -- )
 ;       Terminate a DO-LOOP loop.
 
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     (IMEDD+4)
         .ascii  "LOOP"
+        .endif
 LOOP:
         CALL    COMPI
         CALL    ONE
@@ -4390,11 +4384,13 @@ LOOP:
 ;       +LOOP   ( a +n -- )
 ;       Terminate a DO - +LOOP loop.
 
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     (IMEDD+5)
         .ascii  "+LOOP"
+        .endif
 PLOOP:
         CALL    COMPI
         CALL    DOPLOOP
@@ -4407,16 +4403,18 @@ PLOOP:
         .endif
         .endif
 
-	.ifeq	UNLINKCORE
+	.ifeq	BAREBONES
 ;       BEGIN   ( -- a )
 ;       Start an infinite or
 ;       indefinite loop structure.
 
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     (IMEDD+5)
         .ascii  "BEGIN"
+        .endif
 BEGIN:
         JP      HERE
 
@@ -4424,11 +4422,13 @@ BEGIN:
 ;       Terminate a BEGIN-UNTIL
 ;       indefinite loop structure.
 
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     (IMEDD+5)
         .ascii  "UNTIL"
+        .endif
 UNTIL:
         CALL    COMPI
         CALL    QBRAN
@@ -4438,11 +4438,13 @@ UNTIL:
 ;       Terminate a BEGIN-AGAIN
 ;       infinite loop structure.
 
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     (IMEDD+5)
         .ascii  "AGAIN"
+        .endif
 AGAIN:
         CALL    CCOMMALIT
         .db     BRAN_OPC
@@ -4451,11 +4453,13 @@ AGAIN:
 ;       IF      ( -- A )
 ;       Begin a conditional branch.
 
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     (IMEDD+2)
         .ascii  "IF"
+        .endif
 IFF:
         CALL    COMPI
         CALL    QBRAN
@@ -4464,11 +4468,13 @@ IFF:
 ;       THEN    ( A -- )
 ;       Terminate a conditional branch structure.
 
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     (IMEDD+4)
         .ascii  "THEN"
+        .endif
 THENN:
         CALL    HERE
         CALLR   SWAPLOC
@@ -4477,11 +4483,13 @@ THENN:
 ;       ELSE    ( A -- A )
 ;       Start the false clause in an IF-ELSE-THEN structure.
 
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     (IMEDD+4)
         .ascii  "ELSE"
+        .endif
 ELSEE:
         CALLR   AHEAD
         CALLR   SWAPLOC
@@ -4490,11 +4498,13 @@ ELSEE:
 ;       AHEAD   ( -- A )
 ;       Compile a forward branch instruction.
 
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     (IMEDD+5)
         .ascii  "AHEAD"
+        .endif
 AHEAD:
         CALL    CCOMMALIT
         .db     BRAN_OPC
@@ -4505,15 +4515,17 @@ ZEROCOMMA:
         CALL    ZERO
         JP      COMMA
 
-	.ifeq	UNLINKCORE
+        .ifeq	BAREBONES
 ;       WHILE   ( a -- A a )
 ;       Conditional branch out of a BEGIN-WHILE-REPEAT loop.
 
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     (IMEDD+5)
         .ascii  "WHILE"
+        .endif
 WHILE:
         CALL    IFF
 SWAPLOC:
@@ -4522,11 +4534,13 @@ SWAPLOC:
 ;       REPEAT  ( A a -- )
 ;       Terminate a BEGIN-WHILE-REPEAT indefinite loop.
 
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     (IMEDD+6)
         .ascii  "REPEAT"
+        .endif
 REPEA:
         CALLR   AGAIN
         JRA     THENN
@@ -4534,11 +4548,13 @@ REPEA:
 ;       AFT     ( a -- a A )
 ;       Jump to THEN in a FOR-AFT-THEN-NEXT loop the first time through.
 
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     (IMEDD+3)
         .ascii  "AFT"
+        .endif
 AFT:
         CALL    DROP
         CALLR   AHEAD
@@ -4546,16 +4562,17 @@ AFT:
         JRA     SWAPLOC
         .endif
 
-	.ifeq	UNLINKCORE
+	.ifeq	BAREBONES
 ;       ABORT"  ( -- ; <string> )
 ;       Conditional abort with an error message.
 
+	.ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     (IMEDD+6)
-        .ascii  "ABORT"
-        .db     '"
+        .ascii  'ABORT"'
+        .endif
 ABRTQ:
         CALL    COMPI
         CALL    ABORQ
@@ -4580,15 +4597,17 @@ STRQ:
 STRCQLOC:
         JP      STRCQ
 
-        .ifeq	UNLINKCORE
+	.ifeq	BAREBONES
 ;       ."      ( -- ; <string> )
 ;       Compile an inline string literal to be typed out at run time.
 
+        .ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     (IMEDD+2)
         .ascii  '."'
+        .endif
 DOTQ:
         CALL    COMPI
         CALL    DOTQP
@@ -4941,6 +4960,7 @@ ALLOT:
 
 ; Tools
 
+	.ifeq	BAREBONES
         .ifeq   UNLINKCORE
 ;       _TYPE   ( b u -- )
 ;       Display a string. Filter
@@ -4953,6 +4973,7 @@ ALLOT:
         .db     5
         .ascii  "_TYPE"
         .endif
+        .endif
 UTYPE:
         CALL    TOR     ;start count down loop
         JRA     UTYP2   ;skip first pass
@@ -4963,17 +4984,21 @@ UTYP1:  CALL    DUPPCAT
 UTYP2:  CALL    DONXT
         .dw     UTYP1   ;loop till done
         JP      DROP
+        .endif
 
+        .ifeq	BAREBONES
 ;       dm+     ( a u -- a )
 ;       Dump u bytes from ,
 ;       leaving a+u on  stack.
 
+        .ifeq   UNLINKCORE
         .ifne   WORDS_LINKMISC
         .dw     LINK
 
         LINK =  .
         .db     3
         .ascii  "dm+"
+        .endif
         .endif
 DUMPP:
         CALL    OVER
@@ -4989,15 +5014,19 @@ PDUM1:  CALL    DUPPCAT
 PDUM2:  CALL    DONXT
         .dw     PDUM1   ;loop till done
         RET
+        .endif
 
+	.ifeq	BAREBONES
 ;       DUMP    ( a u -- )
 ;       Dump u bytes from a,
 ;       in a formatted manner.
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     4
         .ascii  "DUMP"
+        .endif
 DUMP:
         PUSH    USRBASE+1       ; BASE AT TOR save radix
         CALL    HEX
@@ -5018,14 +5047,18 @@ DUMP1:  CALL    CR
 DUMP3:
         POP     USRBASE+1       ; restore radix
         JP      DROP
+        .endif
 
+        .ifeq	BAREBONES
 ;       .S      ( ... -- ... )
 ;       Display contents of stack.
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     2
         .ascii  ".S"
+        .endif
 DOTS:
         CALL    CR
         CALL    DEPTH           ; stack depth
@@ -5041,16 +5074,20 @@ DOTS2:  CALL    DONXT
         .db     5
         .ascii  " <sp "
         RET
+        .endif
 
+        .ifeq	BAREBONES
 ;       .ID     ( na -- )
 ;       Display name at address.
 
+        .ifeq   UNLINKCORE
         .ifne   WORDS_LINKMISC
         .dw     LINK
 
         LINK =  .
         .db     3
         .ascii  ".ID"
+        .endif
         .endif
 DOTID:
         CALL    QDQBRAN         ; if zero no name
@@ -5070,6 +5107,8 @@ DUPPCAT:
         JP      CAT
 
 
+  
+	.ifeq	BAREBONES
         .ifeq   UNLINKCORE
         .ifne   WORDS_EXTRADEBUG
 ;       >NAME   ( ca -- na | F )
@@ -5082,6 +5121,8 @@ DUPPCAT:
         LINK =  .
         .db     5
         .ascii  ">NAME"
+        .endif
+        .endif
         .endif
 TNAME:
         CALL    CNTXT           ; vocabulary link
@@ -5099,49 +5140,19 @@ TNAM2:  CALL    AT
 TNAM3:  JP      NIP
 TNAM4:  CALL    DDROP
         JP      ZERO
-
-;       SEE     ( -- ; <string> )
-;       A simple decompiler.
-;       Updated for byte machines.
-        .dw     LINK
-
-        LINK =  .
-        .db     3
-        .ascii  "SEE"
-SEE:
-        CALL    TICK    ;starting address
-        CALL    CR
-        CALL    ONEM
-SEE1:
-        CALL    CELLP   ;Fixed tg9541
-        CALL    DUPP
-        CALL    AT
-        CALL    DUPP    ;?does it contain a zero
-        CALL    QBRAN
-        .dw     SEE2
-        CALL    TNAME   ;?is it a name
-SEE2:   CALL    QDQBRAN ;name address or zero
-        .dw     SEE3
-        CALL    SPACE
-        CALL    DOTID   ;display name
-        CALL    ONEP
-        JRA     SEE4
-SEE3:   CALLR   DUPPCAT
-        CALL    UDOT    ;display number
-SEE4:   CALL    NUFQ    ;user control
-        CALL    QBRAN
-        .dw     SEE1
-        JP      DROP
         .endif
 
+        .ifeq	BAREBONES
 ;       WORDS   ( -- )
 ;       Display names in vocabulary.
 
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     5
         .ascii  "WORDS"
+        .endif
 WORDS:
         CALL    CR
         CALL    CNTXT           ; only in context
@@ -5154,6 +5165,7 @@ WORS1:  CALL    AT              ; @ sets Z and N
         JRA     WORS1
 1$:     JP      DROP
 	.endif
+
 
 
 
