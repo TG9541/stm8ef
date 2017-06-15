@@ -2307,7 +2307,7 @@ EXG:
         .endif
 
 ;       2/      ( n -- n )      ( TOS STM8: -- Y,Z,N )
-;       Multiply tos by 2.
+;       Devide tos by 2.
 
         .dw     LINK
 
