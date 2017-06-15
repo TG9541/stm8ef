@@ -3166,10 +3166,9 @@ DOSTR:
         LINK =  .
         .db     (COMPO+3)
         .ascii  '$"|'
-        .endif
 STRQP:
-        CALL    DOSTR
-        RET
+        JRA     DOSTR
+        .endif
 
 ;       ."|     ( -- )
 ;       Run time routine of ." .
@@ -4381,7 +4380,7 @@ ABRTQ:
         .endif
 STRQ:
         CALL    COMPI
-        CALL    STRQP
+        CALL    DOSTR
 STRCQLOC:
         JP      STRCQ
 
@@ -4449,7 +4448,7 @@ SNAME:
         CALL    AT
         CALL    SWAPP
         JP      STORE           ; save code pointer
-PNAM1:  CALL    STRQP
+PNAM1:  CALL    DOSTR
         .db     5
         .ascii  " name"         ; null input
         JP      ABOR1
