@@ -3629,7 +3629,7 @@ TOKEN:
 ;       Return a code address given
 ;       a name address.
 
-        .ifeq   UNLINKCOR+BAREBONES
+        .ifeq   UNLINKCORE + BAREBONES
         .dw     LINK
 
         LINK =  .
