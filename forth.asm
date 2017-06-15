@@ -338,7 +338,7 @@ _TRAP_Handler:
 
         .macro DoLitW w
         call    DOLIT
-        .db     w
+        .dw     w
         .endm
 
         .endif
