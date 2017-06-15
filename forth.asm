@@ -343,7 +343,7 @@ _TRAP_Handler:
 
         .macro DoLitW w
         call    DOLIT
-        .db     w
+        .dw     w
         .endm
 
         .endif
@@ -1187,7 +1187,7 @@ STORE:
         LDW     X,(2,X)
         LDW     [YTEMP],X
         EXGW    X,Y
-        JRA     DDROP
+        JP      DDROP
 
 ;       C@      ( b -- c )      ( TOS STM8: -- A,Z,N )
 ;       Push byte in memory to stack.
@@ -1693,14 +1693,12 @@ TQKEY:
 ;       LAST    ( -- a )        ( TOS STM8: -- Y,Z,N )
 ;       Point to last name in dictionary.
 
-        .ifeq   BAREBONES
         .ifeq	UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     4
         .ascii  "last"
-        .endif
         .endif
 LAST:
         LD      A,#(RAMBASE+USRLAST)
@@ -3278,10 +3276,10 @@ DOSTR:
         .db     (COMPO+3)
         .ascii  '$"|'
         .endif
-        .endif
+
 STRQP:
-        CALL    DOSTR
-        RET
+        JRA     DOSTR
+        .endif
 
 ;       ."|     ( -- )
 ;       Run time routine of ." .
@@ -3631,7 +3629,7 @@ TOKEN:
 ;       Return a code address given
 ;       a name address.
 
-        .ifeq   UNLINKCORE
+        .ifeq   UNLINKCOR+BAREBONES
         .dw     LINK
 
         LINK =  .
@@ -3882,8 +3880,8 @@ KTAP:
         .dw     KTAP1
 
         CALL    BLANK
-        JP      TAP
-KTAP1:  JP      BKSP
+        JRA     TAP
+KTAP1:  JRA     BKSP
 KTAP2:  CALL    DROP
         CALL    NIP
         JP      DUPP
@@ -3916,9 +3914,9 @@ ACCP1:  CALL    DDUP
         CALL    WITHI
         CALL    QBRAN
         .dw     ACCP2
-        CALL    TAP
+        CALLR   TAP
         JRA     ACCP3
-ACCP2:  CALL    KTAP
+ACCP2:  CALLR   KTAP
 ACCP3:  JRA     ACCP1
 ACCP4:  CALL    DROP
         CALL    OVER
@@ -3940,7 +3938,7 @@ ACCP4:  CALL    DROP
 QUERY:
         DoLitW  TIBB
         DoLitC  TIBLENGTH
-        CALL    ACCEP
+        CALLR   ACCEP
         CALL    NTIB
         CALL    STORE
         CLR     USR_IN
@@ -4031,7 +4029,7 @@ INTER:
         CALL    AT
         DoLitW  0x04000         ; COMPO*256
         CALL    ANDD            ; ?compile only lexicon bits
-        CALL    ABORQ
+        CALLR   ABORQ
         .db     13
         .ascii  " compile only"
         JP      EXECU
@@ -4277,14 +4275,33 @@ BCOMP:
         .ascii  "COMPILE"
         .endif
 COMPI:
-        CALL    RFROM
-        CALL    ONEP
-        CALL    DUPP
-        CALL    AT
-        CALLR   JSRC            ; compile subroutine
-        CALL    CELLP
-        CALL    TOR             ; this was a JP - a serious bug that took a while to find
-        RET
+        EXGW    X,Y
+        POPW    X
+        LD      A,(X)
+        INCW    X
+        CP      A,#CALL_OPC
+        JRNE    COMPIO1
+        LDW     YTEMP,X         ; COMPILE CALL address
+        INCW    X
+        INCW    X
+        PUSHW   X
+        LDW     X,[YTEMP]
+        JRA     COMPIO2
+COMPIO1:
+        LD      A,(X)           ; COMPILE CALLR offset
+        INCW    X
+        PUSHW   X               ; return address
+        CLRW    X               ; offset i8_t to i16_t
+        TNZ     A
+        JRPL    1$
+        DECW    X
+1$:     LD      XL,A
+        ADDW    X,(1,SP)        ; add offset in X to address of next instruction
+COMPIO2:
+        EXGW    X,Y
+        CALL    YSTOR
+        JRA     JSRC            ; compile subroutine
+
 
 ;       $,"     ( -- )
 ;       Compile a literal string
@@ -4527,7 +4544,7 @@ ZEROCOMMA:
         .ascii  "WHILE"
         .endif
 WHILE:
-        CALL    IFF
+        CALLR   IFF
 SWAPLOC:
         JP      SWAPP
 
@@ -4593,7 +4610,7 @@ ABRTQ:
         .endif
 STRQ:
         CALL    COMPI
-        CALL    STRQP
+        CALL    DOSTR
 STRCQLOC:
         JP      STRCQ
 
@@ -4658,7 +4675,7 @@ SNAME:
         CALL    DUPPCAT         ; ?null input
         CALL    QBRAN
         .dw     PNAM1
-        CALL    UNIQU           ; ?redefinition
+        CALLR   UNIQU           ; ?redefinition
         CALL    DUPP
         CALL    CNTPCPPSTORE
         CALL    DUPP
@@ -4669,7 +4686,7 @@ SNAME:
         CALL    AT
         CALL    SWAPP
         JP      STORE           ; save code pointer
-PNAM1:  CALL    STRQP
+PNAM1:  CALL    DOSTR
         .db     5
         .ascii  " name"         ; null input
         JP      ABOR1
@@ -4711,7 +4728,7 @@ SCOM2:  CALL    NUMBQ   ;try to convert to number
 ;       Link a new word into vocabulary.
 
         .ifne   WORDS_LINKCOMP + HAS_ALIAS
-        .ifeq	UNLINKCORE
+        .ifeq	  UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4823,7 +4840,7 @@ RBRAC:
         .endif
 DOESS:
         CALL    COMPI
-        CALL    DODOES          ; 3 CALL dodoes>
+        CALLR   DODOES          ; 3 CALL dodoes>
         CALL    HERECP
         .ifne  USE_CALLDOLIT
         DoLitC  9
@@ -5108,8 +5125,7 @@ DUPPCAT:
 
 
   
-	.ifeq	BAREBONES
-        .ifeq   UNLINKCORE
+     	  .ifeq	  UNLINKCORE
         .ifne   WORDS_EXTRADEBUG
 ;       >NAME   ( ca -- na | F )
 ;       Convert code address
@@ -5121,7 +5137,6 @@ DUPPCAT:
         LINK =  .
         .db     5
         .ascii  ">NAME"
-        .endif
         .endif
         .endif
 TNAME:
@@ -5142,7 +5157,7 @@ TNAM4:  CALL    DDROP
         JP      ZERO
         .endif
 
-        .ifeq	BAREBONES
+        .ifeq	  UNLINKCORE
 ;       WORDS   ( -- )
 ;       Display names in vocabulary.
 
@@ -5164,7 +5179,7 @@ WORS1:  CALL    AT              ; @ sets Z and N
         CALL    CELLM
         JRA     WORS1
 1$:     JP      DROP
-	.endif
+	      .endif
 
 
 
@@ -5573,7 +5588,7 @@ NVMM:
         MOV     USRLAST,NVMCONTEXT
         MOV     USRLAST+1,NVMCONTEXT+1
         CALLR   SWAPCP
-        CALL    UNLOCK_FLASH
+        CALLR   UNLOCK_FLASH
 1$:
         RET
 
