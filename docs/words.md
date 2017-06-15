@@ -478,7 +478,7 @@
 
 ```
 ;       2/      ( n -- n )      ( TOS STM8: -- Y,Z,N )
-;       Multiply tos by 2.
+;       Divide tos by 2.
 ```
 
 ```

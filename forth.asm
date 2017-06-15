@@ -167,12 +167,14 @@
         USE_CALLDOLIT    = 0    ; use CALL DOLIT instead of the DOLIT TRAP handler (deprecated)
         CASEINSENSITIVE  = 0    ; Case insensitive dictionary search
         SPEEDOVERSIZE    = 0    ; Speed-over-size in core words ROT - = < -1 0 1
-        BAREBONES        = 0    ; Removes words: '?KEY 'EMIT ( (+loop) +LOOP . ." .( .ID .R .S 2! 2* 2/ 2@ < = >CHAR >NAME ? 
-				; ABORT" AFT AGAIN AHEAD BEGIN DO DUMP ELSE EXG FOR IF LEAVE LOOP MAX MIN NEXT 
-				; OR REPEAT SEE SPACES THEN U. U.R UM+ UNTIL WHILE WORDS [COMPILE] _TYPE dm+ 
-				; Drops headers: ?RX TX! ?RXP ?RX TXP! TX! LAST ERASE
-				; Drops support for entry of binary (%) and decimal (&)
+        BAREBONES        = 0    ; Removes words: '?KEY 'EMIT EXIT EXG @EXECUTE ERASE
+                                ; Drops headers: ?RX TX! ?RXP ?RX TXP! TX! LAST DEPTH COUNT SPACES .R NAME> ABORT" AHEAD
+                                ; Drops support for entry of binary (%) and decimal (&)
+        BOOTSTRAP        = 0    ; Remove words: (+loop) EXIT 2! 2/ UM+ OR = MAX MIN U. . ? .( [COMPILE] FOR DO BEGIN WHILE
+                                ;               ABORT" ." _TYPE dm+ DUMP .S .ID >CHAR <
         UNLINKCORE       = 0    ; Drops headers on everything except: (TODO)
+                                ;               ABORT" AFT AGAIN AHEAD BEGIN DO DUMP ELSE EXG FOR IF LEAVE LOOP MAX MIN NEXT
+                                ;               OR REPEAT SEE SPACES THEN U. U.R UM+ UNTIL WHILE WORDS [COMPILE] _TYPE dm+
         NO_VARIABLE      = 0    ; Disable VARIABLE and feature "VARIABLE in Flash allocates RAM"
 
         WORDS_LINKINTER  = 0    ; Link interpreter words: ACCEPT QUERY TAP kTAP hi 'BOOT tmp >IN 'TIB #TIB eval CONTEXT pars PARSE NUMBER? DIGIT? WORD TOKEN NAME> SAME? find ABORT aborq $INTERPRET INTER? .OK ?STACK EVAL PRESET QUIT $COMPILE
@@ -572,7 +574,7 @@ COLD:
 ;       'BOOT   ( -- a )
 ;       The application startup vector and NVM USR setting array
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .ifne   (WORDS_LINKINTER + HAS_CPNVM)
         .dw     LINK
 
@@ -845,7 +847,7 @@ TIM4_END:
 
 ;       ?KEY    ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
 ;       Return input char and true, or false.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     4
@@ -857,7 +859,7 @@ QKEY:
 ;       EMIT    ( c -- )
 ;       Send character c to output device.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     4
@@ -901,7 +903,7 @@ DOLITC:
 ;       doLit   ( -- w )
 ;       Push an inline literal.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .ifne   WORDS_LINKRUNTI
         .dw     LINK
         LINK =  .
@@ -919,13 +921,13 @@ DOLIT:
         JRA     POPYJPY
         .endif
 
-	.ifeq	BAREBONES
+        .ifeq   BOOTSTRAP
         .ifne   HAS_DOLOOP
         ;       (+loop) ( +n -- )
         ;       Add n to index R@ and test for lower than limit (R-CELL)@.
 
         .ifne   WORDS_LINKRUNTI
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     (COMPO+7)
@@ -956,7 +958,7 @@ DOPLOOP:
 ;       LEAVE   ( -- )
 ;       Leave a DO .. LOOP/+LOOP loop.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -973,7 +975,7 @@ LEAVE:
 ;       next    ( -- )
 ;       Code for single index loop.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .ifne   WORDS_LINKRUNTI
         .dw     LINK
         LINK =  .
@@ -1001,7 +1003,7 @@ QDQBRAN:
 ;       ?branch ( f -- )
 ;       Branch if flag is zero.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .ifne   WORDS_LINKRUNTI
         .dw     LINK
         LINK =  .
@@ -1038,7 +1040,7 @@ YJPIND:
 ;       EXECUTE ( ca -- )
 ;       Execute word at ca.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     7
@@ -1050,11 +1052,24 @@ EXECU:
         INCW    X
         JRA     YJPIND
 
-        .ifeq	BAREBONES
+        .ifeq   BOOTSTRAP + BAREBONES
+;       EXIT    ( -- )
+;       Terminate a colon definition.
+
+        .dw     LINK
+        LINK =  .
+        .db     4
+        .ascii  "EXIT"
+EXIT:
+        POPW    Y
+        RET
+        .endif
+
+        .ifeq   BOOTSTRAP
 ;       2!      ( d a -- )      ( TOS STM8: -- Y,Z,N )
 ;       Store double integer to address a.
 
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1067,11 +1082,13 @@ DSTOR:
         CALLR   STORE
         CALL    CELLP
         JRA     STORE
+        .endif
 
+        .ifeq   BOOTSTRAP
 ;       2@      ( a -- d )
 ;       Fetch double integer from address a.
 
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1090,7 +1107,7 @@ DAT:
         .ifne   WORDS_EXTRAMEM
 ;       2C!  ( n b -- )
 ;       Store word C-wise to 16 bit HW registers "MSB first"
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1108,7 +1125,7 @@ DCSTOR:
 
 ;       2C@  ( a -- n )
 ;       Fetch word C-wise from 16 bit HW config. registers "MSB first"
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1127,7 +1144,7 @@ DCAT:
 ;       B! ( t a u -- )
 ;       Set/reset bit #u (0..7) in the byte at address a to bool t
 ;       Note: creates/executes BSER/BRES + RET code on Data Stack
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1157,7 +1174,7 @@ BRSS:
 ;       @       ( a -- w )      ( TOS STM8: -- Y,Z,N )
 ;       Push memory location to stack.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     1
@@ -1173,7 +1190,7 @@ AT:
 
 ;       !       ( w a -- )      ( TOS STM8: -- Y,Z,N )
 ;       Pop data stack to memory.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     1
@@ -1192,7 +1209,7 @@ STORE:
 ;       C@      ( b -- c )      ( TOS STM8: -- A,Z,N )
 ;       Push byte in memory to stack.
 ;       STM8: Z,N
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     2
@@ -1209,7 +1226,7 @@ YCAT:
 
 ;       C!      ( c b -- )
 ;       Pop     data stack to byte memory.
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     2
@@ -1222,7 +1239,7 @@ CSTOR:
         LD      (Y),A           ; store c at b
         JRA     DDROP
 
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .ifne   WORDS_EXTRACORE
 ;       I       ( -- n )     ( TOS STM8: -- Y,Z,N )
 ;       Get inner FOR-NEXT or DO-LOOP index value
@@ -1238,7 +1255,7 @@ IGET:
 
 ;       R>      ( -- w )     ( TOS STM8: -- Y,Z,N )
 ;       Pop return stack to data stack.
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     (COMPO+2)
@@ -1267,7 +1284,7 @@ DOVARPTR:
 ;       Code for VARIABLE and CREATE.
 
         .ifne   WORDS_LINKRUNTI
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     (COMPO+5)
@@ -1288,7 +1305,7 @@ YSTOR:
 
 ;       R@      ( -- w )        ( TOS STM8: -- Y,Z,N )
 ;       Copy top of return stack to stack (or the FOR - NEXT index value).
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     2
@@ -1300,7 +1317,7 @@ RAT:
 
 ;       >R      ( w -- )      ( TOS STM8: -- Y,Z,N )
 ;       Push data stack to return stack.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     (COMPO+2)
@@ -1321,20 +1338,20 @@ TOR:
 
 ;       NIP     ( n1 n2 -- n2 )
 ;       Drop 2nd item on the stack
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     3
         .ascii  "NIP"
-	.endif
+        .endif
 NIP:
         CALLR   SWAPP
         JRA     DROP
 
 ;       DROP    ( w -- )        ( TOS STM8: -- Y,Z,N )
 ;       Discard top stack item.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     4
@@ -1349,7 +1366,7 @@ DROP:
 
 ;       2DROP   ( w w -- )       ( TOS STM8: -- Y,Z,N )
 ;       Discard two items on stack.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1363,7 +1380,7 @@ DDROP:
 
 ;       DUP     ( w -- w w )    ( TOS STM8: -- Y,Z,N )
 ;       Duplicate top stack item.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     3
@@ -1376,7 +1393,7 @@ DUPP:
 
 ;       SWAP ( w1 w2 -- w2 w1 ) ( TOS STM8: -- Y,Z,N )
 ;       Exchange top two stack items.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     4
@@ -1396,7 +1413,7 @@ SWAPP:
 
 ;       OVER    ( w1 w2 -- w1 w2 w1 ) ( TOS STM8: -- Y,Z,N )
 ;       Copy second stack item to top.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     4
@@ -1407,11 +1424,11 @@ OVER:
         LDW     Y,(2,Y)
         JRA     YSTOR
 
-        .ifeq	BAREBONES
+        .ifeq   BOOTSTRAP
 ;       UM+     ( u u -- udsum )
 ;       Add two unsigned single
 ;       and return a double sum.
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     3
@@ -1426,7 +1443,7 @@ UPLUS:
 
 ;       +       ( w w -- sum ) ( TOS STM8: -- Y,Z,N )
 ;       Add top two items.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1446,7 +1463,7 @@ LDADROP:
 
 ;       XOR     ( w w -- w )    ( TOS STM8: -- Y,Z,N )
 ;       Bitwise exclusive OR.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     3
@@ -1462,7 +1479,7 @@ XORR:
 
 ;       AND     ( w w -- w )    ( TOS STM8: -- Y,Z,N )
 ;       Bitwise AND.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     3
@@ -1476,10 +1493,10 @@ ANDD:
         AND     A,(2,X)
         JRA     LDADROP
 
-        .ifeq	BAREBONES
+        .ifeq   BOOTSTRAP
 ;       OR      ( w w -- w )    ( TOS STM8: -- immediate Y,Z,N )
 ;       Bitwise inclusive OR.
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1497,7 +1514,7 @@ ORR:
 
 ;       0<      ( n -- t ) ( TOS STM8: -- A,Z )
 ;       Return true if n is negative.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     2
@@ -1515,7 +1532,7 @@ ZL1:    LD      (X),A
 
 ;       -   ( n1 n2 -- n1-n2 )  ( TOS STM8: -- Y,Z,N )
 ;       Subtraction.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1545,7 +1562,7 @@ SUBB:
 ;       Start vocabulary search.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1572,7 +1589,7 @@ CNTXT_ALIAS:
 ;       Point to top of dictionary.
 
         .ifne   WORDS_LINKCOMP
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1588,7 +1605,7 @@ CPP:
 
 ;       BASE    ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Radix base for numeric I/O.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     4
@@ -1602,7 +1619,7 @@ BASE:
 ;       Hold parsing pointer.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1618,7 +1635,7 @@ INN:
 ;       Count in terminal input buffer.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1634,7 +1651,7 @@ NTIB:
 ;       Execution vector of EVAL.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1651,7 +1668,7 @@ TEVAL:
 ;       Hold a pointer of output string.
 
         .ifne   WORDS_LINKCHAR
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1693,7 +1710,7 @@ TQKEY:
 ;       LAST    ( -- a )        ( TOS STM8: -- Y,Z,N )
 ;       Point to last name in dictionary.
 
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE + BAREBONES
         .dw     LINK
 
         LINK =  .
@@ -1725,7 +1742,7 @@ ATOKEY:
 ;       Return address of terminal input buffer.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1740,7 +1757,7 @@ TIB:
         .ifne   HAS_OUTPUTS
 ;       OUT     ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Return address of OUTPUTS register
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1756,7 +1773,7 @@ OUTA:
 
 ;       BL      ( -- 32 )     ( TOS STM8: -- Y,Z,N )
 ;       Return 32, blank character.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1771,7 +1788,7 @@ BLANK:
 ;       Return 0.
 
         .ifne   SPEEDOVERSIZE
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1787,7 +1804,7 @@ ZERO:
 ;       Return 1.
 
         .ifne   SPEEDOVERSIZE
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1803,7 +1820,7 @@ ONE:
 ;       Return -1
 
         .ifne   SPEEDOVERSIZE
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1819,7 +1836,7 @@ AYSTOR:
         .ifne   HAS_BACKGROUND
 ;       TIM     ( -- T)     ( TOS STM8: -- Y,Z,N )
 ;       Return TICKCNT as timer
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1833,7 +1850,7 @@ TIMM:
 
 ;       BG      ( -- a)     ( TOS STM8: -- Y,Z,N )
 ;       Return address of BGADDR vector
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1851,7 +1868,7 @@ BGG:
 ;       Return address of PROMPT vector
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1872,7 +1889,7 @@ PACEE:
 
 ;       HAND    ( -- )
 ;       set PROMPT vector to interactive mode
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1903,7 +1920,7 @@ FILEE:
 
 ;       ?DUP    ( w -- w w | 0 )   ( TOS STM8: -- Y,Z,N )
 ;       Dup tos if its not zero.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1921,7 +1938,7 @@ QDUP1:  RET
 
 ;       ROT     ( w1 w2 w3 -- w2 w3 w1 ) ( TOS STM8: -- Y,Z,N )
 ;       Rot 3rd item to top.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1954,7 +1971,7 @@ ROT:
 
 ;       2DUP    ( w1 w2 -- w1 w2 w1 w2 )
 ;       Duplicate top two items.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -1966,7 +1983,7 @@ DDUP:
 1$:
         JP      OVER
 
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
 ;       DNEGATE ( d -- -d )     ( TOS STM8: -- Y,Z,N )
 ;       Two's complement of top double.
 
@@ -1991,11 +2008,11 @@ DN1:    LDW     (X),Y
         RET
         .endif
 
-	.ifeq	BAREBONES
+        .ifeq   BOOTSTRAP
 ;       =       ( w w -- t )    ( TOS STM8: -- Y,Z,N )
 ;       Return true if top two are equal.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2029,7 +2046,7 @@ EQ1:    LD      (X),A
 
 ;       U<      ( u u -- t )    ( TOS STM8: -- Y,Z,N )
 ;       Unsigned compare of top two items.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2046,11 +2063,11 @@ ULESS:
         LDW     (X),Y
         RET
 
-        .ifeq	BAREBONES
+        .ifeq   BOOTSTRAP
 ;       <       ( n1 n2 -- t )
 ;       Signed compare of top two items.
 
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2094,11 +2111,11 @@ YTEMPCMP:
         CPW     Y,YTEMP
         RET
 
-        .ifeq	BAREBONES
+        .ifeq   BOOTSTRAP
 ;       MAX     ( n n -- n )    ( TOS STM8: -- Y,Z,N )
 ;       Return greater of two top items.
 
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2113,11 +2130,13 @@ YTEMPTOS:
         LDW     (X),Y
 MMEXIT:
         RET
+        .endif
 
+        .ifeq   BOOTSTRAP
 ;       MIN     ( n n -- n )    ( TOS STM8: -- Y,Z,N )
 ;       Return smaller of top two items.
 
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2134,7 +2153,7 @@ MIN:
 ;       Return true if u is within
 ;       range of ul and uh. ( ul <= u < uh )
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2154,7 +2173,7 @@ WITHI:
 ;       UM/MOD  ( udl udh un -- ur uq )
 ;       Unsigned divide of a double by a
 ;       single. Return mod and quotient.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2201,7 +2220,7 @@ MMSM4:
         LDW     (2,X),Y
         RET
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
 ;       M/MOD   ( d n -- r q )
 ;       Signed floored divide of double by
 ;       single. Return mod and quotient.
@@ -2279,7 +2298,7 @@ SLASH:
 
 ;       UM*     ( u u -- ud )
 ;       Unsigned multiply. Return double product.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2331,7 +2350,7 @@ UMSTA:                          ; stack have 4 bytes u1=a,b u2=c,d
 
 ;       *       ( n n -- n )    ( TOS STM8: -- Y,Z,N )
 ;       Signed multiply. Return single product.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2342,7 +2361,7 @@ STAR:
         CALLR   UMSTA
         JP      DROP
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
 ;       M*      ( n n -- d )
 ;       Signed multiply. Return double product.
         .dw     LINK
@@ -2398,6 +2417,7 @@ STASL:
         .ifeq   BAREBONES
 ;       EXG      ( n -- n )      ( TOS STM8: -- Y,Z,N )
 ;       Exchange high with low byte of n.
+
         .dw     LINK
 
         LINK =  .
@@ -2409,11 +2429,11 @@ EXG:
         RET
         .endif
 
-	.ifeq	BAREBONES
+        .ifeq   BOOTSTRAP
 ;       2/      ( n -- n )      ( TOS STM8: -- Y,Z,N )
 ;       Divide tos by 2.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2428,7 +2448,7 @@ TWOSL:
 ;       2*      ( n -- n )      ( TOS STM8: -- Y,Z,N )
 ;       Multiply tos by 2.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2443,7 +2463,7 @@ CELLS:
 
 ;       2-      ( a -- a )      ( TOS STM8: -- Y,Z,N )
 ;       Subtract 2 from tos.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2458,7 +2478,7 @@ CELLM:
 
 ;       2+      ( a -- a )      ( TOS STM8: -- Y,Z,N )
 ;       Add 2 to tos.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2473,7 +2493,7 @@ CELLP:
 
 ;       1-      ( n -- n )      ( TOS STM8: -- Y,Z,N )
 ;       Subtract 1 from tos.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2487,7 +2507,7 @@ ONEM:
 
 ;       1+      ( n -- n )      ( TOS STM8: -- Y,Z,N )
 ;       Add 1 to tos.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2515,7 +2535,7 @@ DOXCODE:
 
 ;       NOT     ( w -- w )     ( TOS STM8: -- Y,Z,N )
 ;       One's complement of TOS.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2529,7 +2549,7 @@ INVER:
 
 ;       NEGATE  ( n -- -n )     ( TOS STM8: -- Y,Z,N )
 ;       Two's complement of TOS.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2543,7 +2563,7 @@ NEGAT:
 
 ;       ABS     ( n -- n )      ( TOS STM8: -- Y,Z,N )
 ;       Return  absolute value of n.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2559,7 +2579,7 @@ ABSS:
         .ifne   WORDS_EXTRACORE
 ;       0=      ( n -- t )      ( TOS STM8: -- Y,Z,N ))
 ;       Return true if n is equal to 0
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2577,7 +2597,7 @@ ZEQUAL:
 
 ;       PICK    ( ... +n -- ... w )      ( TOS STM8: -- Y,Z,N )
 ;       Copy    nth stack item to tos.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2591,12 +2611,12 @@ PICK:
         LDW     X,(X)
         RET
 
-	.ifeq	BAREBONES
+        .ifeq   BOOTSTRAP
  ;      >CHAR   ( c -- c )      ( TOS STM8: -- A,Z,N )
 ;       Filter non-printing characters.
 
         .ifne   WORDS_LINKMISC
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2618,7 +2638,7 @@ TCHAR:
 
 ;       DEPTH   ( -- n )      ( TOS STM8: -- Y,Z,N )
 ;       Return  depth of data stack.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE + BAREBONES
         .dw     LINK
 
         LINK =  .
@@ -2638,7 +2658,7 @@ DEPTH:
 
 ;       +!      ( n a -- )      ( TOS STM8: -- Y,Z,N )
 ;       Add n to contents at address a.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2663,7 +2683,7 @@ PSTOR:
 ;       Return count byte of a string
 ;       and add 1 to byte address.
 
-        .ifeq   UNLINKCORE
+        .ifeq   UNLINKCORE + BAREBONES
         .dw     LINK
 
         LINK =  .
@@ -2678,7 +2698,7 @@ COUNT:
 
 ;       HERE    ( -- a )      ( TOS STM8: -- A,Z,N )
 ;       Return  top of  code dictionary.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2706,7 +2726,7 @@ HERECP:
 ;       above code dictionary.
 
         .ifne   WORDS_LINKCHAR
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2730,9 +2750,26 @@ PAD:
         DoLitC  PADOFFS
         JP      PLUS
 
+        .ifeq   BAREBONES
+;       @EXECUTE        ( a -- )  ( TOS STM8: undefined )
+;       Execute vector stored in address a.
+
+        .dw     LINK
+
+        LINK =  .
+        .db     8
+        .ascii  "@EXECUTE"
+ATEXE:
+        CALL    YFLAGS
+        LDW     Y,(Y)
+        JREQ    1$
+        JP      (Y)
+1$:     RET
+        .endif
+
 ;       CMOVE   ( b1 b2 u -- )
 ;       Copy u bytes from b1 to b2.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2756,7 +2793,7 @@ CMOV2:  CALL    DONXT
 ;       FILL    ( b u c -- )
 ;       Fill u bytes of character c
 ;       to area beginning at b.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2775,27 +2812,27 @@ FILL2:  CALL    DONXT
         .dw     FILL1
         JP      DDROP
 
+        .ifeq   BAREBONES
 ;       ERASE   ( b u -- )
 ;       Erase u bytes beginning at b.
-	.ifeq	BAREBONES
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
         .db     5
         .ascii  "ERASE"
         .endif
-        .endif
 ERASE:
         CALL    ZERO
         JRA     FILL
+        .endif
 
 ;       PACK$   ( b u a -- a )
 ;       Build a counted string with
 ;       u characters from b. Null fill.
 
         .ifne   WORDS_LINKCHAR
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2820,7 +2857,7 @@ PACKS:
 ;       Convert digit u to a character.
 
         .ifne   WORDS_LINKCHAR
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2842,7 +2879,7 @@ DIGIT:
 ;       Extract least significant digit from n.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2861,7 +2898,7 @@ EXTRC:
 ;       Initiate numeric output process.
 
         .ifne   WORDS_LINKCHAR
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2878,7 +2915,7 @@ BDIGS:
 ;       Insert a character into output string.
 
         .ifne   WORDS_LINKCHAR
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2901,7 +2938,7 @@ HOLD:
 ;       append digit to output string.
 
         .ifne   WORDS_LINKCHAR
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2919,7 +2956,7 @@ DIG:
 ;       are added to output string.
 
         .ifne   WORDS_LINKCHAR
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2937,7 +2974,7 @@ DIGS1:  CALLR   DIG
 ;       numeric output string.
 
         .ifne   WORDS_LINKCHAR
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2957,7 +2994,7 @@ SIGN1:  JP      DROP
 ;       Prepare output string.
 
         .ifne   WORDS_LINKCHAR
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2977,7 +3014,7 @@ EDIGS:
 ;       to a numeric string.
 
         .ifne   WORDS_LINKCHAR
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -2998,7 +3035,7 @@ STR:
 ;       HEX     ( -- )
 ;       Use radix 16 as base for
 ;       numeric conversions.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3012,7 +3049,7 @@ HEX:
 ;       DECIMAL ( -- )
 ;       Use radix 10 as base
 ;       for numeric conversions.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3039,7 +3076,7 @@ BASEAT:
 ;       integer. Push a flag on tos.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3140,7 +3177,7 @@ NUMDROP:
 ;       value. A flag indicates success.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3172,7 +3209,7 @@ DGTQ1:  LD      (1,X),A
 ;       KEY     ( -- c )
 ;       Wait for and return an
 ;       input character.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3185,10 +3222,44 @@ KEY1:   CALL    [USRQKEY]
         .dw     KEY1
         RET
 
+        .ifeq   BAREBONES
+;       NUF?    ( -- t )
+;       Return false if no input,
+;       else pause and if CR return true.
+
+        .dw     LINK
+
+        LINK =  .
+        .db     4
+        .ascii  "NUF?"
+NUFQ:
+        .ifne   HALF_DUPLEX
+        ; slow EMIT down to free the line for RX
+        .ifne   HAS_BACKGROUND * HALF_DUPLEX
+        LD      A,TICKCNT+1
+        ADD     A,#3
+1$:     CP      A,TICKCNT+1
+        JRNE    1$
+        .else
+        CLRW    Y
+1$:     DECW    Y
+        JRNE    1$
+        .endif
+        .endif
+        CALL    [USRQKEY]
+        LD      A,(1,X)
+        JREQ    NUFQ1
+        CALL    DDROP
+        CALLR   KEY
+        DoLitC  CRR
+        JP      EQUAL
+NUFQ1:  RET
+        .endif
+
 ;       SPACE   ( -- )
 ;       Send    blank character to
 ;       output device.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3200,19 +3271,22 @@ SPACE:
         CALL    BLANK
         JP      [USREMIT]
 
-	.ifeq	BAREBONES
+        .ifeq   UNLINKCORE
 ;       SPACES  ( +n -- )
 ;       Send n spaces to output device.
-        .ifeq   UNLINKCORE
+
+        .ifeq   BAREBONES
         .dw     LINK
 
         LINK =  .
         .db     6
         .ascii  "SPACES"
-        .endif
 SPACS:
         CALL    ZERO
         CALL    MAX
+        .else
+SPACS:
+        .endif
         CALL    TOR
         JRA     CHAR2
 CHAR1:  CALLR   SPACE
@@ -3224,7 +3298,7 @@ CHAR2:  CALL    DONXT
 ;       CR      ( -- )
 ;       Output a carriage return
 ;       and a line feed.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3245,7 +3319,7 @@ CR:
 ;       string.
 
         .ifne   WORDS_LINKRUNTI
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3269,7 +3343,7 @@ DOSTR:
 ;       Return address of a compiled string.
 
         .ifne   WORDS_LINKRUNTI
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3286,7 +3360,7 @@ STRQP:
 ;       Output a compiled string.
 
         .ifne   WORDS_LINKRUNTI
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3314,7 +3388,9 @@ DOTR:
         CALL    TOR
         CALL    STR
         JRA     RFROMTYPES
+        .endif
 
+        .ifeq   BAREBONES
 ;       U.R     ( u +n -- )
 ;       Display an unsigned integer
 ;       in n column, right justified.
@@ -3324,6 +3400,7 @@ DOTR:
         LINK =  .
         .db     3
         .ascii  "U.R"
+        .endif
 UDOTR:
         CALL    TOR
         CALLR   BDEDIGS
@@ -3333,11 +3410,10 @@ RFROMTYPES:
         CALL    SUBB
         CALLR   SPACS
         JRA     TYPES
-        .endif
 
 ;       TYPE    ( b u -- )
 ;       Output u characters from b.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3355,11 +3431,11 @@ TYPE2:
         .dw     TYPE1
         JP      DROP
 
-        .ifeq	BAREBONES
+        .ifeq   BOOTSTRAP
 ;       U.      ( u -- )
 ;       Display an unsigned integer
 ;       in free format.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3378,11 +3454,11 @@ BDEDIGS:
         JP      EDIGS
         .endif
 
-        .ifeq	BAREBONES
+        .ifeq   BOOTSTRAP
 ;       .       ( w -- )
 ;       Display an integer in free
 ;       format, preceeded by a space.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3399,11 +3475,11 @@ DOT:
         JRA     TYPES
         .endif
 
-	.ifeq	BAREBONES
+        .ifeq   BOOTSTRAP
 ;       ?       ( a -- )
 ;       Display contents in memory cell.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3444,7 +3520,7 @@ AFLAGS:
 ;       Return found string and its offset.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3520,7 +3596,7 @@ SUBPARS:
 ;       counted string delimited by c.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3540,11 +3616,11 @@ PARSE:
         CALL    INN
         JP      PSTOR
 
-	.ifeq	BAREBONES
+        .ifeq   BOOTSTRAP
 ;       .(      ( -- )
 ;       Output following string up to next ) .
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3555,12 +3631,14 @@ DOTPR:
         DoLitC  41      ; ")"
         CALLR   PARSE
         JP      TYPES
+        .endif
 
+        .ifeq   BOOTSTRAP
 ;       (       ( -- )
 ;       Ignore following string up to next ).
 ;       A comment.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3576,7 +3654,7 @@ PAREN:
 ;       \       ( -- )
 ;       Ignore following text till
 ;       end of line.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3593,7 +3671,7 @@ BKSLA:
 ;       and copy it to code dictionary.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3612,7 +3690,7 @@ WORDD:
 ;       and copy it to name dictionary.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3670,7 +3748,7 @@ SAMEQCAT:
 ;       strings. Return 0 if identical.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3699,7 +3777,7 @@ SAME2:  CALL    DONXT
 ;       convert char to upper case
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3722,7 +3800,7 @@ CUPPER:
 ;       Search vocabularies for a string.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3744,7 +3822,7 @@ NAMEQ:
 ;       Return ca and na if succeeded.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3807,7 +3885,7 @@ SWAPPF:
 ;       Backup cursor by one character.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3839,7 +3917,7 @@ BACK1:  RET
 ;       and bump cursor.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3861,7 +3939,7 @@ TAP:
 ;       CR or backspace.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3891,7 +3969,7 @@ KTAP2:  CALL    DROP
 ;       buffer. Return with actual count.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3927,7 +4005,7 @@ ACCP4:  CALL    DROP
 ;       terminal input buffer.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3950,7 +4028,7 @@ QUERY:
 ;       jump to QUIT.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3967,7 +4045,7 @@ ABORT:
 ;       Abort with a message.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -3993,7 +4071,7 @@ ABOR2:  CALL    DOSTR
 ;       terminal input buffer.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4014,7 +4092,7 @@ PRESE:
 ;       try to convert it to an integer.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4060,7 +4138,7 @@ COMPIQ:
 ;       Display 'ok' while interpreting.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4084,7 +4162,7 @@ DOTO1:  JP      CR
 ;       Abort if stack underflows.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4104,7 +4182,7 @@ QSTAC:
 ;       Interpret input stream.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4129,7 +4207,7 @@ EVAL2:
 ;       and start text interpreter.
 
         .ifne   WORDS_LINKINTER
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4150,7 +4228,7 @@ QUIT2:  CALL    QUERY           ; get input
 ;       '       ( -- ca )
 ;       Search vocabularies for
 ;       next word in input stream.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4198,7 +4276,7 @@ OMMA:
 
 ;       CALL,   ( ca -- )
 ;       Compile a subroutine call.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE + BAREBONES
         .dw     LINK
 
         LINK =  .
@@ -4230,7 +4308,7 @@ JSRC:
 ;       LITERAL ( w -- )
 ;       Compile tos to dictionary
 ;       as an integer literal.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4247,12 +4325,12 @@ LITER:
         .endif
         JRA      COMMA
 
-	.ifeq BAREBONES
+        .ifeq BOOTSTRAP
 ;       [COMPILE]       ( -- ; <string> )
 ;       Compile next immediate
 ;       word into code dictionary.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE + BAREBONES
         .dw     LINK
 
         LINK =  .
@@ -4267,7 +4345,7 @@ BCOMP:
 ;       COMPILE ( -- )
 ;       Compile next jsr in
 ;       colon list to code dictionary.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE + BAREBONES
         .dw     LINK
 
         LINK =  .
@@ -4306,7 +4384,7 @@ COMPIO2:
 ;       $,"     ( -- )
 ;       Compile a literal string
 ;       up to next " .
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4326,11 +4404,11 @@ CNTPCPPSTORE:
 
 ; Structures
 
-	.ifeq	BAREBONES
+        .ifeq   BOOTSTRAP
 ;       FOR     ( -- a )
 ;       Start a FOR-NEXT loop
 ;       structure in a colon definition.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4345,7 +4423,7 @@ FOR:
 ;       NEXT    ( a -- )
 ;       Terminate a FOR-NEXT loop.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4359,12 +4437,12 @@ NEXT:
         .endif
 
         .ifne   HAS_DOLOOP
-	.ifeq	BAREBONES
+        .ifeq   BOOTSTRAP
 ;       DO      ( -- a )
 ;       Start a DO LOOP loop
 ;       structure in a colon definition.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4386,7 +4464,7 @@ DOO:
 ;       LOOP    ( a -- )
 ;       Terminate a DO-LOOP loop.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4401,7 +4479,7 @@ LOOP:
 ;       +LOOP   ( a +n -- )
 ;       Terminate a DO - +LOOP loop.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4420,12 +4498,12 @@ PLOOP:
         .endif
         .endif
 
-	.ifeq	BAREBONES
+        .ifeq   BOOTSTRAP
 ;       BEGIN   ( -- a )
 ;       Start an infinite or
 ;       indefinite loop structure.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4439,7 +4517,7 @@ BEGIN:
 ;       Terminate a BEGIN-UNTIL
 ;       indefinite loop structure.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4455,7 +4533,7 @@ UNTIL:
 ;       Terminate a BEGIN-AGAIN
 ;       infinite loop structure.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4470,7 +4548,7 @@ AGAIN:
 ;       IF      ( -- A )
 ;       Begin a conditional branch.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4485,7 +4563,7 @@ IFF:
 ;       THEN    ( A -- )
 ;       Terminate a conditional branch structure.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4500,7 +4578,7 @@ THENN:
 ;       ELSE    ( A -- A )
 ;       Start the false clause in an IF-ELSE-THEN structure.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4515,7 +4593,7 @@ ELSEE:
 ;       AHEAD   ( -- A )
 ;       Compile a forward branch instruction.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE + BAREBONES
         .dw     LINK
 
         LINK =  .
@@ -4532,11 +4610,11 @@ ZEROCOMMA:
         CALL    ZERO
         JP      COMMA
 
-        .ifeq	BAREBONES
+        .ifeq   BOOTSTRAP
 ;       WHILE   ( a -- A a )
 ;       Conditional branch out of a BEGIN-WHILE-REPEAT loop.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4551,7 +4629,7 @@ SWAPLOC:
 ;       REPEAT  ( A a -- )
 ;       Terminate a BEGIN-WHILE-REPEAT indefinite loop.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4565,7 +4643,7 @@ REPEA:
 ;       AFT     ( a -- a A )
 ;       Jump to THEN in a FOR-AFT-THEN-NEXT loop the first time through.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4579,11 +4657,11 @@ AFT:
         JRA     SWAPLOC
         .endif
 
-	.ifeq	BAREBONES
+        .ifeq   BOOTSTRAP
 ;       ABORT"  ( -- ; <string> )
 ;       Conditional abort with an error message.
 
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE + BAREBONES
         .dw     LINK
 
         LINK =  .
@@ -4600,7 +4678,7 @@ ABRTQ:
 ;       Compile an inline string literal.
 
         .ifne   WORDS_LINKCHAR
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4614,11 +4692,11 @@ STRQ:
 STRCQLOC:
         JP      STRCQ
 
-	.ifeq	BAREBONES
+        .ifeq   BOOTSTRAP
 ;       ."      ( -- ; <string> )
 ;       Compile an inline string literal to be typed out at run time.
 
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4638,7 +4716,7 @@ DOTQ:
 ;       if word already exists.
 
         .ifne   WORDS_LINKCOMP
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4663,7 +4741,7 @@ UNIQ1:  JP      DROP
 ;       using string at na.
 
         .ifne   WORDS_LINKCOMP
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4698,7 +4776,7 @@ PNAM1:  CALL    DOSTR
 ;       dictionary as a token or literal.
 
         .ifne   WORDS_LINKCOMP
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4728,7 +4806,7 @@ SCOM2:  CALL    NUMBQ   ;try to convert to number
 ;       Link a new word into vocabulary.
 
         .ifne   WORDS_LINKCOMP + HAS_ALIAS
-        .ifeq	  UNLINKCORE
+        .ifeq          UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4798,7 +4876,7 @@ COLON:
 ;       IMMEDIATE       ( -- )
 ;       Make last compiled word
 ;       an immediate word.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4831,7 +4909,7 @@ RBRAC:
 
 ;       DOES>   ( -- )
 ;       Define action of defining words
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4859,7 +4937,7 @@ DOESS:
 ;       link action to words created by defining words
 
         .ifne   WORDS_LINKRUNTI
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4897,7 +4975,7 @@ DODOES:
 ;       CREATE  ( -- ; <string> )
 ;       Compile a new array
 ;       without allocating space.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4929,7 +5007,7 @@ CREAT:
 ;       VARIABLE        ( -- ; <string> )
 ;       Compile a new variable
 ;       initialized to 0.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4957,7 +5035,7 @@ VARIA:
 
 ;       ALLOT   ( n -- )
 ;       Allocate n bytes to code DICTIONARY.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -4977,7 +5055,7 @@ ALLOT:
 
 ; Tools
 
-	.ifeq	BAREBONES
+        .ifeq   BOOTSTRAP
         .ifeq   UNLINKCORE
 ;       _TYPE   ( b u -- )
 ;       Display a string. Filter
@@ -5003,7 +5081,7 @@ UTYP2:  CALL    DONXT
         JP      DROP
         .endif
 
-        .ifeq	BAREBONES
+        .ifeq   BOOTSTRAP
 ;       dm+     ( a u -- a )
 ;       Dump u bytes from ,
 ;       leaving a+u on  stack.
@@ -5033,7 +5111,7 @@ PDUM2:  CALL    DONXT
         RET
         .endif
 
-	.ifeq	BAREBONES
+        .ifeq   BOOTSTRAP
 ;       DUMP    ( a u -- )
 ;       Dump u bytes from a,
 ;       in a formatted manner.
@@ -5066,7 +5144,7 @@ DUMP3:
         JP      DROP
         .endif
 
-        .ifeq	BAREBONES
+        .ifeq   BOOTSTRAP
 ;       .S      ( ... -- ... )
 ;       Display contents of stack.
         .ifeq   UNLINKCORE
@@ -5093,7 +5171,7 @@ DOTS2:  CALL    DONXT
         RET
         .endif
 
-        .ifeq	BAREBONES
+        .ifeq   BOOTSTRAP
 ;       .ID     ( na -- )
 ;       Display name at address.
 
@@ -5124,8 +5202,8 @@ DUPPCAT:
         JP      CAT
 
 
-  
-     	  .ifeq	  UNLINKCORE
+
+        .ifeq   UNLINKCORE
         .ifne   WORDS_EXTRADEBUG
 ;       >NAME   ( ca -- na | F )
 ;       Convert code address
@@ -5157,7 +5235,7 @@ TNAM4:  CALL    DDROP
         JP      ZERO
         .endif
 
-        .ifeq	  UNLINKCORE
+        .ifeq          UNLINKCORE
 ;       WORDS   ( -- )
 ;       Display names in vocabulary.
 
@@ -5179,7 +5257,7 @@ WORS1:  CALL    AT              ; @ sets Z and N
         CALL    CELLM
         JRA     WORS1
 1$:     JP      DROP
-	      .endif
+              .endif
 
 
 
@@ -5205,7 +5283,7 @@ PAT7SAZ:
 
 ;       E7S  ( c -- )
 ;       Convert char to 7-seg LED pattern, and insert it in display buffer
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -5312,7 +5390,7 @@ XLEDGROUP:
 
 ;       P7S  ( c -- )
 ;       Right aligned 7S-LED pattern output, rotates LED group buffer
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -5353,7 +5431,7 @@ PUT7S:
 
 ;       ?KEYB   ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
 ;       Return keyboard char and true, or false if no key pressed.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     5
@@ -5387,7 +5465,7 @@ NOKEYB:
         .ifne   HAS_ADC
 ;       ADC!  ( c -- )
 ;       Init ADC, select channel for conversion
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -5407,7 +5485,7 @@ ADCSTOR:
 
 ;       ADC@  ( -- w )
 ;       start ADC conversion, read result
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -5431,7 +5509,7 @@ ADCAT:
 
 ;       SP!     ( a -- )
 ;       Set data stack pointer.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     3
@@ -5443,7 +5521,7 @@ SPSTO:
 
 ;       SP@     ( -- a )        ( TOS STM8: -- Y,Z,N )
 ;       Push current stack pointer.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     3
@@ -5455,7 +5533,7 @@ SPAT:
 
 ;       RP@     ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Push current RP to data stack.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     3
@@ -5467,7 +5545,7 @@ RPAT:
 
 ;       RP!     ( a -- )
 ;       Set return stack pointer.
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
         LINK =  .
         .db     (COMPO+3)
@@ -5490,7 +5568,7 @@ RPSTO:
         .ifne   WORDS_EXTRAEEPR
 ;       ULOCK  ( -- )
 ;       Unlock EEPROM (STM8S)
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -5506,7 +5584,7 @@ ULOCK:
 
 ;       LOCK  ( -- )
 ;       Lock EEPROM (STM8S)
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -5523,7 +5601,7 @@ LOCK:
 ;       ULOCKF  ( -- )
 ;       Unlock Flash (STM8S)
         .ifne   WORDS_EXTRAEEPR
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -5541,7 +5619,7 @@ UNLOCK_FLASH:
 ;       LOCKF  ( -- )
 ;       Lock Flash (STM8S)
         .ifne   WORDS_EXTRAEEPR
-        .ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -5574,7 +5652,7 @@ SWAPCP:
 
 ;       NVM  ( -- )
 ;       Compile to NVM (enter mode NVM)
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -5595,7 +5673,7 @@ NVMM:
 
 ;       RAM  ( -- )
 ;       Compile to RAM (enter mode RAM)
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -5623,7 +5701,7 @@ RAMM:
 
 ;       RESET  ( -- )
 ;       Reset Flash dictionary and 'BOOT to defaults and restart
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -5643,7 +5721,7 @@ RESETT:
 ;       SAVEC ( -- )
 ;       Minimal context switch for low level interrupt code
 ;       This should be the first word called in the interrupt handler
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
@@ -5660,7 +5738,7 @@ SAVEC:
 ;       IRET ( -- )
 ;       Restore context and return from low level interrupt code
 ;       This should be the last word called in the interrupt handler
-	.ifeq	UNLINKCORE
+        .ifeq   UNLINKCORE
         .dw     LINK
 
         LINK =  .
