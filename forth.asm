@@ -168,24 +168,31 @@
         CASEINSENSITIVE  = 0    ; Case insensitive dictionary search
         SPEEDOVERSIZE    = 0    ; Speed-over-size in core words ROT - = < -1 0 1
         BAREBONES        = 0    ; Removes words: '?KEY 'EMIT EXIT EXG @EXECUTE ERASE
-                                ; Drops headers: ?RX TX! ?RXP ?RX TXP! TX! LAST DEPTH COUNT SPACES .R NAME> ABORT" AHEAD
+                                ;   Drops headers: ?RX TX! ?RXP ?RX TXP! TX! LAST DEPTH COUNT
+                                ;     SPACES .R NAME> ABORT" AHEAD
                                 ; Drops support for entry of binary (%) and decimal (&)
-        BOOTSTRAP        = 0    ; Remove words: (+loop) EXIT 2! 2/ UM+ OR = MAX MIN U. . ? .( [COMPILE] FOR DO BEGIN WHILE
-                                ;               ABORT" ." _TYPE dm+ DUMP .S .ID >CHAR <
+        BOOTSTRAP        = 0    ; Remove words: (+loop) EXIT 2! 2/ UM+ OR = MAX MIN U. . ? .(
+                                ;  [COMPILE] FOR DO BEGIN WHILE ABORT" ." _TYPE dm+ DUMP .S
+                                ;  .ID >CHAR <
         UNLINKCORE       = 0    ; Drops headers on everything except: (TODO)
-                                ;               ABORT" AFT AGAIN AHEAD BEGIN DO DUMP ELSE EXG FOR IF LEAVE LOOP MAX MIN NEXT
-                                ;               OR REPEAT SEE SPACES THEN U. U.R UM+ UNTIL WHILE WORDS [COMPILE] _TYPE dm+
+                                ;  ABORT" AFT AGAIN AHEAD BEGIN DO DUMP ELSE EXG FOR IF LEAVE
+                                ;  LOOP MAX MIN NEXT OR REPEAT SEE SPACES THEN U. U.R UM+
+                                ;  UNTIL WHILE WORDS [COMPILE] _TYPE dm+
         NO_VARIABLE      = 0    ; Disable VARIABLE and feature "VARIABLE in Flash allocates RAM"
 
-        WORDS_LINKINTER  = 0    ; Link interpreter words: ACCEPT QUERY TAP kTAP hi 'BOOT tmp >IN 'TIB #TIB eval CONTEXT pars PARSE NUMBER? DIGIT? WORD TOKEN NAME> SAME? find ABORT aborq $INTERPRET INTER? .OK ?STACK EVAL PRESET QUIT $COMPILE
-        WORDS_LINKCOMP   = 0    ; Link compiler words: cp last OVERT $"| ."| $,n
+        WORDS_LINKINTER  = 0    ; Link interpreter words: $" aborq ABORT ACCEPT 'BOOT CONTEXT
+                                ;    CUPPER DIGIT? eval 'eval EXTRACT find ^h hi >IN $INTERPRET
+                                ;    kTAP NAME? NUMBER? .OK PAD pars PRESET 'PROMPT QUERY QUIT
+                                ;    SAME? ?STACK TAP TIB 'TIB #TIB TOKEN WORD
+        WORDS_LINKCOMP   = 0    ; Link compiler words: cp last OVERT $,n ?UNIQUE $COMPILE
         WORDS_LINKRUNTI  = 0    ; Link runtime words: doLit do$ doVAR donxt dodoes ?branch branch
+                                ;    (+loop) $"| ."|
         WORDS_LINKCHAR   = 0    ; Link char out words: DIGIT <# # #S SIGN #> str hld HOLD PACK$
-        WORDS_LINKMISC   = 0    ; Link composing words of SEE DUMP WORDS: >CHAR _TYPE dm+ .ID >NAME
+        WORDS_LINKMISC   = 0    ; Link composing words of: >CHAR _TYPE dm+ .ID >NAME
 
         WORDS_EXTRASTACK = 0    ; Link/include stack core words: rp@ rp! sp! sp@
-        WORDS_EXTRADEBUG = 0    ; Extra debug words: SEE
-        WORDS_EXTRACORE  = 0    ; Extra core words: =0 I
+        WORDS_EXTRADEBUG = 0    ; Extra debug words: >NAME
+        WORDS_EXTRACORE  = 0    ; Extra core words: 0= I
         WORDS_EXTRAMEM   = 0    ; Extra memory words: B! 2C@ 2C!
         WORDS_EXTRAEEPR  = 0    ; Extra EEPROM lock/unlock words: LOCK ULOCK ULOCKF LOCKF
         WORDS_HWREG      = 0    ; Peripheral Register words
@@ -3964,8 +3971,8 @@ KTAP2:  CALL    DROP
         CALL    NIP
         JP      DUPP
 
-;       accept  ( b u -- b u )
-;       Accept characters to input
+;       ACCEPT  ( b u -- b u )
+;       Accept one line of characters to input
 ;       buffer. Return with actual count.
 
         .ifne   WORDS_LINKINTER
@@ -4001,7 +4008,7 @@ ACCP4:  CALL    DROP
         JP      SUBB
 
 ;       QUERY   ( -- )
-;       Accept input stream to
+;       Accept one line from input stream to
 ;       terminal input buffer.
 
         .ifne   WORDS_LINKINTER
