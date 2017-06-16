@@ -2238,25 +2238,23 @@ MMSM4:
         .db     5
         .ascii  "M/MOD"
 MSMOD:
-        CALL    DUPP
-        CALL    ZLESS
-        CALL    DUPP
-        CALL    TOR
-        CALL    QBRAN
-        .dw     MMOD1
+        LD      A,(X)           ; DUPP ZLESS
+        PUSH    A               ; DUPP TOR
+        JRPL    MMOD1           ; QBRAN
         CALL    NEGAT
         CALL    TOR
         CALL    DNEGA
         CALL    RFROM
-MMOD1:  CALL    TOR
-        JRPL    MMOD2
+MMOD1:
+        CALL    TOR
+        JRPL    MMOD2           ; DUPP ZLESS QBRAN
         CALL    RAT
         CALL    PLUS
 MMOD2:  CALL    RFROM
         CALLR   UMMOD
-        CALL    RFROM
-        CALL    QBRAN
-        .dw     MMOD3
+        POP     A               ; RFROM
+        TNZ     A
+        JRPL    MMOD3           ; QBRAN
         CALL    SWAPP
         CALL    NEGAT
         CALL    SWAPP
@@ -2377,17 +2375,16 @@ STAR:
         .db     2
         .ascii  "M*"
 MSTAR:
-        CALL    DDUP
-        CALL    XORR
-        CALL    ZLESS
-        CALL    TOR
+        LD      A,(2,X)         ; DDUP
+        XOR     A,(X)           ; XORR
+        PUSH    A               ; TOR
         CALL    ABSS
         CALL    SWAPP
         CALL    ABSS
         CALLR   UMSTA
-        CALL    RFROM
-        CALL    QBRAN
-        .dw     MSTA1
+        POP     A               ; RFROM
+        TNZ     A
+        JRPL    MSTA1           ; QBRAN
         CALL    DNEGA
 MSTA1:  RET
 
