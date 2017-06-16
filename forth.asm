@@ -5207,7 +5207,6 @@ DUPPCAT:
 
 
 
-        .ifeq   UNLINKCORE
         .ifne   WORDS_EXTRADEBUG
 ;       >NAME   ( ca -- na | F )
 ;       Convert code address
@@ -5219,7 +5218,6 @@ DUPPCAT:
         LINK =  .
         .db     5
         .ascii  ">NAME"
-        .endif
         .endif
 TNAME:
         CALL    CNTXT           ; vocabulary link
