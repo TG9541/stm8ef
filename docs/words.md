@@ -848,14 +848,14 @@
 ```
 
 ```
-;       accept  ( b u -- b u )
-;       Accept characters to input
+;       ACCEPT  ( b u -- b u )
+;       Accept one line of characters to input
 ;       buffer. Return with actual count.
 ```
 
 ```
 ;       QUERY   ( -- )
-;       Accept input stream to
+;       Accept one line from input stream to
 ;       terminal input buffer.
 ```
 
@@ -1155,12 +1155,6 @@
 ;       >NAME   ( ca -- na | F )
 ;       Convert code address
 ;       to a name address.
-```
-
-```
-;       SEE     ( -- ; <string> )
-;       A simple decompiler.
-;       Updated for byte machines.
 ```
 
 ```
