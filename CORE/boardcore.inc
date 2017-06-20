@@ -84,7 +84,4 @@ BOARDINIT:
 
         RET
 
-        .ifne   HAS_KEYS
-        JRA     BKEY            ; Dummy: get "no key" and leave it as it is
-       .endif
 
