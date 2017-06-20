@@ -3,14 +3,6 @@
 ; Note: for supporting a new board create a new board configuration
 ;       folder with a "globconfig.inc" and a copy of this file.
 
-;       BOARDINIT  ( -- )
-;       Init board GPIO (except COM ports)
-
-BOARDINIT:
-        ; Board I/O initialization
-
-        RET
-
 ;===============================================================
 
 ;      Dummy labels for PSIM interrupts declared in main.c
@@ -79,6 +71,20 @@ BKEY:
 ;       Read and translate board dependent key bitmap into char
 
 BKEYCHAR:
+        JRA     BKEY            ; Dummy: get "no key" and leave it as it is
+       .endif
+
+;===============================================================
+
+;       BOARDINIT  ( -- )
+;       Init board GPIO (except COM ports)
+
+BOARDINIT:
+        ; Board I/O initialization
+
+        RET
+
+        .ifne   HAS_KEYS
         JRA     BKEY            ; Dummy: get "no key" and leave it as it is
        .endif
 
