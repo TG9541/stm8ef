@@ -281,7 +281,7 @@
         LINK    = .
         .db      ((102$ - 101$) + wFlag)
 101$:
-        .ascis  wName
+        .ascii  wName
 102$:
         .endif
 ;'Label:
