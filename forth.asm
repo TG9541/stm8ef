@@ -253,10 +253,13 @@
         ;******  7) Code  ******
         ;***********************
 
-;       Forth header macros
-;       Macro support in SDCC's assembler "SDAS" has some quirks:
-;         * the characters "," and ";" can not be passed as parameter values
-;         * the first macro call after include files can fail under certain conditions
+;        ==============================================
+;        Forth header macros
+;        Macro support in SDCC's assembler "SDAS" has some quirks:
+;          * strings with "," and ";" arn't allowed in parameters
+;          * after include files, the first macro call may fail
+;            unless it's preceded by unconditional code
+;         ==============================================
 
         LINK =          0       ;
         
@@ -284,6 +287,9 @@
 ;'Label:
         .endm
 
+;         ==============================================
+;               Low level code
+;         ==============================================
 
 ;       TRAP handler for DOLIT
 ;       Push the inline literal following the TRAP instruction
@@ -401,7 +407,7 @@ TIM2IRET:
         .endif
 
 
-; ==============================================
+;       ==============================================
 
 ;       Main entry points and COLD start data
 
@@ -1007,7 +1013,7 @@ DSTOR:
 ;       Fetch double integer from address a.
 
         .ifeq   UNLINKCORE
-         HEADER DAT "2@"
+        HEADER DAT "2@"
         .endif
 DAT:
         CALL    DUPP
@@ -2449,11 +2455,6 @@ DIGIT:
         .ifne   WORDS_LINKINTER
         .ifeq   UNLINKCORE
         HEADER  EXTRC "EXTRACT"
-        ;.dw     LINK
-
-        ;LINK =  .
-        ;.db     7
-        ;.ascii  "EXTRACT"
         .endif
         .endif
 EXTRC:
@@ -3608,7 +3609,8 @@ TICK:
 ;       ,       ( w -- )
 ;       Compile an integer into
 ;       code dictionary.
-;        HEADER  COMMA ","
+
+;       HEADER  COMMA ","
         .dw     LINK
 
         LINK =  .
@@ -3621,7 +3623,7 @@ COMMA:
 
 ;       C,      ( c -- )
 ;       Compile a byte into code dictionary.
-;        HEADER  CCOMMA "C,"
+;       HEADER  CCOMMA "C,"
         .dw     LINK
 
         LINK =  .
@@ -3641,8 +3643,8 @@ OMMA:
 
 ;       CALL,   ( ca -- )
 ;       Compile a subroutine call.
-;        HEADER  JSRC "CALL,"
         .ifeq   UNLINKCORE + BAREBONES
+;       HEADER  JSRC "CALL,"
         .dw     LINK
 
         LINK =  .
@@ -3739,12 +3741,12 @@ COMPIO2:
 ;       Compile a literal string
 ;       up to next " .
         .ifeq   UNLINKCORE
-;        HEADER  STRCQ '$,"'
+;       HEADER  STRCQ '$,"'
          .dw     LINK
 
-         LINK =  .
-         .db     3
-         .ascii  '$,"'
+        LINK =  .
+        .db     3
+        .ascii  '$,"'
         .endif
 STRCQ:
         DoLitC  34              ; "
@@ -4021,7 +4023,7 @@ UNIQ1:  JP      DROP
 
         .ifne   WORDS_LINKCOMP
         .ifeq   UNLINKCORE
-;        HEADER  SNAME "$,n"
+;       HEADER  SNAME "$,n"
         .dw     LINK
 
         LINK =  .
@@ -4082,7 +4084,7 @@ SCOM2:  CALL    NUMBQ   ;try to convert to number
 ;       Link a new word into vocabulary.
 
         .ifne   WORDS_LINKCOMP + HAS_ALIAS
-        .ifeq          UNLINKCORE
+        .ifeq   UNLINKCORE
         HEADER  OVERT "OVERT"
         .endif
         .endif
@@ -4121,8 +4123,7 @@ OVSTORE:
 ;       ;       ( -- )
 ;       Terminate a colon definition.
 
-;        HEADFLG ";" (IMEDD+COMPO)
-;        HEADER  SEMIS ";"
+;       HEADFLG ";" (IMEDD+COMPO)
         .dw     LINK
 
         LINK =  .
@@ -4453,7 +4454,7 @@ TNAM4:  CALL    DDROP
         JP      ZERO
         .endif
 
-        .ifeq          UNLINKCORE
+        .ifeq   UNLINKCORE
 ;       WORDS   ( -- )
 ;       Display names in vocabulary.
 
@@ -4908,7 +4909,6 @@ RESTC:
           .include "hwregs8s003.inc"
 ;        .endif
         .endif
-
 
 ;===============================================================
         LASTN   =       LINK    ;last name defined
