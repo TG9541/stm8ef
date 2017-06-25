@@ -20,8 +20,6 @@ def upload(path):
             if len(line) > 64:
                 raise 'Line is too long: %s' % (line)
             print('sending: ' + line)
-            line = line.strip()
-            if not line: continue
             tn.write(line + '\r')
             print tn.expect(['(\v|\n)'])[2]
 
