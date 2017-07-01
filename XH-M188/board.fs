@@ -1,4 +1,4 @@
-FILE NVM
+NVM
 : @dif ( a -- n )  \ indirect delta of elements of value pairs
   dup 2+ 2+ @ swap @ - ;
 : @inter ( n a -- n1 )  \ find value pairs and interpolate
@@ -10,5 +10,5 @@ FILE NVM
     2+ @ nip 
   else 
     dup rot over @ - over 2+ @dif rot @dif */ swap 2+ @ + then ;
-RAM HAND
+RAM
 

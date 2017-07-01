@@ -49,8 +49,8 @@ forth.rel: forth.asm $(FDEPS)
 flash: main.ihx
 	stm8flash -c stlinkv2 -p $(TARGET) -w out/$(BOARD)/$(BOARD).ihx
 
-forth: flash
-	tools/loadserial.py $(BOARD)/board.fs
+forth: main.ihx
+	tools/simload.sh $(BOARD)
 
 directories: out
 
