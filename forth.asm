@@ -3551,7 +3551,7 @@ QSTAC:
         CALL    ZLESS   ;check only for underflow
         CALL    ABORQ
         .db     11
-        .ascii  " underflow "
+        .ascii  " underflow"
         RET
 
 ;       EVAL    ( -- )
