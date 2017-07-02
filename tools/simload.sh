@@ -36,7 +36,6 @@ EOF
 export persist=`mktemp`
 cat << 'EOF' > "$persist"
 ULOCKF 
-'BOOT DUP $12 + SWAP 6 CMOVE 
 'BOOT DUP $12 DUP ROT + SWAP CMOVE
 LOCKF
 EOF
@@ -50,7 +49,7 @@ read -d '' makeHex << 'EOF'
 /^0x/ {
   cs=0; a=":"; g=$0; n=gsub(/ 0x/,"",g)
   App(Xpr(n),1); App($1,4); App($1,6); App("00",1)
-  for (i=2; i<=n; i++) { App($i,3) }
+  for (i=2; i<=(n+1); i++) { App($i,3) }
   print a Xpr(and(-cs,0xFF))
 }
 END { print ":00000001FF" }
@@ -61,7 +60,7 @@ function App(x,n) {
 EOF
 
 # dump flash data, convert to Intel Hex, kill uCsim
-nc localhost 10001 <<EOF |gawk "$makeHex" > "out/$object/$object-forth.ihx"
+nc localhost 10001 <<EOF | gawk "$makeHex" > "out/$object/$object-forth.ihx"
 dch 0x8000 0x9FFF 16
 kill
 EOF

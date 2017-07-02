@@ -1,23 +1,57 @@
 #!/usr/bin/env python2
+# STM8EF uCsim telnet uploader
+# - supports e4thcom stile "#include" pseudo word. The include path is:
+#   1. `cwd` of uploader
+#   2. path of the including file
+#   3. `cwd`/lib
+# - for now, assume that the telnet port is 10000
 
 import sys
+import os
+import re
 import telnetlib
 
 HOST = "localhost"
 PORT = 10000
-tn = telnetlib.Telnet(HOST,PORT)
-tn.read_until("menu\r\n")
+CWDPATH = os.getcwd()
 
 if len(sys.argv) < 2:
     print('Usage %s <file1> ... [fileN]' % (sys.argv[0]))
-    sys.exit()
+    sys.exit(2)
+
+tn = telnetlib.Telnet(HOST,PORT)
+tn.read_until("menu\r\n")
+
+def error(message,line, path, lineNr):
+    print 'Error file %s line %d: %s' % (path, lineNr, message)
+    print '>>>  %s' % (line)
+    sys.exit(1)
 
 def upload(path):
     with open(path) as source:
+        lineNr = 0
+        print 'Uploading %s' % path
         try:
+            CPATH = os.path.dirname(path)
             for line in source.readlines():
-                line = line.strip()
+                lineNr += 1
+
+                line = line.partition('\\')[0].strip()
                 if not line: continue
+                reInclude = re.search('^#(include|require) +(.+?)$', line)
+                if reInclude:
+                    includeFile = CWDPATH + '/' + reInclude.group(2)
+                    if not os.path.isfile(includeFile):
+                         includeFile = CPATH + '/' + reInclude.group(2)
+                    if not os.path.isfile(includeFile):
+                         includeFile = CWDPATH + '/lib/' + reInclude.group(2)
+                    if not os.path.isfile(includeFile):
+                        error('file not found', line, path, lineNr)
+                    try:
+                        upload(includeFile)
+                    except:
+                        error('could not upload file', line, path, lineNr)
+                    continue
                 if len(line) > 64:
                     raise ValueError('Line is too long: %s' % (line))
                 print('sending: ' + line)
@@ -31,5 +65,4 @@ def upload(path):
             print(err.args)
 
 for path in sys.argv[1:]:
-    print('Uploading %s' % path)
     upload(path)
