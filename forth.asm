@@ -3550,7 +3550,7 @@ QSTAC:
         CALL    DEPTH
         CALL    ZLESS   ;check only for underflow
         CALL    ABORQ
-        .db     11
+        .db     10
         .ascii  " underflow"
         RET
 
