@@ -475,6 +475,7 @@ COLD:
 
         .ifne   HAS_TXSIM*((PNRX-PNTX)+(1-HAS_RXSIM))
         ; init TxD through GPIO if not shared pin with PNRX
+        BSET    PSIM+ODR,#PNTX    ; PNTX GPIO high
         BSET    PSIM+DDR,#PNTX    ; PNTX GPIO output
         BSET    PSIM+CR1,#PNTX    ; enable PNTX push-pull
         .endif
@@ -772,6 +773,8 @@ TIM4_OFF:
         .ifne   HALF_DUPLEX_SIM
         BSET    PSIM+CR2,#PNRX  ; enable PNRX external interrupt
         BRES    PSIM+DDR,#PNRX  ; set shared GPIO to input
+        .else
+        BSET    PSIM+ODR,#PNTX  ; set TX GPIO to STOP
         .endif
         BRES    TIM4_IER,#0     ; disable TIM4 interrupt
         IRET
