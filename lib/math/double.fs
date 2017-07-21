@@ -14,23 +14,6 @@
 ;
 
 : d> ( d d -- f )
-  d- 2dup or 0= ( d f ) rot rot
-  0< swap drop or not
-;
-
-: isqrt ( d -- n )
-  $8000 ( d c ) $8000 ( d c g )
-  BEGIN
-    DUP DUP UM* ( d c g g^2)
-    6 PICK 6 PICK ( d c g g^2 d )
-    d> IF ( d c g )
-      OVER XOR
-    THEN ( d c g )
-    SWAP 2/ $7FFF AND ( d g c )
-    DUP 0= IF
-      DROP ROT ROT 2DROP -1 ( g true )
-    ELSE
-      SWAP OVER ( d c g c ) OR 0
-    THEN
-  UNTIL
+  d- 2DUP OR 0= ( d f ) ROT ROT
+  0< SWAP DROP OR NOT
 ;
