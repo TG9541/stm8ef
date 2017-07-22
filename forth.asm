@@ -145,6 +145,7 @@
 
         .include "globconf.inc"
 
+
         ;**************************************
         ;******  5) Board Driver Memory  ******
         ;**************************************
@@ -170,13 +171,6 @@
         ;******  Board variables  ******
         .ifne   HAS_OUTPUTS
         RamWord OUTPUTS         ; outputs, like relays, LEDs, etc. (16 bit)
-        .endif
-
-        .ifne   HAS_TXSIM ;+ HAS_RXSIM
-        RamByte TIM4TCNT        ; TIM4 RX/TX interrupt counter
-        RamByte TIM4TXREG       ; TIM4 TX transmit buffer and shift register
-        RamByte TIM4RXREG       ; TIM4 RX shift register
-        RamByte TIM4RXBUF       ; TIM4 RX receive buffer
         .endif
 
         .ifne   HAS_BACKGROUND
@@ -262,7 +256,7 @@
 ;         ==============================================
 
         LINK =          0       ;
-        
+
         .macro  HEADER Label wName
         .ifeq   UNLINK_'Label
         .dw     LINK
@@ -466,11 +460,6 @@ COLD:
         MOV     TIM4_ARR,#TIM4RELOAD
         MOV     TIM4_PSCR,#0x03 ; prescaler 1/8
         MOV     TIM4_CR1,#0x01  ; enable TIM4
-        .ifne  PNRX^PNTX
-        HALF_DUPLEX_SIM = 0     ; is there no better way to do "!=" in ASxxxx 2.x?
-        .else
-        HALF_DUPLEX_SIM = 1     ; Half-duplex RxTx if GPIO is shared
-        .endif
         .endif
 
         .ifne   HAS_TXSIM*((PNRX-PNTX)+(1-HAS_RXSIM))
@@ -627,8 +616,7 @@ HI:
         .endif
 
 ; ==============================================
-
-;      Device dependent I/O
+;       Device dependent I/O
 
         .ifne   HAS_RXUART
 ;       ?RX     ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
@@ -658,154 +646,37 @@ TXSTOR:
         INCW    X
 
         .ifne   HALF_DUPLEX * (1-HAS_TXSIM)
+        ; TODO: this is most likely obsolete
         ; HALF_DUPLEX with normal UART (e.g. wired-or Rx and Tx)
         BRES    UART_CR2,#2    ; disable rx
 1$:     BTJF    UART_SR,#7,1$  ; loop until tdre
         LD      UART_DR,A      ; send A
 2$:     BTJF    UART_SR,#6,2$  ; loop until tc
         BSET    UART_CR2,#2    ; enable rx
-        .else                   ; not HALF_DUPLEX
+        .else                  ; not HALF_DUPLEX
 1$:     BTJF    UART_SR,#7,1$  ; loop until tdre
         LD      UART_DR,A      ; send A
         .endif
         RET
         .endif
 
-        .ifne   HAS_RXSIM
-;       ?RXP     ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
-;       Return char from a simulated serial interface and true, or false.
+;       Simulated serial I/O
+;       either full or half duplex
 
-        .ifeq   BAREBONES
-        .ifne   HAS_RXUART
-        HEADER  QRXP "?RXP"
-        .else
-        HEADER  QRX "?RX"
-        .endif
-        .endif
-        .ifeq   HAS_RXUART
-QRX:
-        .endif
-QRXP:
-        CLR     A
-        EXG     A,TIM4RXBUF     ; read and consume char
-        JP      ATOKEY
-        .endif
-
-        .ifne   HAS_TXSIM
-;       TXP!     ( c -- )
-;       Send character c to a simulated serial interface.
-
-        .ifeq   BAREBONES
-        .ifne   HAS_TXUART
-        HEADER  TXPSTOR "TXP!"
-        .else
-        HEADER  TXSTOR "TX!"
-        .endif
-        .endif
-
-        .ifeq   HAS_TXUART
-TXSTOR:
-        .endif
-TXPSTOR:
-        INCW    X
-        LD      A,(X)
-        INCW    X
-
-1$:     TNZ     TIM4TCNT
-        JRNE    1$              ; wait for free TIM4 RX-TX
-
-        .ifne   HALF_DUPLEX_SIM
-        BRES    PSIM+CR2,#PNRX    ; disable PNRX external interrupt
-        .endif
-
-        LD      TIM4TXREG,A     ; char to TXSIM output register
-        MOV     TIM4TCNT,#10    ; init next transfer
-        CLR     TIM4_CNTR       ; reset TIM4, trigger update interrupt
-        BSET    TIM4_IER,#0     ; enable TIM4 interrupt
-        RET
-        .endif
-
-;       RxD through GPIO start-bit interrupt handler
-
-        .ifne   HAS_RXSIM
-
-        .ifeq   PSIM-PORTA
-_EXTI0_IRQHandler:
-        .endif
-
-        .ifeq   PSIM-PORTB
-_EXTI1_IRQHandler:
-        .endif
-
-        .ifeq   PSIM-PORTC
-_EXTI2_IRQHandler:
-        .endif
-
-        .ifeq   PSIM-PORTD
-_EXTI3_IRQHandler:
-        .endif
-
-        BRES    PSIM+CR2,#PNRX    ; disable PNRX external interrupt
-
-        ; Set-up TIM4 for 8N1 Rx sampling at half bit time
-        MOV     TIM4TCNT,#(-9)  ; set sequence counter for RX
-        MOV     TIM4_CNTR,#(TIM4RELOAD/2)
-        BRES    TIM4_SR,#0      ; clear TIM4 UIF
-        BSET    TIM4_IER,#0     ; enable TIM4 interrupt
-        IRET
-        .endif
-
+        .ifeq  HAS_TXSIM + HAS_RXSIM
 _TIM4_IRQHandler:
-;       TODO: reset the µC if a unepected interrupt occurs?
-        .ifne   HAS_RXSIM+HAS_TXSIM
-        ; TIM4 interrupt handler for software Rx/Tx or half-duplex Rx+Tx
-
-        ;BCPL    PC_ODR,#4  ; pin debug
-
-        BRES    TIM4_SR,#0      ; clear TIM4 UIF
-
-        LD      A,TIM4TCNT      ; TIM4CNT is the step counter
-        JRMI    TIM4_RECVE      ; negative index: receive
-        JRNE    TIM4_TRANS      ; positive index: transmit
-        ; TIM4CNT is zero
-
-TIM4_OFF:
-        .ifne   HALF_DUPLEX_SIM
-        BSET    PSIM+CR2,#PNRX  ; enable PNRX external interrupt
-        BRES    PSIM+DDR,#PNRX  ; set shared GPIO to input
+        ; dummy for linker - can be overwritten by Forth application
         .else
-        BSET    PSIM+ODR,#PNTX  ; set TX GPIO to STOP
+        ; include required serial I/O code
+        .ifne  PNRX^PNTX
+        .include "sser_fdx.inc" ; Full Duplex serial
+        .else
+        .include "sser_hdx.inc" ; Half Duplex serial
         .endif
-        BRES    TIM4_IER,#0     ; disable TIM4 interrupt
-        IRET
-TIM4_RECVE:
-        BTJT    PSIM+IDR,#PNRX,1$ ; dummy branch, copy GPIO to CF
-1$:     RRC     TIM4RXREG
-        INC     TIM4TCNT
-        JRNE    TIM4_END
-        MOV     TIM4RXBUF,TIM4RXREG ; save result (CF is now start-bit)
-        .ifeq   HALF_DUPLEX_SIM
-        BSET    PSIM+CR2,#PNRX  ; enable PNRX external interrupt
         .endif
-        JRA     TIM4_OFF
-TIM4_TRANS:
-        CP      A,#10           ; test if startbit (coincidentially set CF)
-        JRNE    TIM4_SER
-        .ifne   HALF_DUPLEX_SIM
-        BSET    PSIM+DDR,#PNRX  ; port PD1=PNRX to output
-        .endif
-        JRA     TIM4_BIT        ; emit start bit (CF=0 from CP)
-TIM4_SER:
-        RRC     TIM4TXREG       ; get data bit, shift in stop bit (CF=1 from CP)
-        ; fall through
-TIM4_BIT:
-        BCCM    PSIM+ODR,#PNTX  ; Set GPIO to CF
-        DEC     TIM4TCNT        ; next TXD TIM4 state
-        JREQ    TIM4_OFF        ; complete when TIM4CNT is zero
-        ; fall through
-TIM4_END:
-        IRET
-        .endif
+
+; ==============================================
+;       Device independent I/O
 
 ;       ?KEY    ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
 ;       Return input char and true, or false.

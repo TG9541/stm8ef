@@ -25,16 +25,6 @@
 ```
 
 ```
-;       ?RXP     ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
-;       Return char from a simulated serial interface and true, or false.
-```
-
-```
-;       TXP!     ( c -- )
-;       Send character c to a simulated serial interface.
-```
-
-```
 ;       ?KEY    ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
 ;       Return input char and true, or false.
 ```
@@ -924,6 +914,7 @@
 ```
 ;       C,      ( c -- )
 ;       Compile a byte into code dictionary.
+;       HEADER  CCOMMA "C,"
 ```
 
 ```

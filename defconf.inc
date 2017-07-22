@@ -1,3 +1,8 @@
+;--------------------------------------------------------
+;       STM8EF for STM8S (Value line and Access Line devices)
+;       Default settings for all kinds of options
+;--------------------------------------------------------
+
         TERM_LINUX       = 1    ; LF terminates line
         HALF_DUPLEX      = 0    ; Use EMIT/?KEY in half duplex mode
         HAS_TXUART       = 1    ; Enable UART TXD, word TX!
