@@ -1,5 +1,5 @@
 \ STM8S option register words
-\ (c) TG9541, refer to licence at github.com/TG9541/stm8ef
+\ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
 
 : OPT0 $4800 [COMPILE] LITERAL ; IMMEDIATE
 : OPT1 $4801 [COMPILE] LITERAL ; IMMEDIATE

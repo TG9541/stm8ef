@@ -32,10 +32,10 @@ download
 run
 EOF
 
-# STM8EF: set RESET defaults to include the newly defined words 
+# STM8EF: set RESET defaults to include the newly defined words
 export persist=`mktemp`
 cat << 'EOF' > "$persist"
-ULOCKF 
+ULOCKF
 'BOOT DUP $12 DUP ROT + SWAP CMOVE
 LOCKF
 EOF

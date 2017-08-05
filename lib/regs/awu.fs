@@ -1,5 +1,5 @@
 \ STM8S103 AWU register words
-\ (c) TG9541, refer to licence at github.com/TG9541/stm8ef/
+\ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
 
 \ AWU control/status register 1         (0x00)
 : AWU_CSR1   $50F0 [COMPILE] LITERAL ; IMMEDIATE

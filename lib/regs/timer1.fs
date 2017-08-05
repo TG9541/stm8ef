@@ -1,5 +1,5 @@
 \ STM8S103 Timer1 register words
-\ (c) TG9541, refer to licence at github.com/TG9541/stm8ef/
+\ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
 
 : TIM1_CR1   $5250 [COMPILE] LITERAL ; IMMEDIATE
 : TIM1_CCMR1 $5258 [COMPILE] LITERAL ; IMMEDIATE

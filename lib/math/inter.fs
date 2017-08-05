@@ -1,6 +1,6 @@
 \ Linear interpolation between closest x-sorted x/y pairs
 \ Saturates to y(xmin), y(xmax).
-\ (c) TG9541, refer to licence at github.com/TG9541/stm8ef
+\ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
 
 \ Example with 3 x/y pairs:
 \   create iTab 3 , -100 , 200 , 0 , 100, 100, -1000 , ok

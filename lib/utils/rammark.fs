@@ -1,5 +1,5 @@
 \ STM8EF temporary RAM dictionary
-\ (c) TG9541, refer to licence at github.com/TG9541/stm8ef/
+\ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
 
 \ Mark current CP, LAST and CONTEXT in RAM mode
 : RAMmark ( -- a a a )

@@ -112,7 +112,7 @@ TIM4_RECVE:
         JRNE    TIM4_END
         MOV     TIM4RXBUF,TIM4RXREG ; save result (CF is now start-bit)
         JRA     TIM4_OFF
-        
+
 TIM4_TRANS:
         CP      A,#10           ; startbit? (also sets CF)
         JRNE    TIM4_SER

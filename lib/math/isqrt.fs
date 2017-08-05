@@ -1,5 +1,5 @@
 \ Some integer square root (C) RigTig 2017
-\ github.com/TG9541/stm8ef/blob/master/LICENSE.md
+\ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
 
 \ require: math/double.fs
 

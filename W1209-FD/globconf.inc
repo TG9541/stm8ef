@@ -15,7 +15,7 @@
         QKEY_BG  = QKEYB        ; Board keys background QKEY vector
 
         HAS_LED7SEG      = 1    ; yes, 1*3 dig. 7-seg LED on module
-        
+
         HAS_KEYS         = 3    ; yes, 3 keys on module
         HAS_OUTPUTS      = 1    ; yes, one LED
         HAS_ADC          = 1    ; Analog input words

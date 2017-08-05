@@ -1,5 +1,5 @@
 \ STM8S option setting words
-\ (c) TG9541, refer to licence at github.com/TG9541/stm8ef
+\ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
 
 \ store char to (a), and inverted value to (a+1)
 : CN! ( c a -- )

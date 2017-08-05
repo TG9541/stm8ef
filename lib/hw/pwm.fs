@@ -1,3 +1,12 @@
+\ STM8S103 Timer1 PWM
+\ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
+
+\ Example:
+\   15  initTIM1
+\   1000 relTIM1
+\   800 pwm1
+\   500 pwm2
+\   200 pwm3
 
 \ Init Timer1 with prescaler ( n=15 -> 1 MHz), CC PWM1..PWM3
 : T1PwmInit ( n -- )
@@ -33,13 +42,7 @@
 
 \ convert duty cycle [1/1000] to PWM reload value
 : duty ( n -- n )
-  TIM1_ARRH 2C@ 1000 */ 
+  TIM1_ARRH 2C@ 1000 */
 ;
 
-\ Example:
-\   15  initTIM1
-\   1000 relTIM1
-\   800 pwm1
-\   500 pwm2
-\   200 pwm3
 

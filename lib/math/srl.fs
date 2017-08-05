@@ -1,5 +1,5 @@
 \ STM8S: Shift Right Logical
-\ (c) TG9541, refer to licence at github.com/TG9541/stm8ef
+\ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
 
 \ SRL: shift right logical (unsigned divide by 2)
 : SRL ( n -- n )

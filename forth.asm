@@ -27,8 +27,8 @@
 ;
 ;
 ; Docs for the SDCC integrated assembler are scarce, thus
-; SDCC was used to write the sceleton for this file.
-; Hoever, the assembly doesn't constitue SDCC code.
+; SDCC was used to write the skeleton for this file.
+; However, the code in this file isn't SDCC code.
 ;--------------------------------------------------------
 ; File Created by SDCC : free open source ANSI-C Compiler
 ; Version 3.6.0 #9615 (Linux)
@@ -3035,9 +3035,9 @@ NAMET:
         .ifeq   HAS_ALIAS
         JP      PLUS
         .else
-        CALL    PLUS
+        CALL    PLUS            ; ALIAS: return the target address of a JP
         LD      A,(Y)           ; DUP C@
-        CP      A,#0xCC         ; $CC =
+        CP      A,#BRAN_OPC     ; BRAN_OPC =
         JRNE    1$              ; IF
         INCW    Y               ; 1+
         LDW     Y,(Y)           ; @
