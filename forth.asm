@@ -4566,12 +4566,9 @@ ADCSTOR:
 ADCAT:
         BRES    ADC_CSR,#7      ; reset EOC
         BSET    ADC_CR1,#0      ; start ADC
-        DECW    X
-        DECW    X
 1$:     BTJF    ADC_CSR,#7,1$   ; wait until EOC
         LDW     Y,ADC_DRH       ; read ADC
-        LDW     (X),Y
-        RET
+        JP      YSTOR
         .endif
 
 ;===============================================================
@@ -4685,12 +4682,12 @@ NVMQ:
 
 ;       Helper routine: swap USRCP and NVMCP
 SWAPCP:
-        LDW     Y,USRCP
+        LDW     X,USRCP
         MOV     USRCP,NVMCP
         MOV     USRCP+1,NVMCP+1
-        LDW     NVMCP,Y
+        LDW     NVMCP,X
+        EXGW    X,Y
         RET
-
 
 ;       NVM  ( -- )
 ;       Compile to NVM (enter mode NVM)
@@ -4701,8 +4698,9 @@ NVMM:
         CALLR    NVMQ
         JRNE    1$           ; state entry action?
         ; in NVM mode only link words in NVM
-        MOV     USRLAST,NVMCONTEXT
-        MOV     USRLAST+1,NVMCONTEXT+1
+        EXGW    X,Y
+        LDW     X,NVMCONTEXT
+        LDW     USRLAST,X
         CALLR   SWAPCP
         CALLR   UNLOCK_FLASH
 1$:
@@ -4717,17 +4715,17 @@ NVMM:
 RAMM:
         CALLR   NVMQ
         JREQ    1$
+
+        EXGW    X,Y
+        LDW     X,USRVAR
+        LDW     COLDCTOP,X
+        LDW     X,NVMCP
+        LDW     COLDNVMCP,X
+        LDW     X,NVMCONTEXT
+        LDW     COLDCONTEXT,X
+        LDW     X,USRCONTEXT
+        LDW     USRLAST,X
         CALLR   SWAPCP          ; Switch back to mode RAM
-
-        MOV     COLDCTOP,USRVAR
-        MOV     COLDCTOP+1,USRVAR+1
-        MOV     COLDNVMCP,NVMCP ; Store NCM pointers for init in COLD
-        MOV     COLDNVMCP+1,NVMCP+1
-        MOV     COLDCONTEXT,NVMCONTEXT
-        MOV     COLDCONTEXT+1,NVMCONTEXT+1
-
-        MOV     USRLAST,USRCONTEXT
-        MOV     USRLAST+1,USRCONTEXT+1
         CALLR   LOCK_FLASH
 1$:
         RET
