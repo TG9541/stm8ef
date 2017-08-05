@@ -17,14 +17,9 @@ BOARDINIT:
         ; Init Timer for PWM
         ; Unlock EEPROM and set AFR0 flag
         CALL    ULOCK
-        MOV     FLASH_CR2, #0b10000000
-        MOV     FLASH_NCR2,#0b01111111
-        MOV     OPT2, #0b00000001
+        MOV     OPT2, #0b00000001  ; set AFR0 bit, alternate PWM function
         MOV     NOPT2,#0b11111110
-        ; should wait for EOP bit here...meh, seems to work
-        ; then re-lock
-        MOV     FLASH_CR2, #0b00000000
-        MOV     FLASH_NCR2,#0b11111111
+1$:     BTJF    FLASH_IAPSR,#2,1$    ; wait for "end of programming" bit
         CALL LOCK
 
         ; Set voltage-control PWM timers

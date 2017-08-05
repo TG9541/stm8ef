@@ -4,12 +4,13 @@ ifeq ($(BOARD),)
 all: zip
 
 zip: build
-	find out/ -name "*.ihx" -print | zip out/stm8ef-bin docs/words.md -@
+	find out/ -name "*.ihx" -print | zip -r out/stm8ef-bin docs/words.md lib/* -@
 
 build: words
 	make BOARD=CORE
 	make BOARD=XH-M188
 	make BOARD=W1209
+	make BOARD=W1209-FD
 	make BOARD=W1219
 	make BOARD=W1401
 	make BOARD=C0135
@@ -49,8 +50,8 @@ forth.rel: forth.asm $(FDEPS)
 flash: main.ihx
 	stm8flash -c stlinkv2 -p $(TARGET) -w out/$(BOARD)/$(BOARD).ihx
 
-forth: flash
-	tools/loadserial.py $(BOARD)/board.fs
+forth: main.ihx
+	tools/simload.sh $(BOARD)
 
 directories: out
 

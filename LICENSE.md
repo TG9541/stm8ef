@@ -1,4 +1,4 @@
-This is derived work from STM8eForth by Dr. C.H. Ting, which was kindly granted into the public domain in 2010 with contribution from TG9541 Copyright (c) 2016.
+This work is partially derived from STM8eForth by Dr. C.H. Ting, which was kindly granted into the public domain in 2010. Other parts Copyright (c) TG9541 (c) 2016.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 

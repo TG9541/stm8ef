@@ -1,22 +1,23 @@
 ; STM8EF Global Configuration File
-; STM8S003F3P6 generic SWIM single pin communication
+; Config for W1209 Thermostat Module
 ; Clock: HSI (no crystal)
 
-        HALF_DUPLEX      = 1    ; Use EMIT/?KEY in half duplex mode
+        HALF_DUPLEX      = 0    ; Use EMIT/?KEY in half duplex mode
         HAS_TXUART       = 0    ; No UART TXD, word TX!
         HAS_RXUART       = 0    ; No UART RXD, word ?RX
+        PSIM     = PORTC        ; Port for UART simulation
         HAS_TXSIM        = 1    ; Enable TxD via GPIO/TIM4, word TXGP!
+        PNTX             = 5    ; Port GPIO# for HAS_TXDSIM
         HAS_RXSIM        = 1    ; Enable RxD via GPIO/TIM4, word ?RXGP
-        PSIM     = PORTD        ; Port for UART simulation
-        PNRX             = 1    ; Port GPIO# for HAS_RXDSIM
-        PNTX             = 1    ; Port GPIO# for HAS_TXDSIM
+        PNRX             = 4    ; Port GPIO# for HAS_RXDSIM
 
-        EMIT_BG  = DROP         ; 7S-LED background EMIT vector
-        QKEY_BG  = ZERO         ; Board keys background QKEY vector
+        EMIT_BG  = EMIT7S       ; 7S-LED background EMIT vector
+        QKEY_BG  = QKEYB        ; Board keys background QKEY vector
 
-        HAS_LED7SEG      = 0    ; no
-        HAS_KEYS         = 0    ; no
-        HAS_OUTPUTS      = 0    ; no
+        HAS_LED7SEG      = 1    ; yes, 1*3 dig. 7-seg LED on module
+
+        HAS_KEYS         = 3    ; yes, 3 keys on module
+        HAS_OUTPUTS      = 1    ; yes, one LED
         HAS_ADC          = 1    ; Analog input words
 
         HAS_BACKGROUND   = 1    ; Background Forth task (TIM2 ticker)
