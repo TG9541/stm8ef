@@ -22,7 +22,7 @@ TG9541/STM8EF provides board support for several common "Chinese gadgets", and f
 * [W1401](https://github.com/TG9541/stm8ef/wiki/Board-W1401) (also XH-W1401) thermostat with 3x2 digit 7S-LED display, half-duplex RS232 through SWIM
 * [C0135](https://github.com/TG9541/stm8ef/wiki/Board-C0135) "Relay-4 Board" (can be used as a *Nano PLC*)
 * [DCDC](https://github.com/TG9541/stm8ef/wiki/Board-CN2596) hacked DCDC converter with voltmeter
-* [MINDEV](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards)` STM8S103F3 low cost "minimum development board"
+* [MINDEV](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) STM8S103F3 low cost "minimum development board"
 * `CORE` starting point for new boards, most extra feature words disabled
 * `SWIMCOM` communication through the SWIM interface for board exploration
 
@@ -157,6 +157,7 @@ It's advisable to have at least two boards for reverse engineering: one in origi
   * native BRANCH (JP), and EXIT (RET)
   * relative CALL with two bytes where possible
   * pseudo-opcode for DOLIT using TRAP: compiled literals 3 instead of 5 bytes
+  * [ALIAS words](https://github.com/TG9541/stm8ef/wiki/STM8S-eForth-Alias-Words) for indirect dictionary entries
 * compile Forth to NVM (Non Volatile Memory with Flash IAP)
   * Words `NVM` and `RAM` switch between volatile (RAM) and non volatile (NVM) modes
   * RAM allocation for `VARIABLE` and `ALLOT` fully transparent in NVM mode
