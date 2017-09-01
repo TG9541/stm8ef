@@ -974,13 +974,12 @@ AT:
         .endif
 STORE:
         LDW     Y,X
-        LDW     X,(X)
-        LDW     YTEMP,X
-        LDW     X,Y
+        LDW     Y,(Y)
+        PUSHW   X
         LDW     X,(2,X)
-        LDW     [YTEMP],X
-        EXGW    X,Y
-        JP      DDROP
+        LDW     (Y),X
+        POPW    X
+        JRA     DDROP
 
 ;       C@      ( b -- c )      ( TOS STM8: -- A,Z,N )
 ;       Push byte in memory to stack.
@@ -1028,7 +1027,6 @@ RFROM:
         POPW    Y               ; save return addr
         LDW     YTEMP,Y
         POPW    Y
-PUSHJPYTEMP:
         DECW    X
         DECW    X
         LDW     (X),Y
@@ -1079,14 +1077,12 @@ RAT:
         .endif
 TOR:
         EXGW    X,Y
-        POPW    X               ; save return addr
-        LDW     YTEMP,X
-        LDW     X,Y
-        LDW     X,(X)
-        PUSHW   X               ; restore return addr
-        LDW     X,YTEMP
+        LDW     X,(1,SP)
         PUSHW   X
         LDW     X,Y
+        LDW     X,(X)
+        EXGW    X,Y
+        LDW     (3,SP),Y
         JRA     DROP
 
 
