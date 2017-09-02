@@ -2172,24 +2172,25 @@ COUNT:
         CALL    SWAPP
         JP      CAT
 
+        .ifne  HAS_CPNVM
+RAMHERE:
+        CALL    NVMQ
+        JREQ    HERE            ; NVM: CP points to NVM, NVMCP points to RAM
+        CALL    COMPIQ
+        JRNE    HERE
+
+        DoLitW  NVMCP           ; 'eval in Interpreter mode: HERE returns pointer to RAM
+        JP      AT
+        .else
+        RAMHERE = HERE
+        .endif
+
 ;       HERE    ( -- a )      ( TOS STM8: -- A,Z,N )
 ;       Return  top of  code dictionary.
         .ifeq   UNLINKCORE
         HEADER  HERE "HERE"
         .endif
 HERE:
-
-        .ifne  HAS_CPNVM
-        CALL    NVMQ
-        JREQ    1$              ; NVM: CP points to NVM, NVMCP points to RAM
-        CALL    COMPIQ
-        JRNE    1$
-
-        DoLitW  NVMCP        ; 'eval in Interpreter mode: HERE returns pointer to RAM
-        JP      AT
-        .endif
-1$:
-HERECP:
         CALL    CPP
         JP      AT
 
@@ -2214,7 +2215,7 @@ PAD:
         RET
 1$:
         .endif
-        CALLR   HERE            ; regular PAD with offset to HERE
+        CALLR   RAMHERE         ; regular PAD with offset to HERE
         DoLitC  PADOFFS
         JP      PLUS
 
@@ -2997,7 +2998,7 @@ BKSLA:
         .endif
 WORDD:
         CALLR   PARSE
-        CALL    HERE
+        CALL    RAMHERE
         CALL    CELLP
         JP      PACKS
 
@@ -3506,7 +3507,7 @@ CCOMMA:
 
 ;       common part of COMMA and CCOMMA
 OMMA:
-        CALL    HERECP
+        CALL    HERE
         CALL    SWAPP
         CALL    CPP
         JP      PSTOR
@@ -3621,7 +3622,7 @@ COMPIO2:
 STRCQ:
         DoLitC  34              ; "
         CALL    PARSE
-        CALL    HERECP
+        CALL    HERE
         CALL    PACKS           ; string to code dictionary
 CNTPCPPSTORE:
         CALL    COUNT
@@ -4050,14 +4051,14 @@ RBRAC:
 DOESS:
         CALL    COMPI
         CALLR   DODOES          ; 3 CALL dodoes>
-        CALL    HERECP
+        CALL    HERE
         .ifne  USE_CALLDOLIT
         DoLitC  9
         .else
         DoLitC  7
         .endif
         CALL    PLUS
-        CALL    LITER           ; 3 CALL doLit + 2 (HERECP+9)
+        CALL    LITER           ; 3 CALL doLit + 2 (HERE+9)
         CALL    COMPI
         CALL    COMMA           ; 3 CALL COMMA
         CALL    CCOMMALIT
@@ -4079,7 +4080,7 @@ DODOES:
         DoLitC  BRAN_OPC               ; ' JP
         CALL    OVER                   ; ' JP '
         CALL    CSTOR                  ; ' \ CALL <- JP
-        CALL    HERECP                 ; ' HERE
+        CALL    HERE                   ; ' HERE
         CALL    OVER                   ; ' HERE '
         CALL    ONEP                   ; ' HERE ('+1)
         CALL    STORE                  ; ' \ CALL DOVAR <- JP HERE
@@ -4140,7 +4141,7 @@ VARIA:
         CALL    NVMQ
         JREQ    1$              ; NVM: allocate space in RAM
         DoLitW  DOVARPTR        ; overwrite call address "DOVAR" with "DOVARPTR"
-        CALL    HERECP
+        CALL    HERE
         CALL    CELLM
         CALL    STORE
         LDW     Y,USRVAR
