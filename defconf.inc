@@ -143,6 +143,7 @@
         UNLINK_MAX       = 0    ; "MAX"
         UNLINK_MIN       = 0    ; "MIN"
         UNLINK_WITHI     = 0    ; "WITHIN"
+        REMOVE_WITHI     = 0    ; remove "WITHIN"
         UNLINK_UMMOD     = 0    ; "UM/MOD"
         UNLINK_MSMOD     = 0    ; "M/MOD"
         UNLINK_SLMOD     = 0    ; "/MOD"

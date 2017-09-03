@@ -1645,6 +1645,7 @@ MIN:
         JRA     YTEMPTOS
         .endif
 
+        .ifeq   REMOVE_WITHI
 ;       WITHIN ( u ul uh -- t ) ( TOS STM8: -- Y,Z,N )
 ;       Return true if u is within
 ;       range of ul and uh. ( ul <= u < uh )
@@ -1657,6 +1658,7 @@ WITHI:
         CALL    SUBB
         CALL    RFROM
         JRA     ULESS
+        .endif
 
 ; Divide
 
@@ -2328,8 +2330,8 @@ BASESET:
 ;       BASE@     ( -- u )
 ;       Get BASE value
 BASEAT:
-        CALL    BASE
-        JP      AT
+        LD      A,USRBASE+1
+        JP      ASTOR
 
 ; Numeric input, single precision
 
@@ -3001,14 +3003,13 @@ SWAPPF:
         HEADER  BKSP "^h"
         .endif
 BKSP:
-        CALL    TOR
-        CALL    OVER
-        CALL    RFROM
-        CALLR   SWAPPF
-        CALL    OVER
-        CALL    XORR
-        CALL    QBRAN
-        .dw     BACK1
+        LD      A,(4,X)         ; backspace if CUR != BOT
+        CP      A,(X)
+        JRNE    BACK0
+        LD      A,(5,X)
+        CP      A,(1,X)
+        JREQ    BACK1
+BACK0:
         .ifeq   HALF_DUPLEX
         CALLR   BACKSP
         .endif
@@ -3075,12 +3076,10 @@ ACCP1:  CALL    DDUP
         CALL    QBRAN
         .dw     ACCP4
         CALL    KEY
-        CALL    DUPP
-        CALL    BLANK
-        DoLitC  127
-        CALL    WITHI
-        CALL    QBRAN
-        .dw     ACCP2
+        LD      A,(1,X)         ; DUPP
+        JRMI    ACCP2           ; BL 127 WITHIN
+        CP      A,#32
+        JRMI    ACCP2           ; ?branch ACC2
         CALLR   TAP
         JRA     ACCP3
 ACCP2:  CALLR   KTAP
@@ -3126,14 +3125,14 @@ ABORT:
         .endif
 ABORQ:
         CALL    QBRAN
-        .dw     ABOR2   ;text flag
+        .dw     ABOR2           ; text flag
         CALL    DOSTR
 ABOR1:  CALL    SPACE
         CALL    COUNTTYPES
-        DoLitC  63 ; "?"
+        DoLitC  63              ; "?"
         CALL    [USREMIT]
         CALL    CR
-        JRA     ABORT   ;pass error string
+        JRA     ABORT           ; pass error string
 ABOR2:  CALL    DOSTR
         JP      DROP
 
