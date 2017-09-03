@@ -2212,32 +2212,18 @@ EXTRC:
         CALL    SWAPP
         JRA     DIGIT
 
-;       <#      ( -- )   ( TOS STM8: -- Y,Z,N )
-;       Initiate numeric output process.
+;       #>      ( w -- b u )
+;       Prepare output string.
 
         .ifne   WORDS_LINKCHAR
-        HEADER  BDIGS "<#"
+        HEADER  EDIGS "#>"
         .endif
-BDIGS:
+EDIGS:
+        LDW     Y,USRHLD        ; DROP HLD
+        LDW     (X),Y
         CALL    PAD
-        CALL    HLD
-        JP      STORE
-
-;       HOLD    ( c -- )    ( TOS STM8: -- Y,Z,N )
-;       Insert a character into output string.
-
-        .ifne   WORDS_LINKCHAR
-        HEADER  HOLD "HOLD"
-        .endif
-HOLD:
-        LD      A,(1,X)
-        EXGW    X,Y
-        LDW     X,USRHLD
-        DECW    X
-        LDW     USRHLD,X
-        LD      (X),A
-        EXGW    X,Y
-        JP      DROP
+        CALL    OVER
+        JP      SUBB
 
 ;       #       ( u -- u )    ( TOS STM8: -- Y,Z,N )
 ;       Extract one digit from u and
@@ -2263,6 +2249,23 @@ DIGS1:  CALLR   DIG
         JRNE    DIGS1
         RET
 
+;       HOLD    ( c -- )    ( TOS STM8: -- Y,Z,N )
+;       Insert a character into output string.
+
+        .ifne   WORDS_LINKCHAR
+        HEADER  HOLD "HOLD"
+        .endif
+HOLD:
+        LD      A,(1,X)                ; A < c
+        EXGW    X,Y
+        LDW     X,USRHLD               ; HLD @
+        DECW    X                      ; 1 -
+        LDW     USRHLD,X               ; DUP HLD !
+        LD      (X),A                  ; C!
+        EXGW    X,Y
+H_DROP:
+        JP      DROP
+
 ;       SIGN    ( n -- )
 ;       Add a minus sign to
 ;       numeric output string.
@@ -2272,28 +2275,25 @@ DIGS1:  CALLR   DIG
         .endif
 SIGN:
         TNZ     (X)
-        JRPL    SIGN1
+        JRPL    H_DROP
         LD      A,#('-')
         LD      (1,X),A
         JRA     HOLD
-SIGN1:  JP      DROP
-
-;       #>      ( w -- b u )
-;       Prepare output string.
-
-        .ifne   WORDS_LINKCHAR
-        HEADER  EDIGS "#>"
-        .endif
-EDIGS:
-        LDW     Y,USRHLD
-        LDW     (X),Y
-        CALL    PAD
-        CALL    OVER
-        JP      SUBB
 
 ;       str     ( w -- b u )
 ;       Convert a signed integer
 ;       to a numeric string.
+
+;       <#      ( -- )   ( TOS STM8: -- Y,Z,N )
+;       Initiate numeric output process.
+
+        .ifne   WORDS_LINKCHAR
+        HEADER  BDIGS "<#"
+        .endif
+BDIGS:
+        CALL    PAD
+        CALL    HLD
+        JP      STORE
 
         HEADER  STR "str"
 STR:
