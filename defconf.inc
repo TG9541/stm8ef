@@ -230,9 +230,11 @@
         UNLINK_EVAL      = 0    ; "EVAL"
         UNLINK_QUIT      = 0    ; "QUIT"
         UNLINK_TICK      = 0    ; "'"
+        UNLINK_JSRC      = 0    ; "CALL,"
         UNLINK_LITER     = 0    ; "LITERAL"
         UNLINK_BCOMP     = 0    ; "[COMPILE]"
         UNLINK_COMPI     = 0    ; "COMPILE"
+        UNLINK_STRCQ     = 0    ; "$,""
         UNLINK_FOR       = 0    ; "FOR"
         UNLINK_NEXT      = 0    ; "NEXT"
         UNLINK_DOO       = 0    ; "DO"
@@ -252,6 +254,7 @@
         UNLINK_STRQ      = 0    ; '$"'
         UNLINK_DOTQ      = 0    ; '."'
         UNLINK_UNIQU     = 0    ; "?UNIQUE"
+        UNLINK_SNAME     = 0    ; "$,n"
         UNLINK_SCOMP     = 0    ; "$COMPILE"
         UNLINK_OVERT     = 0    ; "OVERT"
         UNLINK_COLON     = 0    ; ":"
