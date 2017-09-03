@@ -1108,7 +1108,7 @@ OVER:
         HEADER  IGET "I"
 IGET:
         .ifne   HAS_ALIAS
-        JP      RAT             ; CF JP: NAME> resolves I as ' R@" 
+        JP      RAT             ; CF JP: NAME> resolves I as ' R@"
         .else
         JRA     RAT
         .endif
@@ -1565,7 +1565,7 @@ EQ1:    LD      (X),A
 
 ;       U<      ( u u -- t )    ( TOS STM8: -- Y,Z,N )
 ;       Unsigned compare of top two items.
-        
+
         HEADER  ULESS "U<"
 ULESS:
         CLR     A
@@ -2015,7 +2015,7 @@ TCHAR:
 
 ;       DEPTH   ( -- n )      ( TOS STM8: -- Y,Z,N )
 ;       Return  depth of data stack.
-        
+
         .ifeq   BAREBONES
         HEADER  DEPTH "DEPTH"
         .endif
@@ -2087,14 +2087,11 @@ HERE:
 ;       above code dictionary.
 
         .ifne   WORDS_LINKCHAR
-        .ifeq   UNLINKCORE
         HEADER  PAD "PAD"
-        .endif
         .endif
 PAD:
         .ifne   HAS_BACKGROUND
-        ; hack for background task PAD
-        ; create offset for PAD area
+        ; get PAD area address (offset or dedicated) for PAD area
         PUSH    CC              ; Test interrupt level flags in CC
         POP     A
         AND     A,#0x20
@@ -2107,7 +2104,7 @@ PAD:
         DoLitC  PADOFFS
         JP      PLUS
 
-        .ifeq   BAREBONES
+        .ifeq   REMOVE_ATEXE
 ;       @EXECUTE        ( a -- )  ( TOS STM8: undefined )
 ;       Execute vector stored in address a.
 
@@ -2169,10 +2166,8 @@ ERASE:
 ;       Build a counted string with
 ;       u characters from b. Null fill.
 
-        .ifne   WORDS_LINKCHAR
-        .ifeq   UNLINKCORE
+        .ifne   WORDS_LINKINTER
         HEADER  PACKS "PACK$"
-        .endif
         .endif
 PACKS:
         CALL    DUPP
@@ -2201,7 +2196,6 @@ DIGIT:
 1$:     ADD     A,#48
         LD      (1,X),A
         RET
-
 
 ;       EXTRACT ( n base -- n c )   ( TOS STM8: -- Y,Z,N )
 ;       Extract least significant digit from n.
@@ -4044,14 +4038,12 @@ DUPPCAT:
 
 
 
-        .ifne   WORDS_EXTRADEBUG
+        .ifeq   REMOVE_TNAME
 ;       >NAME   ( ca -- na | F )
 ;       Convert code address
 ;       to a name address.
 
-        .ifne   WORDS_LINKMISC
         HEADER  TNAME ">NAME"
-        .endif
 TNAME:
         CALL    CNTXT           ; vocabulary link
 TNAM2:  CALL    AT

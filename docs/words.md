@@ -137,11 +137,6 @@
 ```
 
 ```
-;       I       ( -- n )     ( TOS STM8: -- Y,Z,N )
-;       Get inner FOR-NEXT or DO-LOOP index value
-```
-
-```
 ;       R>      ( -- w )     ( TOS STM8: -- Y,Z,N )
 ;       Pop return stack to data stack.
 ```
@@ -198,6 +193,11 @@
 ```
 ;       OVER    ( w1 w2 -- w1 w2 w1 ) ( TOS STM8: -- Y,Z,N )
 ;       Copy second stack item to top.
+```
+
+```
+;       I       ( -- n )     ( TOS STM8: -- Y,Z,N )
+;       Get inner FOR-NEXT or DO-LOOP index value
 ```
 
 ```
