@@ -8,6 +8,6 @@
 
 \ unlock write protection, store option byte
 : OPT! ( c a -- )
-  FLASH_CR2 DUP C@ $80 OR SWAP CN!
+  [ FLASH_CR2 ] LITERAL DUP C@ $80 OR SWAP CN!
   ULOCK CN! LOCK
 ;

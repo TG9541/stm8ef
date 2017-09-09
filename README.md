@@ -2,20 +2,20 @@
 
 TG9541/STM8EF is an extends [Dr. C.H. Ting's eForth for the *STM8S Discovery*](http://www.forth.org/svfig/kk/07-2010.html). It aims to be a very lightweight embedded "untethered" Forth system for low-end STM8 µCs with a maximum "feature-to-binary-size" ratio. TG9541/STM8EF is published as Free Open Source Software ([license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md)) with the kind permission of the original author.
 
-![4th_640](https://user-images.githubusercontent.com/5466977/28994765-3267d78c-79d6-11e7-927f-91751cd402db.jpg)
+[![STM8EF Wiki](https://user-images.githubusercontent.com/5466977/28994765-3267d78c-79d6-11e7-927f-91751cd402db.jpg)](https://github.com/TG9541/stm8ef/wiki)
 
 The project has the following goals:
 
 1. provide an easy to use [Forth kit](https://github.com/TG9541/stm8ef/wiki/STM8S-eForth-Programming) for STM8 µCs
 2. board support for [common low-cost Chinese control boards](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets)
 3. maximize the product *features* * *free space* for low-end STM8 *Value Line* µCs (see below)
-4. create a development environment, libraries, and encourage community support
+4. collaborate with the Forth community to create a development environment, libraries, and applications
 
 Please refer to the [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) for more information!
 
 # Board support:
 
-TG9541/STM8EF provides board support for several common "Chinese gadgets", and for generic targets:
+TG9541/STM8EF provides board support for generic targets and for several common "Chinese gadgets" like the following:
 
 * [W1209](https://github.com/TG9541/stm8ef/wiki/Board-W1209) low-cost thermostat w/ 3 digit 7S-LED display, full- or half-duplex RS232
 * [W1219](https://github.com/TG9541/stm8ef/wiki/Board-W1219) low cost thermostat with 2x3 digit 7S-LED display, half-duplex RS232 through PD1/SWIM
