@@ -48,10 +48,7 @@
                                 ;  UNTIL WHILE WORDS [COMPILE] _TYPE dm+
         NO_VARIABLE      = 0    ; Disable VARIABLE and feature "VARIABLE in Flash allocates RAM"
 
-        WORDS_LINKINTER  = 0    ; Link interpreter words: $" aborq ABORT ACCEPT 'BOOT CONTEXT
-                                ;    CUPPER DIGIT? eval 'eval EXTRACT find ^h hi >IN $INTERPRET
-                                ;    kTAP NAME? NUMBER? .OK PAD pars PRESET 'PROMPT QUERY QUIT
-                                ;    SAME? ?STACK TAP TIB 'TIB #TIB TOKEN WORD
+        WORDS_LINKINTER  = 0    ; Link interpreter words
         WORDS_LINKCOMP   = 0    ; Link compiler words: cp last OVERT $,n ?UNIQUE $COMPILE
         WORDS_LINKRUNTI  = 0    ; Link runtime words: doLit do$ doVAR donxt dodoes ?branch branch
                                 ;    (+loop) $"| ."|
@@ -67,8 +64,8 @@
 
 
         UNLINK_COLD      = 0    ; "COLD"
-        UNLINK_TBOOT     = 0    ; "'BOOT"
-        UNLINK_HI        = 0    ; "hi"
+        UNLINK_TBOOT     = 1    ; "'BOOT"
+        UNLINK_HI        = 1    ; "hi"
         UNLINK_QRX       = 0    ; "?RX"
         UNLINK_TXSTOR    = 0    ; "TX!"
         UNLINK_QRXP      = 0    ; "?RXP"
@@ -112,17 +109,18 @@
         UNLINK_ORR       = 0    ; "OR"
         UNLINK_ZLESS     = 0    ; "0<"
         UNLINK_SUBB      = 0    ; "-"
-        UNLINK_CNTXT     = 0    ; "CONTEXT"
+        UNLINK_CNTXT     = 1    ; "CONTEXT"
         UNLINK_CPP       = 0    ; "cp"
         UNLINK_BASE      = 0    ; "BASE"
-        UNLINK_INN       = 0    ; ">IN"
-        UNLINK_NTIB      = 0    ; "#TIB"
-        UNLINK_TEVAL     = 0    ; "'eval"
+        UNLINK_INN       = 1    ; ">IN"
+        UNLINK_NTIB      = 1    ; "#TIB"
+        UNLINK_TEVAL     = 1    ; "'eval"
         UNLINK_HLD       = 1    ; "hld"
         UNLINK_TEMIT     = 0    ; "'EMIT"
         UNLINK_TQKEY     = 0    ; "'?KEY"
         UNLINK_LAST      = 0    ; "last"
         UNLINK_TIB       = 0    ; "TIB"
+        REMOVE_TIB       = 1    ; remove "TIB"
         UNLINK_OUTA      = 0    ; "OUT"
         UNLINK_BLANK     = 0    ; "BL"
         UNLINK_ZERO      = 0    ; "0"
@@ -130,7 +128,8 @@
         UNLINK_MONE      = 0    ; "-1"
         UNLINK_TIMM      = 0    ; "TIM"
         UNLINK_BGG       = 0    ; "BG"
-        UNLINK_TPROMPT   = 0    ; "'PROMPT"
+        UNLINK_TPROMPT   = 1    ; "'PROMPT"
+        REMOVE_TPROMPT   = 1    ; remove "'PROMPT"
         UNLINK_HANDD     = 0    ; "HAND"
         UNLINK_FILEE     = 0    ; "FILE"
         UNLINK_QDUP      = 0    ; "?DUP"
@@ -177,9 +176,9 @@
         UNLINK_CMOVE     = 0    ; "CMOVE"
         UNLINK_FILL      = 0    ; "FILL"
         UNLINK_ERASE     = 0    ; "ERASE"
-        UNLINK_PACKS     = 0    ; "PACK$"
+        UNLINK_PACKS     = 1    ; "PACK$"
         UNLINK_DIGIT     = 1    ; "DIGIT"
-        UNLINK_EXTRC     = 0    ; "EXTRACT"
+        UNLINK_EXTRC     = 1    ; "EXTRACT"
         UNLINK_BDIGS     = 0    ; "<#"
         UNLINK_HOLD      = 0    ; "HOLD"
         UNLINK_DIG       = 0    ; "#"
@@ -257,7 +256,7 @@
         UNLINK_DOTQ      = 0    ; '."'
         UNLINK_UNIQU     = 0    ; "?UNIQUE"
         UNLINK_SNAME     = 0    ; "$,n"
-        UNLINK_SCOMP     = 0    ; "$COMPILE"
+        UNLINK_SCOMP     = 1    ; "$COMPILE"
         UNLINK_OVERT     = 0    ; "OVERT"
         UNLINK_COLON     = 0    ; ":"
         UNLINK_IMMED     = 0    ; "IMMEDIATE"
@@ -293,3 +292,6 @@
         UNLINK_RESETT    = 0    ; "RESET"
         UNLINK_SAVEC     = 0    ; "SAVEC"
         UNLINK_RESTC     = 0    ; "IRET"
+
+
+

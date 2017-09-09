@@ -145,6 +145,7 @@
 
         .include "globconf.inc"
 
+        .include "linkopts.inc"
 
         ;**************************************
         ;******  5) Board Driver Memory  ******
@@ -545,9 +546,7 @@ COLD:
 ;       'BOOT   ( -- a )
 ;       The application startup vector and NVM USR setting array
 
-        .ifne   (WORDS_LINKINTER + HAS_CPNVM)
         HEADER  TBOOT "'BOOT"
-        .endif
 TBOOT:
         CALL    DOVAR
         UBOOT = .
@@ -598,9 +597,7 @@ TBOOT:
 ;       hi      ( -- )
 ;       Display sign-on message.
 
-        .ifne   (WORDS_LINKINTER + HAS_CPNVM)
         HEADER  HI "hi"
-        .endif
 HI:
         CALLR   1$              ; CR
         CALL    DOTQP           ; initialize I/O
@@ -1220,9 +1217,7 @@ SUBB:
 ;       CONTEXT ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Start vocabulary search.
 
-        .ifne   WORDS_LINKINTER
         HEADER  CNTXT "CONTEXT"
-        .endif
 CNTXT:
         .ifne  HAS_CPNVM
         CALL    COMPIQ
@@ -1261,9 +1256,7 @@ BASE:
 ;       >IN     ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Hold parsing pointer.
 
-        .ifne   WORDS_LINKINTER
         HEADER  INN ">IN"
-        .endif
 INN:
         LD      A,#(RAMBASE+USR_IN)
         JRA     ASTOR
@@ -1271,9 +1264,7 @@ INN:
 ;       #TIB    ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Count in terminal input buffer.
 
-        .ifne   WORDS_LINKINTER
         HEADER  NTIB "#TIB"
-        .endif
 NTIB:
         LD      A,#(RAMBASE+USRNTIB)
         JRA     ASTOR
@@ -1281,13 +1272,10 @@ NTIB:
 ;       'eval   ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Execution vector of EVAL.
 
-        .ifne   WORDS_LINKINTER
         HEADER  TEVAL "'eval"
-        .endif
 TEVAL:
         LD      A,#(RAMBASE+USREVAL)
         JRA     ASTOR
-
 
 ;       HLD     ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Hold a pointer of output string.
@@ -1305,7 +1293,6 @@ TEMIT:
         LD      A,#(USREMIT)
         JRA     ASTOR
         .endif
-
 
 ;       '?KEY   ( -- a )     ( TOS STM8: -- A,Z,N )
 ;
@@ -1346,7 +1333,7 @@ ATOKEY:
 ;       TIB     ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Return address of terminal input buffer.
 
-        .ifne   WORDS_LINKINTER
+        .ifeq   REMOVE_TIB
         HEADER  TIB "TIB"
 TIB:
         DoLitW  TIBB
@@ -1424,11 +1411,10 @@ BGG:
         .endif
 
 
-        .ifne   HAS_CPNVM
 ;       'PROMPT ( -- a)     ( TOS STM8: -- Y,Z,N )
 ;       Return address of PROMPT vector
 
-        .ifne   WORDS_LINKINTER
+        .ifeq   REMOVE_TPROMPT
         HEADER  TPROMPT "'PROMPT"
 TPROMPT:
         LD      A,#(USRPROMPT)
@@ -2168,9 +2154,7 @@ ERASE:
 ;       Build a counted string with
 ;       u characters from b. Null fill.
 
-        .ifne   WORDS_LINKINTER
         HEADER  PACKS "PACK$"
-        .endif
 PACKS:
         CALL    DUPP
         CALL    TOR             ; strings only on cell boundary
@@ -2202,9 +2186,7 @@ DIGIT:
 ;       EXTRACT ( n base -- n c )   ( TOS STM8: -- Y,Z,N )
 ;       Extract least significant digit from n.
 
-        .ifne   WORDS_LINKINTER
         HEADER  EXTRC "EXTRACT"
-        .endif
 EXTRC:
         CALL    ZERO
         CALL    SWAPP
@@ -2339,9 +2321,7 @@ BASEAT:
 ;       Convert a number string to
 ;       integer. Push a flag on tos.
 
-        .ifne   WORDS_LINKINTER
         HEADER  NUMBQ "NUMBER?"
-        .endif
 NUMBQ:
         PUSH    USRBASE+1
         PUSH    #0                     ; sign flag
@@ -2434,9 +2414,7 @@ NUMDROP:
 ;       Convert a character to its numeric
 ;       value. A flag indicates success.
 
-        .ifne   WORDS_LINKINTER
         HEADER  DIGITQ "DIGIT?"
-        .endif
 DIGTQ:
         CALL    TOR
         LD      A,YL
@@ -2701,9 +2679,7 @@ AFLAGS:
 ;       Scan string delimited by c.
 ;       Return found string and its offset.
 
-        .ifne   WORDS_LINKINTER
         HEADER  PARS "pars"
-        .endif
 PARS:
         CALLR   AFLAGS          ; TEMP CSTOR
         PUSH    A
@@ -2771,9 +2747,7 @@ SUBPARS:
 ;       Scan input stream and return
 ;       counted string delimited by c.
 
-        .ifne   WORDS_LINKINTER
         HEADER  PARSE "PARSE"
-        .endif
 PARSE:
         DoLitW  TIBB
         ADDW    Y,USR_IN        ; current input buffer pointer
@@ -2823,9 +2797,7 @@ BKSLA:
 ;       Parse a word from input stream
 ;       and copy it to code dictionary.
 
-        .ifne   WORDS_LINKINTER
         HEADER  WORDD "WORD"
-        .endif
 WORDD:
         CALLR   PARSE
         CALL    RAMHERE
@@ -2837,9 +2809,7 @@ WORDD:
 ;       Parse a word from input stream
 ;       and copy it to name dictionary.
 
-        .ifne   WORDS_LINKINTER
         HEADER  TOKEN "TOKEN"
-        .endif
 TOKEN:
         CALL    BLANK
         JRA     WORDD
@@ -2886,9 +2856,7 @@ SAMEQCAT:
 ;       Compare u cells in two
 ;       strings. Return 0 if identical.
 
-        .ifne   WORDS_LINKINTER
         HEADER  SAMEQ "SAME?"
-        .endif
 SAMEQ:
         CALL    ONEM
         CALL    TOR
@@ -2909,9 +2877,7 @@ SAME2:  CALL    DONXT
 ;       CUPPER  ( c -- c )
 ;       convert char to upper case
 
-        .ifne   WORDS_LINKINTER
         HEADER  CUPPER "CUPPER"
-        .endif
 CUPPER:
         LD      A,(1,X)
         CP      A,#('a')
@@ -2926,9 +2892,7 @@ CUPPER:
 ;       NAME?   ( a -- ca na | a F )
 ;       Search vocabularies for a string.
 
-        .ifne   WORDS_LINKINTER
         HEADER  NAMEQ "NAME?"
-        .endif
 NAMEQ:
         .ifne   HAS_ALIAS
         CALL    CNTXT_ALIAS
@@ -2942,9 +2906,7 @@ NAMEQ:
 ;       Search vocabulary for string.
 ;       Return ca and na if succeeded.
 
-        .ifne   WORDS_LINKINTER
         HEADER  FIND "find"
-        .endif
 FIND:
         CALLR   SWAPPF          ; SWAPP
         LDW     Y,(Y)           ; DUPP CAT TEMP CSTOR DUPP AT
@@ -2999,9 +2961,7 @@ SWAPPF:
 ;       ^H      ( bot eot cur -- bot eot cur )
 ;       Backup cursor by one character.
 
-        .ifne   WORDS_LINKINTER
         HEADER  BKSP "^h"
-        .endif
 BKSP:
         LD      A,(4,X)         ; backspace if CUR != BOT
         CP      A,(X)
@@ -3024,9 +2984,7 @@ BACK1:  RET
 ;       Accept and echo key stroke
 ;       and bump cursor.
 
-        .ifne   WORDS_LINKINTER
         HEADER  TAP "TAP"
-        .endif
 TAP:
         .ifeq   HALF_DUPLEX
         CALL    DUPP
@@ -3040,9 +2998,7 @@ TAP:
 ;       Process a key stroke,
 ;       CR or backspace.
 
-        .ifne   WORDS_LINKINTER
         HEADER  KTAP "kTAP"
-        .endif
 KTAP:
         LD      A,(1,X)
         CP     A,#CRR
@@ -3064,9 +3020,7 @@ KTAP2:  CALL    DROP
 ;       Accept one line of characters to input
 ;       buffer. Return with actual count.
 
-        .ifne   WORDS_LINKINTER
         HEADER  ACCEP "ACCEPT"
-        .endif
 ACCEP:
         CALL    OVER
         CALL    PLUS
@@ -3092,9 +3046,7 @@ ACCP4:  CALL    DROP
 ;       Accept one line from input stream to
 ;       terminal input buffer.
 
-        .ifne   WORDS_LINKINTER
         HEADER  QUERY "QUERY"
-        .endif
 QUERY:
         DoLitW  TIBB
         DoLitC  TIBLENGTH
@@ -3109,9 +3061,7 @@ QUERY:
 ;       Reset data stack and
 ;       jump to QUIT.
 
-        .ifne   WORDS_LINKINTER
         HEADER  ABORT "ABORT"
-        .endif
 ABORT:
         CALLR   PRESE
         JP      QUIT
@@ -3120,9 +3070,7 @@ ABORT:
 ;       Run time routine of ABORT".
 ;       Abort with a message.
 
-        .ifne   WORDS_LINKINTER
         HEADFLG ABORQ "aborq" COMPO
-        .endif
 ABORQ:
         CALL    QBRAN
         .dw     ABOR2           ; text flag
@@ -3140,9 +3088,7 @@ ABOR2:  CALL    DOSTR
 ;       Reset data stack pointer and
 ;       terminal input buffer.
 
-        .ifne   WORDS_LINKINTER
         HEADER  PRESE "PRESET"
-        .endif
 PRESE:
         CLR     USRNTIB
         CLR     USRNTIB+1
@@ -3155,9 +3101,7 @@ PRESE:
 ;       Interpret a word. If failed,
 ;       try to convert it to an integer.
 
-        .ifne   WORDS_LINKINTER
         HEADER  INTER "$INTERPRET"
-        .endif
 INTER:
         CALL    NAMEQ
         CALL    QDQBRAN         ; ?defined
@@ -3191,9 +3135,7 @@ COMPIQ:
 ;       .OK     ( -- )
 ;       Display 'ok' while interpreting.
 
-        .ifne   WORDS_LINKINTER
         HEADER  DOTOK ".OK"
-        .endif
 DOTOK:
         CALLR   COMPIQ
         JRNE    DOTO1
@@ -3209,9 +3151,7 @@ DOTO1:  JP      CR
 ;       ?STACK  ( -- )
 ;       Abort if stack underflows.
 
-        .ifne   WORDS_LINKINTER
         HEADER  QSTAC "?STACK"
-        .endif
 QSTAC:
         CALL    DEPTH
         CALL    ZLESS   ;check only for underflow
@@ -3223,9 +3163,7 @@ QSTAC:
 ;       EVAL    ( -- )
 ;       Interpret input stream.
 
-        .ifne   WORDS_LINKINTER
         HEADER  EVAL "EVAL"
-        .endif
 EVAL:
 EVAL1:  CALL    TOKEN
         LD      A,(Y)
@@ -3242,9 +3180,7 @@ EVAL2:
 ;       Reset return stack pointer
 ;       and start text interpreter.
 
-        .ifne   WORDS_LINKINTER
         HEADER  QUIT "QUIT"
-        .endif
 QUIT:
         LDW     Y,#RPP          ; initialize return stack
         LDW     SP,Y
@@ -3685,9 +3621,7 @@ PNAM1:  CALL    DOSTR
 ;       Compile next word to
 ;       dictionary as a token or literal.
 
-        .ifne   WORDS_LINKCOMP
         HEADER  SCOMP "$COMPILE"
-        .endif
 SCOMP:
         CALL    NAMEQ
         CALL    QDQBRAN         ; ?defined
