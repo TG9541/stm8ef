@@ -1422,11 +1422,11 @@ TPROMPT:
         .endif
 
 
+        .ifne   HAS_FILEHAND
 ;       ( -- ) EMIT pace character for handshake in FILE mode
 PACEE:
         DoLitC  PACE      ; pace character for host handshake
         JP      [USREMIT]
-
 
 ;       HAND    ( -- )
 ;       set PROMPT vector to interactive mode

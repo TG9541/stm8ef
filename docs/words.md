@@ -593,13 +593,8 @@
 ```
 
 ```
-;       <#      ( -- )   ( TOS STM8: -- Y,Z,N )
-;       Initiate numeric output process.
-```
-
-```
-;       HOLD    ( c -- )    ( TOS STM8: -- Y,Z,N )
-;       Insert a character into output string.
+;       #>      ( w -- b u )
+;       Prepare output string.
 ```
 
 ```
@@ -615,20 +610,25 @@
 ```
 
 ```
+;       HOLD    ( c -- )    ( TOS STM8: -- Y,Z,N )
+;       Insert a character into output string.
+```
+
+```
 ;       SIGN    ( n -- )
 ;       Add a minus sign to
 ;       numeric output string.
 ```
 
 ```
-;       #>      ( w -- b u )
-;       Prepare output string.
-```
-
-```
 ;       str     ( w -- b u )
 ;       Convert a signed integer
 ;       to a numeric string.
+```
+
+```
+;       <#      ( -- )   ( TOS STM8: -- Y,Z,N )
+;       Initiate numeric output process.
 ```
 
 ```
