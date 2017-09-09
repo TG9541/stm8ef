@@ -1224,12 +1224,12 @@ CNTXT:
         JREQ    1$
         CALL    NVMQ
         JREQ    1$
-        LD      A,#(RAMBASE+NVMCONTEXT)
+        LD      A,#(NVMCONTEXT)
         JRA     ASTOR
 1$:
         .endif
 CNTXT_ALIAS:
-        LD      A,#(RAMBASE+USRCONTEXT)
+        LD      A,#(USRCONTEXT)
         JRA     ASTOR
 
 
@@ -1240,7 +1240,7 @@ CNTXT_ALIAS:
         HEADER  CPP "cp"
         .endif
 CPP:
-        LD      A,#(RAMBASE+USRCP)
+        LD      A,#(USRCP)
         JRA     ASTOR
 
 ; System and user variables
@@ -1250,7 +1250,7 @@ CPP:
 
         HEADER  BASE "BASE"
 BASE:
-        LD      A,#(RAMBASE+USRBASE)
+        LD      A,#(USRBASE)
         JRA     ASTOR
 
 ;       >IN     ( -- a )     ( TOS STM8: -- Y,Z,N )
@@ -1258,7 +1258,7 @@ BASE:
 
         HEADER  INN ">IN"
 INN:
-        LD      A,#(RAMBASE+USR_IN)
+        LD      A,#(USR_IN)
         JRA     ASTOR
 
 ;       #TIB    ( -- a )     ( TOS STM8: -- Y,Z,N )
@@ -1266,7 +1266,7 @@ INN:
 
         HEADER  NTIB "#TIB"
 NTIB:
-        LD      A,#(RAMBASE+USRNTIB)
+        LD      A,#(USRNTIB)
         JRA     ASTOR
 
 ;       'eval   ( -- a )     ( TOS STM8: -- Y,Z,N )
@@ -1274,7 +1274,7 @@ NTIB:
 
         HEADER  TEVAL "'eval"
 TEVAL:
-        LD      A,#(RAMBASE+USREVAL)
+        LD      A,#(USREVAL)
         JRA     ASTOR
 
 ;       HLD     ( -- a )     ( TOS STM8: -- Y,Z,N )
@@ -1282,7 +1282,7 @@ TEVAL:
 
         HEADER  HLD "hld"
 HLD:
-        LD      A,#(RAMBASE+USRHLD)
+        LD      A,#(USRHLD)
         JRA     ASTOR
 
 ;       'EMIT   ( -- a )     ( TOS STM8: -- A,Z,N )
@@ -1310,7 +1310,7 @@ TQKEY:
         HEADER  LAST "last"
         .endif
 LAST:
-        LD      A,#(RAMBASE+USRLAST)
+        LD      A,#(USRLAST)
 
 ;       ASTOR core ( -- n )     ( TOS STM8: -- Y,Z,N )
 ;       push A to stack
@@ -3580,6 +3580,7 @@ UNIQU:
         CALL    OVER
         CALL    COUNTTYPES      ; just in case
 UNIQ1:  JP      DROP
+
 
 ;       $,n     ( na -- )
 ;       Build a new dictionary name
