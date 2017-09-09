@@ -836,7 +836,7 @@ EXECU:
         INCW    X
         JRA     YJPIND
 
-        .ifeq   BOOTSTRAP + BAREBONES
+        .ifeq   REMOVE_EXIT
 ;       EXIT    ( -- )
 ;       Terminate a colon definition.
 
@@ -2447,7 +2447,7 @@ KEY1:   CALL    [USRQKEY]
         .dw     KEY1
         RET
 
-        .ifeq   BAREBONES
+        .ifeq   REMOVE_NUFQ
 ;       NUF?    ( -- t )
 ;       Return false if no input,
 ;       else pause and if CR return true.
