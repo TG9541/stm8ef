@@ -2053,9 +2053,6 @@ COUNT:
 RAMHERE:
         CALL    NVMQ
         JREQ    HERE            ; NVM: CP points to NVM, NVMCP points to RAM
-        CALL    COMPIQ
-        JRNE    HERE
-
         DoLitW  NVMCP           ; 'eval in Interpreter mode: HERE returns pointer to RAM
         JP      AT
         .else
@@ -2793,27 +2790,38 @@ BKSLA:
         LDW     USR_IN,Y
         RET
 
+;       TOKEN   ( -- a ; <string> )
+;       Parse a word from input stream
+;       and copy it to code dictionary or to RAM.
+
+        HEADER  TOKEN "TOKEN"
+
+TOKEN:
+        CALL    BLANK
+        JRA     WORDD
+
 ;       WORD    ( c -- a ; <string> )
 ;       Parse a word from input stream
-;       and copy it to code dictionary.
+;       and copy it to code dictionary or to RAM.
 
         HEADER  WORDD "WORD"
 WORDD:
         CALLR   PARSE
         CALL    RAMHERE
+CPPACKS:
         CALL    CELLP
         JP      PACKS
 
-
-;       TOKEN   ( -- a ; <string> )
-;       Parse a word from input stream
-;       and copy it to name dictionary.
-
-        HEADER  TOKEN "TOKEN"
-TOKEN:
+;       TOKEN_$,n ( <word> -- <dict header> )
+;       copy token to the code dictionary
+;       and build a new dictionary name
+;       note: for defining words (e.g. :, CREATE)
+TOKSNAME:
         CALL    BLANK
-        JRA     WORDD
-
+        CALLR   PARSE
+        CALL    HERE
+        CALLR   CPPACKS
+        JP      SNAME
 
 ; Dictionary search
 ;       NAME>   ( na -- ca )
@@ -3198,10 +3206,10 @@ QUIT2:  CALL    QUERY           ; get input
         HEADER  TICK "'"
 TICK:
         CALL    TOKEN
-        CALL    NAMEQ   ;?defined
+        CALL    NAMEQ           ; ?defined
         CALL    QBRAN
         .dw     ABOR1
-        RET     ;yes, push code address
+        RET                     ; yes, push code address
 
 ;       ,       ( w -- )
 ;       Compile an integer into
@@ -3636,7 +3644,7 @@ SCOMP:
 
         JP      EXECU
 SCOM1:  JP      JSRC
-SCOM2:  CALL    NUMBQ   ;try to convert to number
+SCOM2:  CALL    NUMBQ           ; try to convert to number
         CALL    QBRAN
         .dw     ABOR1
         JP      LITER
@@ -3701,8 +3709,7 @@ SEMIS:
         HEADER  COLON ":"
 COLON:
         CALLR   RBRAC           ; do "]" first to set HERE to compile state
-        CALL    TOKEN
-        JP      SNAME
+        JP      TOKSNAME        ; copy token to dictionary
 
 
 ;       IMMEDIATE       ( -- )
@@ -3783,28 +3790,14 @@ DODOES:
         RET
         .endif
 
-
 ;       CREATE  ( -- ; <string> )
 ;       Compile a new array
 ;       without allocating space.
 
         HEADER  CREAT "CREATE"
 CREAT:
-        .ifne   HAS_CPNVM
-        LDW     Y,USREVAL
-        PUSHW   Y               ; save TEVAL
-        CALLR   RBRAC           ; "]" make HERE return CP even in INTERPRETER mode
-        .endif
-
-        CALL    TOKEN
-        CALL    SNAME
+        CALL    TOKSNAME        ; copy token to dictionary
         CALL    OVERT
-
-        .ifne   HAS_CPNVM
-        POPW    Y               ; restore TEVAL
-        LDW     USREVAL,Y       ; from here on ',', 'C,', '$,"' and 'ALLOT' write to CP
-        .endif
-
         CALL    COMPI
         CALL    DOVAR
         RET
