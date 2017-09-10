@@ -1654,15 +1654,15 @@ WITHI:
 
         HEADER  UMMOD "UM/MOD"
 UMMOD:
-        PUSHW   X       ; save stack pointer
-        LDW     X,(X)   ; un
-        LDW     YTEMP,X ; save un
-        LDW     Y,(1,SP); X stack pointer
-        LDW     Y,(4,Y) ; Y=udl
-        LDW     X,(1,SP); X
-        LDW     X,(2,X) ; X=udh
+        PUSHW   X               ; save stack pointer
+        LDW     X,(X)           ; un
+        LDW     YTEMP,X         ; save un
+        LDW     Y,(1,SP)        ; X stack pointer
+        LDW     Y,(4,Y)         ; Y=udl
+        LDW     X,(1,SP)        ; X
+        LDW     X,(2,X)         ; X=udh
         CPW     X,YTEMP
-        JRULE   MMSM1   ; X is still on the R-stack
+        JRULE   MMSM1           ; X is still on the R-stack
         POPW    X
         INCW    X               ; pop off 1 level
         INCW    X               ; ADDW   X,#2
@@ -1672,24 +1672,24 @@ UMMOD:
         LDW     (2,X),Y
         RET
 MMSM1:
-        LD      A,#17   ; loop count
+        LD      A,#17           ; loop count
 MMSM3:
-        CPW     X,YTEMP ; compare udh to un
-        JRULT   MMSM4   ; can't subtract
-        SUBW    X,YTEMP ; can subtract
+        CPW     X,YTEMP         ; compare udh to un
+        JRULT   MMSM4           ; can't subtract
+        SUBW    X,YTEMP         ; can subtract
 MMSM4:
-        CCF             ; quotient bit
-        RLCW    Y       ; rotate into quotient
-        RLCW    X       ; rotate into remainder
-        DEC     A       ; repeat
+        CCF                     ; quotient bit
+        RLCW    Y               ; rotate into quotient
+        RLCW    X               ; rotate into remainder
+        DEC     A               ; repeat
         JRUGT   MMSM3
         SRAW    X
-        LDW     YTEMP,X ; done, save remainder
+        LDW     YTEMP,X         ; done, save remainder
         POPW    X
         INCW    X               ; drop
         INCW    X               ; ADDW   X,#2
         LDW     (X),Y
-        LDW     Y,YTEMP ; save quotient
+        LDW     Y,YTEMP         ; save quotient
         LDW     (2,X),Y
         RET
 
@@ -1918,7 +1918,7 @@ ONEP:
 ;       DOXCODE   ( n -- n )   ( TOS STM8: -- Y,Z,N )
 ;       DOXCODE precedes assembly code for a primitive word
 ;       In the assembly code: X=(TOS), YTEMP=TOS. (TOS)=X after RET
-;       Caution: no other Forth word may be called
+;       Caution: no other Forth word may be called from assembly!
 DOXCODE:
         POPW    Y
         LDW     YTEMP,X
@@ -2235,12 +2235,12 @@ DIGS1:  CALLR   DIG
         HEADER  HOLD "HOLD"
         .endif
 HOLD:
-        LD      A,(1,X)                ; A < c
+        LD      A,(1,X)         ; A < c
         EXGW    X,Y
-        LDW     X,USRHLD               ; HLD @
-        DECW    X                      ; 1 -
-        LDW     USRHLD,X               ; DUP HLD !
-        LD      (X),A                  ; C!
+        LDW     X,USRHLD        ; HLD @
+        DECW    X               ; 1 -
+        LDW     USRHLD,X        ; DUP HLD !
+        LD      (X),A           ; C!
         EXGW    X,Y
 H_DROP:
         JP      DROP
@@ -2321,7 +2321,7 @@ BASEAT:
         HEADER  NUMBQ "NUMBER?"
 NUMBQ:
         PUSH    USRBASE+1
-        PUSH    #0                     ; sign flag
+        PUSH    #0              ; sign flag
 
         CALL    ZERO
         CALL    OVER
@@ -2351,14 +2351,14 @@ NUMQ0:
         CP      A,#('-')
         JRNE    NUMQ1
         POP     A
-        PUSH    #0x80                   ; flag ?sign
+        PUSH    #0x80           ; flag ?sign
 
 NUMQSKIP:
         CALL    SWAPP
         CALL    ONEP
         CALL    SWAPP
         CALL    ONEM
-        JRNE    NUMQ0            ; check for more modifiers
+        JRNE    NUMQ0           ; check for more modifiers
 
 NUMQ1:
         CALL    QDQBRAN
@@ -2424,7 +2424,7 @@ DIGTQ:
         .endif
         CP      A,#10
         JRPL    DGTQ1
-        CPL     A                      ; make sure A > base
+        CPL     A               ; make sure A > base
 DGTQ1:  LD      (1,X),A
         CALL    DUPP
         CALL    RFROM
@@ -2852,7 +2852,7 @@ NAMET:
 ;       R@ indexed char lookup for SAME?
 SAMEQCAT:
         CALL    OVER
-        ADDW    Y,(3,SP)             ; R-OVER> PLUS
+        ADDW    Y,(3,SP)        ; R-OVER> PLUS
         .ifne   CASEINSENSITIVE
         CALL    YCAT
         JRA   CUPPER
@@ -2875,7 +2875,7 @@ SAME1:
         CALL    XORR
         CALL    QDQBRAN
         .dw     SAME2
-        POPW    Y                      ; RFROM DROP
+        POPW    Y               ; RFROM DROP
         RET
 SAME2:  CALL    DONXT
         .dw     SAME1
@@ -2940,14 +2940,14 @@ FIND1:  CALL    AT
         CALL    QBRAN
         .dw     FIND2
         CALL    CELLP
-        CALL    MONE                   ; 0xFFFF
+        CALL    MONE            ; 0xFFFF
         JRA     FIND3
 FIND2:  CALL    CELLP
-        LD      A,(3,SP)               ; TEMP CAT
+        LD      A,(3,SP)        ; TEMP CAT
         CALL    ASTOR
         CALL    SAMEQ
 FIND3:  JRA     FIND4
-FIND6:  ADDW    SP,#3                  ; (pop TEMP) RFROM DROP
+FIND6:  ADDW    SP,#3           ; (pop TEMP) RFROM DROP
         CALLR   SWAPPF
         CALL    CELLM
         JRA     SWAPPF
@@ -2956,7 +2956,7 @@ FIND4:  CALL    QBRAN
         CALL    CELLM
         CALL    CELLM
         JRA     FIND1
-FIND5:  ADDW    SP,#3                  ; (pop TEMP) RFROM DROP
+FIND5:  ADDW    SP,#3           ; (pop TEMP) RFROM DROP
         CALL    NIP
         CALL    CELLM
         CALL    DUPP
@@ -3162,7 +3162,7 @@ DOTO1:  JP      CR
         HEADER  QSTAC "?STACK"
 QSTAC:
         CALL    DEPTH
-        CALL    ZLESS   ;check only for underflow
+        CALL    ZLESS           ; check only for underflow
         CALL    ABORQ
         .db     10
         .ascii  " underflow"
@@ -3765,28 +3765,28 @@ DOESS:
         HEADER  DODOES "dodoes"
         .endif
 DODOES:
-        CALL    LAST                   ; ( link field of current word )
+        CALL    LAST            ; ( link field of current word )
         CALL    AT
-        CALL    NAMET                  ; ' ( 'last  )
-        DoLitC  BRAN_OPC               ; ' JP
-        CALL    OVER                   ; ' JP '
-        CALL    CSTOR                  ; ' \ CALL <- JP
-        CALL    HERE                   ; ' HERE
-        CALL    OVER                   ; ' HERE '
-        CALL    ONEP                   ; ' HERE ('+1)
-        CALL    STORE                  ; ' \ CALL DOVAR <- JP HERE
+        CALL    NAMET           ; ' ( 'last  )
+        DoLitC  BRAN_OPC        ; ' JP
+        CALL    OVER            ; ' JP '
+        CALL    CSTOR           ; ' \ CALL <- JP
+        CALL    HERE            ; ' HERE
+        CALL    OVER            ; ' HERE '
+        CALL    ONEP            ; ' HERE ('+1)
+        CALL    STORE           ; ' \ CALL DOVAR <- JP HERE
         .ifne  USE_CALLDOLIT
         CALL    COMPI
-        CALL    DOLIT                  ; ' \ HERE <- DOLIT
+        CALL    DOLIT           ; ' \ HERE <- DOLIT
         .else
         CALL    CCOMMALIT
-        .db     DOLIT_OPC              ; \ HERE <- DOLIT <- ('+3) <- branch
+        .db     DOLIT_OPC       ; \ HERE <- DOLIT <- ('+3) <- branch
         .endif
-        DoLitC  3                      ; ' 3
-        CALL    PLUS                   ; ('+3)
-        CALL    COMMA                  ; \ HERE <- DOLIT <-('+3)
+        DoLitC  3               ; ' 3
+        CALL    PLUS            ; ('+3)
+        CALL    COMMA           ; \ HERE <- DOLIT <-('+3)
         CALL    CCOMMALIT
-        .db     BRAN_OPC               ; \ HERE <- DOLIT <- ('+3) <- branch
+        .db     BRAN_OPC        ; \ HERE <- DOLIT <- ('+3) <- branch
         RET
         .endif
 
@@ -3854,14 +3854,14 @@ ALLOT:
         HEADER  UTYPE "_TYPE"
         .endif
 UTYPE:
-        CALL    TOR     ;start count down loop
-        JRA     UTYP2   ;skip first pass
+        CALL    TOR             ; start count down loop
+        JRA     UTYP2           ; skip first pass
 UTYP1:  CALL    DUPPCAT
         CALL    TCHAR
-        CALL    [USREMIT]       ;display only printable
-        CALL    ONEP    ;increment address
+        CALL    [USREMIT]       ; display only printable
+        CALL    ONEP            ; increment address
 UTYP2:  CALL    DONXT
-        .dw     UTYP1   ;loop till done
+        .dw     UTYP1           ; loop till done
         JP      DROP
         .endif
 
@@ -3876,16 +3876,16 @@ UTYP2:  CALL    DONXT
 DUMPP:
         CALL    OVER
         DoLitC  4
-        CALL    UDOTR   ;display address
+        CALL    UDOTR           ; display address
         CALL    SPACE
-        CALL    TOR     ;start count down loop
-        JRA     PDUM2   ;skip first pass
+        CALL    TOR             ; start count down loop
+        JRA     PDUM2           ; skip first pass
 PDUM1:  CALL    DUPPCAT
         DoLitC  3
-        CALL    UDOTR   ;display numeric data
-        CALL    ONEP    ;increment address
+        CALL    UDOTR           ; display numeric data
+        CALL    ONEP            ; increment address
 PDUM2:  CALL    DONXT
-        .dw     PDUM1   ;loop till done
+        .dw     PDUM1           ; loop till done
         RET
         .endif
 

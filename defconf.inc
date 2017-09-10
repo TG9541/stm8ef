@@ -295,5 +295,3 @@
         UNLINK_SAVEC     = 0    ; "SAVEC"
         UNLINK_RESTC     = 0    ; "IRET"
 
-
-
