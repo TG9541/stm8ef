@@ -1,7 +1,6 @@
         .ifne  HAS_CPNVM
         UNLINK_TBOOT     = 0    ; "'BOOT"
         UNLINK_HI        = 0    ; "hi"
-        REMOVE_TPROMPT   = 0    ; remove "'PROMPT"
         .endif
 
         .ifne WORDS_LINKINTER
@@ -12,7 +11,7 @@
         UNLINK_NTIB      = 0    ; "#TIB"    ; charInput
         UNLINK_TEVAL     = 0    ; "'eval"   ; REPL
         REMOVE_TIB       = 0    ; remove "TIB" ; charInput
-        UNLINK_TPROMPT   = 1    ; "'PROMPT"
+        UNLINK_TPROMPT   = 0    ; "'PROMPT"
         REMOVE_TPROMPT   = 0    ; remove "'PROMPT" ; REPL
         UNLINK_NUMBQ     = 0    ; "NUMBER?" ; parser
         UNLINK_DIGITQ    = 0    ; "DIGIT?"  ; parser

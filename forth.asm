@@ -3085,8 +3085,8 @@ ABORQ:
         CALL    DOSTR
 ABOR1:  CALL    SPACE
         CALL    COUNTTYPES
-        DoLitC  63              ; "?"
-        CALL    [USREMIT]
+        CALL    DOTQP
+        .db     2, 63, 7        ; ?[BEL]
         CALL    CR
         JRA     ABORT           ; pass error string
 ABOR2:  CALL    DOSTR

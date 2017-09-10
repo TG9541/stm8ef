@@ -31,6 +31,7 @@
         HAS_DOES         = 0    ; DOES> extension
         HAS_DOLOOP       = 0    ; DO .. LOOP extension: DO LEAVE LOOP +LOOP
         HAS_ALIAS        = 1    ; NAME> resolves "alias" (RigTig style), aliases can be in RAM
+        HAS_FILEHAND     = 0    ; FILE and HAND for file upload
 
         USE_CALLDOLIT    = 0    ; use CALL DOLIT instead of the DOLIT TRAP handler (deprecated)
         CASEINSENSITIVE  = 0    ; Case insensitive dictionary search
