@@ -1596,13 +1596,15 @@ LESS:
 ;       Load (TOS) to YTEMP and (TOS-1) to Y, DROP, CMP to STM8 flags
 YTEMPCMP:
         LDW     Y,X
-        LDW     Y,(Y)
-        LDW     YTEMP,Y
         INCW    X
         INCW    X
-        LDW     Y,X
-        LDW     Y,(Y)
-        CPW     Y,YTEMP
+        EXGW    X,Y
+        LDW     X,(X)
+        LDW     YTEMP,X
+        LDW     X,Y
+        LDW     X,(X)
+        CPW     X,YTEMP
+        EXGW    X,Y
         RET
 
         .ifeq   BOOTSTRAP
