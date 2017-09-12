@@ -441,16 +441,19 @@ COLD:
         .ifne   HAS_RXUART+HAS_TXUART
         ; Init RS232 communication port
         ; STM8S[01]003F3 init UART
-        LDW     X,#0x6803              ; 9600 baud
-        LDW     UART_BRR1,X           ;
+        LDW     X,#0x6803       ; 9600 baud
+        LDW     UART_BRR1,X
         .ifne   HAS_RXUART*HAS_TXUART
-        MOV     UART_CR2,#0x0C        ; Use UART1 full duplex
+        MOV     UART_CR2,#0x0C  ; Use UART1 full duplex
+        .ifne   HALF_DUPLEX
+        MOV     UART1_CR5,#0x08 ; UART1 Half-Duplex
+        .endif
         .else
         .ifne   HAS_TXUART
-        MOV     UART_CR2,#0x08        ; UART1 enable tx
+        MOV     UART_CR2,#0x08  ; UART1 enable tx
         .endif
         .ifne   HAS_RXUART
-        MOV     UART_CR2,#0x04        ; UART1 enable rx
+        MOV     UART_CR2,#0x04  ; UART1 enable rx
         .endif
         .endif
         .endif
@@ -641,10 +644,9 @@ TXSTOR:
         INCW    X
 
         .ifne   HALF_DUPLEX * (1-HAS_TXSIM)
-        ; TODO: this is most likely obsolete
         ; HALF_DUPLEX with normal UART (e.g. wired-or Rx and Tx)
-        BRES    UART_CR2,#2    ; disable rx
 1$:     BTJF    UART_SR,#7,1$  ; loop until tdre
+        BRES    UART_CR2,#2    ; disable rx
         LD      UART_DR,A      ; send A
 2$:     BTJF    UART_SR,#6,2$  ; loop until tc
         BSET    UART_CR2,#2    ; enable rx
