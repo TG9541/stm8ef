@@ -1784,7 +1784,7 @@ UMSTA:                          ; stack have 4 bytes u1=a,b u2=c,d
         LD      (3,X),A         ; store least significant byte
         ADDW    Y,(1,SP)        ; PROD3
         CLR     A
-        ADC     A,#0            ; save carry
+        RLC     A               ; save carry
         LD      (1,SP),A        ; CARRY
         ADDW    Y,(3,SP)        ; PROD2
         LD      A,(1,SP)        ; CARRY
@@ -2790,8 +2790,7 @@ PAREN:
 
         HEADFLG BKSLA "\" IMEDD
 BKSLA:
-        LDW     Y,USRNTIB
-        LDW     USR_IN,Y
+        MOV       USR_IN+1,USRNTIB+1
         RET
 
 ;       TOKEN   ( -- a ; <string> )
@@ -3063,8 +3062,8 @@ QUERY:
         DoLitW  TIBB
         DoLitC  TIBLENGTH
         CALLR   ACCEP
-        CALL    NTIB
-        CALL    STORE
+        CALL    AFLAGS          ; NTIB !
+        LD      USRNTIB+1,A
         CLR     USR_IN
         CLR     USR_IN+1
         JP      DROP
@@ -3102,8 +3101,8 @@ ABOR2:  CALL    DOSTR
 
         HEADER  PRESE "PRESET"
 PRESE:
-        CLR     USRNTIB
-        CLR     USRNTIB+1
+        CLRW    X
+        LDW     USRNTIB,X
         LDW     X,#SPP          ; initialize data stack
         RET
 
@@ -3832,6 +3831,7 @@ VARIA:
         .endif
 
 
+        .ifeq   NO_VARIABLE
 ;       ALLOT   ( n -- )
 ;       Allocate n bytes to code DICTIONARY.
 
@@ -3846,6 +3846,7 @@ ALLOT:
 1$:
         .endif
         JP      PSTOR
+        .endif
 
 ; Tools
 
@@ -3869,7 +3870,7 @@ UTYP2:  CALL    DONXT
         JP      DROP
         .endif
 
-        .ifeq   BOOTSTRAP
+        .ifeq   REMOVE_DUMP
 ;       dm+     ( a u -- a )
 ;       Dump u bytes from ,
 ;       leaving a+u on  stack.
@@ -3893,7 +3894,7 @@ PDUM2:  CALL    DONXT
         RET
         .endif
 
-        .ifeq   BOOTSTRAP
+        .ifeq   REMOVE_DUMP
 ;       DUMP    ( a u -- )
 ;       Dump u bytes from a,
 ;       in a formatted manner.
@@ -3921,7 +3922,7 @@ DUMP3:
         JP      DROP
         .endif
 
-        .ifeq   BOOTSTRAP
+        .ifeq   REMOVE_DOTS
 ;       .S      ( ... -- ... )
 ;       Display contents of stack.
 
