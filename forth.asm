@@ -441,16 +441,19 @@ COLD:
         .ifne   HAS_RXUART+HAS_TXUART
         ; Init RS232 communication port
         ; STM8S[01]003F3 init UART
-        LDW     X,#0x6803              ; 9600 baud
-        LDW     UART_BRR1,X           ;
+        LDW     X,#0x6803       ; 9600 baud
+        LDW     UART_BRR1,X
         .ifne   HAS_RXUART*HAS_TXUART
-        MOV     UART_CR2,#0x0C        ; Use UART1 full duplex
+        MOV     UART_CR2,#0x0C  ; Use UART1 full duplex
+        .ifne   HALF_DUPLEX
+        MOV     UART1_CR5,#0x08 ; UART1 Half-Duplex
+        .endif
         .else
         .ifne   HAS_TXUART
-        MOV     UART_CR2,#0x08        ; UART1 enable tx
+        MOV     UART_CR2,#0x08  ; UART1 enable tx
         .endif
         .ifne   HAS_RXUART
-        MOV     UART_CR2,#0x04        ; UART1 enable rx
+        MOV     UART_CR2,#0x04  ; UART1 enable rx
         .endif
         .endif
         .endif
@@ -641,10 +644,9 @@ TXSTOR:
         INCW    X
 
         .ifne   HALF_DUPLEX * (1-HAS_TXSIM)
-        ; TODO: this is most likely obsolete
         ; HALF_DUPLEX with normal UART (e.g. wired-or Rx and Tx)
-        BRES    UART_CR2,#2    ; disable rx
 1$:     BTJF    UART_SR,#7,1$  ; loop until tdre
+        BRES    UART_CR2,#2    ; disable rx
         LD      UART_DR,A      ; send A
 2$:     BTJF    UART_SR,#6,2$  ; loop until tc
         BSET    UART_CR2,#2    ; enable rx
@@ -1224,12 +1226,12 @@ CNTXT:
         JREQ    1$
         CALL    NVMQ
         JREQ    1$
-        LD      A,#(RAMBASE+NVMCONTEXT)
+        LD      A,#(NVMCONTEXT)
         JRA     ASTOR
 1$:
         .endif
 CNTXT_ALIAS:
-        LD      A,#(RAMBASE+USRCONTEXT)
+        LD      A,#(USRCONTEXT)
         JRA     ASTOR
 
 
@@ -1240,7 +1242,7 @@ CNTXT_ALIAS:
         HEADER  CPP "cp"
         .endif
 CPP:
-        LD      A,#(RAMBASE+USRCP)
+        LD      A,#(USRCP)
         JRA     ASTOR
 
 ; System and user variables
@@ -1250,40 +1252,48 @@ CPP:
 
         HEADER  BASE "BASE"
 BASE:
-        LD      A,#(RAMBASE+USRBASE)
+        LD      A,#(USRBASE)
         JRA     ASTOR
 
+        .ifeq    UNLINK_INN
 ;       >IN     ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Hold parsing pointer.
 
         HEADER  INN ">IN"
 INN:
-        LD      A,#(RAMBASE+USR_IN)
+        LD      A,#(USR_IN)
         JRA     ASTOR
+        .endif
 
+        .ifeq    UNLINK_NTIB
 ;       #TIB    ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Count in terminal input buffer.
 
         HEADER  NTIB "#TIB"
 NTIB:
-        LD      A,#(RAMBASE+USRNTIB)
+        LD      A,#(USRNTIB)
         JRA     ASTOR
+        .endif
 
+        .ifeq    UNLINK_TEVAL
 ;       'eval   ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Execution vector of EVAL.
 
         HEADER  TEVAL "'eval"
 TEVAL:
-        LD      A,#(RAMBASE+USREVAL)
+        LD      A,#(USREVAL)
         JRA     ASTOR
+        .endif
 
+        .ifeq    UNLINK_HLD
 ;       HLD     ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Hold a pointer of output string.
 
         HEADER  HLD "hld"
 HLD:
-        LD      A,#(RAMBASE+USRHLD)
+        LD      A,#(USRHLD)
         JRA     ASTOR
+        .endif
 
 ;       'EMIT   ( -- a )     ( TOS STM8: -- A,Z,N )
 ;
@@ -1310,7 +1320,7 @@ TQKEY:
         HEADER  LAST "last"
         .endif
 LAST:
-        LD      A,#(RAMBASE+USRLAST)
+        LD      A,#(USRLAST)
 
 ;       ASTOR core ( -- n )     ( TOS STM8: -- Y,Z,N )
 ;       push A to stack
@@ -1333,7 +1343,7 @@ ATOKEY:
 ;       TIB     ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Return address of terminal input buffer.
 
-        .ifeq   REMOVE_TIB
+        .ifeq   UNLINK_TIB
         HEADER  TIB "TIB"
 TIB:
         DoLitW  TIBB
@@ -1414,7 +1424,7 @@ BGG:
 ;       'PROMPT ( -- a)     ( TOS STM8: -- Y,Z,N )
 ;       Return address of PROMPT vector
 
-        .ifeq   REMOVE_TPROMPT
+        .ifeq   UNLINK_TPROMPT
         HEADER  TPROMPT "'PROMPT"
 TPROMPT:
         LD      A,#(USRPROMPT)
@@ -1422,11 +1432,11 @@ TPROMPT:
         .endif
 
 
+        .ifne   HAS_FILEHAND
 ;       ( -- ) EMIT pace character for handshake in FILE mode
 PACEE:
         DoLitC  PACE      ; pace character for host handshake
         JP      [USREMIT]
-
 
 ;       HAND    ( -- )
 ;       set PROMPT vector to interactive mode
@@ -1596,13 +1606,15 @@ LESS:
 ;       Load (TOS) to YTEMP and (TOS-1) to Y, DROP, CMP to STM8 flags
 YTEMPCMP:
         LDW     Y,X
-        LDW     Y,(Y)
-        LDW     YTEMP,Y
         INCW    X
         INCW    X
-        LDW     Y,X
-        LDW     Y,(Y)
-        CPW     Y,YTEMP
+        EXGW    X,Y
+        LDW     X,(X)
+        LDW     YTEMP,X
+        LDW     X,Y
+        LDW     X,(X)
+        CPW     X,YTEMP
+        EXGW    X,Y
         RET
 
         .ifeq   BOOTSTRAP
@@ -1631,7 +1643,7 @@ MIN:
         JRA     YTEMPTOS
         .endif
 
-        .ifeq   REMOVE_WITHI
+        .ifeq   UNLINK_WITHI
 ;       WITHIN ( u ul uh -- t ) ( TOS STM8: -- Y,Z,N )
 ;       Return true if u is within
 ;       range of ul and uh. ( ul <= u < uh )
@@ -1654,15 +1666,15 @@ WITHI:
 
         HEADER  UMMOD "UM/MOD"
 UMMOD:
-        PUSHW   X       ; save stack pointer
-        LDW     X,(X)   ; un
-        LDW     YTEMP,X ; save un
-        LDW     Y,(1,SP); X stack pointer
-        LDW     Y,(4,Y) ; Y=udl
-        LDW     X,(1,SP); X
-        LDW     X,(2,X) ; X=udh
+        PUSHW   X               ; save stack pointer
+        LDW     X,(X)           ; un
+        LDW     YTEMP,X         ; save un
+        LDW     Y,(1,SP)        ; X stack pointer
+        LDW     Y,(4,Y)         ; Y=udl
+        LDW     X,(1,SP)        ; X
+        LDW     X,(2,X)         ; X=udh
         CPW     X,YTEMP
-        JRULE   MMSM1   ; X is still on the R-stack
+        JRULE   MMSM1           ; X is still on the R-stack
         POPW    X
         INCW    X               ; pop off 1 level
         INCW    X               ; ADDW   X,#2
@@ -1672,24 +1684,24 @@ UMMOD:
         LDW     (2,X),Y
         RET
 MMSM1:
-        LD      A,#17   ; loop count
+        LD      A,#17           ; loop count
 MMSM3:
-        CPW     X,YTEMP ; compare udh to un
-        JRULT   MMSM4   ; can't subtract
-        SUBW    X,YTEMP ; can subtract
+        CPW     X,YTEMP         ; compare udh to un
+        JRULT   MMSM4           ; can't subtract
+        SUBW    X,YTEMP         ; can subtract
 MMSM4:
-        CCF             ; quotient bit
-        RLCW    Y       ; rotate into quotient
-        RLCW    X       ; rotate into remainder
-        DEC     A       ; repeat
+        CCF                     ; quotient bit
+        RLCW    Y               ; rotate into quotient
+        RLCW    X               ; rotate into remainder
+        DEC     A               ; repeat
         JRUGT   MMSM3
         SRAW    X
-        LDW     YTEMP,X ; done, save remainder
+        LDW     YTEMP,X         ; done, save remainder
         POPW    X
         INCW    X               ; drop
         INCW    X               ; ADDW   X,#2
         LDW     (X),Y
-        LDW     Y,YTEMP ; save quotient
+        LDW     Y,YTEMP         ; save quotient
         LDW     (2,X),Y
         RET
 
@@ -1780,7 +1792,7 @@ UMSTA:                          ; stack have 4 bytes u1=a,b u2=c,d
         LD      (3,X),A         ; store least significant byte
         ADDW    Y,(1,SP)        ; PROD3
         CLR     A
-        ADC     A,#0            ; save carry
+        RLC     A               ; save carry
         LD      (1,SP),A        ; CARRY
         ADDW    Y,(3,SP)        ; PROD2
         LD      A,(1,SP)        ; CARRY
@@ -1918,7 +1930,7 @@ ONEP:
 ;       DOXCODE   ( n -- n )   ( TOS STM8: -- Y,Z,N )
 ;       DOXCODE precedes assembly code for a primitive word
 ;       In the assembly code: X=(TOS), YTEMP=TOS. (TOS)=X after RET
-;       Caution: no other Forth word may be called
+;       Caution: no other Forth word may be called from assembly!
 DOXCODE:
         POPW    Y
         LDW     YTEMP,X
@@ -2053,9 +2065,6 @@ COUNT:
 RAMHERE:
         CALL    NVMQ
         JREQ    HERE            ; NVM: CP points to NVM, NVMCP points to RAM
-        CALL    COMPIQ
-        JRNE    HERE
-
         DoLitW  NVMCP           ; 'eval in Interpreter mode: HERE returns pointer to RAM
         JP      AT
         .else
@@ -2092,7 +2101,7 @@ PAD:
         DoLitC  PADOFFS
         JP      PLUS
 
-        .ifeq   REMOVE_ATEXE
+        .ifeq   UNLINK_ATEXE
 ;       @EXECUTE        ( a -- )  ( TOS STM8: undefined )
 ;       Execute vector stored in address a.
 
@@ -2238,12 +2247,12 @@ DIGS1:  CALLR   DIG
         HEADER  HOLD "HOLD"
         .endif
 HOLD:
-        LD      A,(1,X)                ; A < c
+        LD      A,(1,X)         ; A < c
         EXGW    X,Y
-        LDW     X,USRHLD               ; HLD @
-        DECW    X                      ; 1 -
-        LDW     USRHLD,X               ; DUP HLD !
-        LD      (X),A                  ; C!
+        LDW     X,USRHLD        ; HLD @
+        DECW    X               ; 1 -
+        LDW     USRHLD,X        ; DUP HLD !
+        LD      (X),A           ; C!
         EXGW    X,Y
 H_DROP:
         JP      DROP
@@ -2274,7 +2283,7 @@ SIGN:
         .endif
 BDIGS:
         CALL    PAD
-        CALL    HLD
+        DoLitC  USRHLD
         JP      STORE
 
         HEADER  STR "str"
@@ -2324,7 +2333,7 @@ BASEAT:
         HEADER  NUMBQ "NUMBER?"
 NUMBQ:
         PUSH    USRBASE+1
-        PUSH    #0                     ; sign flag
+        PUSH    #0              ; sign flag
 
         CALL    ZERO
         CALL    OVER
@@ -2354,14 +2363,14 @@ NUMQ0:
         CP      A,#('-')
         JRNE    NUMQ1
         POP     A
-        PUSH    #0x80                   ; flag ?sign
+        PUSH    #0x80           ; flag ?sign
 
 NUMQSKIP:
         CALL    SWAPP
         CALL    ONEP
         CALL    SWAPP
         CALL    ONEM
-        JRNE    NUMQ0            ; check for more modifiers
+        JRNE    NUMQ0           ; check for more modifiers
 
 NUMQ1:
         CALL    QDQBRAN
@@ -2427,7 +2436,7 @@ DIGTQ:
         .endif
         CP      A,#10
         JRPL    DGTQ1
-        CPL     A                      ; make sure A > base
+        CPL     A               ; make sure A > base
 DGTQ1:  LD      (1,X),A
         CALL    DUPP
         CALL    RFROM
@@ -2757,7 +2766,7 @@ PARSE:
         CALL    ASTOR
         CALL    ROT
         CALL    PARS
-        CALL    INN
+        DoLitC  USR_IN
         JP      PSTOR
 
         .ifeq   BOOTSTRAP
@@ -2789,31 +2798,41 @@ PAREN:
 
         HEADFLG BKSLA "\" IMEDD
 BKSLA:
-        LDW     Y,USRNTIB
-        LDW     USR_IN,Y
+        MOV       USR_IN+1,USRNTIB+1
         RET
+
+;       TOKEN   ( -- a ; <string> )
+;       Parse a word from input stream
+;       and copy it to code dictionary or to RAM.
+
+        HEADER  TOKEN "TOKEN"
+
+TOKEN:
+        CALL    BLANK
+        JRA     WORDD
 
 ;       WORD    ( c -- a ; <string> )
 ;       Parse a word from input stream
-;       and copy it to code dictionary.
+;       and copy it to code dictionary or to RAM.
 
         HEADER  WORDD "WORD"
 WORDD:
         CALLR   PARSE
         CALL    RAMHERE
+CPPACKS:
         CALL    CELLP
         JP      PACKS
 
-
-;       TOKEN   ( -- a ; <string> )
-;       Parse a word from input stream
-;       and copy it to name dictionary.
-
-        HEADER  TOKEN "TOKEN"
-TOKEN:
+;       TOKEN_$,n ( <word> -- <dict header> )
+;       copy token to the code dictionary
+;       and build a new dictionary name
+;       note: for defining words (e.g. :, CREATE)
+TOKSNAME:
         CALL    BLANK
-        JRA     WORDD
-
+        CALLR   PARSE
+        CALL    HERE
+        CALLR   CPPACKS
+        JP      SNAME
 
 ; Dictionary search
 ;       NAME>   ( na -- ca )
@@ -2844,7 +2863,7 @@ NAMET:
 ;       R@ indexed char lookup for SAME?
 SAMEQCAT:
         CALL    OVER
-        ADDW    Y,(3,SP)             ; R-OVER> PLUS
+        ADDW    Y,(3,SP)        ; R-OVER> PLUS
         .ifne   CASEINSENSITIVE
         CALL    YCAT
         JRA   CUPPER
@@ -2867,7 +2886,7 @@ SAME1:
         CALL    XORR
         CALL    QDQBRAN
         .dw     SAME2
-        POPW    Y                      ; RFROM DROP
+        POPW    Y               ; RFROM DROP
         RET
 SAME2:  CALL    DONXT
         .dw     SAME1
@@ -2932,14 +2951,14 @@ FIND1:  CALL    AT
         CALL    QBRAN
         .dw     FIND2
         CALL    CELLP
-        CALL    MONE                   ; 0xFFFF
+        CALL    MONE            ; 0xFFFF
         JRA     FIND3
 FIND2:  CALL    CELLP
-        LD      A,(3,SP)               ; TEMP CAT
+        LD      A,(3,SP)        ; TEMP CAT
         CALL    ASTOR
         CALL    SAMEQ
 FIND3:  JRA     FIND4
-FIND6:  ADDW    SP,#3                  ; (pop TEMP) RFROM DROP
+FIND6:  ADDW    SP,#3           ; (pop TEMP) RFROM DROP
         CALLR   SWAPPF
         CALL    CELLM
         JRA     SWAPPF
@@ -2948,7 +2967,7 @@ FIND4:  CALL    QBRAN
         CALL    CELLM
         CALL    CELLM
         JRA     FIND1
-FIND5:  ADDW    SP,#3                  ; (pop TEMP) RFROM DROP
+FIND5:  ADDW    SP,#3           ; (pop TEMP) RFROM DROP
         CALL    NIP
         CALL    CELLM
         CALL    DUPP
@@ -3001,7 +3020,7 @@ TAP:
         HEADER  KTAP "kTAP"
 KTAP:
         LD      A,(1,X)
-        CP     A,#CRR
+        CP      A,#CRR
         JREQ    KTAP2
 
         DoLitC  BKSPP
@@ -3051,8 +3070,8 @@ QUERY:
         DoLitW  TIBB
         DoLitC  TIBLENGTH
         CALLR   ACCEP
-        CALL    NTIB
-        CALL    STORE
+        CALL    AFLAGS          ; NTIB !
+        LD      USRNTIB+1,A
         CLR     USR_IN
         CLR     USR_IN+1
         JP      DROP
@@ -3077,9 +3096,12 @@ ABORQ:
         CALL    DOSTR
 ABOR1:  CALL    SPACE
         CALL    COUNTTYPES
-        DoLitC  63              ; "?"
-        CALL    [USREMIT]
-        CALL    CR
+        CALL    DOTQP
+        .ifne   HAS_OLDOK
+        .db     2, 63,  10       ; ?<CR>
+        .else
+        .db     3, 63,  7, 10   ; ?<BEL><CR>
+        .endif
         JRA     ABORT           ; pass error string
 ABOR2:  CALL    DOSTR
         JP      DROP
@@ -3090,8 +3112,8 @@ ABOR2:  CALL    DOSTR
 
         HEADER  PRESE "PRESET"
 PRESE:
-        CLR     USRNTIB
-        CLR     USRNTIB+1
+        CLRW    X
+        LDW     USRNTIB,X
         LDW     X,#SPP          ; initialize data stack
         RET
 
@@ -3138,15 +3160,26 @@ COMPIQ:
         HEADER  DOTOK ".OK"
 DOTOK:
         CALLR   COMPIQ
-        JRNE    DOTO1
+        JREQ    DOTO1
+        .ifne   HAS_OLDOK
+        JP      CR
+        .else
+        CALL    DOTQP
+        .db     4
+        .ascii  " OK"
+        .db     10
+        RET
+        .endif
 
         .ifne   BAREBONES
 HI:
         .endif
+DOTO1:
         CALL    DOTQP
-        .db     3
+        .db     4
         .ascii  " ok"
-DOTO1:  JP      CR
+        .db     10
+        RET
 
 ;       ?STACK  ( -- )
 ;       Abort if stack underflows.
@@ -3154,7 +3187,7 @@ DOTO1:  JP      CR
         HEADER  QSTAC "?STACK"
 QSTAC:
         CALL    DEPTH
-        CALL    ZLESS   ;check only for underflow
+        CALL    ZLESS           ; check only for underflow
         CALL    ABORQ
         .db     10
         .ascii  " underflow"
@@ -3198,10 +3231,10 @@ QUIT2:  CALL    QUERY           ; get input
         HEADER  TICK "'"
 TICK:
         CALL    TOKEN
-        CALL    NAMEQ   ;?defined
+        CALL    NAMEQ           ; ?defined
         CALL    QBRAN
         .dw     ABOR1
-        RET     ;yes, push code address
+        RET                     ; yes, push code address
 
 ;       ,       ( w -- )
 ;       Compile an integer into
@@ -3581,6 +3614,7 @@ UNIQU:
         CALL    COUNTTYPES      ; just in case
 UNIQ1:  JP      DROP
 
+
 ;       $,n     ( na -- )
 ;       Build a new dictionary name
 ;       using string at na.
@@ -3635,7 +3669,7 @@ SCOMP:
 
         JP      EXECU
 SCOM1:  JP      JSRC
-SCOM2:  CALL    NUMBQ   ;try to convert to number
+SCOM2:  CALL    NUMBQ           ; try to convert to number
         CALL    QBRAN
         .dw     ABOR1
         JP      LITER
@@ -3700,8 +3734,7 @@ SEMIS:
         HEADER  COLON ":"
 COLON:
         CALLR   RBRAC           ; do "]" first to set HERE to compile state
-        CALL    TOKEN
-        JP      SNAME
+        JP      TOKSNAME        ; copy token to dictionary
 
 
 ;       IMMEDIATE       ( -- )
@@ -3757,31 +3790,30 @@ DOESS:
         HEADER  DODOES "dodoes"
         .endif
 DODOES:
-        CALL    LAST                   ; ( link field of current word )
+        CALL    LAST            ; ( link field of current word )
         CALL    AT
-        CALL    NAMET                  ; ' ( 'last  )
-        DoLitC  BRAN_OPC               ; ' JP
-        CALL    OVER                   ; ' JP '
-        CALL    CSTOR                  ; ' \ CALL <- JP
-        CALL    HERE                   ; ' HERE
-        CALL    OVER                   ; ' HERE '
-        CALL    ONEP                   ; ' HERE ('+1)
-        CALL    STORE                  ; ' \ CALL DOVAR <- JP HERE
+        CALL    NAMET           ; ' ( 'last  )
+        DoLitC  BRAN_OPC        ; ' JP
+        CALL    OVER            ; ' JP '
+        CALL    CSTOR           ; ' \ CALL <- JP
+        CALL    HERE            ; ' HERE
+        CALL    OVER            ; ' HERE '
+        CALL    ONEP            ; ' HERE ('+1)
+        CALL    STORE           ; ' \ CALL DOVAR <- JP HERE
         .ifne  USE_CALLDOLIT
         CALL    COMPI
-        CALL    DOLIT                  ; ' \ HERE <- DOLIT
+        CALL    DOLIT           ; ' \ HERE <- DOLIT
         .else
         CALL    CCOMMALIT
-        .db     DOLIT_OPC              ; \ HERE <- DOLIT <- ('+3) <- branch
+        .db     DOLIT_OPC       ; \ HERE <- DOLIT <- ('+3) <- branch
         .endif
-        DoLitC  3                      ; ' 3
-        CALL    PLUS                   ; ('+3)
-        CALL    COMMA                  ; \ HERE <- DOLIT <-('+3)
+        DoLitC  3               ; ' 3
+        CALL    PLUS            ; ('+3)
+        CALL    COMMA           ; \ HERE <- DOLIT <-('+3)
         CALL    CCOMMALIT
-        .db     BRAN_OPC               ; \ HERE <- DOLIT <- ('+3) <- branch
+        .db     BRAN_OPC        ; \ HERE <- DOLIT <- ('+3) <- branch
         RET
         .endif
-
 
 ;       CREATE  ( -- ; <string> )
 ;       Compile a new array
@@ -3789,21 +3821,8 @@ DODOES:
 
         HEADER  CREAT "CREATE"
 CREAT:
-        .ifne   HAS_CPNVM
-        LDW     Y,USREVAL
-        PUSHW   Y               ; save TEVAL
-        CALLR   RBRAC           ; "]" make HERE return CP even in INTERPRETER mode
-        .endif
-
-        CALL    TOKEN
-        CALL    SNAME
+        CALL    TOKSNAME        ; copy token to dictionary
         CALL    OVERT
-
-        .ifne   HAS_CPNVM
-        POPW    Y               ; restore TEVAL
-        LDW     USREVAL,Y       ; from here on ',', 'C,', '$,"' and 'ALLOT' write to CP
-        .endif
-
         CALL    COMPI
         CALL    DOVAR
         RET
@@ -3834,6 +3853,7 @@ VARIA:
         .endif
 
 
+        .ifeq   NO_VARIABLE
 ;       ALLOT   ( n -- )
 ;       Allocate n bytes to code DICTIONARY.
 
@@ -3848,6 +3868,7 @@ ALLOT:
 1$:
         .endif
         JP      PSTOR
+        .endif
 
 ; Tools
 
@@ -3860,18 +3881,18 @@ ALLOT:
         HEADER  UTYPE "_TYPE"
         .endif
 UTYPE:
-        CALL    TOR     ;start count down loop
-        JRA     UTYP2   ;skip first pass
+        CALL    TOR             ; start count down loop
+        JRA     UTYP2           ; skip first pass
 UTYP1:  CALL    DUPPCAT
         CALL    TCHAR
-        CALL    [USREMIT]       ;display only printable
-        CALL    ONEP    ;increment address
+        CALL    [USREMIT]       ; display only printable
+        CALL    ONEP            ; increment address
 UTYP2:  CALL    DONXT
-        .dw     UTYP1   ;loop till done
+        .dw     UTYP1           ; loop till done
         JP      DROP
         .endif
 
-        .ifeq   BOOTSTRAP
+        .ifeq   REMOVE_DUMP
 ;       dm+     ( a u -- a )
 ;       Dump u bytes from ,
 ;       leaving a+u on  stack.
@@ -3882,20 +3903,20 @@ UTYP2:  CALL    DONXT
 DUMPP:
         CALL    OVER
         DoLitC  4
-        CALL    UDOTR   ;display address
+        CALL    UDOTR           ; display address
         CALL    SPACE
-        CALL    TOR     ;start count down loop
-        JRA     PDUM2   ;skip first pass
+        CALL    TOR             ; start count down loop
+        JRA     PDUM2           ; skip first pass
 PDUM1:  CALL    DUPPCAT
         DoLitC  3
-        CALL    UDOTR   ;display numeric data
-        CALL    ONEP    ;increment address
+        CALL    UDOTR           ; display numeric data
+        CALL    ONEP            ; increment address
 PDUM2:  CALL    DONXT
-        .dw     PDUM1   ;loop till done
+        .dw     PDUM1           ; loop till done
         RET
         .endif
 
-        .ifeq   BOOTSTRAP
+        .ifeq   REMOVE_DUMP
 ;       DUMP    ( a u -- )
 ;       Dump u bytes from a,
 ;       in a formatted manner.
@@ -3923,7 +3944,7 @@ DUMP3:
         JP      DROP
         .endif
 
-        .ifeq   BOOTSTRAP
+        .ifeq   REMOVE_DOTS
 ;       .S      ( ... -- ... )
 ;       Display contents of stack.
 

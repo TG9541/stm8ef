@@ -34,7 +34,6 @@ defaults105:
 else
 
 MDEPS = forth.rel forth.h
-FDEPS = hwregs8s003.inc
 MKDIR_P = mkdir -p out
 TARGET = `[ -f $(BOARD)/target.inc ] && awk '/TARGET/ {print tolower($$3)}' $(BOARD)/target.inc || echo "stm8s103f3"`
 
@@ -43,9 +42,9 @@ all: directories main.ihx
 main.ihx: main.c $(MDEPS)
 	sdcc -mstm8 -oout/$(BOARD)/$(BOARD).ihx main.c out/$(BOARD)/forth.rel
 
-forth.rel: forth.asm $(FDEPS)
+forth.rel: forth.asm
 	mkdir -p out/$(BOARD)
-	sdasstm8 -I. -I./$(BOARD) -plosgffw out/$(BOARD)/forth.rel forth.asm
+	sdasstm8 -I. -I./$(BOARD) -I./inc -plosgffw out/$(BOARD)/forth.rel forth.asm
 
 flash: main.ihx
 	stm8flash -c stlinkv2 -p $(TARGET) -w out/$(BOARD)/$(BOARD).ihx

@@ -11,7 +11,7 @@
         PORTG        = PG_ODR
         PORTH        = PH_ODR
         PORTI        = PI_ODR
-PORTX        = 0
+        PORTX        = 0
 
         ODR          = 0
         IDR          = 1

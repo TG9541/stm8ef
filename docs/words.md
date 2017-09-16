@@ -500,7 +500,7 @@
 ;       DOXCODE   ( n -- n )   ( TOS STM8: -- Y,Z,N )
 ;       DOXCODE precedes assembly code for a primitive word
 ;       In the assembly code: X=(TOS), YTEMP=TOS. (TOS)=X after RET
-;       Caution: no other Forth word may be called
+;       Caution: no other Forth word may be called from assembly!
 ```
 
 ```
@@ -593,13 +593,8 @@
 ```
 
 ```
-;       <#      ( -- )   ( TOS STM8: -- Y,Z,N )
-;       Initiate numeric output process.
-```
-
-```
-;       HOLD    ( c -- )    ( TOS STM8: -- Y,Z,N )
-;       Insert a character into output string.
+;       #>      ( w -- b u )
+;       Prepare output string.
 ```
 
 ```
@@ -615,20 +610,25 @@
 ```
 
 ```
+;       HOLD    ( c -- )    ( TOS STM8: -- Y,Z,N )
+;       Insert a character into output string.
+```
+
+```
 ;       SIGN    ( n -- )
 ;       Add a minus sign to
 ;       numeric output string.
 ```
 
 ```
-;       #>      ( w -- b u )
-;       Prepare output string.
-```
-
-```
 ;       str     ( w -- b u )
 ;       Convert a signed integer
 ;       to a numeric string.
+```
+
+```
+;       <#      ( -- )   ( TOS STM8: -- Y,Z,N )
+;       Initiate numeric output process.
 ```
 
 ```
@@ -781,15 +781,22 @@
 ```
 
 ```
-;       WORD    ( c -- a ; <string> )
+;       TOKEN   ( -- a ; <string> )
 ;       Parse a word from input stream
-;       and copy it to code dictionary.
+;       and copy it to code dictionary or to RAM.
 ```
 
 ```
-;       TOKEN   ( -- a ; <string> )
+;       WORD    ( c -- a ; <string> )
 ;       Parse a word from input stream
-;       and copy it to name dictionary.
+;       and copy it to code dictionary or to RAM.
+```
+
+```
+;       TOKEN_$,n ( <word> -- <dict header> )
+;       copy token to the code dictionary
+;       and build a new dictionary name
+;       note: for defining words (e.g. :, CREATE)
 ```
 
 ```
