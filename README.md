@@ -1,6 +1,8 @@
 # STM8S eForth (stm8ef)
 
-TG9541/STM8EF is an extends [Dr. C.H. Ting's eForth for the *STM8S Discovery*](http://www.forth.org/svfig/kk/07-2010.html). It aims to be a very lightweight embedded "untethered" Forth system for low-end STM8 µCs with a maximum "feature-to-binary-size" ratio. TG9541/STM8EF is published as Free Open Source Software ([license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md)) with the kind permission of the original author.
+TG9541/STM8EF is an extends [Dr. C.H. Ting's eForth for the *STM8S Discovery*](http://www.forth.org/svfig/kk/07-2010.html). It aims to be a very lightweight embedded "untethered" (self-hosted) Forth system for low-end STM8 µCs with a maximum "feature-to-binary-size" ratio. It provides a plug-in system for board support, base dictionary configuration, a Forth include file infrastructure, and uCsim based binary level simulation. With the kind permission of the original author TG9541/STM8EF provides a perimissive FOSS [license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md).
+
+Please refer to the [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) for more information!
 
 [![STM8EF Wiki](https://user-images.githubusercontent.com/5466977/28994765-3267d78c-79d6-11e7-927f-91751cd402db.jpg)](https://github.com/TG9541/stm8ef/wiki)
 
@@ -11,116 +13,40 @@ The project has the following goals:
 3. maximize the product *features* * *free space* for low-end STM8 *Value Line* µCs (see below)
 4. collaborate with the Forth community to create a development environment, libraries, and applications
 
-Please refer to the [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) for more information!
+TG9541/STM8EF can be configured for a range of Forth features and different STM8S devices: a full featured binary requires 4.7KiB, a basic interactive Forth fits in 3.5KiB, and building small non-interactive binaries is possible. 
 
-# Board support:
+The interactive Forth console can use any GPIO, a pair if GPIOs, or the STM8 UART, for 2-wire or 3-wire communication. Up to two serial interfaces can be configured. 
 
-TG9541/STM8EF provides board support for generic targets and for several common "Chinese gadgets" like the following:
 
+## Generic targets
+
+For a quick start, binaries for generic targets (e.g. breadboards) are provided:
+
+* `CORE` a starting point for new boards. For a minumal footprint Many features Features words disabled
+* `SWIMCOM` communication through the SWIM interface for board exploration
+* [STM8S105K4](https://github.com/TG9541/stm8ef/tree/master/STM8S105K4), a starting point for STM8S Medium Density devices (Value Line / Access Line)
+* `STM8S001J3M3` is a Low-Densisty STM8S in a SO8N package. The Forth console used half-duplex UART mode on pin8
+
+Various STM8S Discovery boards for Value Line and Access Line devices can also be used. Support for STM8S High Density, and STM8L Medium Density devices is under consideration.
+
+## Board support:
+
+TG9541/STM8EF provides board support for several common "Chinese gadgets", like the following:
+
+* [MINDEV](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for the STM8S103F3P6 $0.60 "minimum development board"
 * [W1209](https://github.com/TG9541/stm8ef/wiki/Board-W1209) low-cost thermostat w/ 3 digit 7S-LED display, full- or half-duplex RS232
 * [W1219](https://github.com/TG9541/stm8ef/wiki/Board-W1219) low cost thermostat with 2x3 digit 7S-LED display, half-duplex RS232 through PD1/SWIM
 * [W1401](https://github.com/TG9541/stm8ef/wiki/Board-W1401) (also XH-W1401) thermostat with 3x2 digit 7S-LED display, half-duplex RS232 through SWIM
 * [C0135](https://github.com/TG9541/stm8ef/wiki/Board-C0135) "Relay-4 Board" (can be used as a *Nano PLC*)
 * [DCDC](https://github.com/TG9541/stm8ef/wiki/Board-CN2596) hacked DCDC converter with voltmeter
-* [MINDEV](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) STM8S103F3 low cost "minimum development board"
-* `CORE` starting point for new boards, most extra feature words disabled
-* `SWIMCOM` communication through the SWIM interface for board exploration
-
-Please refer to [STM8S-Value-Line-Gadgets][WG1] in the Wiki. Binaries for the listed targets are in the [Releases](https://github.com/TG9541/stm8ef/releases) section.
-
-There is limited support for the STM8S Discovery, and for Access Line devices with 2KiB RAM (tested on a STM8S105K4T6 breakout board).
-
-## W1209 Thermostat Module
-
-STM8S003F3P6-based thermostat board with a 3 digit 7S-LED display, a relay, and a 10k NTC sensor.
-This very cheap board can be used for single input/single output control applications with a basic UI (e.g. timer, counter, dosing, monitoring).
-
-Please refer to the [wiki](https://github.com/TG9541/stm8ef/wiki/Board-W1209) for more informatiom.
-
-* Binary size below 5500 bytes
-* Selected feature set:
-  * Full-duplex serial interface through key pins (variant W1209-FD)
-  * Half-duplex serial interface through the sensor header (variant W1209)
-  * 7S-LED display and board keys (P7S E7S BKEY KEYB?)
-  * EEPROM access
-  * background task
-  * eForth extensions *CREATE-DOES>*, *DO-LEAVE-LOOP/+LOOP*
-  * I/O words
-  * bit addressing
-  * case-insensitive vocabulary
-
-Run `make BOARD=W1209-FD flash` or `make BOARD=W1209 flash` for building and flashing.
-
-## 1401 Thermostat Module
-
-STM8S003F3P6-based thermostat board with 3x2 digit 7S-LED display, relay, LED, buzzer, 4 keys, and a 10k NTC sensor.
-A cheap board that, like the W1209, can be used for single input/single output control applications with a basic UI (e.g. timer, counter, dosing, monitoring).
-
-Please refer to the [wiki](https://github.com/TG9541/stm8ef/wiki/Board-W1401) for more informatiom.
-
-* Selected feature set:
-  * Half-duplex serial interface through ICP header
-  * 7S-LED display and board keys (P7S E7S BKEY KEYB?)
-  * EEPROM access
-  * background task
-  * eForth extensions *CREATE-DOES>*, *DO-LEAVE-LOOP/+LOOP*
-  * I/O words
-  * bit addressing
-  * case-insensitive vocabulary
-* Binary size below 5600 bytes
-
-Run `make BOARD=W1401 flash` for building and flashing.
-
-## STM8S103F3 "minimum development board"
-
-Cheap STM8S103F3P6-based breakout board with LED on port B5 (there are plenty of vendors on EBay or AliExpress, the price starts below $0.70 incl. shipping).
-
-Please refer to the [wiki](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for more informatiom.
-
-* Selected features (superset of CORE):
-  * EEPROM access
-  * background task
-  * eForth extensions *CREATE-DOES>*, *DO-LEAVE-LOOP/+LOOP*
-  * I/O words, bit access
-  * bit addressing
-  * case-insensitive vocabulary
-* Binary size below 5000 bytes
-
-Run `make BOARD=MINDEV flash` for building and flashing.
-
-## Other Supported Gadgets
 
 The Wiki lists other supported "[Value Line Gadgets](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets)", e.g. [voltmeters & power supplies](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets#voltmeters-and-power-supplies), [breakout boards](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards), and [thermostats](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets#thermostats).
 
-## STM8S003F3 Core
+## 2-Wire Communication
 
-A plain STM8S003F3P6 eForth core with a lean scripting oriented vocabulary (words like AHEAD or [COMPILE] not linked), and a minimal memory footprint (less than 4KiB Flash). CORE can be used as-is or as a starting point for new configurations.
+The Forth console can be configured to use 3-wire interfaces in full-duplex, or 2-wire interface in half-duplex mode. For boards without access to STM8S UART pins, a generic STM8EF binary is provided, that performs 2-wire communication through PD1 on the SWIM ICP header. 
 
-* Selected features:
-  * 16MHz HSI
-  * compile to Flash
-  * lightweight low-level interrupt handlers in Forth code
-  * serial console with UART
-* Binary size below 4096 bytes
-
-More features can be selected from the list of options in `globalconf.inc`.
-
-Run `make BOARD=CORE flash` for building and flashing.
-
-## STM8S003F3 "Communication through PD1/SWIM"
-
-This is a generic STM8EF target for exploring boards where no UART pins are broken out but where PD1 is available on a SWIM ICP header. Access to PD5/TX and PD6/RX is not required, bus-style half-duplex console communciation with a software UART simulation is used instead.
-
-* Selected features (superset of CORE):
-  * any port pin can be configured for half-duplex RS232 (standard: PD1/SWIM)
-  * EEPROM access
-  * background task
-  * eForth extensions *CREATE-DOES>*, *DO-LEAVE-LOOP/+LOOP*
-  * bit addressing
-  * case-insensitive vocabulary
-* Binary size below 5100 bytes
-
-For serial communication the following simple wired-or interface can be used:
+The following simple wired-or interface can be used:
 
 ```
 
@@ -136,20 +62,21 @@ GND------------>>----------o serial GND
                .
 ................
 ```
-
-Run `make BOARD=SWIMCOM flash` for building and flashing.
+Please note that some PC serial interfaces require matching logic levels (e.g. a low drop diode, or buffers).
 
 ## Steps for creating a new board variant
 
-For creating a variant, copy and rename a base variant folder (e.g. CORE). By running `make BOARD=<folderName> flash` will be compiled and programmed to the target. Other STM8 variants can be supported by a putting a matching `stm8device.inc` file into the board folder.
+For creating a variant, copy and rename a base variant folder (e.g. CORE). Running `make BOARD=<folderName> flash` builds the code, and transfers it to the target. 
 
-It's advisable to have at least two boards for reverse engineering: one in original state, and one for testing new code. Please [open a ticket here](https://github.com/TG9541/stm8ef/issues), or contact the STM8EF [Hackaday.io project](https://hackaday.io/project/16097-eforth-for-cheap-stm8s-value-line-gadgets) before you start working on a new board!
+When working with 3rd party boards, it's recommended to have at least two boards for reverse engineering: one in original state, and one for testing new code. If you believe to have identified a target board of general interest, please [open a ticket here](https://github.com/TG9541/stm8ef/issues), or contact the STM8EF [Hackaday.io project](https://hackaday.io/project/16097-eforth-for-cheap-stm8s-value-line-gadgets)!
 
-**Warning**:  the original ROM contents of most boards is read-protected and can't be read, and once erased the original function can't be restored (your board will be useless unless you write your own code).
+In any case, please keep the following in mind:
 
-**Warning**: if your target board is designed to supply or control connected devices (e.g. a power supply unit) it's recommended not to assume fail-safe properties of the board (e.g. the output voltage of a power supply board might rise to the maximum without the proper software). Disconnect any connected equipment, and if possible only supply the µC with a current limiting power supply!
+* when working with unknown boards make sure to have at least a basic understanding of the schematics and workings of the board! The author(s) of this software can't help you reverse-engineering an unsupported board. Working knowledge of electronics engineering is required!
+* the original ROM contents of most boards is read-protected and can't be read, and once erased the original function can't be restored (your board will be useless unless you write your own code)!
+* if your target board is designed to supply or control connected devices (e.g. a power supply unit) it's recommended not to assume fail-safe properties of the board (e.g. the output voltage of a power supply board might rise to the maximum without the proper software). Disconnect any connected equipment, and if possible only supply the µC with a current limiting power supply!
 
-**Warning**: when working with unknown boards make sure to have at least a basic understanding of the schematics and workings of the board! The author(s) of this software can't help you reverse-engineering an unsupported board. Working knowledge of electronics engineering is assumed.
+Other than that, have fun, and consider sharing your results!
 
 # Feature Overview
 
@@ -165,18 +92,19 @@ It's advisable to have at least two boards for reverse engineering: one in origi
 * Low-level interrupts in Forth
   * lightweight context switch with `SAVEC` and `IRET`
   * example code for HALT is in the [Wiki](https://github.com/TG9541/stm8ef/wiki/STM8S-eForth-Programming#low-level-interrupts-in-forth)
-* preemptive background tasks with fixed cycle time (default 5ms)
-  * robust and fast context switch with "clean stack" approach
-  * allows `INPUT-PROCESS-OUTPUT` processing indepent from the Forth console
-  * allows setting process parameters through interactive console
+* preemptive background tasks with fixed cycle time
+  * configurable cycle (default: 5ms)
+  * `INPUT-PROCESS-OUTPUT` processing indepent from the Forth console
+  * robust and fast context switch with a "clean stack" approach
+  * concurrent interactive console, e.g. for setting control process parameters
   * in background tasks `?KEY` can read board keys, and [boards with 7Seg-LED UI](https://github.com/TG9541/stm8ef/wiki/eForth-Background-Task) can simply output to the LED display
 * configuration options for serial console or dual serial interface
   * UART: ?RX TX!
   * any GPIO or pair of GPIOs from ports PA through PD can be used as a simulated COM port
   * GPIO w/ Port edge & Timer4 interrupts: ?RXP TXP!
-  * half-duplex "bus style" communication with a single GPIO (e.g. PD1/SWIM)
+  * half-duplex "bus style" communication using a single GPIO (e.g. PD1/SWIM), or UART half-duplex mode
 * board support for Chinese made [STM8S based very low cost boards][WG1]:
-  * STM8S103F3 "$0.65" breakout board
+  * STM8S103F3 "$0.60" breakout board
   * Termostats, e.g. W1209, W1219, or W1401
   * Low cost power supply boards, e.g. XH-M188, DCDC w/ voltmeter
   * C0135 Relay Board
@@ -189,37 +117,24 @@ It's advisable to have at least two boards for reverse engineering: one in origi
   * board keys, outputs, LEDs: BKEY KEYB? EMIT7S OUT OUT!
   * EEPROM, FLASH lock/unlock: LOCK ULOCK LOCKF ULOCKF
   * native bit set/reset: B! (b a u -- )
-  * 16bit register access with reversed byte order (e.g. timer registers): 2C@ 2C!
+  * 16bit STM8 timer register access: 2C@ 2C!
   * compile to Flash memory: NVR RAM RESET
   * autostart applications: 'BOOT
   * ASCII file transfer: FILE HAND
 * configurable vocabulary subsets for binary size optimization
 
-# Support for STM8S Value Line and Access Line
+# Other changes compared to the original STM8EF code:
 
-The availability of low-cost boards (e.g. thermostats, power supplies, WIFI modules) makes the *STM8S003F3P6* the main target.
-
-Differences between STM8S003F3P6 and STM8S105C6T6 (*STM8S Discovery*) are:
-
-* 8 KiB Flash instead of 32 KiB
-* 1 KiB RAM instead of 2 KiB
-* 128 bytes EEPROM instead of 1 KiB (the STM8S103F3 has 640 bytes)
-* reduced set of GPIO and other peripherals
-* UART1 instead of UART2
-
-Other changes to the original code:
-
-* use of the free SDCC tool chain ("ASxxxx V2.0" syntax, SDCC linker with declaration of ISR routines in `main.c`)
-* the [SDCC toolchain](http://sdcc.sourceforge.net/) allows mixing Forth, assembly, and C
-* removal of hard STM8S105C6 dependencies (e.g. RAM layout, UART2)
-* flexible RAM layout, meaningful symbols for RAM locations
+* "ASxxxx V2.0" syntax (the free [SDCC tool chain](http://sdcc.sourceforge.net/) allows mixing Forth, assembly, and C)
+* hard STM8S105C6 dependencies removed (e.g. RAM layout, UART2)
+* flexible RAM layout, basic RAM memory management, meaningful symbols for RAM locations
 * conditional code for different target boards with a subdirectory based configuration framework
-* bug fixes (e.g. COMPILE, DEPTH, R!)
-* significant binary size reduction
+* bugs fixed (e.g. COMPILE, DEPTH, R!)
+* rather significant binary size reduction
 
 # Disclaimer, copyright
 
-TL;DR: This is a hobby project! Don't use the code for any application that requires support, correctness, or dependability. Please note that different licenses may apply to the code, some of which might require that derived work is to be made public!
+TL;DR: This is a hobby project! Don't use the code if support, correctness, or dependability are required. Also note that additional licenses might apply to the code which might require derived work to be made public!
 
 Please refer to LICENSE.md for details.
 
