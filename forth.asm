@@ -3011,8 +3011,16 @@ TAP:
 
         HEADER  KTAP "kTAP"
 KTAP:
+        .ifne   HAS_E4THCOM
+        MOV     USRNTIB,#128
         LD      A,(1,X)
-        CP     A,#CRR
+        CP      A,#PACE
+        JREQ    KTAP2
+        CLR     USRNTIB
+        .else
+        LD      A,(1,X)
+        .endif
+        CP      A,#CRR
         JREQ    KTAP2
 
         DoLitC  BKSPP
@@ -3088,9 +3096,12 @@ ABORQ:
         CALL    DOSTR
 ABOR1:  CALL    SPACE
         CALL    COUNTTYPES
+        .ifne   HAS_E4THCOM
         CALL    DOTQP
-        .db     2, 63, 7        ; ?[BEL]
-        CALL    CR
+        .db     3, 63,  7, 10   ; ?<BEL><CR>
+        .else
+        .db     2, 63,  7       ; ?<CR>
+        .endif
         JRA     ABORT           ; pass error string
 ABOR2:  CALL    DOSTR
         JP      DROP
@@ -3149,11 +3160,24 @@ COMPIQ:
         HEADER  DOTOK ".OK"
 DOTOK:
         CALLR   COMPIQ
+
+        .ifne   HAS_E4THCOM
+        JREQ    DOTO2
+        TNZ     USRNTIB
+        JRPL    DOTO1
+        CALL    DOTQP
+        .db     4
+        .ascii  " ]ok"
+        JRA     DOTO1
+        .else
         JRNE    DOTO1
+        .endif
 
         .ifne   BAREBONES
 HI:
         .endif
+
+DOTO2:
         CALL    DOTQP
         .db     3
         .ascii  " ok"
