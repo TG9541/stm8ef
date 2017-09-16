@@ -1,40 +1,39 @@
 # STM8S eForth (stm8ef)
 
-TG9541/STM8EF is an extends [Dr. C.H. Ting's eForth for the *STM8S Discovery*](http://www.forth.org/svfig/kk/07-2010.html). It aims to be a very lightweight embedded "untethered" (self-hosted) Forth system for low-end STM8 µCs with a maximum "feature-to-binary-size" ratio. It provides a plug-in system for board support, base dictionary configuration, a Forth include file infrastructure, and uCsim based binary level simulation. With the kind permission of the original author TG9541/STM8EF provides a perimissive FOSS [license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md).
+TG9541/STM8EF is an extends [Dr. C.H. Ting's eForth for the *STM8S Discovery*](http://www.forth.org/svfig/kk/07-2010.html). It aims to be a very lightweight embedded "untethered" (self-hosted) Forth system for low-end STM8 µCs with a maximum "feature-to-binary-size" ratio. It provides a plug-in system for board support, base dictionary configuration, a Forth include file infrastructure, and uCsim based binary level simulation. With the kind permission of the original author, TG9541/STM8EF has a perimissive [FOSS license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md).
 
-Please refer to the [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) for more information!
+The [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) provides information on various topics, e.g. how to use Chinese thermostats, voltmeters, or DC/DC-converters, as Forth powered embedded control boards!
 
 [![STM8EF Wiki](https://user-images.githubusercontent.com/5466977/28994765-3267d78c-79d6-11e7-927f-91751cd402db.jpg)](https://github.com/TG9541/stm8ef/wiki)
 
-The project has the following goals:
+This project has the following goals:
 
 1. provide an easy to use [Forth kit](https://github.com/TG9541/stm8ef/wiki/STM8S-eForth-Programming) for STM8 µCs
-2. board support for [common low-cost Chinese control boards](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets)
+2. offer board support for [common low-cost Chinese control boards](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets)
 3. maximize the product *features* * *free space* for low-end STM8 *Value Line* µCs (see below)
-4. collaborate with the Forth community to create a development environment, libraries, and applications
+4. learn to know the Forth community, and work on the development environment, libraries, and applications
 
 TG9541/STM8EF can be configured for a range of Forth features and different STM8S devices: a full featured binary requires 4.7KiB, a basic interactive Forth fits in 3.5KiB, and building small non-interactive binaries is possible. 
 
-The interactive Forth console can use any GPIO, a pair if GPIOs, or the STM8 UART, for 2-wire or 3-wire communication. Up to two serial interfaces can be configured. 
-
+The interactive Forth console can use any GPIO, a pair of GPIOs, or the STM8 UART, for 2-wire or 3-wire communication. Up to two serial interfaces can be configured.
 
 ## Generic targets
 
 For a quick start, binaries for generic targets (e.g. breadboards) are provided:
 
-* `CORE` a starting point for new boards. For a minumal footprint Many features Features words disabled
-* `SWIMCOM` communication through the SWIM interface for board exploration
+* `CORE` a starting point for new boards - some advanced features were disabled (e.g. no background task)
+* `SWIMCOM` communication through the SWIM interface for board exploration - full feature set
 * [STM8S105K4](https://github.com/TG9541/stm8ef/tree/master/STM8S105K4), a starting point for STM8S Medium Density devices (Value Line / Access Line)
-* `STM8S001J3M3` is a Low-Densisty STM8S in a SO8N package. The Forth console used half-duplex UART mode on pin8
+* `STM8S001J3M3` is a Low-Densisty STM8S in a SO8N package - the Forth console uses the STM8 UART half-duplex mode
 
-Various STM8S Discovery boards for Value Line and Access Line devices can also be used. Support for STM8S High Density, and STM8L Medium Density devices is under consideration.
+Various STM8S Discovery boards and [breakout boards](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for Value- and Access-Line devices can be used. Support for STM8S High Density, and STM8L Medium Density devices is under consideration.
 
 ## Board support:
 
 TG9541/STM8EF provides board support for several common "Chinese gadgets", like the following:
 
 * [MINDEV](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for the STM8S103F3P6 $0.60 "minimum development board"
-* [W1209](https://github.com/TG9541/stm8ef/wiki/Board-W1209) low-cost thermostat w/ 3 digit 7S-LED display, full- or half-duplex RS232
+* [W1209](https://github.com/TG9541/stm8ef/wiki/Board-W1209) $1.50 thermostat board w/ 3 digit 7S-LED display, full- or half-duplex RS232
 * [W1219](https://github.com/TG9541/stm8ef/wiki/Board-W1219) low cost thermostat with 2x3 digit 7S-LED display, half-duplex RS232 through PD1/SWIM
 * [W1401](https://github.com/TG9541/stm8ef/wiki/Board-W1401) (also XH-W1401) thermostat with 3x2 digit 7S-LED display, half-duplex RS232 through SWIM
 * [C0135](https://github.com/TG9541/stm8ef/wiki/Board-C0135) "Relay-4 Board" (can be used as a *Nano PLC*)
