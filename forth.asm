@@ -1255,6 +1255,7 @@ BASE:
         LD      A,#(USRBASE)
         JRA     ASTOR
 
+        .ifeq    UNLINK_INN
 ;       >IN     ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Hold parsing pointer.
 
@@ -1262,7 +1263,9 @@ BASE:
 INN:
         LD      A,#(USR_IN)
         JRA     ASTOR
+        .endif
 
+        .ifeq    UNLINK_NTIB
 ;       #TIB    ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Count in terminal input buffer.
 
@@ -1270,7 +1273,9 @@ INN:
 NTIB:
         LD      A,#(USRNTIB)
         JRA     ASTOR
+        .endif
 
+        .ifeq    UNLINK_TEVAL
 ;       'eval   ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Execution vector of EVAL.
 
@@ -1278,7 +1283,9 @@ NTIB:
 TEVAL:
         LD      A,#(USREVAL)
         JRA     ASTOR
+        .endif
 
+        .ifeq    UNLINK_HLD
 ;       HLD     ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Hold a pointer of output string.
 
@@ -1286,6 +1293,7 @@ TEVAL:
 HLD:
         LD      A,#(USRHLD)
         JRA     ASTOR
+        .endif
 
 ;       'EMIT   ( -- a )     ( TOS STM8: -- A,Z,N )
 ;
@@ -1335,7 +1343,7 @@ ATOKEY:
 ;       TIB     ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Return address of terminal input buffer.
 
-        .ifeq   REMOVE_TIB
+        .ifeq   UNLINK_TIB
         HEADER  TIB "TIB"
 TIB:
         DoLitW  TIBB
@@ -1416,7 +1424,7 @@ BGG:
 ;       'PROMPT ( -- a)     ( TOS STM8: -- Y,Z,N )
 ;       Return address of PROMPT vector
 
-        .ifeq   REMOVE_TPROMPT
+        .ifeq   UNLINK_TPROMPT
         HEADER  TPROMPT "'PROMPT"
 TPROMPT:
         LD      A,#(USRPROMPT)
@@ -1635,7 +1643,7 @@ MIN:
         JRA     YTEMPTOS
         .endif
 
-        .ifeq   REMOVE_WITHI
+        .ifeq   UNLINK_WITHI
 ;       WITHIN ( u ul uh -- t ) ( TOS STM8: -- Y,Z,N )
 ;       Return true if u is within
 ;       range of ul and uh. ( ul <= u < uh )
@@ -2093,7 +2101,7 @@ PAD:
         DoLitC  PADOFFS
         JP      PLUS
 
-        .ifeq   REMOVE_ATEXE
+        .ifeq   UNLINK_ATEXE
 ;       @EXECUTE        ( a -- )  ( TOS STM8: undefined )
 ;       Execute vector stored in address a.
 
@@ -2275,7 +2283,7 @@ SIGN:
         .endif
 BDIGS:
         CALL    PAD
-        CALL    HLD
+        DoLitC  USRHLD
         JP      STORE
 
         HEADER  STR "str"
@@ -2758,7 +2766,7 @@ PARSE:
         CALL    ASTOR
         CALL    ROT
         CALL    PARS
-        CALL    INN
+        DoLitC  USR_IN
         JP      PSTOR
 
         .ifeq   BOOTSTRAP
