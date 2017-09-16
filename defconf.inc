@@ -32,7 +32,7 @@
         HAS_DOLOOP       = 0    ; DO .. LOOP extension: DO LEAVE LOOP +LOOP
         HAS_ALIAS        = 1    ; NAME> resolves "alias" (RigTig style), aliases can be in RAM
         HAS_FILEHAND     = 0    ; FILE and HAND for file upload
-        HAS_E4THCOM      = 1    ; E4THCOM file upload support
+        HAS_OLDOK        = 0    ; Disable e4thcom file upload support
 
         USE_CALLDOLIT    = 0    ; use CALL DOLIT instead of the DOLIT TRAP handler (deprecated)
         CASEINSENSITIVE  = 0    ; Case insensitive dictionary search
