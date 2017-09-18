@@ -4,5 +4,6 @@ sudo: required
 env:
   - BOARD=CORE
   - BOARD=MINDEV
+  - BOARD=SWIMCOM
 install: sh -e test/deps.sh
 script: make BOARD=$BOARD
