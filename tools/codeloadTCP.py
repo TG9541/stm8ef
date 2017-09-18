@@ -1,10 +1,14 @@
 #!/usr/bin/env python2
 # STM8EF uCsim telnet uploader
-# - supports e4thcom stile "#include" pseudo word. The include path is:
+# - supports e4thcom style "#include" and "#require" pseudo words.
+# - The include path is:
 #   1. `cwd` of uploader
 #   2. path of the including file
 #   3. `cwd`/lib
-# - for now, assume that the telnet port is 10000
+# Limitations:
+# - no error detection
+# - #require does the same as #include (no conditional uploading)
+# - the telnet port is fixed (localhost 10000)
 
 import sys
 import os

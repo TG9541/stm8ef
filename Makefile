@@ -53,6 +53,9 @@ flash: main.ihx
 forth: main.ihx
 	tools/simload.sh $(BOARD)
 
+forthflash: forth
+	stm8flash -c stlinkv2 -p $(TARGET) -w out/$(BOARD)/$(BOARD)-forth.ihx
+
 directories: out
 
 out:
