@@ -1,5 +1,7 @@
 # STM8S eForth (stm8ef)
 
+[![Test](https://travis-ci.org/TG9541/stm8ef.svg)](https://travis-ci.org/TG9541/stm8ef)
+
 TG9541/STM8EF is based on [Dr. C.H. Ting's eForth for the *STM8S Discovery*](http://www.forth.org/svfig/kk/07-2010.html). It aims to be a lightweight embedded "untethered" (self-hosted) Forth system for low-end STM8 µCs with a maximum "feature-to-binary-size" ratio. It provides a plug-in system for board support, base dictionary configuration, a Forth include file infrastructure, and uCsim based binary level simulation. With the kind permission of the original author, TG9541/STM8EF has a permissive [FOSS license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md).
 
 The [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) covers various topics, e.g. how to use cheap Chinese thermostats, voltmeters, or DC/DC-converters, as Forth powered embedded control boards.

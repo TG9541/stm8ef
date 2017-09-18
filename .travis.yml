@@ -1,0 +1,8 @@
+dist: trusty
+language: c
+sudo: required
+env:
+  - BOARD=CORE
+  - BOARD=MINDEV
+install: sh -e test/deps.sh
+script: make BOARD=$BOARD
