@@ -5,5 +5,8 @@ env:
   - BOARD=CORE
   - BOARD=MINDEV
   - BOARD=SWIMCOM
+cache:
+  directories:
+    - $HOME/sdcc
 install: sh -e test/deps.sh
-script: make BOARD=$BOARD
+script: PATH=$PATH:$HOME/sdcc/bin make BOARD=$BOARD
