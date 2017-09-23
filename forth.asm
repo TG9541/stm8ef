@@ -2071,7 +2071,7 @@ RAMHERE:
         RAMHERE = HERE
         .endif
 
-;       HERE    ( -- a )      ( TOS STM8: -- A,Z,N )
+;       HERE    ( -- a )      ( TOS STM8: -- Y,Z,N )
 ;       Return  top of  code dictionary.
 
         HEADER  HERE "HERE"
@@ -4388,7 +4388,7 @@ RAMM:
         EXGW    X,Y
         LDW     X,USRVAR
         LDW     COLDCTOP,X
-        LDW     X,NVMCP
+        LDW     X,USRCP
         LDW     COLDNVMCP,X
         LDW     X,NVMCONTEXT
         LDW     COLDCONTEXT,X
