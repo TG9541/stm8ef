@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python2.7
 # STM8EF uCsim telnet uploader
 # - supports e4thcom style "#include" and "#require" pseudo words.
 # - The include path is:

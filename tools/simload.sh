@@ -17,7 +17,7 @@ EOF
 gawk "$setbreak" out/$object/forth.rst >> "$ucsimstart"
 
 # start simulator, it's set to break at HI
-./sstm8 -w -C$ucsimstart -g -Z10001 -tS103 -Suart=1,port=10000 &
+sstm8 -w -C$ucsimstart -g -Z10001 -tS103 -Suart=1,port=10000 &
 
 # wait, inject uart code patch, and start over
 sleep 0.2
@@ -35,9 +35,9 @@ EOF
 # STM8EF: set RESET defaults to include the newly defined words
 export persist=`mktemp`
 cat << 'EOF' > "$persist"
-ULOCKF
+NVM
 'BOOT DUP $12 DUP ROT + SWAP CMOVE
-LOCKF
+RAM
 EOF
 
 # wait some more, start transferring Forth code
