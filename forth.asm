@@ -1185,8 +1185,7 @@ ORR:
         HEADER  ZLESS "0<"
 ZLESS:
         CLR     A
-        LDW     Y,X
-        LDW     Y,(Y)
+        TNZ     (X)
         JRPL    ZL1
         CPL     A               ; true
 ZL1:    LD      (X),A
