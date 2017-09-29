@@ -1185,8 +1185,7 @@ ORR:
         HEADER  ZLESS "0<"
 ZLESS:
         CLR     A
-        LDW     Y,X
-        LDW     Y,(Y)
+        TNZ     (X)
         JRPL    ZL1
         CPL     A               ; true
 ZL1:    LD      (X),A
@@ -2552,12 +2551,11 @@ DOSTR:
 ;       Run time routine compiled by $".
 ;       Return address of a compiled string.
 
-        .ifne   WORDS_LINKRUNTI
         HEADFLG STRQP '$"|' COMPO
 
 STRQP:
-        JRA     DOSTR
-        .endif
+        CALLR   DOSTR
+        RET
 
 ;       ."|     ( -- )
 ;       Run time routine of ." .
@@ -3578,7 +3576,7 @@ ABRTQ:
         .endif
 STRQ:
         CALL    COMPI
-        CALL    DOSTR
+        CALL    STRQP
 STRCQLOC:
         JP      STRCQ
 
@@ -3644,7 +3642,7 @@ SNAME:
         CALL    AT
         CALL    SWAPP
         JP      STORE           ; save code pointer
-PNAM1:  CALL    DOSTR
+PNAM1:  CALL    STRQP
         .db     5
         .ascii  " name"         ; null input
         JP      ABOR1
