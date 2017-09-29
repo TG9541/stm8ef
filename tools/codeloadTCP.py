@@ -6,7 +6,6 @@
 #   2. path of the including file
 #   3. `cwd`/lib
 # Limitations:
-# - no error detection
 # - #require does the same as #include (no conditional uploading)
 # - the telnet port is fixed (localhost 10000)
 
@@ -58,15 +57,16 @@ def upload(path):
                     continue
                 if len(line) > 64:
                     raise ValueError('Line is too long: %s' % (line))
-                print('sending: ' + line)
+                print('TX: ' + line)
                 tn.write(line + '\r')
-                result = tn.expect(['.*\?\r\n', '.*k\r\n', '\r\n'],3)[0]
+                result = tn.expect(['\?\a\r\n', 'k\r\n', 'K\r\n'],3)[0]
                 if result<0:
                     raise ValueError('timeout %s' % (line))
                 elif result == 0:
                     raise ValueError('error %s' % (line))
         except ValueError as err:
-            print(err.args)
+            print(err.args[0])
+            exit(1)
 
 for path in sys.argv[1:]:
     upload(path)
