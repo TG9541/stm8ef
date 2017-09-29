@@ -16,12 +16,16 @@ read -d '' setbreak << 'EOF'
 EOF
 gawk "$setbreak" out/$object/forth.rst >> "$ucsimstart"
 
+echo "simload.sh: starting uCsim"
+
 # start simulator, it's set to break at HI
 sstm8 -w -C$ucsimstart -g -Z10001 -tS103 -Suart=1,port=10000 &
+sleep 1.0
 
 # wait, inject uart code patch, and start over
-sleep 0.2
-nc localhost 10001 <<EOF
+echo "simload.sh: injecting UART code"
+
+nc -w 1 localhost 10001 <<EOF
 download
 :04006000100010205C
 :1010000090AE680390CF5232350C523535100061e6
@@ -32,6 +36,7 @@ download
 run
 EOF
 
+
 # STM8EF: set RESET defaults to include the newly defined words
 export persist=`mktemp`
 cat << 'EOF' > "$persist"
@@ -41,8 +46,13 @@ RAM
 EOF
 
 # wait some more, start transferring Forth code
-sleep 0.8
-tools/codeloadTCP.py "$object/board.fs" "$persist"
+sleep 1.0
+
+echo "simload.sh: running codeloadTCP.py $object/board.fs persist"
+
+tools/codeloadTCP.py "$object/board.fs" "$persist" || exit
+
+echo "simload.sh: injecting UART code"
 
 # gawk: uCsim "dch" dump to Intel HEX conversion
 read -d '' makeHex << 'EOF'
@@ -60,8 +70,11 @@ function App(x,n) {
 EOF
 
 # dump flash data, convert to Intel Hex, kill uCsim
-nc localhost 10001 <<EOF | gawk "$makeHex" > "out/$object/$object-forth.ihx"
+echo "simload.sh: loading $object binary"
+
+nc -w 1 localhost 10001 <<EOF | gawk "$makeHex" > "out/$object/$object-forth.ihx"
 dch 0x8000 0x9FFF 16
 kill
 EOF
 
+echo "simload.sh: bye"

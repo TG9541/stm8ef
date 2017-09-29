@@ -545,7 +545,7 @@
 ```
 
 ```
-;       HERE    ( -- a )      ( TOS STM8: -- A,Z,N )
+;       HERE    ( -- a )      ( TOS STM8: -- Y,Z,N )
 ;       Return  top of  code dictionary.
 ```
 
