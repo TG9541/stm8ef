@@ -41,4 +41,4 @@ For assembly code, please use the following formatting:
 ## Licensing & Legal Stuff
 
 Please don't contribute code that doesn't fit our [ISC](https://en.wikipedia.org/wiki/ISC_license) style license. 
-If the code isn't yours, or if you don't have the original authors permission to use it under the terms of the license, then please don't put it in a pull request it!
+If the code isn't yours, or if you don't have the original authors permission to use it under the terms of the license, then please don't put it in a pull request!
