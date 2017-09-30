@@ -1,12 +1,14 @@
-dist: trusty
-language: c
 sudo: required
-env:
-  - BOARD=CORE
-  - BOARD=MINDEV
-  - BOARD=SWIMCOM
-cache:
-  directories:
-    - $HOME/sdcc
-install: sh -e test/deps.sh
-script: PATH=$PATH:$HOME/sdcc/bin make BOARD=$BOARD
+
+language: c
+
+services:
+  - docker
+
+before_install:
+  - docker pull tg9541/docker-sdcc
+
+install:
+  - docker run -v `pwd`:/home docker-sdcc /bin/sh -c "sdcc --version ; sstm8 -version"
+
+script: docker run -v `pwd`:/home docker-sdcc /bin/sh -c "cd /home && make BOARD=W1209 forth"
