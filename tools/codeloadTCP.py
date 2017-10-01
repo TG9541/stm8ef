@@ -59,11 +59,11 @@ def upload(path):
                     raise ValueError('Line is too long: %s' % (line))
                 print('TX: ' + line)
                 tn.write(line + '\r')
-                result = tn.expect(['\?\a\r\n', 'k\r\n', 'K\r\n'],3)[0]
-                if result<0:
+                result = tn.expect(['\?\a\r\n', 'k\r\n', 'K\r\n'],60)
+                if result[0]<0:
                     raise ValueError('timeout %s' % (line))
-                elif result == 0:
-                    raise ValueError('error %s' % (line))
+                elif result[0] == 0:
+                    raise ValueError('error %s' % (result[2]))
         except ValueError as err:
             print(err.args[0])
             exit(1)
