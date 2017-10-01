@@ -124,18 +124,18 @@ Other than that, have fun, and consider sharing your results!
   * ASCII file transfer: FILE HAND
 * configurable vocabulary subsets for binary size optimization
 
-# Other changes compared to the original STM8EF code:
+## Other changes to the original STM8EF code:
 
 * "ASxxxx V2.0" syntax (the free [SDCC tool chain](http://sdcc.sourceforge.net/) allows mixing Forth, assembly, and C)
 * hard STM8S105C6 dependencies removed (e.g. RAM layout, UART2)
 * flexible RAM layout, basic RAM memory management, meaningful symbols for RAM locations
 * conditional code for different target boards with a subdirectory based configuration framework
 * bugs fixed (e.g. COMPILE, DEPTH, R!)
-* rather significant binary size reduction
+* significant binary size reduction
 
 # Disclaimer, copyright
 
-TL;DR: This is a hobby project! Don't use the code if support, correctness, or dependability are required. Also note that additional licenses might apply to the code which might require derived work to be made public!
+TL;DR: This is a hobby project! Don't use the code if support, correctness, or dependability are required. Additional licenses might apply to the code which may require derived work to be made public!
 
 Please refer to LICENSE.md for details.
 
