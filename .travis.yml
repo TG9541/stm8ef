@@ -11,4 +11,4 @@ before_install:
 install:
   - docker run -v `pwd`:/home tg9541/docker-sdcc /bin/sh -c "sdcc --version ; sstm8 -version"
 
-script: docker run -v `pwd`:/home tg9541/docker-sdcc /bin/sh -c "cd /home && make BOARD=W1209 forth"
+script: docker run -v `pwd`:/home tg9541/docker-sdcc /bin/sh -c "cd /home && make BOARD=test forth"
