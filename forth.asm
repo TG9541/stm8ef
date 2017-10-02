@@ -1221,10 +1221,8 @@ SUBB:
         HEADER  CNTXT "CONTEXT"
 CNTXT:
         .ifne  HAS_CPNVM
-        CALL    COMPIQ
-        JREQ    1$
         CALL    NVMQ
-        JREQ    1$
+        JREQ    1$              ; link NVM to NVM
         LD      A,#(NVMCONTEXT)
         JRA     ASTOR
 1$:
@@ -3843,7 +3841,7 @@ VARIA:
         CALL    CELLM
         CALL    STORE
         LDW     Y,USRVAR
-        LDW     (X),Y           ; overwrite ZERO with RAM address RAM for COMMA
+        LDW     (X),Y           ; overwrite ZERO with RAM address for COMMA
         DoLitC  2               ; Allocate space for variable in RAM
         CALLR   ALLOT
         .endif
