@@ -13,7 +13,7 @@ CREATE RESULTS 12 2* ALLOT
       1- DUP FOR DUP I - 2* RESULTS + ? NEXT DROP
    THEN 1 ;
 : T{   ( -- )
-   ;
+   DECIMAL ;
 : ->   ( ... -- )
    \ save stack depth and result values
    DEPTH DUP #RESULTS !
@@ -41,8 +41,8 @@ VARIABLE EmitV 'EMIT @ EmitV !
 : tEmit ( c -- )
    1 Char# +!  CharSum +! ;
 : T{e ( -- )
-  [ ' tEmit ] LITERAL 'EMIT !
-  0 Char# ! 0 CharSum ! ;
+   [ ' tEmit ] LITERAL 'EMIT !
+   0 Char# ! 0 CharSum ! ;
 : e-> ( -- n n )
- EmitV @ 'EMIT !
- Char# @ CharSum @ -> ;
+   EmitV @ 'EMIT !
+   Char# @ CharSum @ -> ;
