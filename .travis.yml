@@ -8,7 +8,10 @@ services:
 before_install:
   - docker pull tg9541/docker-sdcc:V1.0.0
 
-script: docker run -v `pwd`:/home tg9541/docker-sdcc:V1.0.0 /bin/sh -c "sdcc --version ; sstm8 -version && ncd /home && make BOARD=test forth && make clean && make all"
+install:
+  - docker run -v `pwd`:/home tg9541/docker-sdcc:V1.0.0 /bin/sh -c "sdcc --version ; sstm8 -version"
+
+script: docker run -v `pwd`:/home tg9541/docker-sdcc:V1.0.0 /bin/sh -c "cd /home && make BOARD=test forth && make clean && make all"
 
 deploy:
   provider: releases
