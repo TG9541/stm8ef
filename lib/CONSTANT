@@ -31,7 +31,7 @@
 
  MARKER RAM\
 
-\res MCU: mcu/STM8S103
+\res MCU: STM8S103
 \res export PB_ODR
 
  NVM
