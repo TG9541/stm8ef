@@ -21,7 +21,9 @@
   NVM
 
   : CONSTANT ( "name" x -- )
-    : compile docon , [compile] [ overt immediate ; 
+    : compile docon , [compile] [ overt immediate ;
+    
+  RAM
 
   RAM\
 \ ------------------------------------------------------------------------------
@@ -36,6 +38,8 @@
 
   : LED.on ( -- )  0 PB_ODR 5 B! ;
   : LED.off ( -- ) 1 PB_ODR 5 B! ;
+  
+ RAM
 
  RAM\
 
