@@ -1,0 +1,20 @@
+\ STM8EF : ]B!                                                         MM-170927
+\ ------------------------------------------------------------------------------
+  RAM
+
+  \ Enable the compile mode and compile the code to set|reset the bit at addr.
+  : ]B! ( 1|0 addr bit -- )
+     rot 0= 1 and swap 2* $10 + + $72 c, c, , ]
+  ; immediate
+
+\\ Example:
+
+#require CONSTANT
+
+\res MCU: STM8S103
+
+\res export PB_ODR
+
+   : LED.on ( -- )  [ 0 PB_ODR 5 ]B! ;
+   : LED.off ( -- ) [ 1 PB_ODR 5 ]B! ;
+

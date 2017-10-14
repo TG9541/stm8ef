@@ -1,0 +1,80 @@
+\ STM8S103 Register ans Bit Identifiers                                MM-170928
+
+\ Bitmasks (probably names should be changed to BMx ?)
+  01 equ BIT0
+  02 equ BIT1
+  04 equ BIT2
+  08 equ BIT3
+  10 equ BIT4
+  20 equ BIT5
+  40 equ BIT6
+  80 equ BIT7
+ 100 equ BIT8
+ 200 equ BIT9
+ 400 equ BIT10
+ 800 equ BIT11
+1000 equ BIT12
+2000 equ BIT13  
+4000 equ BIT14
+8000 equ BIT15      
+
+
+                      \ Register name                      \ Reset status  
+5005 equ PB_ODR  \ Port B data output latch register         0x00
+5006 equ PB_IDR  \ Port B input pin value register           0xXX
+5007 equ PB_DDR  \ Port B data direction register            0x00
+5008 equ PB_CR1  \ Port B control register 1                 0x00
+5009 equ PB_CR2  \ Port B control register 2                 0x00
+
+
+5200 equ SPI_CR1    \ ($00)
+5201 equ SPI_CR2    \ ($00)
+5202 equ SPI_ICR    \ ($00)
+5203 equ SPI_SR     \ ($02)
+5204 equ SPI_DR     \ ($00)
+5205 equ SPI_CRCPR  \ ($07)
+5206 equ SPI_RXCRCR \ ($00)
+5207 equ SPI_TXCRCR \ ($00)
+
+
+5210 equ I2C_CR1
+   0 equ I2C_CR1_PE
+5211 equ I2C_CR2
+   0 equ I2C_CR2_START
+   1 equ I2C_CR2_STOP
+   2 equ I2C_CR2_ACK
+   3 equ I2C_CR2_POS
+   7 equ I2C_CR2_SWRST
+5212 equ I2C_FREQR
+5213 equ I2C_OARL   \ $00
+5214 equ I2C_OARH   \ $00
+   6 equ I2C_OARH_ADDCONF  \ must be set by sofware as '1'
+   7 equ I2C_OARH_ADDMODE  \ 0|1 = 7|10 slave address
+
+
+5216 equ I2C_DR
+5217 equ I2C_SR1
+   0 equ I2C_SR1_SB
+   1 equ I2C_SR1_ADDR
+   2 equ I2C_SR1_BTF
+   3 equ I2C_SR1_ADD10
+   4 equ I2C_SR1_STOPF
+   6 equ I2C_SR1_RXNE
+   7 equ I2C_SR1_TXE
+5218 equ I2C_SR2
+5219 equ I2C_SR3      \ $0X
+   0 equ I2C_SR3_MSL
+   1 equ I2C_SR3_BUSY
+   2 equ I2C_SR3_TRA
+   4 equ I2C_SR3_GENCALL
+   7 equ I2C_SR3_DUALF
+
+521A equ I2C_ITR
+521B equ I2C_CCRL
+521C equ I2C_CCRH
+521D equ I2C_TRISER   \ $02
+521E equ I2C_PECR
+
+
+
+

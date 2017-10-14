@@ -3733,17 +3733,6 @@ COLON:
         JP      TOKSNAME        ; copy token to dictionary
 
 
-;       IMMEDIATE       ( -- )
-;       Make last compiled word
-;       an immediate word.
-
-        HEADER  IMMED "IMMEDIATE"
-IMMED:
-        LD      A,[USRLAST]
-        OR      A,#IMEDD
-        LD      [USRLAST],A
-        RET
-
 ;       ]       ( -- )
 ;       Start compiling words in
 ;       input stream.
@@ -3823,6 +3812,30 @@ CREAT:
         CALL    DOVAR
         RET
 
+        .ifeq   UNLINK_CONST
+;       CONSTANT ( "name" n -- )
+;       Create a named constant with state dependant action
+
+        HEADFLG CONST "CONSTANT" IMEDD
+CONST:
+        CALL    COLON
+        CALL    COMPI
+        CALLR   DOCON           ; compile action code
+        CALL    COMMA           ; compile constant
+        CALL    LBRAC
+        CALL    OVERT
+        JRA     IMMED           ; make immediate
+
+;       docon ( -- )
+;       state dependent action code of constant
+
+DOCON:  CALL    RFROM
+        CALL    AT              ; push constant in interpreter mode
+        CALL    COMPIQ
+        JREQ    1$
+        CALL    LITER           ; compile constant in compiler mode
+1$:     RET
+        .endif
 
         .ifeq   NO_VARIABLE
 ;       VARIABLE        ( -- ; <string> )
@@ -3867,6 +3880,17 @@ ALLOT:
         .endif
 
 ; Tools
+
+;       IMMEDIATE       ( -- )
+;       Make last compiled word
+;       an immediate word.
+
+        HEADER  IMMED "IMMEDIATE"
+IMMED:
+        LD      A,[USRLAST]
+        OR      A,#IMEDD
+        LD      [USRLAST],A
+        RET
 
         .ifeq   BOOTSTRAP
 ;       _TYPE   ( b u -- )

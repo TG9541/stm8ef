@@ -259,13 +259,14 @@
         UNLINK_SCOMP     = 1    ; "$COMPILE"
         UNLINK_OVERT     = 0    ; "OVERT"
         UNLINK_COLON     = 0    ; ":"
-        UNLINK_IMMED     = 0    ; "IMMEDIATE"
         UNLINK_RBRAC     = 0    ; "]"
         UNLINK_DOESS     = 0    ; "DOES>"
         UNLINK_DODOES    = 0    ; "dodoes"
         UNLINK_CREAT     = 0    ; "CREATE"
+        UNLINK_CONST     = 0    ; "CONSTANT" - 45 bytes
         UNLINK_VARIA     = 0    ; "VARIABLE"
         UNLINK_ALLOT     = 0    ; "ALLOT"
+        UNLINK_IMMED     = 0    ; "IMMEDIATE"
         UNLINK_UTYPE     = 1    ; "_TYPE"
         UNLINK_DUMPP     = 1    ; "dm+"
         UNLINK_DUMP      = 0    ; "DUMP"
@@ -294,4 +295,3 @@
         UNLINK_RESETT    = 0    ; "RESET"
         UNLINK_SAVEC     = 0    ; "SAVEC"
         UNLINK_RESTC     = 0    ; "IRET"
-
