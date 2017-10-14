@@ -1,4 +1,4 @@
-#include utils/tester.fs
+#require utils/tester.fs
 
 \ expected vocabulary (uncluding tester.fs)
 T{e WORDS e-> 987 -185 }T

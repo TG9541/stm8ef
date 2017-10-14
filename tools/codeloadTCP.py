@@ -24,30 +24,70 @@ if len(sys.argv) < 2:
 
 tn = telnetlib.Telnet(HOST,PORT)
 tn.read_until("menu\r\n")
+reExampleStart = re.compile("^\\\\\\\\ Example:")
 
 def error(message,line, path, lineNr):
     print 'Error file %s line %d: %s' % (path, lineNr, message)
     print '>>>  %s' % (line)
     sys.exit(1)
 
+def transfer(line):
+    tn.write(line + '\r')
+    tnResult=tn.expect(['\?\a\r\n', 'k\r\n', 'K\r\n'],60)
+    if tnResult[0]<0:
+        raise ValueError('timeout %s' % line)
+    elif tnResult[0]==0:
+        return tnResult[2]
+    else:
+        return "ok"
+
+def notRequired(word):
+    return transfer("' %s DROP" % word) == 'ok'
+
 def upload(path):
     with open(path) as source:
-        lineNr = 0
         print 'Uploading %s' % path
+        lineNr = 0
+        isExample = False
+
         try:
             CPATH = os.path.dirname(path)
             for line in source.readlines():
                 lineNr += 1
+                # all lines from "\\ Example:" on are comments
+                if reExampleStart.match(line):
+                    isExample = True
+
+                if isExample:
+                    print('\\ ' + line)
+                    continue
+
+                reRes = re.search('^\\\\res +(.+?)$', line)
+                if reRes:
+                    reRes = reRes.group(1)
+                    print('res: ' + reRes)
+                    continue
 
                 line = line.partition('\\')[0].strip()
                 if not line: continue
+
                 reInclude = re.search('^#(include|require) +(.+?)$', line)
                 if reInclude:
-                    includeFile = CWDPATH + '/' + reInclude.group(2)
+                    includeMode = reInclude.group(1)
+                    includeItem = reInclude.group(2)
+
+                    if includeMode == 'require' and notRequired(includeItem):
+                        continue
+
+                    includeFile = CWDPATH + '/' + includeItem
                     if not os.path.isfile(includeFile):
-                         includeFile = CPATH + '/' + reInclude.group(2)
+                        includeFile = CPATH + '/' + includeItem
                     if not os.path.isfile(includeFile):
-                         includeFile = CWDPATH + '/lib/' + reInclude.group(2)
+                        includeFile = CWDPATH + '/lib/' + includeItem
+                    if not os.path.isfile(includeFile):
+                        includeFile = CWDPATH + '/mcu/' + includeItem
+                    if not os.path.isfile(includeFile):
+                        includeFile = CWDPATH + '/target/' + includeItem
                     if not os.path.isfile(includeFile):
                         error('file not found', line, path, lineNr)
                     try:
@@ -55,15 +95,12 @@ def upload(path):
                     except:
                         error('could not upload file', line, path, lineNr)
                     continue
-                if len(line) > 64:
+                if len(line) > 80:
                     raise ValueError('Line is too long: %s' % (line))
                 print('TX: ' + line)
-                tn.write(line + '\r')
-                result = tn.expect(['\?\a\r\n', 'k\r\n', 'K\r\n'],60)
-                if result[0]<0:
-                    raise ValueError('timeout %s' % (line))
-                elif result[0] == 0:
-                    raise ValueError('error %s' % (result[2]))
+                result = transfer(line)
+                if result != 'ok':
+                    raise ValueError('error %s' % result)
         except ValueError as err:
             print(err.args[0])
             exit(1)
