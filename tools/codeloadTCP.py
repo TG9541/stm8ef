@@ -134,6 +134,7 @@ def upload(path):
                     includeItem = reInclude.group(2)
 
                     if includeMode == 'require' and notRequired(includeItem):
+                        print "#require %s: skipped" % includeItem
                         continue
 
                     includeFile = searchItem(includeItem,CPATH)
@@ -141,6 +142,10 @@ def upload(path):
                         error('file not found', line, path, lineNr)
                     try:
                         upload(includeFile)
+                        if includeMode == 'require' and not notRequired(includeItem):
+                            result = transfer(": %s ;" % includeItem)
+                            if result != 'ok':
+                                raise ValueError('error closing #require %s' % result)
                     except:
                         error('could not upload file', line, path, lineNr)
                     continue
@@ -150,6 +155,7 @@ def upload(path):
                 result = transfer(line)
                 if result != 'ok':
                     raise ValueError('error %s' % result)
+
         except ValueError as err:
             print(err.args[0])
             exit(1)
