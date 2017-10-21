@@ -24,46 +24,138 @@ if len(sys.argv) < 2:
 
 tn = telnetlib.Telnet(HOST,PORT)
 tn.read_until("menu\r\n")
+reExampleStart = re.compile("^\\\\\\\\ Example:")
+resources = {}
+
+def searchItem(item, CPATH):
+    searchRes = CWDPATH + '/' + item
+    if not os.path.isfile(searchRes):
+        searchRes = CPATH + '/' + item
+    if not os.path.isfile(searchRes):
+        searchRes = CWDPATH + '/lib/' + item
+    if not os.path.isfile(searchRes):
+        searchRes = CWDPATH + '/mcu/' + item
+    if not os.path.isfile(searchRes):
+        searchRes = CWDPATH + '/target/' + item
+    if not os.path.isfile(searchRes):
+        searchRes = ''
+    return searchRes
+
+
+def removeComment(line):
+    if re.search('^\\\\ +', line):
+        return ''
+    else:
+        return line.partition(' \\ ')[0].strip()
 
 def error(message,line, path, lineNr):
     print 'Error file %s line %d: %s' % (path, lineNr, message)
     print '>>>  %s' % (line)
     sys.exit(1)
 
-def upload(path):
+def transfer(line):
+    tn.write(line + '\r')
+    tnResult=tn.expect(['\?\a\r\n', 'k\r\n', 'K\r\n'],60)
+    if tnResult[0]<0:
+        raise ValueError('timeout %s' % line)
+    elif tnResult[0]==0:
+        return tnResult[2]
+    else:
+        return "ok"
+
+def notRequired(word):
+    return transfer("' %s DROP" % word) == 'ok'
+
+def readEfr(path):
     with open(path) as source:
+        print 'Reading efr file %s' % path
         lineNr = 0
-        print 'Uploading %s' % path
         try:
             CPATH = os.path.dirname(path)
             for line in source.readlines():
                 lineNr += 1
+                line = removeComment(line)
+                if not line:
+                    continue
+                resItem = line.rsplit()
+                if resItem[1] == 'equ':
+                    resources[resItem[2]] = resItem[0]
 
-                line = line.partition('\\')[0].strip()
-                if not line: continue
+        except ValueError as err:
+            print(err.args[0])
+            exit(1)
+
+def upload(path):
+    with open(path) as source:
+        print 'Uploading %s' % path
+        lineNr = 0
+        isExample = False
+
+        try:
+            CPATH = os.path.dirname(path)
+            for line in source.readlines():
+                lineNr += 1
+                line = removeComment(line)
+                if not line:
+                    continue
+
+                # all lines from "\\ Example:" on are comments
+                if reExampleStart.match(line):
+                    isExample = True
+
+                if isExample:
+                    print('\\ ' + line)
+                    continue
+
+                if re.search('^\\\\index ', line):
+                    continue
+
+                if re.search('^\\\\res ', line):
+                    resSplit = line.rsplit()
+                    if resSplit[1] == 'MCU:':
+                        mcuFile = resSplit[2]
+                        if not re.search('\\.efr', mcuFile):
+                            mcuFile = mcuFile + '.efr'
+                        mcuFile = searchItem(mcuFile,CPATH)
+                        if not mcuFile:
+                            error('file not found', line, path, lineNr)
+                        else:
+                            readEfr(mcuFile)
+                    elif resSplit[1] == 'export':
+                        symbol = resSplit[2]
+                        if not symbol in resources:
+                            error('symbol not found: %s' % symbol, line, path, lineNr)
+                        transfer("$%s CONSTANT %s" % (resources[symbol], symbol))
+                    continue
+
                 reInclude = re.search('^#(include|require) +(.+?)$', line)
                 if reInclude:
-                    includeFile = CWDPATH + '/' + reInclude.group(2)
-                    if not os.path.isfile(includeFile):
-                         includeFile = CPATH + '/' + reInclude.group(2)
-                    if not os.path.isfile(includeFile):
-                         includeFile = CWDPATH + '/lib/' + reInclude.group(2)
-                    if not os.path.isfile(includeFile):
+                    includeMode = reInclude.group(1)
+                    includeItem = reInclude.group(2)
+
+                    if includeMode == 'require' and notRequired(includeItem):
+                        print "#require %s: skipped" % includeItem
+                        continue
+
+                    includeFile = searchItem(includeItem,CPATH)
+                    if includeFile == '':
                         error('file not found', line, path, lineNr)
                     try:
                         upload(includeFile)
+                        if includeMode == 'require' and not notRequired(includeItem):
+                            result = transfer(": %s ;" % includeItem)
+                            if result != 'ok':
+                                raise ValueError('error closing #require %s' % result)
                     except:
                         error('could not upload file', line, path, lineNr)
                     continue
-                if len(line) > 64:
+                if len(line) > 80:
                     raise ValueError('Line is too long: %s' % (line))
                 print('TX: ' + line)
-                tn.write(line + '\r')
-                result = tn.expect(['\?\a\r\n', 'k\r\n', 'K\r\n'],60)
-                if result[0]<0:
-                    raise ValueError('timeout %s' % (line))
-                elif result[0] == 0:
-                    raise ValueError('error %s' % (result[2]))
+                result = transfer(line)
+                if result != 'ok':
+                    raise ValueError('error %s' % result)
+
         except ValueError as err:
             print(err.args[0])
             exit(1)

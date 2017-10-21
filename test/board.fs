@@ -1,6 +1,6 @@
 #include utils/tester.fs
 
-\ expected vocabulary (uncluding tester.fs)
+\ expected vocabulary (including tester.fs)
 T{e WORDS e-> 987 -185 }T
 
 \ core: string with capured EMIT
