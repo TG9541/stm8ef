@@ -3,7 +3,7 @@
 
 \ Set RESET defaults to include newly defined NVM words
 : PERSIST ( -- )
-  ULOCKF
+  NVM
   'BOOT DUP $12 DUP ROT + SWAP CMOVE
-  LOCKF
+  RAM
 ;
