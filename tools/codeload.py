@@ -17,9 +17,15 @@ import telnetlib
 import re
 import argparse
 
+# hash for "\res MCU:" key-value pairs
+resources = {}
+
+# a modicum of OOP for target line transfer
 class Connection:
     def transfer(self, line):
         return "ok"
+    def testtrans(self, line):
+        return self.transfer(line)
     def tracef(self, line):
         if tracefile:
             try:
@@ -28,11 +34,15 @@ class Connection:
                 print('Error writing tracefile %s' % args.tracefile)
                 exit(1)
 
+# dummy line transfer
 class ConnectDryRun(Connection):
     def transfer(self, line):
         print(line)
         return "ok"
+    def testtrans(self, line):
+        return ""
 
+# uCsim telnet line transfer
 class ConnectUcsim(Connection):
     tn = { }
     def __init__(self, comspec):
@@ -62,13 +72,14 @@ class ConnectUcsim(Connection):
             sys.exit(1)
 
         if tnResult[0]<0:
-            print('timeout %s' % line)
+            print('Error: timeout %s' % line)
             sys.exit(1)
         elif tnResult[0]==0:
             return tnResult[2]
         else:
             return "ok"
 
+# serial line transfer
 class ConnectSerial(Connection):
     port = { }
     def __init__(self, ttydev):
@@ -104,80 +115,51 @@ class ConnectSerial(Connection):
         else:
             return sioResult
 
-#argparse https://docs.python.org/2/howto/argparse.html
-parser = argparse.ArgumentParser()
+# simple show-error-and-exit
+def error(message, line, path, lineNr):
+    print 'Error file %s line %d: %s' % (path, lineNr, message)
+    print '>>>  %s' % (line)
+    sys.exit(1)
 
-parser.add_argument("method", choices=['serial','telnet','dryrun'],
-        help="transfer method")
-parser.add_argument("files", nargs='*',
-        help="name of one or more files to transfer")
-parser.add_argument("-p", "--port", dest="port",
-        help="PORT for transfer, default: /dev/ttyUSB0, localhost:10000", metavar="port")
-parser.add_argument("-t", "--trace", dest="tracefile",
-        help="write source code (with includes) to tracefile", metavar="tracefile")
-parser.add_argument("-q", "--quiet", action="store_false", dest="verbose", default=True,
-        help="don't print status messages to stdout")
-args = parser.parse_args()
-
-# create tracefile if needed
-if args.tracefile:
-    try:
-        tracefile = open(args.tracefile,'w')
-    except:
-        print('Error writing tracefile %s' % args.tracefile)
-        exit(1)
-else:
-    tracefile = False
-
-
-# Initualize transfer method with default destionation port
-if args.method == "telnet":
-    CN = ConnectUcsim(args.port or 'localhost:10000')
-elif args.method == "serial":
-    CN = ConnectSerial(args.port or '/dev/ttyUSB0')
-else:
-    CN = ConnectDryRun()
-
+# simple stdout log printer
 def vprint(text):
     if args.verbose:
         print text
 
-CWDPATH = os.getcwd()
-reExampleStart = re.compile("^\\\\\\\\ Example:")
-resources = {}
-
+# search an item (a source file) in the extended e4thcom search path
 def searchItem(item, CPATH):
-    searchRes = CWDPATH + '/' + item
+    # Windows' DOS days quirks: hack for STM8EF subfolders in lib/
+    if os.name == 'nt' and re.search('^(hw|utils|math)',item):
+        item = item.replace('/','\\',1)
+    CWDPATH = os.getcwd()
+    searchRes = os.path.join(CWDPATH, item)
     if not os.path.isfile(searchRes):
-        searchRes = CPATH + '/' + item
+        searchRes = os.path.join(CPATH, item)
     if not os.path.isfile(searchRes):
-        searchRes = CWDPATH + '/lib/' + item
+        searchRes = os.path.join(CWDPATH, 'lib', item)
     if not os.path.isfile(searchRes):
-        searchRes = CWDPATH + '/mcu/' + item
+        searchRes = os.path.join(CWDPATH, 'mcu', item)
     if not os.path.isfile(searchRes):
-        searchRes = CWDPATH + '/target/' + item
+        searchRes = os.path.join(CWDPATH, 'target', item)
     if not os.path.isfile(searchRes):
         searchRes = ''
     return searchRes
 
-
+# Forth "\" comment stripper
 def removeComment(line):
     if re.search('^\\\\ +', line):
         return ''
     else:
         return line.partition(' \\ ')[0].strip()
 
-def error(message, line, path, lineNr):
-    print 'Error file %s line %d: %s' % (path, lineNr, message)
-    print '>>>  %s' % (line)
-    sys.exit(1)
-
+# test if a word already exists in the dictionary
 def notRequired(word):
-    return CN.transfer("' %s DROP" % word) == 'ok'
+    return CN.testtrans("' %s DROP" % word) == 'ok'
 
+# reader for e4thcom style .efr files (symbol-address value pairs)
 def readEfr(path):
     with open(path) as source:
-        print 'Reading efr file %s' % path
+        vprint('Reading efr file %s' % path)
         lineNr = 0
         try:
             CPATH = os.path.dirname(path)
@@ -194,7 +176,10 @@ def readEfr(path):
             print(err.args[0])
             exit(1)
 
+# uploader with resolution of #include, #require, and \res
 def upload(path):
+    reExampleStart = re.compile("^\\\\\\\\ Example:")
+
     with open(path) as source:
         vprint('Uploading %s' % path)
         lineNr = 0
@@ -204,7 +189,7 @@ def upload(path):
             CPATH = os.path.dirname(path)
             for line in source.readlines():
                 lineNr += 1
-                line = line.replace('\n', ' ').replace('\r', '')
+                line = line.replace('\n', ' ').replace('\r', '').strip()
 
                 # all lines from "\\ Example:" on are comments
                 if reExampleStart.match(line):
@@ -241,7 +226,7 @@ def upload(path):
                     includeItem = reInclude.group(2).strip()
 
                     if includeMode == 'require' and notRequired(includeItem):
-                        print "#require %s: skipped" % includeItem
+                        vprint("#require %s: skipped" % includeItem)
                         continue
 
                     includeFile = searchItem(includeItem,CPATH)
@@ -267,5 +252,38 @@ def upload(path):
             print(err.args[0])
             exit(1)
 
+# Python has a decent command line argument parser - use it
+parser = argparse.ArgumentParser()
+parser.add_argument("method", choices=['serial','telnet','dryrun'],
+        help="transfer method")
+parser.add_argument("files", nargs='*',
+        help="name of one or more files to transfer")
+parser.add_argument("-p", "--port", dest="port",
+        help="PORT for transfer, default: /dev/ttyUSB0, localhost:10000", metavar="port")
+parser.add_argument("-t", "--trace", dest="tracefile",
+        help="write source code (with includes) to tracefile", metavar="tracefile")
+parser.add_argument("-q", "--quiet", action="store_false", dest="verbose", default=True,
+        help="don't print status messages to stdout")
+args = parser.parse_args()
+
+# create tracefile if needed
+if args.tracefile:
+    try:
+        tracefile = open(args.tracefile,'w')
+    except:
+        print('Error writing tracefile %s' % args.tracefile)
+        exit(1)
+else:
+    tracefile = False
+
+# Initalize transfer method with default destionation port
+if args.method == "telnet":
+    CN = ConnectUcsim(args.port or 'localhost:10000')
+elif args.method == "serial":
+    CN = ConnectSerial(args.port or '/dev/ttyUSB0')
+else:
+    CN = ConnectDryRun()
+
+# Ze main
 for path in args.files:
     upload(path)

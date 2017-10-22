@@ -3,10 +3,10 @@
   RAM
 
   \ Begin a nameless definition in the NVM and return its xt on the stack.
-  : :NVM ( -- xt ) NVM here ] ;
+  : :NVM ( -- xt ) NVM HERE ] ;
 
   \ End a nameless definition in the NVM and switch back to RAM.
-  : ;RAM ( xt -- xt ) [compile] [ $81 C, RAM ;  immediate
+  : ;RAM ( xt -- xt ) [COMPILE] [ $81 C, RAM ;  IMMEDIATE
 
 \ ------------------------------------------------------------------------------
 \\ Example:
