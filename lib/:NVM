@@ -1,0 +1,16 @@
+\ STM8eForth : :NVM                                                    MM-170929
+\ ------------------------------------------------------------------------------
+  RAM
+
+  \ Begin a nameless definition in the NVM and return its xt on the stack.
+  : :NVM ( -- xt ) NVM here ] ;
+
+  \ End a nameless definition in the NVM and switch back to RAM.
+  : ;RAM ( xt -- xt ) [compile] [ $81 C, RAM ;  immediate
+
+\ ------------------------------------------------------------------------------
+\\ Example:
+
+#require ALIAS
+
+  :NVM ." hallo" ;RAM  ALIAS .hallo

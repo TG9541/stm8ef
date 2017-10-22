@@ -16,14 +16,14 @@ read -d '' setbreak << 'EOF'
 EOF
 gawk "$setbreak" out/$object/forth.rst >> "$ucsimstart"
 
-echo "simload.sh: starting uCsim"
+echo "simload.sh: run STM8EF in uCsim with breakpoint at HI"
 
 # start simulator, it's set to break at HI
 sstm8 -w -C$ucsimstart -g -Z10001 -tS103 -Suart=1,port=10000 &
 sleep 1.0
 
 # wait, inject uart code patch, and start over
-echo "simload.sh: injecting UART code"
+echo "simload.sh: inject UART code into RAM and continue execution"
 
 nc -w 1 localhost 10001 <<EOF
 download
@@ -36,23 +36,14 @@ download
 run
 EOF
 
+# wait some more before Forth code transfer
+sleep 0.5
 
-# STM8EF: set RESET defaults to include the newly defined words
-export persist=`mktemp`
-cat << 'EOF' > "$persist"
-NVM
-'BOOT DUP $12 DUP ROT + SWAP CMOVE
-RAM
-EOF
+echo "simload.sh: transfer $object/board.fs"
 
-# wait some more, start transferring Forth code
-sleep 1.0
+tools/codeload.py telnet "$object/board.fs" || exit
 
-echo "simload.sh: running codeloadTCP.py $object/board.fs persist"
-
-tools/codeloadTCP.py "$object/board.fs" "$persist" || exit
-
-echo "simload.sh: injecting UART code"
+echo "simload.sh: prepare uCsim memory dump to .ihx script"
 
 # gawk: uCsim "dch" dump to Intel HEX conversion
 read -d '' makeHex << 'EOF'
@@ -64,17 +55,15 @@ read -d '' makeHex << 'EOF'
 }
 END { print ":00000001FF" }
 function Xpr(x) { return sprintf("%02x",x) }
-function App(x,n) {
-  s=substr(x,n,2); a=a s; cs+=strtonum("0x" s)
-}
+function App(x,n) { s=substr(x,n,2); a=a s; cs+=strtonum("0x" s) }
 EOF
 
-# dump flash data, convert to Intel Hex, kill uCsim
-echo "simload.sh: loading $object binary"
+echo "simload.sh: load $object binary before exiting uCsim"
 
+# dump flash data, convert to Intel Hex, hard exit uCsim
 nc -w 1 localhost 10001 <<EOF | gawk "$makeHex" > "out/$object/$object-forth.ihx"
 dch 0x8000 0x9FFF 16
 kill
 EOF
 
-echo "simload.sh: bye"
+echo "simload.sh: complete - bye!"
