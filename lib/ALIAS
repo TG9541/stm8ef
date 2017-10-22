@@ -6,12 +6,8 @@
     : $CC C, , [compile] [ OVERT
   ;
 
-  \ Begin a nameless definition in the NVM and return its xt on the stack.
-  : :NVM ( -- xt ) NVM here ] ;
-
-  \ End a nameless definition in the NVM and switch back to RAM.
-  : ;RAM ( xt -- xt ) [compile] [ $81 C, RAM ;  immediate
-
 \ ------------------------------------------------------------------------------
-\\ Example:  :NVM ." hallo" ;RAM  ALIAS .hallo
+\\ Example:
 
+#require :NVM
+  :NVM ." hallo" ;RAM  ALIAS .hallo

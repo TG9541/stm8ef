@@ -4,9 +4,10 @@
 
   \ Enable the compile mode and compile the code to set|reset the bit at addr.
   : ]B! ( 1|0 addr bit -- )
-     rot 0= 1 and swap 2* $10 + + $72 c, c, , ]
-  ; immediate
+     ROT 0= 1 AND SWAP 2* $10 + + $72 C, C, , ]
+  ; IMMEDIATE
 
+\ ------------------------------------------------------------------------------
 \\ Example:
 
 #require CONSTANT
@@ -17,4 +18,3 @@
 
    : LED.on ( -- )  [ 0 PB_ODR 5 ]B! ;
    : LED.off ( -- ) [ 1 PB_ODR 5 ]B! ;
-

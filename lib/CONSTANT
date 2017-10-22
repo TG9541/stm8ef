@@ -7,22 +7,21 @@
 
   MARKER RAM\
 
-#require ALIAS
-
   : 'EVAL ( -- a ) BASE 2+ ;
 
-  :NVM ( -- x| )
-    r> @ [ 'EVAL dup @ ]
-    literal    \ 'EVAL in interpret mode
-    literal @  \ current 'EVAL
-    - if ( in compile mode ) [compile] literal then
-  ;RAM ALIAS docon ( -- x| )
+#require ALIAS
+
+  NVM HERE ] \ ( -- xt )
+    \ nameless definition in NVM, with ALIAS in RAM
+    R> @ [ 'EVAL DUP @ ]
+    LITERAL    \ 'EVAL in interpret mode
+    LITERAL @  \ current 'EVAL
+    - IF ( in compile mode ) [COMPILE] LITERAL THEN
+  [ $81 C, RAM ALIAS docon
 
   NVM
-
   : CONSTANT ( "name" x -- )
-    : compile docon , [compile] [ overt immediate ;
-    
+    : COMPILE docon , [COMPILE] [ OVERT IMMEDIATE ;
   RAM
 
   RAM\
@@ -38,10 +37,9 @@
 
   : LED.on ( -- )  0 PB_ODR 5 B! ;
   : LED.off ( -- ) 1 PB_ODR 5 B! ;
-  
+
  RAM
 
  RAM\
 
 \index  LED.off  LED.on
-

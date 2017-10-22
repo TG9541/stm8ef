@@ -1,17 +1,16 @@
-\ STM8eForth : MARKER                                                 MM-170929 
+\ STM8eForth : MARKER                                                 MM-170929
 \ ------------------------------------------------------------------------------
 
   RAM   : _ ;  \ dummy word to ensure that last points to RAM, not Flash
 
-  here \ ( -- xt )  
-    ] RAM dup @ last 2- ! 2+ dup @ last ! 2+ @ last 10 + ! [ $81 C,
+  HERE \ ( -- xt )
+    ] RAM DUP @ last 2- ! 2+ DUP @ last ! 2+ @ last 10 + ! [ $81 C,
 
   : MARKER ( "name" -- )
   \ The marker "name" removes itself and all later defined words from RAM.
-    RAM here last 2- @ , last @ , last 10 + @ ,
-    : [compile] literal ( xt ) literal call, [compile] ;
+    RAM HERE last 2- @ , last @ , last 10 + @ ,
+    : [COMPILE] LITERAL ( xt ) LITERAL CALL, [COMPILE] ;
   ;
 
 \ ------------------------------------------------------------------------------
 \ Last Revision: MM-170930 Dummy word _ added. dofence made headerless
-
