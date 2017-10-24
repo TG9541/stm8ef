@@ -1,0 +1,23 @@
+\ STM8S option setting words
+\ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
+
+  RAM  \ constants to RAM
+
+\ load dummy word if TARGET hasn't been set
+#require TARGET
+
+\res MCU: STM8S103
+\res export FLASH_CR2
+
+  TARGET  \ this is either an alias for NVM or a dummy word
+
+  \ (nameless) CN! store char to (a), and inverted value to (a+1)
+  HERE ] \ ( c a -- )
+    2DUP C! SWAP NOT SWAP 1+ C!
+  [ $81 C, ( -- xt )
+
+  \ unlock write protection, store option byte
+  : OPT! ( c a -- )
+    FLASH_CR2 DUP C@ $80 OR SWAP [ DUP CALL, ] ( CN! )
+    ULOCK [ CALL, ] ( CN! ) LOCK
+  ;
