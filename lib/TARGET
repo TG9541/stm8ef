@@ -1,0 +1,6 @@
+\ STM8S compile target dummy word
+\ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
+
+  : TARGET ( -- )
+    ( replace this by a word that calls NVM if the target is Flash memory )
+  ;

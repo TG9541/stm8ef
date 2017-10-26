@@ -1,0 +1,280 @@
+\ STM8S103 Register ans Bit Identifiers                                MM-170928
+
+\ Bitmasks (probably names should be changed to BMx ?)
+  01 equ BIT0
+  02 equ BIT1
+  04 equ BIT2
+  08 equ BIT3
+  10 equ BIT4
+  20 equ BIT5
+  40 equ BIT6
+  80 equ BIT7
+ 100 equ BIT8
+ 200 equ BIT9
+ 400 equ BIT10
+ 800 equ BIT11
+1000 equ BIT12
+2000 equ BIT13
+4000 equ BIT14
+8000 equ BIT15
+
+                 \ Register name                      \ Reset status
+4800 equ OPT0    \ Options 0
+4801 equ OPT1    \ Options 1
+4803 equ OPT2    \ Options 2
+4805 equ OPT3    \ Options 3
+4807 equ OPT4    \ Options 4
+4809 equ OPT5    \ Options 5
+
+                 \ Register name                      \ Reset status
+5000 equ PA_ODR  \ Port A data output latch register         0x00
+5001 equ PA_IDR  \ Port A input pin value register           0xXX
+5002 equ PA_DDR  \ Port A data direction register            0x00
+5003 equ PA_CR1  \ Port A control register 1                 0x00
+5004 equ PA_CR2  \ Port A control register 2                 0x00
+
+5005 equ PB_ODR  \ Port B data output latch register         0x00
+5006 equ PB_IDR  \ Port B input pin value register           0xXX
+5007 equ PB_DDR  \ Port B data direction register            0x00
+5008 equ PB_CR1  \ Port B control register 1                 0x00
+5009 equ PB_CR2  \ Port B control register 2                 0x00
+
+500A equ PC_ODR  \ Port C data output latch register         0x00
+500B equ PC_IDR  \ Port C input pin value register           0xXX
+500C equ PC_DDR  \ Port C data direction register            0x00
+500D equ PC_CR1  \ Port C control register 1                 0x00
+500E equ PC_CR2  \ Port C control register 2                 0x00
+
+500F equ PD_ODR  \ Port D data output latch register         0x00
+5010 equ PD_IDR  \ Port D input pin value register           0xXX
+5011 equ PD_DDR  \ Port D data direction register            0x00
+5012 equ PD_CR1  \ Port D control register 1                 0x00
+5013 equ PD_CR2  \ Port D control register 2                 0x00
+
+5014 equ PE_ODR  \ Port E data output latch register         0x00
+5015 equ PE_IDR  \ Port E input pin value register           0xXX
+5016 equ PE_DDR  \ Port E data direction register            0x00
+5017 equ PE_CR1  \ Port E control register 1                 0x00
+5018 equ PE_CR2  \ Port E control register 2                 0x00
+
+5019 equ PF_ODR  \ Port F data output latch register         0x00
+501A equ PF_IDR  \ Port F input pin value register           0xXX
+501B equ PF_DDR  \ Port F data direction register            0x00
+501C equ PF_CR1  \ Port F control register 1                 0x00
+501D equ PF_CR2  \ Port F control register 2                 0x00
+
+501E  equ  PG_ODR    \ Port G data output latch register     (0x00)
+501F  equ  PG_IDR    \ Port G input pin value register       (0xXX)
+5020  equ  PG_DDR    \ Port G data direction register        (0x00)
+5021  equ  PG_CR1    \ Port G control register 1             (0x00)
+5022  equ  PG_CR2    \ Port G control register 2             (0x00)
+5023  equ  PH_ODR    \ Port H data output latch register     (0x00)
+5024  equ  PH_IDR    \ Port H input pin value register       (0xXX)
+5025  equ  PH_DDR    \ Port H data direction register        (0x00)
+5026  equ  PH_CR1    \ Port H control register 1             (0x00)
+5027  equ  PH_CR2    \ Port H control register 2             (0x00)
+5028  equ  PI_ODR    \ Port I data output latch register     (0x00)
+5029  equ  PI_IDR    \ Port I input pin value register       (0xXX)
+502A  equ  PI_DDR    \ Port I data direction register        (0x00)
+502B  equ  PI_CR1    \ Port I control register 1             (0x00)
+502C  equ  PI_CR2    \ Port I control register 2             (0x00)
+505A  equ  FLASH_CR1    \ Flash control register 1              (0x00)
+505B  equ  FLASH_CR2    \ Flash control register 2              (0x00)
+505C  equ  FLASH_NCR2    \ Flash complementary control register 2 (0xFF)
+505D  equ  FLASH_FPR    \ Flash protection register             (0x00)
+505E  equ  FLASH_NFPR    \ Flash complementary protection register (0xFF)
+505F  equ  FLASH_IAPSR    \ Flash in-application programming status register (0x00)
+5062  equ  FLASH_PUKR    \ Flash Program memory unprotection register (0x00)
+5064  equ  FLASH_DUKR    \ Data EEPROM unprotection register     (0x00)
+50A0  equ  EXTI_CR1    \ External interrupt control register 1 (0x00)
+50A1  equ  EXTI_CR2    \ External interrupt control register 2 (0x00)
+50B3  equ  RST_SR    \ Reset status register                 (0xXX)
+50C0  equ  CLK_ICKR    \ Internal clock control register       (0x01)
+50C1  equ  CLK_ECKR    \ External clock control register       (0x00)
+50C3  equ  CLK_CMSR    \ Clock master status register          (0xE1)
+50C4  equ  CLK_SWR    \ Clock master switch register          (0xE1)
+50C5  equ  CLK_SWCR    \ Clock switch control register         (0xXX)
+50C6  equ  CLK_CKDIVR    \ Clock divider register                (0x18)
+50C7  equ  CLK_PCKENR1    \ Peripheral clock gating register 1    (0xFF)
+50C8  equ  CLK_CSSR    \ Clock security system register        (0x00)
+50C9  equ  CLK_CCOR    \ Configurable clock control register   (0x00)
+50CA  equ  CLK_PCKENR2    \ Peripheral clock gating register 2    (0xFF)
+50CC  equ  CLK_HSITRIMR    \ HSI clock calibration trimming register (0x00)
+50CD  equ  CLK_SWIMCCR    \ SWIM clock control register     (0bXXXXXXX0)
+50CD  equ  CLK_SWIMCCR    \ clock control register                (0bXXXXXXX0)
+50D1  equ  WWDG_CR    \ WWDG control register                 (0x7F)
+50D2  equ  WWDG_WR    \ WWDR window register                  (0x7F)
+50E0  equ  IWDG_KR    \ IWDG key register                     (0xXX)
+50E1  equ  IWDG_PR    \ IWDG prescaler register               (0x00)
+50E2  equ  IWDG_RLR    \ IWDG reload register                  (0xFF)
+50F0  equ  AWU_CSR1    \ AWU control/status register 1         (0x00)
+50F1  equ  AWU_APR    \ AWU asynchronous prescaler buffer register (0x3F)
+50F2  equ  AWU_TBR    \ AWU timebase selection register       (0x00)
+50F3  equ  BEEP_CSR    \ BEEP control/status register          (0x1F)
+5200  equ  SPI_CR1    \ SPI control register 1                (0x00)
+5201  equ  SPI_CR2    \ SPI control register 2                (0x00)
+5202  equ  SPI_ICR    \ SPI interrupt control register        (0x00)
+5203  equ  SPI_SR    \ SPI status register                   (0x02)
+5204  equ  SPI_DR    \ SPI data register                     (0x00)
+5205  equ  SPI_CRCPR    \ SPI CRC polynomial register           (0x07)
+5206  equ  SPI_RXCRCR    \ SPI Rx CRC register                   (0x00)
+5207  equ  SPI_TXCRCR    \ SPI Tx CRC register                   (0x00)
+
+5210  equ  I2C_CR1    \ I2C control register 1                (0x00)
+   0 equ I2C_CR1_PE
+5211  equ  I2C_CR2    \ I2C control register 2                (0x00)
+   0 equ I2C_CR2_START
+   1 equ I2C_CR2_STOP
+   2 equ I2C_CR2_ACK
+   3 equ I2C_CR2_POS
+   7 equ I2C_CR2_SWRST
+5212  equ  I2C_FREQR    \ I2C frequency register                (0x00)
+5213  equ  I2C_OARL    \ I2C own address register low          (0x00)
+5214  equ  I2C_OARH    \ I2C own address register high         (0x00)
+   6 equ I2C_OARH_ADDCONF  \ must be set by sofware as '1'
+   7 equ I2C_OARH_ADDMODE  \ 0|1 = 7|10 slave address
+
+5216  equ  I2C_DR    \ I2C data register                     (0x00)
+5217  equ  I2C_SR1    \ I2C status register 1                 (0x00)
+5219  equ  I2C_SR3    \ I2C status register 3                 (0x00)
+   0 equ I2C_SR1_SB
+   1 equ I2C_SR1_ADDR
+   2 equ I2C_SR1_BTF
+   3 equ I2C_SR1_ADD10
+   4 equ I2C_SR1_STOPF
+   6 equ I2C_SR1_RXNE
+   7 equ I2C_SR1_TXE
+5218  equ  I2C_SR2    \ I2C status register 2                 (0x00)
+5219  equ  I2C_SR3    \ I2C status register 3                 (0x00)
+   0 equ I2C_SR3_MSL
+   1 equ I2C_SR3_BUSY
+   2 equ I2C_SR3_TRA
+   4 equ I2C_SR3_GENCALL
+   7 equ I2C_SR3_DUALF
+521A  equ  I2C_ITR    \ I2C interrupt control register        (0x00)
+521B  equ  I2C_CCRL    \ I2C clock control register low        (0x00)
+521C  equ  I2C_CCRH    \ I2C clock control register high       (0x00)
+521D  equ  I2C_TRISER    \ I2C TRISE register                    (0x02)
+521E  equ  I2C_PECR    \ I2C packet error checking register    (0x00)
+
+5230  equ  UART1_SR    \ UART1 status register                 (0xC0)
+5231  equ  UART1_DR    \ UART1 data register                   (0xXX)
+5232  equ  UART1_BRR1    \ UART1 baud rate register 1            (0x00)
+5233  equ  UART1_BRR2    \ UART1 baud rate register 2            (0x00)
+5234  equ  UART1_CR1    \ UART1 control register 1              (0x00)
+5235  equ  UART1_CR2    \ UART1 control register 2              (0x00)
+5236  equ  UART1_CR3    \ UART1 control register 3              (0x00)
+5237  equ  UART1_CR4    \ UART1 control register 4              (0x00)
+5238  equ  UART1_CR5    \ UART1 control register 5              (0x00)
+5239  equ  UART1_GTR    \ UART1 guard time register             (0x00)
+523A  equ  UART1_PSCR    \ UART1 prescaler register              (0x00)
+5240  equ  UART2_SR    \ UART1 status register                 (0xC0)
+5241  equ  UART2_DR    \ UART1 data register                   (0xXX)
+5242  equ  UART2_BRR1    \ UART1 baud rate register 1            (0x00)
+5243  equ  UART2_BRR2    \ UART1 baud rate register 2            (0x00)
+5244  equ  UART2_CR1    \ UART1 control register 1              (0x00)
+5245  equ  UART2_CR2    \ UART1 control register 2              (0x00)
+5246  equ  UART2_CR3    \ UART1 control register 3              (0x00)
+5247  equ  UART2_CR4    \ UART1 control register 4              (0x00)
+5248  equ  UART2_CR5    \ UART1 control register 5              (0x00)
+5249  equ  UART2_CR6    \ UART1 control register 6              (0x00)
+524A  equ  UART2_GTR    \ UART1 guard time register             (0x00)
+524B  equ  UART2_PSCR    \ UART1 prescaler register              (0x00)
+5250  equ  TIM1_CR1    \ TIM1 control register 1               (0x00)
+5251  equ  TIM1_CR2    \ TIM1 control register 2               (0x00)
+5252  equ  TIM1_SMCR    \ TIM1 slave mode control register      (0x00)
+5253  equ  TIM1_ETR    \ TIM1 external trigger register        (0x00)
+5254  equ  TIM1_IER    \ TIM1 Interrupt enable register        (0x00)
+5255  equ  TIM1_SR1    \ TIM1 status register 1                (0x00)
+5256  equ  TIM1_SR2    \ TIM1 status register 2                (0x00)
+5257  equ  TIM1_EGR    \ TIM1 event generation register        (0x00)
+5258  equ  TIM1_CCMR1    \ TIM1 capture/compare mode register 1  (0x00)
+5259  equ  TIM1_CCMR2    \ TIM1 capture/compare mode register 2  (0x00)
+525A  equ  TIM1_CCMR3    \ TIM1 capture/compare mode register 3  (0x00)
+525B  equ  TIM1_CCMR4    \ TIM1 capture/compare mode register 4  (0x00)
+525C  equ  TIM1_CCER1    \ TIM1 capture/compare enable register 1 (0x00)
+525D  equ  TIM1_CCER2    \ TIM1 capture/compare enable register 2 (0x00)
+525E  equ  TIM1_CNTRH    \ TIM1 counter high                     (0x00)
+525F  equ  TIM1_CNTRL    \ TIM1 counter low                      (0x00)
+5260  equ  TIM1_PSCRH    \ TIM1 prescaler register high          (0x00)
+5261  equ  TIM1_PSCRL    \ TIM1 prescaler register low           (0x00)
+5262  equ  TIM1_ARRH    \ TIM1 auto-reload register high        (0xFF)
+5263  equ  TIM1_ARRL    \ TIM1 auto-reload register low         (0xFF)
+5264  equ  TIM1_RCR    \ TIM1 repetition counter register      (0x00)
+5265  equ  TIM1_CCR1H    \ TIM1 capture/compare register 1 high  (0x00)
+5266  equ  TIM1_CCR1L    \ TIM1 capture/compare register 1 low   (0x00)
+5267  equ  TIM1_CCR2H    \ TIM1 capture/compare register 2 high  (0x00)
+5268  equ  TIM1_CCR2L    \ TIM1 capture/compare register 2 low   (0x00)
+5269  equ  TIM1_CCR3H    \ TIM1 capture/compare register 3 high  (0x00)
+526A  equ  TIM1_CCR3L    \ TIM1 capture/compare register 3 low   (0x00)
+526B  equ  TIM1_CCR4H    \ TIM1 capture/compare register 4 high  (0x00)
+526C  equ  TIM1_CCR4L    \ TIM1 capture/compare register 4 low   (0x00)
+526D  equ  TIM1_BKR    \ TIM1 break register                   (0x00)
+526E  equ  TIM1_DTR    \ TIM1 dead-time register               (0x00)
+526F  equ  TIM1_OISR    \ TIM1 output idle state register       (0x00)
+5300  equ  TIM2_CR1    \ TIM2 control register 1               (0x00)
+5301  equ  TIM2_IER    \ TIM2 interrupt enable register        (0x00)
+5302  equ  TIM2_SR1    \ TIM2 status register 1                (0x00)
+5303  equ  TIM2_SR2    \ TIM2 status register 2                (0x00)
+5304  equ  TIM2_EGR    \ TIM2 event generation register        (0x00)
+5305  equ  TIM2_CCMR1    \ TIM2 capture/compare mode register 1  (0x00)
+5306  equ  TIM2_CCMR2    \ TIM2 capture/compare mode register 2  (0x00)
+5307  equ  TIM2_CCMR3    \ TIM2 capture/compare mode register 3  (0x00)
+5308  equ  TIM2_CCER1    \ TIM2 capture/compare enable register 1 (0x00)
+5309  equ  TIM2_CCER2    \ TIM2 capture/compare enable register 2 (0x00)
+530A  equ  TIM2_CNTRH    \ TIM2 counter high                     (0x00)
+530B  equ  TIM2_CNTRL    \ TIM2 counter low                      (0x00)
+530C  equ  TIM2_PSCR    \ TIM2 prescaler register               (0x00)
+530D  equ  TIM2_ARRH    \ TIM2 auto-reload register high        (0xFF)
+530E  equ  TIM2_ARRL    \ TIM2 auto-reload register low         (0xFF)
+530F  equ  TIM2_CCR1H    \ TIM2 capture/compare register 1 high  (0x00)
+5310  equ  TIM2_CCR1L    \ TIM2 capture/compare register 1 low   (0x00)
+5311  equ  TIM2_CCR2H    \ TIM2 capture/compare reg. 2 high      (0x00)
+5312  equ  TIM2_CCR2L    \ TIM2 capture/compare register 2 low   (0x00)
+5313  equ  TIM2_CCR3H    \ TIM2 capture/compare register 3 high  (0x00)
+5314  equ  TIM2_CCR3L    \ TIM2 capture/compare register 3 low   (0x00)
+5340  equ  TIM4_CR1    \ TIM4 control register 1               (0x00)
+5341  equ  TIM4_IER    \ TIM4 interrupt enable register        (0x00)
+5342  equ  TIM4_SR    \ TIM4 status register                  (0x00)
+5343  equ  TIM4_EGR    \ TIM4 event generation register        (0x00)
+5344  equ  TIM4_CNTR    \ TIM4 counter                          (0x00)
+5345  equ  TIM4_PSCR    \ TIM4 prescaler register               (0x00)
+5346  equ  TIM4_ARR    \ TIM4 auto-reload register             (0xFF)
+53E0  equ  ADC_DBxR    \ ADC data buffer registers 0x53E0 to 0x53F3 (0x00)
+5400  equ  ADC_CSR    \ ADC control/status register           (0x00)
+5401  equ  ADC_CR1    \ ADC configuration register 1          (0x00)
+5402  equ  ADC_CR2    \ ADC configuration register 2          (0x00)
+5403  equ  ADC_CR3    \ ADC configuration register 3          (0x00)
+5404  equ  ADC_DRH    \ ADC data register high                (0xXX)
+5405  equ  ADC_DRL    \ ADC data register low                 (0xXX)
+5406  equ  ADC_TDRH    \ ADC Schmitt trigger disable register high (0x00)
+5407  equ  ADC_TDRL    \ ADC Schmitt trigger disable register low (0x00)
+5408  equ  ADC_HTRH    \ ADC high threshold register high      (0x03)
+5409  equ  ADC_HTRL    \ ADC high threshold register low       (0xFF)
+540A  equ  ADC_LTRH    \ ADC low threshold register high       (0x00)
+540B  equ  ADC_LTRL    \ ADC low threshold register low        (0x00)
+540C  equ  ADC_AWSRH    \ ADC analog watchdog status register high (0x00)
+540D  equ  ADC_AWSRL    \ ADC analog watchdog status register low (0x00)
+540E  equ  ADC_AWCRH    \ ADC analog watchdog control register high (0x00)
+540F  equ  ADC_AWCRL    \ ADC analog watchdog control register low (0x00)
+7F60  equ  CFG_GCR    \ Global configuration register         (0x00)
+7F70  equ  ITC_SPR1    \ Interrupt software priority register 1 (0xFF)
+7F71  equ  ITC_SPR2    \ Interrupt software priority register 2 (0xFF)
+7F72  equ  ITC_SPR3    \ Interrupt software priority register 3 (0xFF)
+7F73  equ  ITC_SPR4    \ Interrupt software priority register 4 (0xFF)
+7F74  equ  ITC_SPR5    \ Interrupt software priority register 5 (0xFF)
+7F75  equ  ITC_SPR6    \ Interrupt software priority register 6 (0xFF)
+7F76  equ  ITC_SPR7    \ Interrupt software priority register 7 (0xFF)
+7F77  equ  ITC_SPR8    \ Interrupt software priority register 8 (0xFF)
+7F80  equ  SWIM_CSR    \ SWIM control status register          (0x00)
+7F90  equ  DM_BK1RE    \ DM breakpoint 1 register extended byte (0xFF)
+7F91  equ  DM_BK1RH    \ DM breakpoint 1 register high byte    (0xFF)
+7F92  equ  DM_BK1RL    \ DM breakpoint 1 register low byte     (0xFF)
+7F93  equ  DM_BK2RE    \ DM breakpoint 2 register extended byte (0xFF)
+7F94  equ  DM_BK2RH    \ DM breakpoint 2 register high byte    (0xFF)
+7F95  equ  DM_BK2RL    \ DM breakpoint 2 register low byte     (0xFF)
+7F96  equ  DM_CR1    \ DM debug module control register 1    (0x00)
+7F97  equ  DM_CR2    \ DM debug module control register 2    (0x00)
+7F98  equ  DM_CSR1    \ DM debug module control/status register 1 (0x10)
+7F99  equ  DM_CSR2    \ DM debug module control/status register 2 (0x00)
+7F9A  equ  DM_ENFCTR    \ DM enable function register           (0xFF)
