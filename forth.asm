@@ -4440,10 +4440,11 @@ RESETT:
 
         HEADER  SAVEC "SAVEC"
 SAVEC:
-        LDW     X,YTEMP         ; Save context
+        POPW    Y
+        LDW     X,YTEMP
         PUSHW   X
         LDW     X,#(ISPP)       ; init data stack for interrupt ISPP
-        RET
+        JP      (Y)
 
 
 ;       IRET ( -- )
@@ -4452,10 +4453,10 @@ SAVEC:
 
         HEADER  RESTC "IRET"
 RESTC:
+        POPW    X               ; discard CALL return address
         POPW    X
         LDW     YTEMP,X         ; restore context
-        IRET                    ; not "EXIT"
-
+        IRET                    ; resturn from interrupt
 
         .endif
 
