@@ -84,9 +84,6 @@
         ;******  1) General Constants  ******
         ;************************************
 
-        VER     =     2         ; Version major release version
-        EXT     =     2         ; Version minor extension
-
         TRUEE   =     0xFFFF    ; true flag
         COMPO   =     0x40      ; lexicon compile only bit
         IMEDD   =     0x80      ; lexicon immediate bit
@@ -604,11 +601,10 @@ TBOOT:
 HI:
         CALLR   1$              ; CR
         CALL    DOTQP           ; initialize I/O
-        .db     15
-        .ascii  "stm8eForth v"
-        .db     (VER+'0')
-        .ascii  "."
-        .db     (EXT+'0')       ; version
+        .db     17
+        .ascii  "STM8eForth 2.2."
+        .db     (RELVER1+'0')
+        .db     (RELVER0+'0')   ; version
 
 1$:     JP      CR
         .endif
