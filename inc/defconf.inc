@@ -2,6 +2,8 @@
 ;       STM8EF for STM8S (Value line and Access Line devices)
 ;       Default settings for all kinds of options
 ;--------------------------------------------------------
+        RELVER1          = 1    ; Revision digit 1
+        RELVER0          = 8    ; Revision digit 0
 
         TERM_LINUX       = 1    ; LF terminates line
         HALF_DUPLEX      = 0    ; Use EMIT/?KEY in half duplex mode
