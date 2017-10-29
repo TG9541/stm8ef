@@ -3,7 +3,7 @@
 ;       Default settings for all kinds of options
 ;--------------------------------------------------------
         RELVER1          = 1    ; Revision digit 1
-        RELVER0          = 8    ; Revision digit 0
+        RELVER0          = 9    ; Revision digit 0
 
         TERM_LINUX       = 1    ; LF terminates line
         HALF_DUPLEX      = 0    ; Use EMIT/?KEY in half duplex mode
