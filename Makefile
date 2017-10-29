@@ -5,6 +5,7 @@ all: zip
 
 zip: build
 	find out/ -name "*.ihx" -print | zip -r out/stm8ef-bin docs/words.md mcu/* lib/* -@
+	find out/ -name "target" -print | zip -r out/stm8ef-bin -@
 
 build: words
 	make BOARD=CORE
@@ -42,6 +43,9 @@ all: directories main.ihx
 
 main.ihx: main.c $(MDEPS)
 	sdcc -mstm8 -oout/$(BOARD)/$(BOARD).ihx main.c out/$(BOARD)/forth.rel
+	mkdir -p out/$(BOARD)/target
+	rm -f out/$(BOARD)/target/*
+	tools/genalias.awk -v target="out/$(BOARD)/target/" out/$(BOARD)/forth.rst
 
 forth.rel: forth.asm
 	mkdir -p out/$(BOARD)
