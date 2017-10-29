@@ -3,10 +3,16 @@
 # source: tg9541/stm8ef
 
 BEGIN {
+  if (!target) {
+    target = "target/"
+  }
   windx = 0                            # word #
   line = 0                             # line # in rst file
   wline = 0                            # lines since word comment
   p = 0                                # state
+  worddef = ""                         # word definition
+  wordcomment = ""                     # word comment
+  dolog = 0
 }
 
 {
@@ -18,46 +24,52 @@ BEGIN {
   }
 }
 
+
 /^ +[0-9]+ ; +[^ ]+ +.+--/ && !/core/ {
   if (p) {
     info("no code " word)
   }
 
+  worddef = $0
+  sub(/[^;]+; +/, "", worddef)
+
   p = 1
   wline = 0
+  label = 0
   word = $3
+
   info("header found " word)
   next
 }
 
-/\.dw +(LINK|0)/ && p==1 {
-  p=2
-  if ($2~/\.dw/ && $3~/(LINK|0)/) {
-    p++
-  }
+/(HEADER|HEADFLG)/ {
+  p = 2
+  for (i=1; i<=NF; i++)
+    if (index($i,"HEAD")) {
+      label = $(i+1)
+      break
+    }
   next
 }
 
-
-$1 ~ /[0-9A-F]{6}/ && $3 ~ /[A-Z_]{2,12}:/ {
-  addrstr = substr($1,3)
-
-  if (p==3) {
-    ALIASADDR[word] = addrstr
-    WORD[addrstr] = word
-    INDEX[windx++] = addrstr
-    result("alias " word)
-  }
-  else if (p==2) {
-    INDEX[windx++] = addrstr
-    WORD[addrstr] = word
-    result("standard header " word)
-  }
-  else {
-    info("rejected " word)
-  }
-  word = "..."
+$6 == "LINK" {
   p = 0
+  info("standard header " word)
+  next
+}
+
+p == 2 && index($3,label ":") {
+  p = 3
+  next
+}
+
+p == 3 && $1~/[0-9A-F]{6}/ {
+  p = 0
+  addrstr = substr($1,3)
+  ALIASADDR[word] = addrstr
+  WORD[addrstr] = word
+  INDEX[windx++] = addrstr
+  result("alias " word)
   next
 }
 
@@ -89,7 +101,7 @@ END {
 }
 
 function makeAlias(word,addr) {
-  print ": " word " [ OVERT $CC C, $" ALIASADDR[word] " ,"
+  print ": " word " [ $CC C, $" ALIASADDR[word] " , OVERT" > target word
 }
 
 function result (text) {

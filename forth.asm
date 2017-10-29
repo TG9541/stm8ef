@@ -861,7 +861,7 @@ DSTOR:
 ;       2@      ( a -- d )
 ;       Fetch double integer from address a.
 
-        HEADER DAT "2@"
+        HEADER  DAT "2@"
 DAT:
         CALL    DUPP
         CALL    CELLP
@@ -3707,7 +3707,7 @@ OVSTORE:
 ;       ;       ( -- )
 ;       Terminate a colon definition.
 
-;       HEADFLG ";" (IMEDD+COMPO)
+;       HEADFLG SEMIS ";" (IMEDD+COMPO)
         .dw     LINK
 
         LINK =  .
