@@ -1307,7 +1307,7 @@ TQKEY:
         .endif
 
 ;       LAST    ( -- a )        ( TOS STM8: -- Y,Z,N )
-;       Point to last name in dictionary.
+;       Point to last name in dictionary
 
         .ifeq   BAREBONES
         HEADER  LAST "last"
