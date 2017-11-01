@@ -55,6 +55,11 @@
 ```
 
 ```
+;       (+loop) ( +n -- )
+;       Add n to index R@ and test for lower than limit (R-CELL)@.
+```
+
+```
 ;       LEAVE   ( -- )
 ;       Leave a DO .. LOOP/+LOOP loop.
 ```
@@ -529,6 +534,11 @@
 ```
 
 ```
+;       >CHAR   ( c -- c )      ( TOS STM8: -- A,Z,N )
+;       Filter non-printing characters.
+```
+
+```
 ;       DEPTH   ( -- n )      ( TOS STM8: -- Y,Z,N )
 ;       Return  depth of data stack.
 ```
@@ -621,14 +631,14 @@
 ```
 
 ```
-;       str     ( w -- b u )
-;       Convert a signed integer
-;       to a numeric string.
+;       <#      ( -- )   ( TOS STM8: -- Y,Z,N )
+;       Initiate numeric output process.
 ```
 
 ```
-;       <#      ( -- )   ( TOS STM8: -- Y,Z,N )
-;       Initiate numeric output process.
+;       str     ( w -- b u )
+;       Convert a signed integer
+;       to a numeric string.
 ```
 
 ```
@@ -793,7 +803,7 @@
 ```
 
 ```
-;       TOKEN_$,n ( <word> -- <dict header> )
+;       TOKEN_$,n core ( <word> -- <dict header> )
 ;       copy token to the code dictionary
 ;       and build a new dictionary name
 ;       note: for defining words (e.g. :, CREATE)
@@ -1083,12 +1093,6 @@
 ```
 
 ```
-;       IMMEDIATE       ( -- )
-;       Make last compiled word
-;       an immediate word.
-```
-
-```
 ;       ]       ( -- )
 ;       Start compiling words in
 ;       input stream.
@@ -1111,6 +1115,16 @@
 ```
 
 ```
+;       CONSTANT ( "name" n -- )
+;       Create a named constant with state dependant action
+```
+
+```
+;       docon ( -- )
+;       state dependent action code of constant
+```
+
+```
 ;       VARIABLE        ( -- ; <string> )
 ;       Compile a new variable
 ;       initialized to 0.
@@ -1119,6 +1133,12 @@
 ```
 ;       ALLOT   ( n -- )
 ;       Allocate n bytes to code DICTIONARY.
+```
+
+```
+;       IMMEDIATE       ( -- )
+;       Make last compiled word
+;       an immediate word.
 ```
 
 ```
