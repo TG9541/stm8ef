@@ -238,7 +238,7 @@
         USRCONTEXT = UPP+22     ; "CONTEXT" start vocabulary search
         USRHLD  =    UPP+24     ; "HLD" hold a pointer of output string
         USRNTIB =    UPP+26     ; "#TIB" count in terminal input buffer
-        USR_IN  =    UPP+28     ; ">IN"hold parsing pointer
+        USR_IN  =    UPP+28     ; ">IN" hold parsing pointer
         YTEMP   =    UPP+30     ; extra working register for core words
 
         ;***********************
@@ -3265,12 +3265,14 @@ OMMA:
 ;       CALL,   ( ca -- )
 ;       Compile a subroutine call.
         .ifeq   BAREBONES
+        .ifeq   UNLINK_JSRC
 ;       HEADER  JSRC "CALL,"
         .dw     LINK
 
         LINK =  .
         .db     5
         .ascii  "CALL,"
+        .endif
         .endif
 JSRC:
         CALL    DUPP
@@ -4458,20 +4460,9 @@ RESTC:
         .endif
 
 ;===============================================================
-
-
-        .ifne WORDS_HWREG
-;        .ifne (TARGET - STM8S103F3)
-          .include "hwregs8s003.inc"
-;        .endif
-        .endif
-
-;===============================================================
         LASTN   =       LINK    ;last name defined
 
         .area CODE
         .area INITIALIZER
         END_SDCC_FLASH = .
         .area CABS (ABS)
-
-
