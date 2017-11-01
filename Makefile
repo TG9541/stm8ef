@@ -5,6 +5,7 @@ all: zip
 
 zip: build
 	find out/ -name "*.ihx" -print | zip -r out/stm8ef-bin docs/words.md mcu/* lib/* -@
+	find out/ -name "*.efr" -print | zip -r out/stm8ef-bin -@
 	find out/ -name "target" -print | zip -r out/stm8ef-bin -@
 
 build: words
@@ -46,6 +47,7 @@ main.ihx: main.c $(MDEPS)
 	mkdir -p out/$(BOARD)/target
 	rm -f out/$(BOARD)/target/*
 	tools/genalias.awk -v target="out/$(BOARD)/target/" out/$(BOARD)/forth.rst
+	tools/genefr.awk out/$(BOARD)/forth.rst > out/$(BOARD)/FORTH.efr
 
 forth.rel: forth.asm
 	mkdir -p out/$(BOARD)

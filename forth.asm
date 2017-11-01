@@ -212,33 +212,33 @@
         CTOP  = CTOPLOC         ; dictionary start, growing up
                                 ; note: PAD is inbetween CTOP and SPP
         SPP   = ISPP-ISPPSIZE   ; data stack, growing down (with SPP-1 first)
-        ISPP  = SPPLOC-BSPPSIZE ; Interrupt data stack, growing down
-        BSPP  = SPPLOC          ; Background data stack, growing down
-        TIBB  = SPPLOC          ; Term. Input Buf. TIBLENGTH between SPPLOC and RPP
-        RPP   = RPPLOC          ; return stack, growing down
+        ISPP  = SPPLOC-BSPPSIZE ; "ISPP" Interrupt data stack, growing down
+        BSPP  = SPPLOC          ; "BSPP" Background data stack, growing down
+        TIBB  = SPPLOC          ; "TIBB" Term. Input Buf. TIBLENGTH between SPPLOC and RPP
+        RPP   = RPPLOC          ; "RPP" return stack, growing down
 
         ; Core variables (same order as 'BOOT initializer block)
 
         USRRAMINIT = USREMIT
 
-        USREMIT  =   UPP+0      ; excection vector of EMIT
-        USRQKEY =    UPP+2      ; excection vector of QKEY
-        USRBASE =    UPP+4      ; radix base for numeric I/O
-        USREVAL =    UPP+6      ; execution vector of EVAL
-        USRPROMPT =  UPP+8      ; point to prompt word (default .OK)
-        USRCP   =    UPP+10     ; point to top of dictionary
-        USRLAST =    UPP+12     ; currently last name in dictionary (init: to LASTN)
+        USREMIT  =   UPP+0      ; "'EMIT" execution vector of EMIT
+        USRQKEY =    UPP+2      ; "'?KEY" execution vector of QKEY
+        USRBASE =    UPP+4      ; "BASE" radix base for numeric I/O
+        USREVAL =    UPP+6      ; "'EVAL" execution vector of EVAL
+        USRPROMPT =  UPP+8      ; "'PROMPT" point to prompt word (default .OK)
+        USRCP   =    UPP+10     ; "CP" point to top of dictionary
+        USRLAST =    UPP+12     ; "LAST" currently last name in dictionary (init: to LASTN)
         NVMCP   =    UPP+14     ; point to top of dictionary in Non Volatile Memory
 
         ; Null initialized core variables (growing down)
 
-        USRCTOP  =   UPP+16     ; point to the start of RAM dictionary
-        USRVAR  =    UPP+18     ; point to next free USR RAM location
+        USRCTOP  =   UPP+16     ; "CTOP" point to the start of RAM dictionary
+        USRVAR  =    UPP+18     ; "VAR" point to next free USR RAM location
         NVMCONTEXT = UPP+20     ; point to top of dictionary in Non Volatile Memory
-        USRCONTEXT = UPP+22     ; start vocabulary search
-        USRHLD  =    UPP+24     ; hold a pointer of output string
-        USRNTIB =    UPP+26     ; count in terminal input buffer
-        USR_IN  =    UPP+28     ; hold parsing pointer
+        USRCONTEXT = UPP+22     ; "CONTEXT" start vocabulary search
+        USRHLD  =    UPP+24     ; "HLD" hold a pointer of output string
+        USRNTIB =    UPP+26     ; "#TIB" count in terminal input buffer
+        USR_IN  =    UPP+28     ; ">IN"hold parsing pointer
         YTEMP   =    UPP+30     ; extra working register for core words
 
         ;***********************
@@ -734,11 +734,11 @@ DOLIT:
 
         .ifeq   BOOTSTRAP
         .ifne   HAS_DOLOOP
-        ;       (+loop) ( +n -- )
-        ;       Add n to index R@ and test for lower than limit (R-CELL)@.
+;       (+loop) ( +n -- )
+;       Add n to index R@ and test for lower than limit (R-CELL)@.
 
         .ifne   WORDS_LINKRUNTI
-        HEADFLG DOLOOP "(+loop)" COMPO
+        HEADFLG DOPLOOP "(+loop)" COMPO
         .endif
 DOPLOOP:
         LDW     Y,(5,SP)
@@ -1988,7 +1988,7 @@ PICK:
         RET
 
         .ifeq   BOOTSTRAP
- ;      >CHAR   ( c -- c )      ( TOS STM8: -- A,Z,N )
+;       >CHAR   ( c -- c )      ( TOS STM8: -- A,Z,N )
 ;       Filter non-printing characters.
 
         .ifne   WORDS_LINKMISC
@@ -2264,10 +2264,6 @@ SIGN:
         LD      (1,X),A
         JRA     HOLD
 
-;       str     ( w -- b u )
-;       Convert a signed integer
-;       to a numeric string.
-
 ;       <#      ( -- )   ( TOS STM8: -- Y,Z,N )
 ;       Initiate numeric output process.
 
@@ -2278,6 +2274,10 @@ BDIGS:
         CALL    PAD
         DoLitC  USRHLD
         JP      STORE
+
+;       str     ( w -- b u )
+;       Convert a signed integer
+;       to a numeric string.
 
         HEADER  STR "str"
 STR:
@@ -2416,7 +2416,7 @@ NUMDROP:
 ;       Convert a character to its numeric
 ;       value. A flag indicates success.
 
-        HEADER  DIGITQ "DIGIT?"
+        HEADER  DIGTQ "DIGIT?"
 DIGTQ:
         CALL    TOR
         LD      A,YL
@@ -3825,7 +3825,9 @@ CONST:
 ;       docon ( -- )
 ;       state dependent action code of constant
 
-DOCON:  CALL    RFROM
+        HEADER  DOCON "docon"
+DOCON:
+        CALL    RFROM
         CALL    AT              ; push constant in interpreter mode
         CALL    COMPIQ
         JREQ    1$
