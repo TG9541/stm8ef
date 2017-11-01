@@ -212,33 +212,33 @@
         CTOP  = CTOPLOC         ; dictionary start, growing up
                                 ; note: PAD is inbetween CTOP and SPP
         SPP   = ISPP-ISPPSIZE   ; data stack, growing down (with SPP-1 first)
-        ISPP  = SPPLOC-BSPPSIZE ; Interrupt data stack, growing down
-        BSPP  = SPPLOC          ; Background data stack, growing down
-        TIBB  = SPPLOC          ; Term. Input Buf. TIBLENGTH between SPPLOC and RPP
-        RPP   = RPPLOC          ; return stack, growing down
+        ISPP  = SPPLOC-BSPPSIZE ; "ISPP" Interrupt data stack, growing down
+        BSPP  = SPPLOC          ; "BSPP" Background data stack, growing down
+        TIBB  = SPPLOC          ; "TIBB" Term. Input Buf. TIBLENGTH between SPPLOC and RPP
+        RPP   = RPPLOC          ; "RPP" return stack, growing down
 
         ; Core variables (same order as 'BOOT initializer block)
 
         USRRAMINIT = USREMIT
 
-        USREMIT  =   UPP+0      ; excection vector of EMIT
-        USRQKEY =    UPP+2      ; excection vector of QKEY
-        USRBASE =    UPP+4      ; radix base for numeric I/O
-        USREVAL =    UPP+6      ; execution vector of EVAL
-        USRPROMPT =  UPP+8      ; point to prompt word (default .OK)
-        USRCP   =    UPP+10     ; point to top of dictionary
-        USRLAST =    UPP+12     ; currently last name in dictionary (init: to LASTN)
+        USREMIT  =   UPP+0      ; "'EMIT" execution vector of EMIT
+        USRQKEY =    UPP+2      ; "'?KEY" execution vector of QKEY
+        USRBASE =    UPP+4      ; "BASE" radix base for numeric I/O
+        USREVAL =    UPP+6      ; "'EVAL" execution vector of EVAL
+        USRPROMPT =  UPP+8      ; "'PROMPT" point to prompt word (default .OK)
+        USRCP   =    UPP+10     ; "CP" point to top of dictionary
+        USRLAST =    UPP+12     ; "LAST" currently last name in dictionary (init: to LASTN)
         NVMCP   =    UPP+14     ; point to top of dictionary in Non Volatile Memory
 
         ; Null initialized core variables (growing down)
 
-        USRCTOP  =   UPP+16     ; point to the start of RAM dictionary
-        USRVAR  =    UPP+18     ; point to next free USR RAM location
+        USRCTOP  =   UPP+16     ; "CTOP" point to the start of RAM dictionary
+        USRVAR  =    UPP+18     ; "VAR" point to next free USR RAM location
         NVMCONTEXT = UPP+20     ; point to top of dictionary in Non Volatile Memory
-        USRCONTEXT = UPP+22     ; start vocabulary search
-        USRHLD  =    UPP+24     ; hold a pointer of output string
-        USRNTIB =    UPP+26     ; count in terminal input buffer
-        USR_IN  =    UPP+28     ; hold parsing pointer
+        USRCONTEXT = UPP+22     ; "CONTEXT" start vocabulary search
+        USRHLD  =    UPP+24     ; "HLD" hold a pointer of output string
+        USRNTIB =    UPP+26     ; "#TIB" count in terminal input buffer
+        USR_IN  =    UPP+28     ; ">IN"hold parsing pointer
         YTEMP   =    UPP+30     ; extra working register for core words
 
         ;***********************
@@ -687,7 +687,7 @@ EMIT:
 ; ==============================================
 ; The kernel
 
-;       PUSHLIT ( -- C )
+;       PUSHLIT ( - C )
 ;       Subroutine for DOLITC and CCOMMALIT
 PUSHLIT:
         LDW     Y,(3,SP)
@@ -699,7 +699,7 @@ PUSHLIT:
         LD      (X),A
         RET
 
-;       CCOMMALIT ( -- )
+;       CCOMMALIT ( - )
 ;       Compile inline literall byte into code dictionary.
 CCOMMALIT:
         CALLR   PUSHLIT
@@ -710,7 +710,7 @@ CSKIPRET:
 
         .ifne   USE_CALLDOLIT
 
-;       DOLITC  ( -- C )
+;       DOLITC  ( - C )
 ;       Push an inline literal character (8 bit).
 DOLITC:
         CALLR   PUSHLIT
@@ -734,11 +734,11 @@ DOLIT:
 
         .ifeq   BOOTSTRAP
         .ifne   HAS_DOLOOP
-        ;       (+loop) ( +n -- )
-        ;       Add n to index R@ and test for lower than limit (R-CELL)@.
+;       (+loop) ( +n -- )
+;       Add n to index R@ and test for lower than limit (R-CELL)@.
 
         .ifne   WORDS_LINKRUNTI
-        HEADFLG DOLOOP "(+loop)" COMPO
+        HEADFLG DOPLOOP "(+loop)" COMPO
         .endif
 DOPLOOP:
         LDW     Y,(5,SP)
@@ -789,7 +789,7 @@ DONXT:
 NEX1:   LDW     (3,SP),Y
         JRA     BRAN
 
-;       QDQBRAN     ( n -- n )
+;       QDQBRAN     ( n - n )
 ;       QDUP QBRANCH phrase
 QDQBRAN:
         CALL    QDUP
@@ -987,7 +987,7 @@ RFROM:
 
 
         .ifne  HAS_CPNVM
-;       doVARPTR core ( -- a )    ( TOS STM8: -- Y,Z,N )
+;       doVARPTR ( - a )    ( TOS STM8: - Y,Z,N )
 DOVARPTR:
         POPW    Y               ; get return addr (pfa)
         LDW     Y,(Y)
@@ -1004,7 +1004,7 @@ DOVAR:
         POPW    Y               ; get return addr (pfa)
         ; fall through
 
-;       YSTOR core ( -- n )     ( TOS STM8: -- Y,Z,N )
+;       YSTOR core ( - n )     ( TOS STM8: - Y,Z,N )
 ;       push Y to stack
 YSTOR:
         DECW    X               ; SUBW  X,#2
@@ -1307,7 +1307,7 @@ TQKEY:
         .endif
 
 ;       LAST    ( -- a )        ( TOS STM8: -- Y,Z,N )
-;       Point to last name in dictionary.
+;       Point to last name in dictionary
 
         .ifeq   BAREBONES
         HEADER  LAST "last"
@@ -1315,7 +1315,7 @@ TQKEY:
 LAST:
         LD      A,#(USRLAST)
 
-;       ASTOR core ( -- n )     ( TOS STM8: -- Y,Z,N )
+;       ASTOR core ( - n )     ( TOS STM8: - Y,Z,N )
 ;       push A to stack
 ASTOR:
         CLRW    Y
@@ -1323,7 +1323,7 @@ ASTOR:
         JP      YSTOR
 
 
-;       ATOKEY core ( -- c T | f )    ( TOS STM8: -- Y,Z,N )
+;       ATOKEY core ( - c T | f )    ( TOS STM8: - Y,Z,N )
 ;       Return input char and true, or false.
 ATOKEY:
         TNZ     A
@@ -1595,7 +1595,7 @@ LESS:
         .endif
         .endif
 
-;       YTEMPCMP       ( n n -- n )      ( TOS STM8: -- Y,Z,N )
+;       YTEMPCMP       ( n n - n )      ( TOS STM8: - Y,Z,N )
 ;       Load (TOS) to YTEMP and (TOS-1) to Y, DROP, CMP to STM8 flags
 YTEMPCMP:
         LDW     Y,X
@@ -1920,7 +1920,7 @@ ONEP:
         INCW    X
         RET
 
-;       DOXCODE   ( n -- n )   ( TOS STM8: -- Y,Z,N )
+;       DOXCODE   ( n - n )   ( TOS STM8: - Y,Z,N )
 ;       DOXCODE precedes assembly code for a primitive word
 ;       In the assembly code: X=(TOS), YTEMP=TOS. (TOS)=X after RET
 ;       Caution: no other Forth word may be called from assembly!
@@ -1988,7 +1988,7 @@ PICK:
         RET
 
         .ifeq   BOOTSTRAP
- ;      >CHAR   ( c -- c )      ( TOS STM8: -- A,Z,N )
+;       >CHAR   ( c -- c )      ( TOS STM8: -- A,Z,N )
 ;       Filter non-printing characters.
 
         .ifne   WORDS_LINKMISC
@@ -1996,9 +1996,8 @@ PICK:
         .endif
 TCHAR:
         LD      A,(1,X)
-        AND     A,#0x7F
         CP      A,#0x7F
-        JREQ    1$
+        JRUGE   1$
         CP      A,#(' ')
         JRUGE   2$
 1$:     LD      A,#('_')
@@ -2264,10 +2263,6 @@ SIGN:
         LD      (1,X),A
         JRA     HOLD
 
-;       str     ( w -- b u )
-;       Convert a signed integer
-;       to a numeric string.
-
 ;       <#      ( -- )   ( TOS STM8: -- Y,Z,N )
 ;       Initiate numeric output process.
 
@@ -2278,6 +2273,10 @@ BDIGS:
         CALL    PAD
         DoLitC  USRHLD
         JP      STORE
+
+;       str     ( w -- b u )
+;       Convert a signed integer
+;       to a numeric string.
 
         HEADER  STR "str"
 STR:
@@ -2416,7 +2415,7 @@ NUMDROP:
 ;       Convert a character to its numeric
 ;       value. A flag indicates success.
 
-        HEADER  DIGITQ "DIGIT?"
+        HEADER  DIGTQ "DIGIT?"
 DIGTQ:
         CALL    TOR
         LD      A,YL
@@ -2655,7 +2654,7 @@ QUEST:
 
 ; Parsing
 
-;       YFLAGS  ( n -- )       ( TOS STM8: -- Y,Z,N )
+;       YFLAGS  ( n - )       ( TOS STM8: - Y,Z,N )
 ;       Consume TOS to CPU Y and Flags
 
 YFLAGS:
@@ -2666,7 +2665,7 @@ YFLAGS:
         RET
 
 
-;       AFLAGS  ( c -- )       ( TOS STM8: -- A,Z,N )
+;       AFLAGS  ( c - )       ( TOS STM8: - A,Z,N )
 ;       Consume TOS to CPU A and Flags
 
 AFLAGS:
@@ -2815,7 +2814,7 @@ CPPACKS:
         CALL    CELLP
         JP      PACKS
 
-;       TOKEN_$,n ( <word> -- <dict header> )
+;       TOKEN_$,n  ( <word> - <dict header> )
 ;       copy token to the code dictionary
 ;       and build a new dictionary name
 ;       note: for defining words (e.g. :, CREATE)
@@ -3825,7 +3824,9 @@ CONST:
 ;       docon ( -- )
 ;       state dependent action code of constant
 
-DOCON:  CALL    RFROM
+        HEADER  DOCON "docon"
+DOCON:
+        CALL    RFROM
         CALL    AT              ; push constant in interpreter mode
         CALL    COMPIQ
         JREQ    1$

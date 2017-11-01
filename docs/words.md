@@ -35,23 +35,13 @@
 ```
 
 ```
-;       PUSHLIT ( -- C )
-;       Subroutine for DOLITC and CCOMMALIT
-```
-
-```
-;       CCOMMALIT ( -- )
-;       Compile inline literall byte into code dictionary.
-```
-
-```
-;       DOLITC  ( -- C )
-;       Push an inline literal character (8 bit).
-```
-
-```
 ;       doLit   ( -- w )
 ;       Push an inline literal.
+```
+
+```
+;       (+loop) ( +n -- )
+;       Add n to index R@ and test for lower than limit (R-CELL)@.
 ```
 
 ```
@@ -62,11 +52,6 @@
 ```
 ;       next    ( -- )
 ;       Code for single index loop.
-```
-
-```
-;       QDQBRAN     ( n -- n )
-;       QDUP QBRANCH phrase
 ```
 
 ```
@@ -142,17 +127,8 @@
 ```
 
 ```
-;       doVARPTR core ( -- a )    ( TOS STM8: -- Y,Z,N )
-```
-
-```
 ;       doVAR   ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Code for VARIABLE and CREATE.
-```
-
-```
-;       YSTOR core ( -- n )     ( TOS STM8: -- Y,Z,N )
-;       push Y to stack
 ```
 
 ```
@@ -283,17 +259,7 @@
 
 ```
 ;       LAST    ( -- a )        ( TOS STM8: -- Y,Z,N )
-;       Point to last name in dictionary.
-```
-
-```
-;       ASTOR core ( -- n )     ( TOS STM8: -- Y,Z,N )
-;       push A to stack
-```
-
-```
-;       ATOKEY core ( -- c T | f )    ( TOS STM8: -- Y,Z,N )
-;       Return input char and true, or false.
+;       Point to last name in dictionary
 ```
 
 ```
@@ -384,11 +350,6 @@
 ```
 ;       <       ( n1 n2 -- t )
 ;       Signed compare of top two items.
-```
-
-```
-;       YTEMPCMP       ( n n -- n )      ( TOS STM8: -- Y,Z,N )
-;       Load (TOS) to YTEMP and (TOS-1) to Y, DROP, CMP to STM8 flags
 ```
 
 ```
@@ -497,13 +458,6 @@
 ```
 
 ```
-;       DOXCODE   ( n -- n )   ( TOS STM8: -- Y,Z,N )
-;       DOXCODE precedes assembly code for a primitive word
-;       In the assembly code: X=(TOS), YTEMP=TOS. (TOS)=X after RET
-;       Caution: no other Forth word may be called from assembly!
-```
-
-```
 ;       NOT     ( w -- w )     ( TOS STM8: -- Y,Z,N )
 ;       One's complement of TOS.
 ```
@@ -526,6 +480,11 @@
 ```
 ;       PICK    ( ... +n -- ... w )      ( TOS STM8: -- Y,Z,N )
 ;       Copy    nth stack item to tos.
+```
+
+```
+;       >CHAR   ( c -- c )      ( TOS STM8: -- A,Z,N )
+;       Filter non-printing characters.
 ```
 
 ```
@@ -621,14 +580,14 @@
 ```
 
 ```
-;       str     ( w -- b u )
-;       Convert a signed integer
-;       to a numeric string.
+;       <#      ( -- )   ( TOS STM8: -- Y,Z,N )
+;       Initiate numeric output process.
 ```
 
 ```
-;       <#      ( -- )   ( TOS STM8: -- Y,Z,N )
-;       Initiate numeric output process.
+;       str     ( w -- b u )
+;       Convert a signed integer
+;       to a numeric string.
 ```
 
 ```
@@ -742,16 +701,6 @@
 ```
 
 ```
-;       YFLAGS  ( n -- )       ( TOS STM8: -- Y,Z,N )
-;       Consume TOS to CPU Y and Flags
-```
-
-```
-;       AFLAGS  ( c -- )       ( TOS STM8: -- A,Z,N )
-;       Consume TOS to CPU A and Flags
-```
-
-```
 ;       parse   ( b u c -- b u delta ; <string> )
 ;       Scan string delimited by c.
 ;       Return found string and its offset.
@@ -790,13 +739,6 @@
 ;       WORD    ( c -- a ; <string> )
 ;       Parse a word from input stream
 ;       and copy it to code dictionary or to RAM.
-```
-
-```
-;       TOKEN_$,n ( <word> -- <dict header> )
-;       copy token to the code dictionary
-;       and build a new dictionary name
-;       note: for defining words (e.g. :, CREATE)
 ```
 
 ```
@@ -1083,12 +1025,6 @@
 ```
 
 ```
-;       IMMEDIATE       ( -- )
-;       Make last compiled word
-;       an immediate word.
-```
-
-```
 ;       ]       ( -- )
 ;       Start compiling words in
 ;       input stream.
@@ -1111,6 +1047,16 @@
 ```
 
 ```
+;       CONSTANT ( "name" n -- )
+;       Create a named constant with state dependant action
+```
+
+```
+;       docon ( -- )
+;       state dependent action code of constant
+```
+
+```
 ;       VARIABLE        ( -- ; <string> )
 ;       Compile a new variable
 ;       initialized to 0.
@@ -1119,6 +1065,12 @@
 ```
 ;       ALLOT   ( n -- )
 ;       Allocate n bytes to code DICTIONARY.
+```
+
+```
+;       IMMEDIATE       ( -- )
+;       Make last compiled word
+;       an immediate word.
 ```
 
 ```

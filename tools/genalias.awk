@@ -18,16 +18,19 @@ BEGIN {
 {
   line++
   wline++
-  if (wline > 15 && p) {
+  # print p " " $0
+  if (wline > 20 && p > 0) {
+    warning("header too long " word " " label " " p)
     p = 0                              # too many lines since word comment
-    warning("header too long " word)
   }
+  cOneIsAddress = ($1~/^00[8-9A-F][0-9A-F]{3}$/)
 }
 
 
-/^ +[0-9]+ ; +[^ ]+ +.+--/ && !/core/ {
+/^ +[0-9]+ ; +[^ ]+ +.+-- / && !/ core / {
   if (p) {
-    info("no code " word)
+    p = 0
+    warning("incomplete header " word)
   }
 
   worddef = $0
@@ -43,27 +46,43 @@ BEGIN {
 }
 
 /(HEADER|HEADFLG)/ {
+# /(HEADER|HEADFLG)/ && (cOneIsAddress || $2==";")
+
   p = 2
   for (i=1; i<=NF; i++)
     if (index($i,"HEAD")) {
       label = $(i+1)
       break
     }
+  info("header " word " for " label)
   next
 }
 
-$6 == "LINK" {
+$6 == "LINK" && cOneIsAddress {
   p = 0
-  info("standard header " word)
+  info("standard header " word " " p)
+  next
+}
+
+p == 1 && (($2~/:$/) || ($3~/:$/))  {
+  p = 0
+  info("core assembly code: " label)
   next
 }
 
 p == 2 && index($3,label ":") {
   p = 3
+  info("label found: " label)
   next
 }
 
-p == 3 && $1~/[0-9A-F]{6}/ {
+p > 0 && index($2,label ":") {
+  p = 0
+  info("no code: " word)
+  next
+}
+
+p == 3 && cOneIsAddress {
   p = 0
   addrstr = substr($1,3)
   ALIASADDR[word] = addrstr
