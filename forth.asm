@@ -1996,9 +1996,8 @@ PICK:
         .endif
 TCHAR:
         LD      A,(1,X)
-        AND     A,#0x7F
         CP      A,#0x7F
-        JREQ    1$
+        JRUGE   1$
         CP      A,#(' ')
         JRUGE   2$
 1$:     LD      A,#('_')
