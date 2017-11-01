@@ -26,5 +26,3 @@
         WORDS_EXTRACORE  = 1    ; Extra core words: =0 I
         WORDS_EXTRAMEM   = 1    ; Extra memory words: B! 2C@ 2C!
         WORDS_EXTRAEEPR  = 1    ; Extra EEPROM lock/unlock words: LOCK ULOCK ULOCKF LOCKF
-        WORDS_HWREG      = 1    ; Peripheral Register words
-
