@@ -35,21 +35,6 @@
 ```
 
 ```
-;       PUSHLIT ( -- C )
-;       Subroutine for DOLITC and CCOMMALIT
-```
-
-```
-;       CCOMMALIT ( -- )
-;       Compile inline literall byte into code dictionary.
-```
-
-```
-;       DOLITC  ( -- C )
-;       Push an inline literal character (8 bit).
-```
-
-```
 ;       doLit   ( -- w )
 ;       Push an inline literal.
 ```
@@ -67,11 +52,6 @@
 ```
 ;       next    ( -- )
 ;       Code for single index loop.
-```
-
-```
-;       QDQBRAN     ( n -- n )
-;       QDUP QBRANCH phrase
 ```
 
 ```
@@ -147,17 +127,8 @@
 ```
 
 ```
-;       doVARPTR core ( -- a )    ( TOS STM8: -- Y,Z,N )
-```
-
-```
 ;       doVAR   ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Code for VARIABLE and CREATE.
-```
-
-```
-;       YSTOR core ( -- n )     ( TOS STM8: -- Y,Z,N )
-;       push Y to stack
 ```
 
 ```
@@ -288,17 +259,7 @@
 
 ```
 ;       LAST    ( -- a )        ( TOS STM8: -- Y,Z,N )
-;       Point to last name in dictionary.
-```
-
-```
-;       ASTOR core ( -- n )     ( TOS STM8: -- Y,Z,N )
-;       push A to stack
-```
-
-```
-;       ATOKEY core ( -- c T | f )    ( TOS STM8: -- Y,Z,N )
-;       Return input char and true, or false.
+;       Point to last name in dictionary
 ```
 
 ```
@@ -389,11 +350,6 @@
 ```
 ;       <       ( n1 n2 -- t )
 ;       Signed compare of top two items.
-```
-
-```
-;       YTEMPCMP       ( n n -- n )      ( TOS STM8: -- Y,Z,N )
-;       Load (TOS) to YTEMP and (TOS-1) to Y, DROP, CMP to STM8 flags
 ```
 
 ```
@@ -499,13 +455,6 @@
 ```
 ;       1+      ( n -- n )      ( TOS STM8: -- Y,Z,N )
 ;       Add 1 to tos.
-```
-
-```
-;       DOXCODE   ( n -- n )   ( TOS STM8: -- Y,Z,N )
-;       DOXCODE precedes assembly code for a primitive word
-;       In the assembly code: X=(TOS), YTEMP=TOS. (TOS)=X after RET
-;       Caution: no other Forth word may be called from assembly!
 ```
 
 ```
@@ -752,16 +701,6 @@
 ```
 
 ```
-;       YFLAGS  ( n -- )       ( TOS STM8: -- Y,Z,N )
-;       Consume TOS to CPU Y and Flags
-```
-
-```
-;       AFLAGS  ( c -- )       ( TOS STM8: -- A,Z,N )
-;       Consume TOS to CPU A and Flags
-```
-
-```
 ;       parse   ( b u c -- b u delta ; <string> )
 ;       Scan string delimited by c.
 ;       Return found string and its offset.
@@ -800,13 +739,6 @@
 ;       WORD    ( c -- a ; <string> )
 ;       Parse a word from input stream
 ;       and copy it to code dictionary or to RAM.
-```
-
-```
-;       TOKEN_$,n core ( <word> -- <dict header> )
-;       copy token to the code dictionary
-;       and build a new dictionary name
-;       note: for defining words (e.g. :, CREATE)
 ```
 
 ```
