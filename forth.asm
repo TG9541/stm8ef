@@ -687,7 +687,7 @@ EMIT:
 ; ==============================================
 ; The kernel
 
-;       PUSHLIT ( -- C )
+;       PUSHLIT ( - C )
 ;       Subroutine for DOLITC and CCOMMALIT
 PUSHLIT:
         LDW     Y,(3,SP)
@@ -699,7 +699,7 @@ PUSHLIT:
         LD      (X),A
         RET
 
-;       CCOMMALIT ( -- )
+;       CCOMMALIT ( - )
 ;       Compile inline literall byte into code dictionary.
 CCOMMALIT:
         CALLR   PUSHLIT
@@ -710,7 +710,7 @@ CSKIPRET:
 
         .ifne   USE_CALLDOLIT
 
-;       DOLITC  ( -- C )
+;       DOLITC  ( - C )
 ;       Push an inline literal character (8 bit).
 DOLITC:
         CALLR   PUSHLIT
@@ -789,7 +789,7 @@ DONXT:
 NEX1:   LDW     (3,SP),Y
         JRA     BRAN
 
-;       QDQBRAN     ( n -- n )
+;       QDQBRAN     ( n - n )
 ;       QDUP QBRANCH phrase
 QDQBRAN:
         CALL    QDUP
@@ -987,7 +987,7 @@ RFROM:
 
 
         .ifne  HAS_CPNVM
-;       doVARPTR core ( -- a )    ( TOS STM8: -- Y,Z,N )
+;       doVARPTR ( - a )    ( TOS STM8: - Y,Z,N )
 DOVARPTR:
         POPW    Y               ; get return addr (pfa)
         LDW     Y,(Y)
@@ -1004,7 +1004,7 @@ DOVAR:
         POPW    Y               ; get return addr (pfa)
         ; fall through
 
-;       YSTOR core ( -- n )     ( TOS STM8: -- Y,Z,N )
+;       YSTOR core ( - n )     ( TOS STM8: - Y,Z,N )
 ;       push Y to stack
 YSTOR:
         DECW    X               ; SUBW  X,#2
@@ -1315,7 +1315,7 @@ TQKEY:
 LAST:
         LD      A,#(USRLAST)
 
-;       ASTOR core ( -- n )     ( TOS STM8: -- Y,Z,N )
+;       ASTOR core ( - n )     ( TOS STM8: - Y,Z,N )
 ;       push A to stack
 ASTOR:
         CLRW    Y
@@ -1323,7 +1323,7 @@ ASTOR:
         JP      YSTOR
 
 
-;       ATOKEY core ( -- c T | f )    ( TOS STM8: -- Y,Z,N )
+;       ATOKEY core ( - c T | f )    ( TOS STM8: - Y,Z,N )
 ;       Return input char and true, or false.
 ATOKEY:
         TNZ     A
@@ -1595,7 +1595,7 @@ LESS:
         .endif
         .endif
 
-;       YTEMPCMP       ( n n -- n )      ( TOS STM8: -- Y,Z,N )
+;       YTEMPCMP       ( n n - n )      ( TOS STM8: - Y,Z,N )
 ;       Load (TOS) to YTEMP and (TOS-1) to Y, DROP, CMP to STM8 flags
 YTEMPCMP:
         LDW     Y,X
@@ -1920,7 +1920,7 @@ ONEP:
         INCW    X
         RET
 
-;       DOXCODE   ( n -- n )   ( TOS STM8: -- Y,Z,N )
+;       DOXCODE   ( n - n )   ( TOS STM8: - Y,Z,N )
 ;       DOXCODE precedes assembly code for a primitive word
 ;       In the assembly code: X=(TOS), YTEMP=TOS. (TOS)=X after RET
 ;       Caution: no other Forth word may be called from assembly!
@@ -2654,7 +2654,7 @@ QUEST:
 
 ; Parsing
 
-;       YFLAGS  ( n -- )       ( TOS STM8: -- Y,Z,N )
+;       YFLAGS  ( n - )       ( TOS STM8: - Y,Z,N )
 ;       Consume TOS to CPU Y and Flags
 
 YFLAGS:
@@ -2665,7 +2665,7 @@ YFLAGS:
         RET
 
 
-;       AFLAGS  ( c -- )       ( TOS STM8: -- A,Z,N )
+;       AFLAGS  ( c - )       ( TOS STM8: - A,Z,N )
 ;       Consume TOS to CPU A and Flags
 
 AFLAGS:
@@ -2814,7 +2814,7 @@ CPPACKS:
         CALL    CELLP
         JP      PACKS
 
-;       TOKEN_$,n ( <word> -- <dict header> )
+;       TOKEN_$,n  ( <word> - <dict header> )
 ;       copy token to the code dictionary
 ;       and build a new dictionary name
 ;       note: for defining words (e.g. :, CREATE)
