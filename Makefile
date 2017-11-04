@@ -6,6 +6,7 @@ all: zip
 zip: build
 	find out/ -name "*.ihx" -print | zip -r out/stm8ef-bin docs/words.md mcu/* lib/* -@
 	find out/ -name "*.efr" -print | zip -r out/stm8ef-bin tools/* STM8S103.efr -@
+	find out/ -name "forth.rst" -print | zip -r out/stm8ef-bin tools/* STM8S103.efr -@
 	find out/ -name "target" -print | zip -r out/stm8ef-bin STM8S105.efr -@
 
 build: words

@@ -36,12 +36,21 @@ download
 run
 EOF
 
+export boardcode="main.fs"
+export boardihx="$object-forth.ihx"
+if [ ! -f "$boardcode" ]; then
+  echo "local $boardcode not found ..."
+  export boardcode="$object/board.fs"
+  export boardihx="out/$object/$object-forth.ihx"
+  echo "... trying $boardcode"
+fi
+
 # wait some more before Forth code transfer
 sleep 0.5
 
-echo "simload.sh: transfer $object/board.fs"
+echo "simload.sh: transfer $boardcode"
 
-tools/codeload.py telnet "$object/board.fs" || exit
+tools/codeload.py telnet "$boardcode" || exit
 
 echo "simload.sh: prepare uCsim memory dump to .ihx script"
 
@@ -58,10 +67,10 @@ function Xpr(x) { return sprintf("%02x",x) }
 function App(x,n) { s=substr(x,n,2); a=a s; cs+=strtonum("0x" s) }
 EOF
 
-echo "simload.sh: load $object binary before exiting uCsim"
+echo "simload.sh: extract $boardihx binary and exit uCsim"
 
 # dump flash data, convert to Intel Hex, hard exit uCsim
-nc -w 1 localhost 10001 <<EOF | gawk "$makeHex" > "out/$object/$object-forth.ihx"
+nc -w 1 localhost 10001 <<EOF | gawk "$makeHex" > "$boardihx"
 dch 0x8000 0x9FFF 16
 kill
 EOF
