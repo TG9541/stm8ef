@@ -1,0 +1,31 @@
+\ Scaffolding for temporary RAM usage during compilation
+\ refer to github.com/TG9541/W1209/blob/master/LICENSE.md
+
+RAM
+#require MARKER
+
+  \ Mark dictionary in RAM
+  MARKER tempRAM
+
+\ assume default target if not defined by the application
+#require TARGET
+
+  : ENDTEMP ( -- )
+    \ tear down scaffolding if we've been compiling to NVM
+    HERE 0< IF
+      RAM tempRAM NVM
+    THEN
+  ;
+
+\ ---------------------------------------------------------
+\\ Example:
+
+\ uncomment for NVM as the compilation target
+\ : TARGET NVM ;
+
+#include STARTTEMP
+  \ use RAM
+  : temporaryWordInRAM ;
+TARGET
+  : wordInTargetMemory ;
+ENDTEMP

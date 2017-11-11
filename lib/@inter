@@ -2,27 +2,34 @@
 \ Saturates to y(xmin), y(xmax).
 \ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
 
-  \ difference of two values two cells apart, helper for @inter
-  HERE \ ( -- xt ) \ nameless @dif ( a -- n )  delta of x1-x0 or y1-y0
-    ] DUP 2+ 2+ @ SWAP @ [ $81 C,
+  HERE \ xt of nameless 2cell+ ( a -- a a+4 )
+    \ helper for @dif and @inter
+    ] DUP 2+ 2+ [ $81 C,
+
+  HERE \ xt of nameless @dif ( a -- n )  delta of x1-x0 or y1-y0
+    \ difference of two values two cells apart, helper for @inter
+    OVER ( 2cell+ ) CALL, ] @ SWAP @ - [ $81 C, SWAP
 
   \ find (X0,Y0)/(X1,Y1) in table, interpolate w/ saturation
-  : @inter ( n a -- n1 )
+  : @inter ( n a -- n )
+    \ compile time: consumes xt of 2cell+ and @dif
     DUP @ 1- >R 2+ DUP BEGIN
-      3 PICK OVER @ < NOT WHILE NIP DUP 2+ 2+ NEXT
+      3 PICK OVER @ < NOT WHILE NIP [ ROT ( 2cell+ ) CALL, ] NEXT
         DROP DUP
       ELSE R> DROP THEN
     OVER = IF
       2+ @ NIP
     ELSE
-      DUP ROT OVER @ - OVER 2+ [ DUP CALL, ] ( @dif )
-      ROT [ CALL, ] ( @dif ) */ SWAP 2+ @ +
-    then
+      DUP ROT OVER @ - OVER 2+ [ OVER ( @dif ) CALL, ]
+      ROT [ SWAP ( @dif ) CALL, ] */ SWAP 2+ @ +
+    THEN
   ;
 
 \\ Example:
 
   \ create structure with 3 x/y pairs:
-  create iTab 3 ,   -100 , 200 ,   0 , 100 ,   100 , -1000 ,
+  CREATE iTab 3 ,   -100 , 200 ,   0 , 100 ,   100 , -1000 ,
 
-  -150 iTab @inter .  \ 200 ok
+  -200 iTab @inter .  \ 200 ok
+    50 iTab @inter .  \ -450 ok
+   200 iTab @inter .  \ -1000 ok
