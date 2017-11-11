@@ -1,16 +1,30 @@
-\ STM8eForth : MARKER                                                 MM-170929
+\ STM8eForth : MARKER for words in RAM                                 MM-170929
 \ ------------------------------------------------------------------------------
 
-  RAM   : _ ;  \ dummy word to ensure that last points to RAM, not Flash
-
   HERE \ ( -- xt )
-    ] RAM DUP @ last 2- ! 2+ DUP @ last ! 2+ @ last 10 + ! [ $81 C,
+    \ get CP stored by MARKER, get last & context from the mark's link field
+    ] RAM DUP @ last 2- ! 2+ @ DUP last ! last 10 + ! [ $81 C,
 
   : MARKER ( "name" -- )
   \ The marker "name" removes itself and all later defined words from RAM.
-    RAM HERE last 2- @ , last @ , last 10 + @ ,
+    RAM HERE last 2- @ ,  \ store CP, then define a mark
     : [COMPILE] LITERAL ( xt ) LITERAL CALL, [COMPILE] ;
   ;
 
 \ ------------------------------------------------------------------------------
-\ Last Revision: MM-170930 Dummy word _ added. dofence made headerless
+\\ Example:
+
+RAM
+  : _ ;  \ dummy word to ensure that last points to RAM, not Flash
+
+  MARKER myMarker
+
+  : tempWordRAM ;
+
+NVM
+  : wordFlash ;
+
+RAM
+  myMarker
+
+\ tempWordRAM and myMarker are removed, wordFlash is still in the dictionary
