@@ -120,7 +120,9 @@ END {
 }
 
 function makeAlias(word,addr) {
-  print ": " word " [ $CC C, $" ALIASADDR[word] " , OVERT" > target word
+  filename = word
+  gsub("/", "_", filename)    # replace "/" - it's forbidden in Linux filenames
+  print ": " word " [ $CC C, $" ALIASADDR[word] " , OVERT" > target filename
 }
 
 function result (text) {
