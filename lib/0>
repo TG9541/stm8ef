@@ -1,0 +1,1 @@
+: 0> ( n -- flag ) NEGATE 0< ;

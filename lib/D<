@@ -1,0 +1,7 @@
+\ D<                              double math utility word
+\ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
+
+#require 2SWAP
+#require D>
+
+: D< ( d d -- flag ) 2SWAP D> ;

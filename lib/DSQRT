@@ -1,14 +1,14 @@
-\ Some integer square root (C) RigTig 2017
+\ (unsigned) double square root            (C) RigTig 2017
 \ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
 
-\ require: math/double.fs
+#require D>
 
-: isqrt ( d -- n )
+: DSQRT ( d -- n )
   $8000 ( d c ) $8000 ( d c g )
   BEGIN
     DUP DUP UM* ( d c g g^2)
     6 PICK 6 PICK ( d c g g^2 d )
-    d> IF ( d c g )
+    D> IF ( d c g )
       OVER XOR
     THEN ( d c g )
     SWAP 2/ $7FFF AND ( d g c )

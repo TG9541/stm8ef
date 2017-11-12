@@ -1,0 +1,1 @@
+: 2SWAP  ( d1 d2 -- d2 d1 ) ROT >R ROT R> ;

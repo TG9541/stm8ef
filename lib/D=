@@ -1,0 +1,4 @@
+\ STM8 eForth D=     double math utility word       TG9541
+\ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
+
+: D=  ( d1 d2 -- flag ) ROT = ROT ROT = AND ;
