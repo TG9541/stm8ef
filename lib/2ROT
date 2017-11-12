@@ -1,0 +1,6 @@
+\ STM8 eForth 2ROT   double utility word                TG9541
+\ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
+
+#require 2SWAP
+
+: 2ROT  ( d1 d2 d3 -- d2 d3 d1 ) >R >R 2SWAP R> R> 2SWAP ;
