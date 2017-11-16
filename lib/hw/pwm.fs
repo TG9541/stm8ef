@@ -1,12 +1,23 @@
 \ STM8S103 Timer1 PWM
 \ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
 
-\ Example:
-\   15  initTIM1
-\   1000 relTIM1
-\   800 pwm1
-\   500 pwm2
-\   200 pwm3
+#include STARTTEMP
+
+  \res MCU: STM8103
+  \res export TIM1_PSCRH
+  \res export TIM1_BKR
+  \res export TIM1_CCMR1
+  \res export TIM1_CCMR2 
+  \res export TIM1_CCMR3 
+  \res export TIM1_CCER1
+  \res export TIM1_CCER2
+  \res export TIM1_CR1
+  \res export TIM1_ARRH
+  \res export TIM1_CCR1H
+  \res export TIM1_CCR2H
+  \res export TIM1_CCR3
+
+TARGET
 
 \ Init Timer1 with prescaler ( n=15 -> 1 MHz), CC PWM1..PWM3
 : T1PwmInit ( n -- )
@@ -45,4 +56,12 @@
   TIM1_ARRH 2C@ 1000 */
 ;
 
+ENDTEMP
 
+\\ Example:
+
+ 15  initTIM1
+ 1000 relTIM1
+ 800 pwm1
+ 500 pwm2
+ 200 pwm3
