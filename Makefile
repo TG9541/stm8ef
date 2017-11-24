@@ -1,12 +1,15 @@
 
 ifeq ($(BOARD),)
 
-all: zip
+all: zip tgz
 
 zip: build
 	find out/ -name "*.ihx" -print | zip -r out/stm8ef-bin docs/words.md mcu/* lib/* -@
 	find out/ -name "forth.rst" -print | zip -r out/stm8ef-bin tools/* -@
 	find out/ -name "target" -print | zip -r out/stm8ef-bin -@
+
+tgz: build
+	( find out/ -path "*target/*" -print0 ; find out/ -name "*.ihx" -type f -print0 ; find out/ -name "forth.rst" -type f -print0 ) | tar -czvf out/stm8ef-bin.tgz docs/words.md mcu lib tools --null -T -
 
 build: words
 	make BOARD=CORE

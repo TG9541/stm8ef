@@ -39,6 +39,7 @@ BEGIN {
   p = 1
   wline = 0
   label = 0
+  immediate = 0
   word = $3
 
   info("header found " word)
@@ -46,14 +47,18 @@ BEGIN {
 }
 
 /(HEADER|HEADFLG)/ {
-# /(HEADER|HEADFLG)/ && (cOneIsAddress || $2==";")
-
   p = 2
-  for (i=1; i<=NF; i++)
+  for (i=1; i<=NF; i++) {
     if (index($i,"HEAD")) {
       label = $(i+1)
       break
     }
+  }
+
+  if (/IMEDD/) {
+    immediate = 1
+  }
+
   info("header " word " for " label)
   next
 }
@@ -86,6 +91,7 @@ p == 3 && cOneIsAddress {
   p = 0
   addrstr = substr($1,3)
   ALIASADDR[word] = addrstr
+  ALIASFLAG[word] = immediate
   WORD[addrstr] = word
   INDEX[windx++] = addrstr
   result("alias " word)
@@ -121,8 +127,16 @@ END {
 
 function makeAlias(word,addr) {
   filename = word
+
+  if (ALIASFLAG[word] == 1) {
+    isImmediate = " IMMEDIATE"
+  }
+  else {
+    isImmediate = ""
+  }
+
   gsub("/", "_", filename)    # replace "/" - it's forbidden in Linux filenames
-  print ": " word " [ $CC C, $" ALIASADDR[word] " , OVERT" > target filename
+  print ": " word " [ $CC C, $" ALIASADDR[word] " , OVERT" isImmediate > target filename
 }
 
 function result (text) {

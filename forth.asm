@@ -3813,7 +3813,7 @@ CREAT:
 ;       CONSTANT ( "name" n -- )
 ;       Create a named constant with state dependant action
 
-        HEADFLG CONST "CONSTANT" IMEDD
+        HEADER CONST "CONSTANT"
 CONST:
         CALL    COLON
         CALL    COMPI
