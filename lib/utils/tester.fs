@@ -12,8 +12,7 @@ CREATE RESULTS 12 2* ALLOT
    #RESULTS @ ?DUP IF
       1- DUP FOR DUP I - 2* RESULTS + ? NEXT DROP
    THEN 1 ;
-: T{   ( -- )
-   DECIMAL ;
+: T{   ( -- ) ;
 : ->   ( ... -- )
    \ save stack depth and result values
    DEPTH DUP #RESULTS !
