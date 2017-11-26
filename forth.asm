@@ -388,7 +388,7 @@ _TIM2_UO_IRQHandler:
         POPW    X
         LDW     USREMIT,X
 
-        POP     USRBASE+1
+        POP     USRBASE+1       ; this may not work in uCsim
 
         POPW    X
         LDW     YTEMP,X
@@ -2324,8 +2324,8 @@ BASEAT:
 
         HEADER  NUMBQ "NUMBER?"
 NUMBQ:
-        PUSH    USRBASE+1
-        PUSH    #0              ; sign flag
+        LDW      Y,USRBASE
+        PUSHW    Y              ; note: (1,SP) used as sign flag
 
         CALL    ZERO
         CALL    OVER
@@ -2406,8 +2406,9 @@ NUMQ5:                          ; THEN
         CALL    DUPP
         ; fall through
 NUMQ6:
-        POP     A               ; sign flag
-        POP     USRBASE+1       ; restore BASE
+        POP     A               ; discard sign flag
+        POP     A               ; restore BASE
+        LD      USRBASE+1,A
 NUMDROP:
         JP      DROP
 
@@ -3407,8 +3408,8 @@ NEXT:
 
         .ifne   HAS_DOLOOP
         .ifeq   BOOTSTRAP
-;       DO      ( -- a )
-;       Start a DO LOOP loop
+;       DO      ( n1 n2 -- )
+;       Start a DO LOOP loop from n1 to n2
 ;       structure in a colon definition.
 
         HEADFLG DOO "DO" IMEDD
@@ -3959,7 +3960,8 @@ DUMP1:  CALL    CR
         CALL    DONXT
         .dw     DUMP1           ; loop till done
 DUMP3:
-        POP     USRBASE+1       ; restore radix
+        POP     A
+        LD      USRBASE+1,A     ; restore radix
         JP      DROP
         .endif
 
