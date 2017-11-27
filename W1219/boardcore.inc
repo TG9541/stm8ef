@@ -176,9 +176,9 @@ OUTSTOR:
 BKEY:
         ; Keys "S" (1), "+" (2), "-" (4)
         CLR     A
-        BTJT    PA_IDR,#6,1$    ; test "set"
+        BTJT    PA_IDR,#2,1$    ; test "set"
         OR      A,#0x01
-1$:     BTJT    PD_IDR,#5,2$    ; test "+"
+1$:     BTJT    PA_IDR,#1,2$    ; test "+"
         OR      A,#0x02
 2$:     BTJT    PD_IDR,#6,3$    ; test "-"
         OR      A,#0x04
