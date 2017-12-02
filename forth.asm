@@ -3102,6 +3102,14 @@ INTE1:  CALL    NUMBQ           ; convert a number
         .dw     ABOR1
         RET
 
+;       [       ( -- )
+;       Start   text interpreter.
+        HEADFLG LBRAC "[" IMEDD
+LBRAC:
+        LDW     Y,#INTER
+        LDW     USREVAL,Y
+        RET
+
 ;       CR      ( -- )
 ;       Output a carriage return
 ;       and a line feed.
@@ -3114,14 +3122,6 @@ CR:
         .endif
         DoLitC  LF
         JP      [USREMIT]
-
-;       [       ( -- )
-;       Start   text interpreter.
-        HEADFLG LBRAC "[" IMEDD
-LBRAC:
-        LDW     Y,#INTER
-        LDW     USREVAL,Y
-        RET
 
 ;       COMPILE?   ( -- n )
 ;       0 if 'EVAL points to $INTERPRETER
@@ -3184,6 +3184,19 @@ QSTAC:
         .ascii  " underflow"
         RET
 
+;       QUIT    ( -- )
+;       Reset return stack pointer
+;       and start text interpreter.
+
+        HEADER  QUIT "QUIT"
+QUIT:
+        LDW     Y,#RPP          ; initialize return stack
+        LDW     SP,Y
+QUIT1:  CALLR   LBRAC           ; start interpretation
+QUIT2:  CALL    QUERY           ; get input
+        CALLR   EVAL
+        JRA     QUIT2           ; continue till error
+
 ;       EVAL    ( -- )
 ;       Interpret input stream.
 
@@ -3199,19 +3212,6 @@ EVAL2:
         INCW    X
         INCW    X
         JP      [USRPROMPT]     ; DOTOK or PACE
-
-;       QUIT    ( -- )
-;       Reset return stack pointer
-;       and start text interpreter.
-
-        HEADER  QUIT "QUIT"
-QUIT:
-        LDW     Y,#RPP          ; initialize return stack
-        LDW     SP,Y
-QUIT1:  CALLR   LBRAC           ; start interpretation
-QUIT2:  CALL    QUERY           ; get input
-        CALLR   EVAL
-        JRA     QUIT2           ; continue till error
 
 ; The compiler
 
