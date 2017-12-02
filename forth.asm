@@ -3123,10 +3123,12 @@ LBRAC:
         LDW     USREVAL,Y
         RET
 
-;       Test if 'EVAL points to $INTERPRETER
+;       COMPILE?   ( -- n )
+;       0 if 'EVAL points to $INTERPRETER
+;       HEADER  COMPIQ "COMPILE?"
 COMPIQ:
         LDW     Y,USREVAL
-        CPW     Y,#INTER
+        SUBW    Y,#INTER
         RET
 
 ;       .OK     ( -- )
