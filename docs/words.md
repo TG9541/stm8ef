@@ -907,8 +907,8 @@
 ```
 
 ```
-;       DO      ( -- a )
-;       Start a DO LOOP loop
+;       DO      ( n1 n2 -- )
+;       Start a DO LOOP loop from n1 to n2
 ;       structure in a colon definition.
 ```
 
