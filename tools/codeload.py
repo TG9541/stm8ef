@@ -186,7 +186,7 @@ def readEfr(path):
 
 # uploader with resolution of #include, #require, and \res
 def upload(path):
-    reExampleStart = re.compile("^\\\\\\\\ Example:")
+    reExampleStart = re.compile("^\\\\\\\\")
 
     with open(path) as source:
         vprint('Uploading %s' % path)

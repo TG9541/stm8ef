@@ -593,22 +593,6 @@ TBOOT:
         ULAST = .
         .endif
 
-        .ifeq   BAREBONES
-;       hi      ( -- )
-;       Display sign-on message.
-
-        HEADER  HI "hi"
-HI:
-        CALLR   1$              ; CR
-        CALL    DOTQP           ; initialize I/O
-        .db     17
-        .ascii  "STM8eForth 2.2."
-        .db     (RELVER1+'0')
-        .db     (RELVER0+'0')   ; version
-
-1$:     JP      CR
-        .endif
-
 ; ==============================================
 ;       Device dependent I/O
 
@@ -2509,20 +2493,6 @@ CHAR2:  CALL    DONXT
         RET
         .endif
 
-;       CR      ( -- )
-;       Output a carriage return
-;       and a line feed.
-
-        HEADER  CR "CR"
-CR:
-        .ifeq TERM_LINUX
-        DoLitC  CRR
-        CALL    [USREMIT]
-        .endif
-        DoLitC  LF
-        JP      [USREMIT]
-
-
 ;       do$     ( -- a )
 ;       Return  address of a compiled
 ;       string.
@@ -3140,10 +3110,25 @@ LBRAC:
         LDW     USREVAL,Y
         RET
 
-;       Test if 'EVAL points to $INTERPRETER
+;       CR      ( -- )
+;       Output a carriage return
+;       and a line feed.
+
+        HEADER  CR "CR"
+CR:
+        .ifeq TERM_LINUX
+        DoLitC  CRR
+        CALL    [USREMIT]
+        .endif
+        DoLitC  LF
+        JP      [USREMIT]
+
+;       COMPILE?   ( -- n )
+;       0 if 'EVAL points to $INTERPRETER
+;       HEADER  COMPIQ "COMPILE?"
 COMPIQ:
         LDW     Y,USREVAL
-        CPW     Y,#INTER
+        SUBW    Y,#INTER
         RET
 
 ;       .OK     ( -- )
@@ -3154,16 +3139,29 @@ DOTOK:
         CALLR   COMPIQ
         JREQ    DOTO1
         .ifne   HAS_OLDOK
-        JP      CR
+        JRA     CR
         .else
-        CALL    DOTQP
+        CALL    DOTQP            ; e4thcom handshake (which also works with " ok")
         .db     4
         .ascii  " OK"
         .db     10
         RET
         .endif
 
-        .ifne   BAREBONES
+        .ifeq   BAREBONES
+;       hi      ( -- )
+;       Display sign-on message.
+
+        HEADER  HI "hi"
+HI:
+        CALL    DOTQP           ; initialize I/O
+        .db     18, 10
+        .ascii  "STM8eForth 2.2."
+        .db     (RELVER1+'0')
+        .db     (RELVER0+'0')   ; version
+
+         ; fall through
+        .else
 HI:
         .endif
 DOTO1:
@@ -3172,6 +3170,7 @@ DOTO1:
         .ascii  " ok"
         .db     10
         RET
+
 
 ;       ?STACK  ( -- )
 ;       Abort if stack underflows.
@@ -3184,6 +3183,19 @@ QSTAC:
         .db     10
         .ascii  " underflow"
         RET
+
+;       QUIT    ( -- )
+;       Reset return stack pointer
+;       and start text interpreter.
+
+        HEADER  QUIT "QUIT"
+QUIT:
+        LDW     Y,#RPP          ; initialize return stack
+        LDW     SP,Y
+QUIT1:  CALLR   LBRAC           ; start interpretation
+QUIT2:  CALL    QUERY           ; get input
+        CALLR   EVAL
+        JRA     QUIT2           ; continue till error
 
 ;       EVAL    ( -- )
 ;       Interpret input stream.
@@ -3200,19 +3212,6 @@ EVAL2:
         INCW    X
         INCW    X
         JP      [USRPROMPT]     ; DOTOK or PACE
-
-;       QUIT    ( -- )
-;       Reset return stack pointer
-;       and start text interpreter.
-
-        HEADER  QUIT "QUIT"
-QUIT:
-        LDW     Y,#RPP          ; initialize return stack
-        LDW     SP,Y
-QUIT1:  CALLR   LBRAC           ; start interpretation
-QUIT2:  CALL    QUERY           ; get input
-        CALLR   EVAL
-        JRA     QUIT2           ; continue till error
 
 ; The compiler
 
