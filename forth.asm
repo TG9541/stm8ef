@@ -593,22 +593,6 @@ TBOOT:
         ULAST = .
         .endif
 
-        .ifeq   BAREBONES
-;       hi      ( -- )
-;       Display sign-on message.
-
-        HEADER  HI "hi"
-HI:
-        CALLR   1$              ; CR
-        CALL    DOTQP           ; initialize I/O
-        .db     17
-        .ascii  "STM8eForth 2.2."
-        .db     (RELVER1+'0')
-        .db     (RELVER0+'0')   ; version
-
-1$:     JP      CR
-        .endif
-
 ; ==============================================
 ;       Device dependent I/O
 
@@ -2509,20 +2493,6 @@ CHAR2:  CALL    DONXT
         RET
         .endif
 
-;       CR      ( -- )
-;       Output a carriage return
-;       and a line feed.
-
-        HEADER  CR "CR"
-CR:
-        .ifeq TERM_LINUX
-        DoLitC  CRR
-        CALL    [USREMIT]
-        .endif
-        DoLitC  LF
-        JP      [USREMIT]
-
-
 ;       do$     ( -- a )
 ;       Return  address of a compiled
 ;       string.
@@ -3132,6 +3102,19 @@ INTE1:  CALL    NUMBQ           ; convert a number
         .dw     ABOR1
         RET
 
+;       CR      ( -- )
+;       Output a carriage return
+;       and a line feed.
+
+        HEADER  CR "CR"
+CR:
+        .ifeq TERM_LINUX
+        DoLitC  CRR
+        CALL    [USREMIT]
+        .endif
+        DoLitC  LF
+        JP      [USREMIT]
+
 ;       [       ( -- )
 ;       Start   text interpreter.
         HEADFLG LBRAC "[" IMEDD
@@ -3154,16 +3137,29 @@ DOTOK:
         CALLR   COMPIQ
         JREQ    DOTO1
         .ifne   HAS_OLDOK
-        JP      CR
+        JRA     CR
         .else
-        CALL    DOTQP
+        CALL    DOTQP            ; e4thcom handshake (which also works with " ok")
         .db     4
         .ascii  " OK"
         .db     10
         RET
         .endif
 
-        .ifne   BAREBONES
+        .ifeq   BAREBONES
+;       hi      ( -- )
+;       Display sign-on message.
+
+        HEADER  HI "hi"
+HI:
+        CALL    DOTQP           ; initialize I/O
+        .db     18, 10
+        .ascii  "STM8eForth 2.2."
+        .db     (RELVER1+'0')
+        .db     (RELVER0+'0')   ; version
+
+         ; fall through
+        .else
 HI:
         .endif
 DOTO1:
@@ -3172,6 +3168,7 @@ DOTO1:
         .ascii  " ok"
         .db     10
         RET
+
 
 ;       ?STACK  ( -- )
 ;       Abort if stack underflows.
