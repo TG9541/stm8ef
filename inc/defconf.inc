@@ -197,9 +197,9 @@
         UNLINK_SPACE     = 0    ; "SPACE"
         UNLINK_SPACS     = 0    ; "SPACES"
         UNLINK_CR        = 0    ; "CR"
-        UNLINK_DOSTR     = 0    ; "do$"
-        UNLINK_STRQP     = 0    ; '$"|'
-        UNLINK_DOTQP     = 0    ; '."|'
+        UNLINK_DOSTR     = 1    ; "do$"
+        UNLINK_STRQP     = 1    ; '$"|'
+        UNLINK_DOTQP     = 1    ; '."|'
         UNLINK_DOTR      = 0    ; ".R"
         UNLINK_UDOTR     = 0    ; "U.R"
         UNLINK_TYPES     = 0    ; "TYPE"
@@ -265,7 +265,7 @@
         UNLINK_DOESS     = 0    ; "DOES>"
         UNLINK_DODOES    = 0    ; "dodoes"
         UNLINK_CREAT     = 0    ; "CREATE"
-        UNLINK_CONST     = 0    ; "CONSTANT" - 45 bytes
+        UNLINK_CONST     = 0    ; "CONSTANT"
         UNLINK_DOCON     = 1    ; "docon"
         UNLINK_VARIA     = 0    ; "VARIABLE"
         UNLINK_ALLOT     = 0    ; "ALLOT"
