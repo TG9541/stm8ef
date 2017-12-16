@@ -2,6 +2,8 @@
 \ ------------------------------------------------------------------------------
   RAM
 
+#require [COMPILE]
+
   \ Begin a nameless definition in the NVM and return its xt on the stack.
   : :NVM ( -- xt ) NVM HERE ] ;
 
