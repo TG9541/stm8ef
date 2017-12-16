@@ -4461,30 +4461,6 @@ RESTC:
         .endif
 
 ;===============================================================
-;       346 - 317 = 29 Bytes
-;       29 + (3996 - 4017) = 8 byte
-
-;        id? ( wid na -- f )
-;        Return true if the word with name address na is a member of the wordlist wid.
-
-;       HEADER  IDQ "id?"
-;IDQ:
-;        EXGW    X,Y
-;        LDW     X,Y             ; DUP
-;        LDW     X,(X)
-;        LD      A,(X)           ; C@
-;        LDW     X,Y
-;        LDW     X,(X)
-;        SUBW    X,#4            ; 4 -
-;        LDW     X,(X)           ; @
-;        AND     A,#0x20         ; $20 AND IF
-;        JRNE    1$              ; ELSE
-;        CLRW    X               ; DROP 0
-;1$:     LDW     (Y),X
-;        EXGW    X,Y             ; THEN
-;       JP      EQUAL           ; =
-
-;===============================================================
         LASTN   =       LINK    ;last name defined
 
         .area CODE
