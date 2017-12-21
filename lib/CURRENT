@@ -4,7 +4,7 @@
 \
 \        License see github.com/TG9541/stm8ef/blob/master/LICENSE.md
 \
-\ This is a patch for the STM8S eForth that adds support for context switching 
+\ This is a patch for the STM8S eForth that adds support for context switching
 \ as it is required for wordlists (see WORDLIST), vocabularies (see VOCABULARY)
 \ and vocabulary prefixing (see VOC).
 \
@@ -51,7 +51,7 @@ RAM  VARIABLE size  NVM  HERE size !
 \ Return true if the word with name address na is a member of the wordlist wid.
 \ id? ( wid na -- f )
   :NVM
-    DUP C@ $20 AND 
+    DUP C@ $20 AND
     IF    \ tagged word
       4 - @  ( wid tag )
     ELSE  \ untagged word
@@ -68,7 +68,7 @@ RAM MARKER <search-wordlist>  \ Making FIND context sensitive :
 
   \ search-wordlist ( a wid -- xt na | a ff )
   :NVM
-    >R CONTEXT   \ stm8ef CONTEXT 
+    >R CONTEXT   \ stm8ef CONTEXT
     BEGIN ( a va )
       OVER SWAP ( a a va ) find DUP 0= IF NIP R> DROP EXIT THEN
       ( a xt na ) R@ OVER ( a xt na wid na ) id? ( a xt na f )
@@ -204,7 +204,7 @@ RAM MARKER <tg+>
 
 NVM
 
-HERE size @ - . .(  NVM bytes used )  
+HERE size @ - . .(  NVM bytes used )
 
 RAM
 
@@ -229,13 +229,13 @@ PERSIST  RAM WIPE
 \ so adaquate for NVM/Flash based ones.
 
 \ Here we use the single stm8ef wordlist for all words in the dictionary. Words
-\ that are not created as a member of the Forth wordlist are then tagged with 
+\ that are not created as a member of the Forth wordlist are then tagged with
 \ the wordlist identifier (wid) of the wordlist they are assigned to.
 
 \ This is easy to implement in NVM based systems and adding and forgetting words
 \ does not require any extra internal garbadge handling.
 
-\ Tagging a word means to compile the wid in front of the words link-field and 
+\ Tagging a word means to compile the wid in front of the words link-field and
 \ to set the lexicon tag bit ( TAGGE = 0x20 ) in the (count) byte at the words
 \ name address. This bit is not used by the stm8ef core itself.
 
@@ -244,6 +244,5 @@ PERSIST  RAM WIPE
 \   IMEDD   =     0x80      ; lexicon immediate bit
 \   MASKK   =     0x1F7F    ; lexicon bit mask
 
-\ Any unique non-zero number can be used as a tag (wid). Zero is reseved for 
+\ Any unique non-zero number can be used as a tag (wid). Zero is reseved for
 \ the FORTH wordlist. (The words of the FORTH wordlist are not tagged.)
-

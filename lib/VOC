@@ -8,7 +8,7 @@
 \
 \ Vocabulary prefixes help to structure the dictionary, make it more readable.
 \
-\ A vocabulary prefix is an immediate word. It reads the next word from the 
+\ A vocabulary prefix is an immediate word. It reads the next word from the
 \ input stream, finds it in its private wordlist and then executes or compiles
 \ it. Throws an error if the input stream is empty.
 \
@@ -17,7 +17,7 @@
 \        VOC name          \ creates a new vocabulary prefix
 \
 \        name DEFINITIONS  \ makes name (names wordlist) the current compilation
-\                          \ context 
+\                          \ context
 \
 \ Example:  VOC i2c  i2c DEFINITIONS
 \
@@ -30,7 +30,7 @@
 \           FORTH DEFINITIONS
 \
 \           i2c words    \ shows all words of the i2c context
-\           i2c start    \ executes/compiles the word start from context i2c    
+\           i2c start    \ executes/compiles the word start from context i2c
 \ ------------------------------------------------------------------------------
 \ requires stm8ef > 2.2.19
 
@@ -76,7 +76,7 @@ RAM
 
 \ dovpx ( "name" -- )
   :NVM
-     R> @ VP ! search-voc 'EVAL @ 3 + EXECUTE 
+     R> @ VP ! search-voc 'EVAL @ 3 + EXECUTE
   ;RAM ALIAS dovpx
 
 NVM
@@ -98,17 +98,17 @@ VP0 CURRENT !  \ voc-root definitions
 : WORDS ( -- )
   CONTEXT @ VP @ CONTEXT ! WORDS VP0 CONTEXT ! WORDS CONTEXT !
 ;
- 
+
 FORTH DEFINITIONS
 
 NVM
 
 \ MM-171203
-\ Switch to NVM mode but abort with a message if CURRENT points to a wordlist 
+\ Switch to NVM mode but abort with a message if CURRENT points to a wordlist
 \ in the RAM. (All words of a VOC defined in RAM should also be defined in RAM.)
 : NVM ( -- ) 0 CURRENT @ < ABORT" RAM only" NVM ;
 
-NVM HERE size @ - . .(  NVM bytes used )  
+NVM HERE size @ - . .(  NVM bytes used )
 
 RAM WIPE
 
@@ -118,4 +118,3 @@ RAM WIPE
 \                           required, NVM redefined, VP0 added, returns the wid
 \                           of voc-root (the name address of VP)
 \                MM-171128  ?RAM added, FORTH and DEFINITIONS factored out.
-
