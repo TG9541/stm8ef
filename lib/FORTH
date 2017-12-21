@@ -1,0 +1,14 @@
+\ stm8ef: FORTH                                                        MM-171128
+\ License see github.com/TG9541/stm8ef/blob/master/LICENSE.md
+
+#require CURRENT  \ persistent support for context switching
+
+NVM
+
+\ Set the FORTH wordlist as top of the search order.
+: FORTH ( -- ) 0 CONTEXT ! ;
+
+RAM
+
+\ Last Revision: MM-171220 License added
+

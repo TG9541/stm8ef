@@ -1,0 +1,51 @@
+\ stm8ef: VOCABULARY                                                   MM-171124
+\ ------------------------------------------------------------------------------
+\ License see github.com/TG9541/stm8ef/blob/master/LICENSE.md
+
+\ requires stm8ef > 2.2.19
+
+#require CURRENT  \ persistent support for context switching
+
+RAM WIPE
+
+#require FORTH
+#require DEFINITIONS
+
+FORTH DEFINITIONS
+
+#require ALIAS
+#require :NVM
+#require LAST
+#require [COMPILE]
+#require ABORT"
+
+:NVM R> @ CONTEXT ! ;RAM ALIAS dovoc ( "name" -- )
+
+NVM
+
+: VOCABULARY ( "name" -- )
+  : COMPILE dovoc LAST @ , [COMPILE] [ OVERT IMMEDIATE
+;
+
+\ MM-171203
+\ Switch to NVM mode but abort with a message if CURRENT points to a wordlist 
+\ in the RAM. (All words of a VOCABULARY defined in RAM should also be defined
+\ in RAM.)
+: NVM ( -- ) 0 CURRENT @ < ABORT" RAM only" NVM ;
+
+RAM WIPE
+
+#require .ID
+
+NVM
+
+: .VOC ( wid -- ) ?DUP IF .ID ELSE ." FORTH" THEN ;
+
+: ORDER ( -- ) CONTEXT DUP @ SPACE .VOC  2+ @ SPACE .VOC ;
+
+RAM WIPE
+
+\ ------------------------------------------------------------------------------
+\ Last Revision: MM-171220 License added
+\                MM-171203 NVM redefined, ?RAM no longer required, VOCABULARY
+\                          is now supported in RAM and NVM mode.

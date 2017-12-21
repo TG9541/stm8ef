@@ -1,0 +1,14 @@
+\ stm8ef: DEFINITIONS                                                  MM-171128
+\ License see github.com/TG9541/stm8ef/blob/master/LICENSE.md
+
+#require CURRENT  \ persistent support for context switching
+
+NVM
+
+\ Set the top wordlist of the search order as compiler context.
+: DEFINITIONS ( -- ) CONTEXT @ CURRENT ! ;
+
+RAM
+
+\ Last Revision: MM-171220 License added
+

@@ -1,0 +1,10 @@
+\ stm8et: SEARCH-WORDLIST                                              MM-171124
+
+#require CURRENT
+
+RAM
+
+#require ALIAS
+
+' nFIND 3 + ALIAS SEARCH-WORDLIST ( a wid -- xt na | a ff )
+

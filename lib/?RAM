@@ -1,0 +1,8 @@
+\ stm8ef: ?RAM                                                         MM-171128
+\ License see github.com/TG9541/stm8ef/blob/master/LICENSE.md
+
+NVM
+\ Switch to RAM mode if a is an address in the RAM dictionary.
+  : ?RAM ( a -- ) $8000 U< IF RAM THEN ;
+RAM
+
