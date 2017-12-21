@@ -1,0 +1,249 @@
+\ stm8ef : CURRENT                                                     MM-171114
+\
+\               Copyright (C) 2017 manfred.mahlow@forth-ev.de
+\
+\        License see github.com/TG9541/stm8ef/blob/master/LICENSE.md
+\
+\ This is a patch for the STM8S eForth that adds support for context switching 
+\ as it is required for wordlists (see WORDLIST), vocabularies (see VOCABULARY)
+\ and vocabulary prefixing (see VOC).
+\
+\ This code adds the context/wordlist pointer CURRENT, redefines the context
+\ pointer CONTEXT, makes WORDS, find and NAME? context sensitive and makes
+\ ?UNIQUE search the CURRENT not the CONTEXT wordlist.
+\
+\ Load this patch only once with #require CURRENT and please be aware that the
+\ modifications are made persistent and can only be removed by re-flashing the
+\ MCU.
+\
+\ The patch was tested with CORE.ihx and MINDEV.ihx. It uses ~ 340 bytes of NVM
+\ and 8 bytes in data RAM.
+\
+\ Glossary:
+\
+\   CONTEXT ( -- a )  Points to the top of the actual search order, e.g. to the
+\                     wordlist that is searched first. The default search order
+\                     is FORTH FORTH.
+\
+\   CURRENT ( -- a )  Points to the current compiler context, e.g. to the
+\                     wordlist new words are assigned to. Default is FORTH.
+\
+\   WORDS ( -- )      Displays all words of the CONTEXT wordlist, e.g. of the
+\                     top wordlist in the search order.
+\
+\ The curious can find some implementation notes at the end of this file.
+\ ------------------------------------------------------------------------------
+\ requires stm8ef > 2.2.19
+
+#require WIPE
+
+RAM WIPE
+
+#require MARKER
+#require ALIAS
+#require :NVM
+
+#require ULOCKF
+#require LOCKF
+
+RAM  VARIABLE size  NVM  HERE size !
+
+\ Return true if the word with name address na is a member of the wordlist wid.
+\ id? ( wid na -- f )
+  :NVM
+    DUP C@ $20 AND 
+    IF    \ tagged word
+      4 - @  ( wid tag )
+    ELSE  \ untagged word
+      DROP 0  ( wid wid.FORTH )
+    THEN
+    =
+  ;RAM ALIAS id?
+
+
+RAM MARKER <search-wordlist>  \ Making FIND context sensitive :
+
+#require CONTEXT
+#require find
+
+  \ search-wordlist ( a wid -- xt na | a ff )
+  :NVM
+    >R CONTEXT   \ stm8ef CONTEXT 
+    BEGIN ( a va )
+      OVER SWAP ( a a va ) find DUP 0= IF NIP R> DROP EXIT THEN
+      ( a xt na ) R@ OVER ( a xt na wid na ) id? ( a xt na f )
+      IF ROT R> 2DROP ( xt na ) EXIT THEN
+      ( a xt na )
+      NIP 2-
+    AGAIN
+  ;RAM ALIAS search-wordlist
+
+NVM : find ( a va -- xt na | a f )
+      @ ( wid/ctag)
+      \ ."   find: wid =" dup .   \ only for debugging
+      search-wordlist
+    ;
+
+<search-wordlist>
+
+
+NVM VARIABLE CONTEXT   2 ALLOT   0 0 CONTEXT !   \ hides the stm8ef CONTEXT !
+    VARIABLE CURRENT   0 CURRENT !
+
+
+RAM MARKER <NAME?>  \ Patching NAME? to use the new context sensitive FIND :
+
+#require NAME?
+
+  :NVM ( a va -- xt na | a f )
+  \ search in only one vocabulary
+    \ CONTEXT find R> DROP
+  \ search in two vocabularies
+    CONTEXT find ?DUP 0= IF [ CONTEXT 2+ ] LITERAL find THEN R> DROP
+  ;RAM ' NAME? 1+ ULOCKF ! LOCKF  \ patching
+
+<NAME?>
+
+
+RAM MARKER <?UNIQUE>  \ Patching ?UNIQUE to only search the CURRENT wordlist :
+
+#require ?UNIQUE
+
+  :NVM ( a va -- xt na | a f )
+    CURRENT find
+  ;RAM ' ?UNIQUE 4 + ULOCKF ! LOCKF  \ patching
+
+<?UNIQUE>
+
+
+RAM MARKER <WORDS>  \ Patching WORDS to make it context sensitive :
+
+#require .ID
+{
+\ -- Version 1, MM --
+
+\ Print the name of the word at name address a if it's a member of the wordlist
+\ CONTEXT is ponting to.
+\ ?id ( a -- )
+  :NVM
+    CONTEXT @ OVER ( a wid a ) id? IF SPACE .ID ELSE DROP THEN R> 3 + >R
+  ;RAM ' WORDS $0C + 3 + ULOCKF ! LOCKF   \ patching
+
+  \ ' WORDS $0C + :  dup space .id cell-   \ before patching
+  \                  dup ?id cell-         \ after  patching
+}
+
+\ -- Version 2, TG9541 --
+
+: nops ( a n -- a+n ) 2DUP $9D FILL + ;
+
+\ Print the name of the word at name address a if it's a member of the wordlist
+\ CONTEXT is ponting to.
+\ ?id ( a -- )
+  :NVM
+    CONTEXT @ OVER ( a wid a ) id? IF SPACE .ID ELSE DROP THEN
+  ;RAM ' WORDS $0E + ULOCKF 3 nops 1+ ! LOCKF   \ patching
+
+  \ ' WORDS $0C + :  dup space .id cell-   \ before patching
+  \                  dup NOP   ?id cell-   \ after  patching
+
+<WORDS>
+
+{ \ for debugging only
+
+  RAM MARKER <v>
+
+#require WORD
+
+  : v ( "name" -- ) BL WORD CONTEXT find .S 2DROP ;
+
+}
+
+
+RAM MARKER <TOKSNAME>  \ Patching TOKSNAME to support context tagging :
+
+  \ tg? ( -- f ) \ f <> 0 if CURRENT <> 0
+  :NVM CURRENT @ ;RAM ALIAS tg?
+
+RAM MARKER <tg+>
+
+#require LAST
+
+  \ tg+ ( -- ) \ Set the tg-bit of the last created word.
+  :NVM
+     LAST @ DUP C@ $20 OR SWAP C!
+     \ ."  tagged "  \ debugging only
+  ;RAM <tg+> ALIAS tg+
+
+  \ tg, ( -- ) \ compile CURRENT as context tag
+  :NVM
+    CURRENT @ ,
+    \ ."  tg, "  \ debugging only
+  ;RAM ALIAS tg,
+
+#require PARSE
+#require PACK$
+#require $,n
+
+  \ nTOKSNAME ( "name" -- )
+  :NVM
+      BL PARSE  ( na )
+      DUP C@ IF tg? IF tg, THEN THEN
+      HERE      ( na here )
+      2+ PACK$
+      $,n
+      tg? IF tg+ THEN
+  ;RAM ALIAS nTOKSNAME
+
+
+  :NVM \ patching TOKSNAME
+    nTOKSNAME R> DROP
+  ;RAM ' CREATE 1+ @ 1+ ULOCKF ! LOCKF   \ patching
+
+<TOKSNAME>
+
+NVM
+
+HERE size @ - . .(  NVM bytes used )  
+
+RAM
+
+#require PERSIST
+
+PERSIST  RAM WIPE
+
+\ ------------------------------------------------------------------------------
+\ Last Revision: MM-171220 stm8ef License added, V1.0 released
+\                MM-171204 WORDS patch: Proposal from TG9541 applied
+\                MM-171127 Introduction, Glossary and Implementation Notes
+\                          added.
+\                MM-171126 Comments added, WIPE added.
+\                MM-171124 Code cleaned up.
+
+\\
+
+\ Implementation Notes:
+
+\ Traditionally contexts/wordlists/namespaces are implemented in Forth as linked
+\ lists. This is memory efficient and easy to do for RAM based systems but not
+\ so adaquate for NVM/Flash based ones.
+
+\ Here we use the single stm8ef wordlist for all words in the dictionary. Words
+\ that are not created as a member of the Forth wordlist are then tagged with 
+\ the wordlist identifier (wid) of the wordlist they are assigned to.
+
+\ This is easy to implement in NVM based systems and adding and forgetting words
+\ does not require any extra internal garbadge handling.
+
+\ Tagging a word means to compile the wid in front of the words link-field and 
+\ to set the lexicon tag bit ( TAGGE = 0x20 ) in the (count) byte at the words
+\ name address. This bit is not used by the stm8ef core itself.
+
+\   TAGGE   =     0x20      ; lexicon tag bit
+\   COMPO   =     0x40      ; lexicon compile only bit
+\   IMEDD   =     0x80      ; lexicon immediate bit
+\   MASKK   =     0x1F7F    ; lexicon bit mask
+
+\ Any unique non-zero number can be used as a tag (wid). Zero is reseved for 
+\ the FORTH wordlist. (The words of the FORTH wordlist are not tagged.)
+

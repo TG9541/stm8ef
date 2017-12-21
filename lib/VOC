@@ -1,0 +1,121 @@
+\ stm8ef: VOC                                                          MM-171116
+\
+\               Copyright (C) 2017 manfred.mahlow@forth-ev.de
+\
+\        License see github.com/TG9541/stm8ef/blob/master/LICENSE.md
+\
+\                A Vocabulary Prefix for the STM8S eForth.
+\
+\ Vocabulary prefixes help to structure the dictionary, make it more readable.
+\
+\ A vocabulary prefix is an immediate word. It reads the next word from the 
+\ input stream, finds it in its private wordlist and then executes or compiles
+\ it. Throws an error if the input stream is empty.
+\
+\ Usage: #require VOC      \ loads this file
+\
+\        VOC name          \ creates a new vocabulary prefix
+\
+\        name DEFINITIONS  \ makes name (names wordlist) the current compilation
+\                          \ context 
+\
+\ Example:  VOC i2c  i2c DEFINITIONS
+\
+\             VARIABLE sid   \ slave id
+\
+\             : start ... ;  \ start an I2C Bus transmission
+\
+\             ...            \ more I2C definitions
+\
+\           FORTH DEFINITIONS
+\
+\           i2c words    \ shows all words of the i2c context
+\           i2c start    \ executes/compiles the word start from context i2c    
+\ ------------------------------------------------------------------------------
+\ requires stm8ef > 2.2.19
+
+#require CURRENT  \ persistent support for context switching
+
+RAM WIPE
+
+RAM  VARIABLE size   NVM  HERE size !   \ for code size monitoring only
+
+#require DEFINITIONS
+#require FORTH
+
+FORTH DEFINITIONS
+
+RAM
+
+\ #require ?RAM     MM-171203
+#require :NVM
+#require ALIAS
+#require 'EVAL
+#require WORD
+#require ABORT"
+#require LAST
+#require COMPILE
+
+NVM
+
+VARIABLE VP  0 VP !   \ VP = wid of voc-root
+                      \ VP @ = wid of the last used VOC
+
+LAST @ CONSTANT VP0   \ wid of voc-root
+
+RAM
+
+' find 3 + ALIAS search-wordlist ( a wid -- xt na | a ff )
+
+\ search-voc ( "name" -- xt na | a ff )
+  :NVM
+    BL WORD VP @ ( a wid )
+    search-wordlist ( a wid -- xt na | a ff ) ?DUP IF EXIT THEN
+    VP0 search-wordlist
+  ;RAM ALIAS search-voc
+
+\ dovpx ( "name" -- )
+  :NVM
+     R> @ VP ! search-voc 'EVAL @ 3 + EXECUTE 
+  ;RAM ALIAS dovpx
+
+NVM
+
+\ Create a vocabulary prefix.
+: VOC ( "name" -- )
+  : COMPILE dovpx LAST @ , [COMPILE] [ OVERT IMMEDIATE
+;
+
+VP0 CURRENT !  \ voc-root definitions
+
+\ Set the wordlist of the active vocabulary prefix as compiler context.
+: DEFINITIONS ( -- ) VP @ CURRENT ! ;
+
+\ Return the execution token of the name on the stack.
+: ' ( "name" -- xt ) search-voc 0= ABORT" " ;
+
+\ Display all words of the wordlist of the active vocabulary prefix.
+: WORDS ( -- )
+  CONTEXT @ VP @ CONTEXT ! WORDS VP0 CONTEXT ! WORDS CONTEXT !
+;
+ 
+FORTH DEFINITIONS
+
+NVM
+
+\ MM-171203
+\ Switch to NVM mode but abort with a message if CURRENT points to a wordlist 
+\ in the RAM. (All words of a VOC defined in RAM should also be defined in RAM.)
+: NVM ( -- ) 0 CURRENT @ < ABORT" RAM only" NVM ;
+
+NVM HERE size @ - . .(  NVM bytes used )  
+
+RAM WIPE
+
+\ ------------------------------------------------------------------------------
+\ Last Revision: MM-171220  License added
+\                MM-171203  A VOC can now also be created in RAM, ?RAM no longer
+\                           required, NVM redefined, VP0 added, returns the wid
+\                           of voc-root (the name address of VP)
+\                MM-171128  ?RAM added, FORTH and DEFINITIONS factored out.
+

@@ -1,0 +1,84 @@
+\ stm8ef: WORDLIST                                                     MM-171123
+\ ------------------------------------------------------------------------------
+\ License see github.com/TG9541/stm8ef/blob/master/LICENSE.md
+
+\ requires stm8ef > 2.2.19
+
+#require CURRENT  \ persistent support for context switching
+#require ?RAM
+
+NVM
+
+: WORDLIST ( -- wid )
+\ Return the next free NVM address to be used as a wid and increment the NVM
+\ address pointer by one.
+  HERE NVM HERE SWAP 0 C, ?RAM ;
+
+RAM
+
+\\ MM-171220: License added
+\  MM-171128: ?RAM added
+
+\ ------------------------------------------------------------------------------
+\ Executable WORDLIST Mini Howto:
+\ ------------------------------------------------------------------------------
+  RAM
+
+#require CONSTANT
+
+\ Create a unique wordlist identfier and assign it to a constant.
+  WORDLIST CONSTANT wid0
+
+KEY DROP
+
+\ Make the new wordlist the current compiler context to add words to it.
+  wid0 CURRENT !
+
+KEY DROP
+
+\ Create an alias of .S in the new wordlist.
+  : .S ( -- ) ."  This is .S in the wordlist wid0 " .S ;
+
+KEY DROP
+
+\ Set the new wordlist on top of the search order to make it visible.
+  wid0 CONTEXT !
+
+\ The search order is now  wid0 FORTH.
+
+KEY DROP
+
+\ Display the new wordlist.
+  WORDS
+
+KEY DROP
+
+\ Now entering .S will execute the alias defined in the new wordlist.
+  .S
+
+KEY DROP
+
+\ We create another word in the new wordlist and enter its name to execute it.
+  : hello ."  Hello from wordlist wid0 " ;
+
+  hello
+
+KEY DROP
+
+\ Now we reset the top of the search order to its default (FORTH).
+
+0 CONTEXT !
+
+\ The search order is now FORTH FORTH again.
+
+KEY DROP
+
+\ The words of the wordlist wid0 are no longer visible and give an error, but
+\ they still exist in the dictionary to be used again.
+  hello
+
+KEY DROP
+
+\ But the wordlist and the words are still in the dictionary to be used again.
+
+
