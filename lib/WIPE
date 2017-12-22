@@ -16,7 +16,7 @@ NVM
 : WIPE ( -- )
 \ Unlink all words from the dictionary that were compiled in RAM mode and reset
 \ the RAM dictionary pointer.
-  NVMCONTEXT @ CTOP @ DUP RAM CP ! 2+ LAST ! , 0 C, OVERT 
+  NVMCONTEXT @ CTOP @ DUP RAM CP ! 2+ LAST ! , 0 C, OVERT
 ;
 
 RAM WIPE

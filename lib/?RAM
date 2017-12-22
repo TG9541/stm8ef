@@ -5,4 +5,3 @@ NVM
 \ Switch to RAM mode if a is an address in the RAM dictionary.
   : ?RAM ( a -- ) $8000 U< IF RAM THEN ;
 RAM
-

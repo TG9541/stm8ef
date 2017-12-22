@@ -28,7 +28,7 @@ NVM
 ;
 
 \ MM-171203
-\ Switch to NVM mode but abort with a message if CURRENT points to a wordlist 
+\ Switch to NVM mode but abort with a message if CURRENT points to a wordlist
 \ in the RAM. (All words of a VOCABULARY defined in RAM should also be defined
 \ in RAM.)
 : NVM ( -- ) 0 CURRENT @ < ABORT" RAM only" NVM ;
