@@ -8,7 +8,7 @@
 #   2. path of the includedfile
 #   3. ./lib
 #   4. ./mcu
-#   5. ./target
+#   5. <base>/target
 
 import sys
 import os
@@ -146,7 +146,8 @@ def searchItem(item, CPATH):
     if not os.path.isfile(searchRes):
         searchRes = os.path.join(CWDPATH, 'mcu', item)
     if not os.path.isfile(searchRes):
-        searchRes = os.path.join(CWDPATH, 'target', item)
+        searchRes = os.path.join(CWDPATH, args.base,'target', item)
+        print(searchRes)
     if not os.path.isfile(searchRes):
         searchRes = os.path.join(CWDPATH, 'lib', item)
     if not os.path.isfile(searchRes):
@@ -186,12 +187,12 @@ def readEfr(path):
 
 # uploader with resolution of #include, #require, and \res
 def upload(path):
-    reExampleStart = re.compile("^\\\\\\\\")
+    reSkipToEOF = re.compile("^\\\\\\\\")
 
     with open(path) as source:
         vprint('Uploading %s' % path)
         lineNr = 0
-        isExample = False
+        skipLine = False
 
         try:
             CPATH = os.path.dirname(path)
@@ -200,10 +201,17 @@ def upload(path):
                 line = line.replace('\n', ' ').replace('\r', '').strip()
 
                 # all lines from "\\ Example:" on are comments
-                if reExampleStart.match(line):
-                    isExample = True
+                if reSkipToEOF.match(line):
+                    skipLine = True
 
-                if isExample:
+                # e4thcom style block comments (may not end in SkipToEOF section)
+                if re.search('^{', line):
+                    skipLine = True
+
+                if re.search('^} ', line):
+                    skipLine = False
+
+                if skipLine:
                     vprint('\\ ' + line)
                     continue
 
@@ -269,12 +277,14 @@ parser.add_argument("method", choices=['serial','telnet','dryrun'],
         help="transfer method")
 parser.add_argument("files", nargs='*',
         help="name of one or more files to transfer")
+parser.add_argument("-b", "--target-base", dest="base", default="",
+        help="target base folder, default: ./", metavar="base")
 parser.add_argument("-p", "--port", dest="port",
         help="PORT for transfer, default: /dev/ttyUSB0, localhost:10000", metavar="port")
-parser.add_argument("-t", "--trace", dest="tracefile",
-        help="write source code (with includes) to tracefile", metavar="tracefile")
 parser.add_argument("-q", "--quiet", action="store_false", dest="verbose", default=True,
         help="don't print status messages to stdout")
+parser.add_argument("-t", "--trace", dest="tracefile",
+        help="write source code (with includes) to tracefile", metavar="tracefile")
 args = parser.parse_args()
 
 # create tracefile if needed
