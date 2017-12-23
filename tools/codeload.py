@@ -4,11 +4,11 @@
 # supports e4thcom pseudo words, e.g. #include, #require, and \res .
 #
 # The include path is:
-#   1. ./
-#   2. path of the includedfile
-#   3. ./lib
-#   4. ./mcu
-#   5. <base>/target
+#   1. path of the included file (in extension to e4thcom)
+#   2. ./
+#   3. ./mcu
+#   4. ./target, or <args.base>/target (-b option)
+#   5. ./lib
 
 import sys
 import os
@@ -139,16 +139,22 @@ def searchItem(item, CPATH):
     # Windows' DOS days quirks: hack for STM8EF subfolders in lib/
     if os.name == 'nt' and re.search('^(hw|utils|math)',item):
         item = item.replace('/','\\',1)
+
     CWDPATH = os.getcwd()
-    searchRes = os.path.join(CWDPATH, item)
+
+    # def.1: folder of current item
+    searchRes = os.path.join(CPATH, item)
     if not os.path.isfile(searchRes):
-        searchRes = os.path.join(CPATH, item)
+        # 2: ./ (e4thcom: cwd)
+        searchRes = os.path.join(CWDPATH, item)
     if not os.path.isfile(searchRes):
+        # 3: ./mcu (e4thcom: cwd/mcu)
         searchRes = os.path.join(CWDPATH, 'mcu', item)
     if not os.path.isfile(searchRes):
+        # 4: ./target (e4thcom: cwd/target), or <args.base>/target (-b option)
         searchRes = os.path.join(CWDPATH, args.base,'target', item)
-        print(searchRes)
     if not os.path.isfile(searchRes):
+        # 5: ./lib (e4thcom: cwd/lib)
         searchRes = os.path.join(CWDPATH, 'lib', item)
     if not os.path.isfile(searchRes):
         searchRes = ''
@@ -192,7 +198,8 @@ def upload(path):
     with open(path) as source:
         vprint('Uploading %s' % path)
         lineNr = 0
-        skipLine = False
+        commentEOF = False
+        commentBlock = False
 
         try:
             CPATH = os.path.dirname(path)
@@ -202,16 +209,18 @@ def upload(path):
 
                 # all lines from "\\ Example:" on are comments
                 if reSkipToEOF.match(line):
-                    skipLine = True
+                    commentEOF = True
 
                 # e4thcom style block comments (may not end in SkipToEOF section)
                 if re.search('^{', line):
-                    skipLine = True
+                    commentBlock = True
 
-                if re.search('^} ', line):
-                    skipLine = False
+                if re.search('^}', line):
+                    commentBlock = False
+                    vprint('\\ ' + line)
+                    continue
 
-                if skipLine:
+                if commentEOF or commentBlock:
                     vprint('\\ ' + line)
                     continue
 

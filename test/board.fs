@@ -140,3 +140,15 @@ COLD
 
 #require CURRENT
 #require VOC
+
+#include utils/tester.fs
+
+T{ : a 1 ; -> }T
+T{ : b 11 ; -> }T
+T{ VOC abc -> }T
+T{ abc DEFINITIONS -> }T
+T{ : a 2 ; -> }T
+T{ : b 22 ; -> }T
+T{ FORTH DEFINITIONS -> }T
+T{ a b -> 1 11 }T
+T{ abc a abc b -> 2 22 }T
