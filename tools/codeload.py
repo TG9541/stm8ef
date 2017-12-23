@@ -187,12 +187,12 @@ def readEfr(path):
 
 # uploader with resolution of #include, #require, and \res
 def upload(path):
-    reExampleStart = re.compile("^\\\\\\\\")
+    reSkipToEOF = re.compile("^\\\\\\\\")
 
     with open(path) as source:
         vprint('Uploading %s' % path)
         lineNr = 0
-        isExample = False
+        skipLine = False
 
         try:
             CPATH = os.path.dirname(path)
@@ -201,10 +201,17 @@ def upload(path):
                 line = line.replace('\n', ' ').replace('\r', '').strip()
 
                 # all lines from "\\ Example:" on are comments
-                if reExampleStart.match(line):
-                    isExample = True
+                if reSkipToEOF.match(line):
+                    skipLine = True
 
-                if isExample:
+                # e4thcom style block comments (may not end in SkipToEOF section)
+                if re.search('^{', line):
+                    skipLine = True
+
+                if re.search('^} ', line):
+                    skipLine = False
+
+                if skipLine:
                     vprint('\\ ' + line)
                     continue
 
