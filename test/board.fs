@@ -133,3 +133,10 @@ T{ 400 CD>TEST cdram -> }T
 T{ cdram -> 800 }T
 
 T{e WORDS e-> 1004 1711 }T
+
+
+\ compile CURRENT and VOC as a test
+COLD
+
+#require CURRENT
+#require VOC
