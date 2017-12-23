@@ -58,7 +58,6 @@ T{ $55AA $0A05 OR -> $5FAF }T
 
 \ core: double arithmetics
 T{ 1 -1 UM+ -> 0 1 }T
-\ uCsim seems to flip BASE to HEX in UM+ or M/MOD opertion!
 T{ 1 -1 -2 M/MOD -> -1 32767 }T
 T{ 1 -1 -2 UM/MOD -> 0 -1 }T
 T{ 1000 -100 500 */ -> -200 }T
