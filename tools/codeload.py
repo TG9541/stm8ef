@@ -147,7 +147,6 @@ def searchItem(item, CPATH):
         searchRes = os.path.join(CWDPATH, 'mcu', item)
     if not os.path.isfile(searchRes):
         searchRes = os.path.join(CWDPATH, args.base,'target', item)
-        print(searchRes)
     if not os.path.isfile(searchRes):
         searchRes = os.path.join(CWDPATH, 'lib', item)
     if not os.path.isfile(searchRes):
