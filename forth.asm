@@ -1199,17 +1199,19 @@ SUBB:
 ;       Start vocabulary search.
 
         HEADER  CNTXT "CONTEXT"
+        .ifeq  HAS_CPNVM
 CNTXT:
-        .ifne  HAS_CPNVM
-        CALL    NVMQ
-        JREQ    1$              ; link NVM to NVM
-        LD      A,#(NVMCONTEXT)
-        JRA     ASTOR
-1$:
         .endif
 CNTXT_ALIAS:
         LD      A,#(USRCONTEXT)
         JRA     ASTOR
+        .ifne  HAS_CPNVM
+CNTXT:
+        CALL    NVMQ
+        JREQ    CNTXT_ALIAS           ; link NVM to NVM
+        LD      A,#(NVMCONTEXT)
+        JRA     ASTOR
+        .endif
 
 
 ;       CP      ( -- a )     ( TOS STM8: -- Y,Z,N )
