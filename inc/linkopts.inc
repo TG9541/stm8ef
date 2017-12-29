@@ -23,7 +23,7 @@
         UNLINK_FIND      = 0    ; "find"    ; parser
         UNLINK_BKSP      = 0    ; "^h"     ; charInput
         UNLINK_TAP       = 0    ; "TAP"    ; charInput
-        UNLINK_KTAP      = 0    ; "kTAP"   ; charInput 
+        UNLINK_KTAP      = 0    ; "kTAP"   ; charInput
         UNLINK_ACCEP     = 0    ; "ACCEPT" ; charInput
         UNLINK_QUERY     = 0    ; "QUERY"  ; charInput
         UNLINK_ABORT     = 0    ; "ABORT"  ; REPL
@@ -32,9 +32,7 @@
         UNLINK_INTER     = 0    ; "$INTERPRET" ; REPL -
         UNLINK_SCOMP     = 0    ; "$COMPILE" ; REPL -
         UNLINK_DOTOK     = 0    ; ".OK" ; REPL
-        UNLINK_QSTAC     = 0    ; "?STACK" ; REPL  
-        UNLINK_EVAL      = 0    ; "EVAL"  ; REPL 
+        UNLINK_QSTAC     = 0    ; "?STACK" ; REPL
+        UNLINK_EVAL      = 0    ; "EVAL"  ; REPL
         UNLINK_QUIT      = 0    ; "QUIT"  ; REPL
         .endif
-
-
