@@ -106,6 +106,7 @@
         BRAN_OPC =    0xCC      ; JP opcode
         CALL_OPC =    0xCD      ; CALL opcode
 
+        STM8L051F3       = 051  ; L core, 8K flash, 1K RAM, 256 EEPROM, UART1
         STM8S003F3       = 103  ; 8K flash, 1K RAM, 128 EEPROM, UART1
         STM8S103F3       = 103  ; like STM8S003F3, 640 EEPROM
         STM8S105K4       = 105  ; 16K flash, 2K RAM, 1K EEPROM, UART2
@@ -125,7 +126,11 @@
         .include        "target.inc"
 
         ; STM8 unified register addresses (depends on "TARGET")
+        .ifeq   (TARGET - STM8L051F3)
+        .include        "stm8ldevice.inc"
+        .else
         .include        "stm8device.inc"
+        .endif
 
         ;**********************************
         ;******  3) Global defaults  ******
