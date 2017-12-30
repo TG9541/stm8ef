@@ -81,7 +81,7 @@ BKEYCHAR:
 
 BOARDINIT:
         ; Board I/O initialization
-        MOV     CLK_PCKENR1,#0x20
+        MOV     CLK_PCKENR1,#0x21
         BSET    PC_DDR,#5
         BSET    PC_CR1,#5
         RET

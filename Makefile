@@ -46,7 +46,7 @@ TARGET = `[ -f $(BOARD)/target.inc ] && awk '/TARGET/ {print tolower($$3)}' $(BO
 all: directories main.ihx
 
 main.ihx: main.c $(MDEPS)
-	sdcc -mstm8 -oout/$(BOARD)/$(BOARD).ihx main.c out/$(BOARD)/forth.rel
+	sdcc -mstm8 -I./$(BOARD) -I./inc -oout/$(BOARD)/$(BOARD).ihx main.c out/$(BOARD)/forth.rel
 	mkdir -p out/$(BOARD)/target
 	rm -f out/$(BOARD)/target/*
 	tools/genalias.awk -v target="out/$(BOARD)/target/" out/$(BOARD)/forth.rst
