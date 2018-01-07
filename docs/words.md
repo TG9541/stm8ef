@@ -458,6 +458,13 @@
 ```
 
 ```
+;       DOXCODE   ( n -- n )   ( TOS STM8: - Y,Z,N )
+;       precede assembly code for a primitive word
+;       Caution: no other Forth word can be called from assembly!
+;       In the assembly code: X=(TOS), YTEMP=TOS. (TOS)=X after RET
+```
+
+```
 ;       NOT     ( w -- w )     ( TOS STM8: -- Y,Z,N )
 ;       One's complement of TOS.
 ```
