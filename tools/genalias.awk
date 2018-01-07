@@ -6,13 +6,16 @@ BEGIN {
   if (!target) {
     target = "target/"
   }
+  if (!dolog) {
+    dolog = 2                          # log warnings to STDOUT
+  }
+
   windx = 0                            # word #
   line = 0                             # line # in rst file
   wline = 0                            # lines since word comment
   p = 0                                # state
   worddef = ""                         # word definition
   wordcomment = ""                     # word comment
-  dolog = 0
 }
 
 {
@@ -46,7 +49,7 @@ BEGIN {
   next
 }
 
-/(HEADER|HEADFLG)/ {
+/(HEADER|HEADFLG)/ && !/\.macro/ {
   p = 2
   for (i=1; i<=NF; i++) {
     if (index($i,"HEAD")) {
@@ -140,19 +143,19 @@ function makeAlias(word,addr) {
 }
 
 function result (text) {
-  logger("Result", text)
+  logger("Result", text, 0)
 }
 
 function info (text) {
-  logger("Info", text)
+  logger("Info", text, 1)
 }
 
 function warning (text) {
-  logger("WARNING", text)
+  logger("WARNING", text, 2)
 }
 
-function logger (type, text) {
-  if (dolog) {
+function logger (type, text, level) {
+  if (level >= dolog) {
     print type " " line ":" text
   }
 }

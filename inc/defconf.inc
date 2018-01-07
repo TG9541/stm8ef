@@ -6,11 +6,12 @@
         RELVER0          = 1    ; Revision digit 0
 
         TERM_LINUX       = 1    ; LF terminates line
-        HALF_DUPLEX      = 0    ; Use EMIT/?KEY in half duplex mode
-        HAS_TXUART       = 1    ; Enable UART TXD, word TX!
+
+        HALF_DUPLEX      = 0    ; Use UART in half duplex mode
         HAS_RXUART       = 1    ; Enable UART RXD, word ?RX
-        HAS_TXSIM        = 0    ; Enable TxD via GPIO/TIM4, word TXGP!
+        HAS_TXUART       = 1    ; Enable UART TXD, word TX!
         HAS_RXSIM        = 0    ; Enable RxD via GPIO/TIM4, word ?RXGP
+        HAS_TXSIM        = 0    ; like HAS_RXSIM, word TXGP!, use for console if > HAS_TXUART
         PSIM     = PORTX        ; Port for UART simulation
         PNRX             = 1    ; Port GPIO# for HAS_RXDSIM
         PNTX             = 1    ; Port GPIO# for HAS_TXDSIM

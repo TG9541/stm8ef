@@ -2,14 +2,14 @@
 ; Config for W1209 Thermostat Module
 ; Clock: HSI (no crystal)
 
-        HALF_DUPLEX      = 0    ; Use EMIT/?KEY in half duplex mode
+        HALF_DUPLEX      = 0    ; Use UART in half duplex mode
         HAS_TXUART       = 0    ; No UART TXD, word TX!
         HAS_RXUART       = 0    ; No UART RXD, word ?RX
-        PSIM     = PORTC        ; Port for UART simulation
         HAS_TXSIM        = 1    ; Enable TxD via GPIO/TIM4, word TXGP!
-        PNTX             = 5    ; Port GPIO# for HAS_TXDSIM
         HAS_RXSIM        = 1    ; Enable RxD via GPIO/TIM4, word ?RXGP
+        PSIM     = PORTC        ; Port for UART simulation
         PNRX             = 4    ; Port GPIO# for HAS_RXDSIM
+        PNTX             = 5    ; Port GPIO# for HAS_TXDSIM
 
         EMIT_BG  = EMIT7S       ; 7S-LED background EMIT vector
         QKEY_BG  = QKEYB        ; Board keys background QKEY vector

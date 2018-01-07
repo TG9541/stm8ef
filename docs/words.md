@@ -10,11 +10,6 @@
 ```
 
 ```
-;       hi      ( -- )
-;       Display sign-on message.
-```
-
-```
 ;       ?RX     ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
 ;       Return serial interface input char from and true, or false.
 ```
@@ -458,6 +453,13 @@
 ```
 
 ```
+;       DOXCODE   ( n -- n )   ( TOS STM8: - Y,Z,N )
+;       precede assembly code for a primitive word
+;       Caution: no other Forth word can be called from assembly!
+;       In the assembly code: X=(TOS), YTEMP=TOS. (TOS)=X after RET
+```
+
+```
 ;       NOT     ( w -- w )     ( TOS STM8: -- Y,Z,N )
 ;       One's complement of TOS.
 ```
@@ -643,12 +645,6 @@
 ```
 
 ```
-;       CR      ( -- )
-;       Output a carriage return
-;       and a line feed.
-```
-
-```
 ;       do$     ( -- a )
 ;       Return  address of a compiled
 ;       string.
@@ -828,8 +824,25 @@
 ```
 
 ```
+;       CR      ( -- )
+;       Output a carriage return
+;       and a line feed.
+```
+
+```
+;       COMPILE?   ( -- n )
+;       0 if 'EVAL points to $INTERPRETER
+;       HEADER  COMPIQ "COMPILE?"
+```
+
+```
 ;       .OK     ( -- )
 ;       Display 'ok' while interpreting.
+```
+
+```
+;       hi      ( -- )
+;       Display sign-on message.
 ```
 
 ```
@@ -838,14 +851,14 @@
 ```
 
 ```
-;       EVAL    ( -- )
-;       Interpret input stream.
-```
-
-```
 ;       QUIT    ( -- )
 ;       Reset return stack pointer
 ;       and start text interpreter.
+```
+
+```
+;       EVAL    ( -- )
+;       Interpret input stream.
 ```
 
 ```
