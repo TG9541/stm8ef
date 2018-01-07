@@ -2,11 +2,11 @@
 ; Config for W1401 Thermostat Module
 ; Clock: HSI (no crystal)
 
-        HALF_DUPLEX      = 1    ; Use EMIT/?KEY in half duplex mode
+        HALF_DUPLEX      = 0    ; Use UART in half duplex mode
         HAS_TXUART       = 0    ; No UART TXD, word TX!
         HAS_RXUART       = 0    ; No UART RXD, word ?RX
-        HAS_TXSIM        = 1    ; Enable TxD via GPIO/TIM4, word TXGP!
         HAS_RXSIM        = 1    ; Enable RxD via GPIO/TIM4, word ?RXGP
+        HAS_TXSIM        = 1    ; Like HAS_RXSIM, word TXGP!, use for console if > HAS_TXUART
         PSIM     = PORTD        ; Port for UART simulation
         PNTX             = 1    ; Port GPIO# for HAS_TXDSIM
         PNRX             = 1    ; Port GPIO# for HAS_RXDSIM

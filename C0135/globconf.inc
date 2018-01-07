@@ -1,13 +1,13 @@
 ; STM8EF Global Configuration File
 ; Config for C0135 "Relay Board-4 STM8S"
 
-        HALF_DUPLEX      = 0    ; Use EMIT/?KEY in half duplex mode
+        HALF_DUPLEX      = 0    ; Use UART in half duplex mode
         HAS_TXUART       = 1    ; No UART TXD, word TX!
         HAS_RXUART       = 1    ; No UART RXD, word ?RX
         HAS_TXSIM        = 0    ; Enable TxD via GPIO/TIM4, word TXGP!
-        PNTX             = 0    ; Port GPIO# for HAS_TXDSIM
         HAS_RXSIM        = 0    ; Enable RxD via GPIO/TIM4, word ?RXGP
         PNRX             = 0    ; Port GPIO# for HAS_RXDSIM
+        PNTX             = 0    ; Port GPIO# for HAS_TXDSIM
 
         EMIT_BG  = DROP         ; 7S-LED background EMIT vector
         QKEY_BG  = QKEYB        ; ?KEYB for background ?KEY

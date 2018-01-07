@@ -2,7 +2,8 @@
 ; STM8S001J3M3 (or STM8S003F3P6) TX-Half-Duplex single wire communication
 ; Clock: HSI (no crystal)
 
-        HALF_DUPLEX      = 1    ; Use EMIT/?KEY in half duplex mode
+
+        HALF_DUPLEX      = 1    ; Use UART in half duplex mode
         HAS_TXUART       = 1    ; UART TXD, word TX!
         HAS_RXUART       = 1    ; UART RXD, word ?RX
         HAS_TXSIM        = 0    ; Enable TxD via GPIO/TIM4, word TXGP!

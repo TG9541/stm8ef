@@ -149,6 +149,14 @@
 
         .include "linkopts.inc"
 
+        ; console configuration: check if TX simulation has priority over UART
+        .ifge   HAS_TXSIM - HAS_TXUART
+        CONSOLE_HALF_DUPLEX = 1 ; RX/TX simulation always behaves like half duplex
+        .else
+        CONSOLE_HALF_DUPLEX = HALF_DUPLEX ; use hardware UART settings
+        .endif
+
+
         ;**************************************
         ;******  5) Board Driver Memory  ******
         ;**************************************
@@ -628,7 +636,7 @@ TXSTOR:
         LD      A,(X)
         INCW    X
 
-        .ifne   HALF_DUPLEX * (1-HAS_TXSIM)
+        .ifne   HALF_DUPLEX
         ; HALF_DUPLEX with normal UART (e.g. wired-or Rx and Tx)
 1$:     BTJF    UART_SR,#7,1$  ; loop until tdre
         BRES    UART_CR2,#2    ; disable rx
@@ -650,11 +658,11 @@ _TIM4_IRQHandler:
         ; dummy for linker - can be overwritten by Forth application
         .else
         ; include required serial I/O code
-        .ifne  PNRX^PNTX
-        .include "sser_fdx.inc" ; Full Duplex serial
-        .else
-        .include "sser_hdx.inc" ; Half Duplex serial
-        .endif
+          .ifne  PNRX^PNTX
+            .include "sser_fdx.inc" ; Full Duplex serial
+          .else
+            .include "sser_hdx.inc" ; Half Duplex serial
+          .endif
         .endif
 
 ; ==============================================
@@ -2450,9 +2458,9 @@ KEY1:   CALL    [USRQKEY]
 
         HEADER  NUFQ "NUF?"
 NUFQ:
-        .ifne   HALF_DUPLEX
+        .ifne   CONSOLE_HALF_DUPLEX
         ; slow EMIT down to free the line for RX
-        .ifne   HAS_BACKGROUND * HALF_DUPLEX
+        .ifne   HAS_BACKGROUND
         LD      A,TICKCNT+1
         ADD     A,#3
 1$:     CP      A,TICKCNT+1
@@ -2961,7 +2969,7 @@ BKSP:
         CP      A,(1,X)
         JREQ    BACK1
 BACK0:
-        .ifeq   HALF_DUPLEX
+        .ifeq   CONSOLE_HALF_DUPLEX
         CALLR   BACKSP
         .endif
         CALL    ONEM
@@ -2977,7 +2985,7 @@ BACK1:  RET
 
         HEADER  TAP "TAP"
 TAP:
-        .ifeq   HALF_DUPLEX
+        .ifeq   CONSOLE_HALF_DUPLEX
         CALL    DUPP
         CALL    [USREMIT]
         .endif
