@@ -18,6 +18,8 @@
 4000 equ BIT14
 8000 equ BIT15
 
+8002 equ RESET_VECTOR
+8006 equ TRAP_VETCOR
                      \ Interrupt vectors (16 bit part)
 800A equ INT_TLI     \ External top level interrupt
 800E equ INT_AWU     \ Auto wake up from halt
@@ -27,6 +29,8 @@
 801E equ INT_EXTI2   \ Port C external interrupts
 8022 equ INT_EXTI3   \ Port D external interrupts
 8026 equ INT_EXTI4   \ Port E external interrupts
+\ 802A
+\ 802E
 8032 equ INT_SPI     \ End of transfer
 8036 equ INT_TIM1    \ TIM1 update/overflow/underflow/ trigger/break
 803A equ INT_TIM1CC  \ TIM1 capture/compare
@@ -34,12 +38,19 @@
 8042 equ INT_TIM2CC  \ TIM2 capture/compare
 8046 equ INT_TIM3    \ TIM3 update /overflow
 804A equ INT_TIM3CC  \ TIM3 capture/compare
+\ 804E
+\ 8052
 8056 equ INT_I2C     \ I2C interrupt
-805A equ INT_UART2TX \ Tx complete
-805C equ INT_UART2RX \ Receive register DATA FULL
+805A equ INT_UARTTX  \ UART2 Tx complete
+805C equ INT_UARTRX  \ UART2 Receive register DATA FULL
 8062 equ INT_ADC1    \ ADC1 end of conversion/analog watchdog interrupt
 8066 equ INT_TIM4    \ TIM4 update/overflow
 806A equ INT_FLASH   \ Flash EOP/WR_PG_DIS
+\ 806E
+\ 8072
+\ 8076
+\ 807A
+\ 807E
 
                  \ Register name                      \ Reset status
 4800 equ OPT0    \ Options 0
