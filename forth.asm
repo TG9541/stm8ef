@@ -151,7 +151,11 @@
 
         ; console configuration: check if TX simulation has priority over UART
         .ifge   HAS_TXSIM - HAS_TXUART
-        CONSOLE_HALF_DUPLEX = 1 ; RX/TX simulation always behaves like half duplex
+        .ifeq  PNTX-PNRX
+        CONSOLE_HALF_DUPLEX = 1 ; single wire RX/TX simulation is half duplex
+        .else
+        CONSOLE_HALF_DUPLEX = 0 ; RX/TX simulation supports full duplex
+        .endif
         .else
         CONSOLE_HALF_DUPLEX = HALF_DUPLEX ; use hardware UART settings
         .endif
