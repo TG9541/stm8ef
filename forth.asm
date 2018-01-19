@@ -150,8 +150,12 @@
         .include "linkopts.inc"
 
         ; console configuration: check if TX simulation has priority over UART
-        .ifeq   HAS_TXSIM - HAS_TXUART
+        .ifge   HAS_TXSIM - HAS_TXUART
+        .ifeq  PNTX-PNRX
         CONSOLE_HALF_DUPLEX = 1 ; single wire RX/TX simulation is half duplex
+        .else
+        CONSOLE_HALF_DUPLEX = 0 ; RX/TX simulation supports full duplex
+        .endif
         .else
         CONSOLE_HALF_DUPLEX = HALF_DUPLEX ; use hardware UART settings
         .endif
