@@ -1,3 +1,58 @@
+\ STM8L051 Register ans Bit Identifiers
+
+\ Bitmasks (probably names should be changed to BMx ?)
+  01 equ BIT0
+  02 equ BIT1
+  04 equ BIT2
+  08 equ BIT3
+  10 equ BIT4
+  20 equ BIT5
+  40 equ BIT6
+  80 equ BIT7
+ 100 equ BIT8
+ 200 equ BIT9
+ 400 equ BIT10
+ 800 equ BIT11
+1000 equ BIT12
+2000 equ BIT13
+4000 equ BIT14
+8000 equ BIT15
+
+8002 equ RESET_VECTOR
+8006 equ TRAP_VETCOR
+                         \ Interrupt vectors (16 bit part)            
+800A equ INT_TLI         \ 0 External top level interrupt
+800E equ INT_FLASH       \ 1 Flash EOP/WR_PG_DIS
+8012 equ INT_DMA1_01     \ 2
+8016 equ INT_DMA1_23     \ 3
+801A equ INT_RTC         \ 4
+801E equ INT_PVD         \ 5
+8022 equ INT_EXTIB       \ 6
+8026 equ INT_EXTID       \ 7
+802A equ INT_EXTI0       \ 8
+802E equ INT_EXTI1       \ 9
+8032 equ INT_EXTI2       \ 10
+8036 equ INT_EXTI3       \ 11
+803A equ INT_EXTI4       \ 12
+803E equ INT_EXTI5       \ 13
+8042 equ INT_EXTI6       \ 14
+8046 equ INT_EXTI7       \ 15
+\ 804A                   \ 16
+804E equ INT_CLK         \ 17
+8052 equ INT_ADC1        \ 18
+8056 equ INT_TIM2        \ 19
+805A equ INT_TIM2CC      \ 20
+805E equ INT_TIM3        \ 21
+8062 equ INT_TIM3CC      \ 22
+8066 equ INT_RI          \ 23
+\ 806A                   \ 24
+806E equ INT_TIM4        \ 25
+8072 equ INT_SPI1        \ 26
+8076 equ INT_UARTTX      \ 27 USART1_TXD
+807A equ INT_UARTRX      \ 28 USART1_RXD
+807E equ INT_I2C         \ 29
+
+
 \ Port A
 5000 equ PA_ODR \ Port A data output latch register (0x00)
 5001 equ PA_IDR \ Port A in put pin value register (0xXX)
