@@ -1,0 +1,18 @@
+\ STM8 eForth : ]C! -- like MM's ]B!
+\ ------------------------------------------------------------------------------
+  RAM
+
+  \ Enable the compile mode and compile the code for "mov addr,#c"
+  : ]C! ( c addr -- )
+     $35 C, SWAP C, , ]
+  ; IMMEDIATE
+
+\ ------------------------------------------------------------------------------
+
+\\ Example:
+
+\res MCU: STM8S103
+\res export BEEP_CSR
+
+: beep-on [ $A8 BEEP_CSR ]C! ;
+: beep-off [ $1F BEEP_CSR ]C! ;
