@@ -187,8 +187,10 @@ RAM MARKER <tg+>
 
   \ nTOKSNAME ( "name" -- )
   :NVM
-      BL PARSE  ( na )
-      DUP C@ IF tg? IF tg, THEN THEN
+\     BL PARSE  ( na )                   bug fix MM-180116
+\     DUP C@ IF tg? IF tg, THEN THEN
+      BL PARSE ( a u )
+      DUP IF tg? IF tg, THEN THEN
       HERE      ( na here )
       2+ PACK$
       $,n
@@ -213,7 +215,8 @@ RAM
 PERSIST  RAM WIPE
 
 \ ------------------------------------------------------------------------------
-\ Last Revision: MM-171220 stm8ef License added, V1.0 released
+\ Last Revision: MM-180116 Bug fix in nTOKSNAME
+\                MM-171220 stm8ef License added, V1.0 released
 \                MM-171204 WORDS patch: Proposal from TG9541 applied
 \                MM-171127 Introduction, Glossary and Implementation Notes
 \                          added.
