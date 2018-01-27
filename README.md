@@ -89,7 +89,7 @@ Other than that, have fun, and consider sharing your results!
   * pseudo-opcode for DOLIT using TRAP: compiled literals 3 instead of 5 bytes
   * [ALIAS words](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Alias-Words) for indirect dictionary entries
 * compile Forth to NVM (Non Volatile Memory with Flash IAP)
-  * Words `NVM` and `RAM` switch between volatile (RAM) and non volatile (NVM) modes
+  * Words `NVM` and `RAM` switch between volatile (RAM) and non volatile (NVM) modes (*REMEMBER execute `RAM` before a power recycle or executing `COLD` if you want the words added to NVM to be available in future terminal sessions*)
   * RAM allocation for `VARIABLE` and `ALLOT` fully transparent in NVM mode
   * autostart feature for embedded applications
 * Low-level interrupts in Forth
