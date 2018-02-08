@@ -17,6 +17,16 @@ T{e -11 5 .R e-> 5 207 }T
 T{e -11 4 U.R e-> 5 263 }T
 T{e 11 4 U.R e-> 4 162 }T
 
+\ core: stack manipulation
+T{ 1 2   OVER -> 1 2 1 }T
+T{ 1 2   SWAP -> 2 1 }T
+T{ 1 2 3 ROT  -> 2 3 1 }T
+T{ 1 2 3 NIP  -> 1 3 }T
+T{ 1 2 3 0 PICK -> 1 2 3 3 }T
+T{ 1 2 3 2 PICK -> 1 2 3 1 }T
+T{ 1 2 2DUP -> 1 2 1 2 }T
+T{ 1 2 3 4 2DROP -> 1 2 }T
+
 \ core: compare operations
 T{ 10 -500 = -> 0 }T
 T{ -500 -500 = -> -1 }T

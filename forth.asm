@@ -1988,6 +1988,7 @@ ZEQUAL:
         HEADER  PICK "PICK"
 PICK:
         CALLR   DOXCODE
+        INCW    X
         SLAW    X
         ADDW    X,YTEMP
         LDW     X,(X)
@@ -3997,7 +3998,6 @@ DOTS:
         CALL    TOR             ; start count down loop
         JRA     DOTS2           ; skip first pass
 DOTS1:  CALL    RAT
-        CALL    ONEP
         CALL    PICK
         CALL    DOT             ; index stack, display contents
 DOTS2:  CALL    DONXT
