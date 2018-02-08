@@ -7,7 +7,7 @@
   $8000 ( d c ) $8000 ( d c g )
   BEGIN
     DUP DUP UM* ( d c g g^2)
-    6 PICK 6 PICK ( d c g g^2 d )
+    5 PICK 5 PICK ( d c g g^2 d )
     D> IF ( d c g )
       OVER XOR
     THEN ( d c g )
@@ -19,3 +19,10 @@
     THEN
   UNTIL
 ;
+
+
+\\ Example:
+
+0 16 DSQRT .S    \ 1024 <sp ok
+0 1 DSQRT .S     \ 256 <sp  ok
+16 0 DSQRT .S    \ 4 <sp  ok

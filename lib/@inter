@@ -14,7 +14,7 @@
   : @inter ( n a -- n )
     \ compile time: consumes xt of 2cell+ and @dif
     DUP @ 1- >R 2+ DUP BEGIN
-      3 PICK OVER @ < NOT WHILE NIP [ ROT ( 2cell+ ) CALL, ] NEXT
+      2 PICK OVER @ < NOT WHILE NIP [ ROT ( 2cell+ ) CALL, ] NEXT
         DROP DUP
       ELSE R> DROP THEN
     OVER = IF

@@ -1,4 +1,4 @@
 \ STM8 eForth 2OVER   double utility word                TG9541
 \ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
 
-: 2OVER  ( d1 d2 -- d1 d2 d1 ) [ $AD00 , ( CALLR 0 ) ] 4 PICK ;
+: 2OVER  ( d1 d2 -- d1 d2 d1 ) [ $AD00 , ( CALLR 0 ) ] 3 PICK ;
