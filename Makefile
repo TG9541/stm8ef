@@ -16,6 +16,7 @@ build: words
 	make BOARD=XH-M188
 	make BOARD=W1209
 	make BOARD=W1209-FD
+	make BOARD=W1209-CA
 	make BOARD=W1219
 	make BOARD=W1401
 	make BOARD=C0135
