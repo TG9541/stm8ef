@@ -4061,7 +4061,7 @@ TNAM4:  CALL    DDROP
         HEADER  WORDS "WORDS"
 WORDS:
         CALL    CR
-        CALL    CNTXT           ; only in context
+        CALL    CNTXT_ALIAS     ; only in context
 WORS1:  CALL    AT              ; @ sets Z and N
         JREQ    1$              ; ?at end of list
         CALL    DUPP
