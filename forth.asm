@@ -1224,8 +1224,8 @@ CNTXT_ALIAS:
         JRA     ASTOR
         .ifne  HAS_CPNVM
 CNTXT:
-        CALL    NVMQ
-        JREQ    CNTXT_ALIAS           ; link NVM to NVM
+        TNZ     USRCP
+        JRPL    CNTXT_ALIAS           ; link NVM to NVM
         LD      A,#(NVMCONTEXT)
         JRA     ASTOR
         .endif
@@ -2062,8 +2062,8 @@ COUNT:
 
         .ifne  HAS_CPNVM
 RAMHERE:
-        CALL    NVMQ
-        JREQ    HERE            ; NVM: CP points to NVM, NVMCP points to RAM
+        TNZ     USRCP
+        JRPL    HERE            ; NVM: CP points to NVM, NVMCP points to RAM
         DoLitW  NVMCP           ; 'eval in Interpreter mode: HERE returns pointer to RAM
         JP      AT
         .else
@@ -3250,6 +3250,19 @@ TICK:
         .dw     ABOR1
         RET                     ; yes, push code address
 
+        .ifeq BOOTSTRAP
+;       [COMPILE]       ( -- ; <string> )
+;       Compile next immediate
+;       word into code dictionary.
+
+        .ifeq   BAREBONES
+        HEADFLG BCOMP "[COMPILE]" IMEDD
+        .endif
+BCOMP:
+        CALLR   TICK
+        JRA     JSRC
+        .endif
+
 ;       ,       ( w -- )
 ;       Compile an integer into
 ;       code dictionary.
@@ -3333,19 +3346,6 @@ LITER:
         .db     DOLIT_OPC
         .endif
         JRA      COMMA
-
-        .ifeq BOOTSTRAP
-;       [COMPILE]       ( -- ; <string> )
-;       Compile next immediate
-;       word into code dictionary.
-
-        .ifeq   BAREBONES
-        HEADFLG BCOMP "[COMPILE]" IMEDD
-        .endif
-BCOMP:
-        CALLR   TICK
-        JRA     JSRC
-        .endif
 
 ;       COMPILE ( -- )
 ;       Compile next jsr in
@@ -3869,8 +3869,8 @@ VARIA:
         CALLR   CREAT
         CALL    ZERO
         .ifne   HAS_CPNVM
-        CALL    NVMQ
-        JREQ    1$              ; NVM: allocate space in RAM
+        TNZ     USRCP
+        JRPL    1$              ; NVM: allocate space in RAM
         DoLitW  DOVARPTR        ; overwrite call address "DOVAR" with "DOVARPTR"
         CALL    HERE
         CALL    CELLM
@@ -3892,8 +3892,8 @@ VARIA:
 ALLOT:
         CALL    CPP
         .ifne   HAS_CPNVM
-        CALL    NVMQ
-        JREQ    1$              ; NVM: allocate space in RAM
+        TNZ     USRCP
+        JRPL    1$              ; NVM: allocate space in RAM
         LD      A,#(USRVAR)
         LD      (1,X),A
 1$:
@@ -4386,13 +4386,6 @@ LOCK_FLASH:
 
         .ifne  HAS_CPNVM
 
-;       Test if CP points doesn't point to RAM
-NVMQ:
-        LD      A,USRCP
-        AND     A,#0xF8
-        RET
-
-
 ;       Helper routine: swap USRCP and NVMCP
 SWAPCP:
         LDW     X,USRCP
@@ -4407,8 +4400,8 @@ SWAPCP:
 
         HEADER  NVMM "NVM"
 NVMM:
-        CALLR    NVMQ
-        JRNE    1$           ; state entry action?
+        TNZ     USRCP
+        JRMI    1$           ; state entry action?
         ; in NVM mode only link words in NVM
         EXGW    X,Y
         LDW     X,NVMCONTEXT
@@ -4424,8 +4417,8 @@ NVMM:
 
         HEADER  RAMM "RAM"
 RAMM:
-        CALLR   NVMQ
-        JREQ    1$
+        TNZ     USRCP
+        JRPL    1$
 
         EXGW    X,Y
         LDW     X,USRVAR
