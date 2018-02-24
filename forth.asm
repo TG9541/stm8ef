@@ -3707,31 +3707,18 @@ SCOM2:  CALL    NUMBQ           ; try to convert to number
         .endif
 OVERT:
         .ifne   HAS_CPNVM
-        CALL    LAST
-        CALL    AT
-
-        LD      A,YH
-        AND     A,#0xF8         ; does USRLAST point to NVM?
-        JREQ    1$
-
+        LDW     Y,USRLAST
+        JRPL    1$              ; skip if USRLAST points to RAM
         LDW     NVMCONTEXT,Y    ; update NVMCONTEXT
-        LDW     Y,USRCTOP
-        CALL    YSTOR
-
-        CALL    DUPP
-        CALL    AT
-        CALL    QBRAN
-        .dw     2$
-        JRA     OVSTORE         ; link dictionary in RAM
-2$:
-        CALL    DROP
+        LD      A,[USRCTOP]
+        OR      A,[USRCTOP+1]
+        JREQ    1$              ; re-link RAM dictionary?
+        LDW     [USRCTOP],Y
+        RET
 1$:
-        DoLitC  USRCONTEXT
-OVSTORE:
-        JP      STORE           ; or update USRCONTEXT
-
+        LDW     USRCONTEXT,Y
+        RET
         .else
-
         LDW     Y,USRLAST
         LDW     USRCONTEXT,Y
         RET
