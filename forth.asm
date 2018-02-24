@@ -3317,7 +3317,7 @@ JSRC:
         CALL    SUBB            ; Y now contains the relative call address
         LD      A,YH
         INC     A
-        JRNE    1$              ; YH must be 0XFF
+        JRNE    1$              ; YH must be 0xFF
         LD      A,YL
         TNZ     A
         JRPL    1$              ; YL must be negative
@@ -3330,6 +3330,15 @@ JSRC:
         .db     CALL_OPC         ; opcode CALL
 2$:
         CALL    DROP             ; drop relative address
+        .ifne   HAS_CPNVM
+        JRMI    3$               ; DROP leaves CALL, data in Y
+        TNZ     USRCP
+        JRPL    3$               ; call to RAM from RAM
+        CALL    ABORQ            ; error: call to RAM from NVM
+        .db     7
+        .ascii  " target"
+3$:
+        .endif
         JRA     COMMA            ; store absolute address or "CALLR reladdr"
 
 ;       LITERAL ( w -- )
