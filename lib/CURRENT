@@ -36,8 +36,7 @@
 \ requires stm8ef > 2.2.19
 
 #require WIPE
-
-RAM WIPE
+WIPE
 
 #require MARKER
 #require ALIAS
@@ -211,8 +210,10 @@ HERE size @ - . .(  NVM bytes used )
 RAM
 
 #require PERSIST
+PERSIST
 
-PERSIST  RAM WIPE
+#require WIPE
+WIPE
 
 \ ------------------------------------------------------------------------------
 \ Last Revision: MM-180116 Bug fix in nTOKSNAME

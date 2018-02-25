@@ -868,6 +868,12 @@
 ```
 
 ```
+;       [COMPILE]       ( -- ; <string> )
+;       Compile next immediate
+;       word into code dictionary.
+```
+
+```
 ;       ,       ( w -- )
 ;       Compile an integer into
 ;       code dictionary.
@@ -888,12 +894,6 @@
 ;       LITERAL ( w -- )
 ;       Compile tos to dictionary
 ;       as an integer literal.
-```
-
-```
-;       [COMPILE]       ( -- ; <string> )
-;       Compile next immediate
-;       word into code dictionary.
 ```
 
 ```
@@ -1215,5 +1215,10 @@
 ;       IRET ( -- )
 ;       Restore context and return from low level interrupt code
 ;       This should be the last word called in the interrupt handler
+```
+
+```
+;       WIPE   ( -- )   ( TOS STM8: - )
+;       Return to RAM mode, claim VARIABLE RAM, init dictionary in RAM
 ```
 
