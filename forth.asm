@@ -244,7 +244,7 @@
         USREVAL =    UPP+6      ; "'EVAL" execution vector of EVAL
         USRPROMPT =  UPP+8      ; "'PROMPT" point to prompt word (default .OK)
         USRCP   =    UPP+10     ; "CP" point to top of dictionary
-        USRLAST =    UPP+12     ; "LAST" currently last name in dictionary (init: to LASTN)
+        USRLAST =    UPP+12     ; "LAST" currently last name in dictionary
         NVMCP   =    UPP+14     ; point to top of dictionary in Non Volatile Memory
 
         ; Null initialized core variables (growing down)
@@ -511,6 +511,15 @@ COLD:
         BSET    PSIM+CR2,#PNRX    ; enable PNRX external interrupt
         .endif
 
+        .ifne   HAS_LED7SEG
+        .if     gt,(HAS_LED7SEG-1)
+        MOV     LED7GROUP,#0     ; one of position HAS_LED7SEG 7-SEG digit groups
+        .endif
+        MOV     LED7FIRST  ,#0x66 ; 7S LEDs 4..
+        MOV     LED7FIRST+1,#0x78 ; 7S LEDs .t.
+        MOV     LED7FIRST+2,#0x74 ; 7S LEDs ..h
+        .endif
+
         CALL    PRESE           ; initialize data stack, TIB
 
         DoLitW  UZERO
@@ -518,38 +527,17 @@ COLD:
         DoLitC  (ULAST-UZERO)
         CALL    CMOVE           ; initialize user area
 
-        .ifne  HAS_CPNVM
-        EXGW    X,Y
-        LDW     X,USRCP         ; reserve some space for user variable
-        LDW     USRVAR,X
-        ADDW    X,#32
-        LDW     USRCP,X
-        LDW     USRCTOP,X       ; store new CTOP
-        EXGW    X,Y
-        .endif
+        CALL    WIPE            ; initialize dictionary
 
         .ifne   HAS_OUTPUTS
         CALL    ZERO
         CALL    OUTSTOR
         .endif
 
-        .ifne   HAS_LED7SEG
-
-        .if     gt,(HAS_LED7SEG-1)
-        MOV     LED7GROUP,#0     ; one of position HAS_LED7SEG 7-SEG digit groups
-        .endif
-
-        MOV     LED7FIRST  ,#0x66 ; 7S LEDs 4..
-        MOV     LED7FIRST+1,#0x78 ; 7S LEDs .t.
-        MOV     LED7FIRST+2,#0x74 ; 7S LEDs ..h
-
-        .endif
-
         ; Hardware initialization complete
         RIM                     ; enable interrupts
 
         CALL    [TBOOT+3]       ; application boot
-        CALL    OVERT           ; initialize CONTEXT from USRLAST
         JP      QUIT            ; start interpretation
 
 
@@ -3708,16 +3696,14 @@ SCOM2:  CALL    NUMBQ           ; try to convert to number
 OVERT:
         .ifne   HAS_CPNVM
         LDW     Y,USRLAST
-        JRPL    1$              ; skip if USRLAST points to RAM
-        LDW     NVMCONTEXT,Y    ; update NVMCONTEXT
-        LD      A,[USRCTOP]
-        OR      A,[USRCTOP+1]
-        JREQ    1$              ; re-link RAM dictionary?
-        LDW     [USRCTOP],Y
-        RET
-1$:
+        JRMI    1$              ; check if USRLAST points to NVM
         LDW     USRCONTEXT,Y
         RET
+1$:
+        LDW     NVMCONTEXT,Y    ; update NVMCONTEXT
+        LDW     [USRCTOP],Y     ; update link from RAM dictionary
+        RET
+
         .else
         LDW     Y,USRLAST
         LDW     USRCONTEXT,Y
@@ -3855,7 +3841,7 @@ DOCON:
 1$:     RET
         .endif
 
-        .ifeq   NO_VARIABLE
+        .ifne   HAS_VARIABLE
 ;       VARIABLE        ( -- ; <string> )
 ;       Compile a new variable
 ;       initialized to 0.
@@ -3880,7 +3866,7 @@ VARIA:
         .endif
 
 
-        .ifeq   NO_VARIABLE
+        .ifne   HAS_VARIABLE
 ;       ALLOT   ( n -- )
 ;       Allocate n bytes to code DICTIONARY.
 
@@ -4470,6 +4456,32 @@ RESTC:
         IRET                    ; resturn from interrupt
 
         .endif
+
+;       WIPE   ( -- )   ( TOS STM8: - )
+;       Return to RAM mode, claim VARIABLE RAM, init dictionary in RAM
+
+;       HEADER  WIPE "WIPE"
+WIPE:
+        .ifne  HAS_CPNVM
+        CALLR   RAMM
+        PUSHW   X
+        LDW     X,COLDCTOP      ; reserve some space for user variable
+        LDW     USRVAR,X
+        ADDW    X,#RAM_VARIABLE
+        LDW     USRCTOP,X       ; store new CTOP
+        LDW     Y,COLDCONTEXT
+        LDW     NVMCONTEXT,Y
+        LDW     (X),Y           ; create dummy word in RAM ...
+        INCW    X
+        INCW    X
+        CLR     (X)             ; ... with NULL string
+        LDW     USRLAST,X       ; prepare OVERT
+        INCW    X
+        LDW     USRCP,X         ; done
+        POPW    X
+        .endif
+        JP      OVERT           ; initialize CONTEXT from USRLAST
+
 
 ;===============================================================
         LASTN   =       LINK    ;last name defined

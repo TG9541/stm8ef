@@ -35,10 +35,11 @@
 \ requires stm8ef > 2.2.19
 
 #require CURRENT  \ persistent support for context switching
+RAM
+#require WIPE
+WIPE
 
-RAM WIPE
-
-RAM  VARIABLE size   NVM  HERE size !   \ for code size monitoring only
+RAM VARIABLE size   NVM  HERE size !   \ for code size monitoring only
 
 #require DEFINITIONS
 #require FORTH
@@ -110,7 +111,10 @@ NVM
 
 NVM HERE size @ - . .(  NVM bytes used )
 
-RAM WIPE
+
+RAM
+#require WIPE
+WIPE
 
 \ ------------------------------------------------------------------------------
 \ Last Revision: MM-171220  License added

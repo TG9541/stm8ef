@@ -51,7 +51,8 @@
                                 ;  ABORT" AFT AGAIN AHEAD BEGIN DO DUMP ELSE EXG FOR IF LEAVE
                                 ;  LOOP MAX MIN NEXT OR REPEAT SEE SPACES THEN U. U.R UM+
                                 ;  UNTIL WHILE WORDS [COMPILE] _TYPE dm+
-        NO_VARIABLE      = 0    ; Disable VARIABLE and feature "VARIABLE in Flash allocates RAM"
+        HAS_VARIABLE     = 1    ; VARIABLE and feature "VARIABLE in Flash allocates RAM"
+        RAM_VARIABLE    = 32    ; Amount of RAM for VARIABLE claimed by WIPE
 
         WORDS_LINKINTER  = 0    ; Link interpreter words
         WORDS_LINKCOMP   = 0    ; Link compiler words: cp last OVERT $,n ?UNIQUE $COMPILE
