@@ -3,7 +3,7 @@
 ;       Default settings for all kinds of options
 ;--------------------------------------------------------
         RELVER1          = 2    ; Revision digit 1
-        RELVER0          = 1    ; Revision digit 0
+        RELVER0          = 2    ; Revision digit 0
 
         TERM_LINUX       = 1    ; LF terminates line
 
