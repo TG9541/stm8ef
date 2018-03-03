@@ -1,6 +1,7 @@
 \ D-            double maths utility word (C) RigTig 2017
 \ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
 
+#require DNEGATE
 #require D+
 
 : D- ( d d -- d )

@@ -50,6 +50,8 @@ main.ihx: main.c $(MDEPS)
 	sdcc -mstm8 -I./$(BOARD) -I./inc -oout/$(BOARD)/$(BOARD).ihx main.c out/$(BOARD)/forth.rel
 	mkdir -p out/$(BOARD)/target
 	rm -f out/$(BOARD)/target/*
+	rm -f target
+	ln -s out/$(BOARD)/target/ target
 	tools/genalias.awk -v target="out/$(BOARD)/target/" out/$(BOARD)/forth.rst
 	tools/genconst.awk -v target="out/$(BOARD)/target/" out/$(BOARD)/forth.rst
 
