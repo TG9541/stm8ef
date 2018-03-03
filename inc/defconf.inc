@@ -140,7 +140,7 @@
         UNLINK_QDUP      = 0    ; "?DUP"
         UNLINK_ROT       = 0    ; "ROT"
         UNLINK_DDUP      = 0    ; "2DUP"
-        UNLINK_DNEGA     = 0    ; "DNEGATE"
+        UNLINK_DNEGA     = 1    ; "DNEGATE"
         UNLINK_EQUAL     = 0    ; "="
         UNLINK_ULESS     = 0    ; "U<"
         UNLINK_LESS      = 0    ; "<"
@@ -197,7 +197,7 @@
         UNLINK_NUFQ      = 0    ; "NUF?"
         REMOVE_NUFQ      = 1    ; remove "NUF?"
         UNLINK_SPACE     = 0    ; "SPACE"
-        UNLINK_SPACS     = 0    ; "SPACES"
+        UNLINK_SPACS     = 1    ; "SPACES"
         UNLINK_CR        = 0    ; "CR"
         UNLINK_DOSTR     = 1    ; "do$"
         UNLINK_STRQP     = 1    ; '$"|'

@@ -1,7 +1,7 @@
 #include utils/tester.fs
 
 \ expected vocabulary (including tester.fs)
-T{e WORDS e-> 969 -1358 }T
+T{e WORDS e-> 954 -2373 }T
 
 \ core: string with capured EMIT
 : test-."" ." abc123" ;
@@ -74,7 +74,6 @@ T{ 1000 -100 500 */ -> -200 }T
 T{ -1000 55 101 */MOD -> 45 -545 }T
 T{ -1 -1 UM* -> 1 -2 }T
 T{ 31 -3010 M* -> -27774 -2 }T
-T{ -27774 -2 DNEGATE -> 27774 1 }T
 
 \ NVM features, 'BOOT vector, and COLD
 NVM
@@ -124,10 +123,46 @@ T{  -20 30 -10 gd7 -> 30 20 10  0 -10 -20 6  }T
 T{  -20 31 -10 gd7 -> 31 21 11  1  -9 -19 6  }T
 T{  -20 29 -10 gd7 -> 29 19  9 -1 -11     5  }T
 
+\ start over - we'll need some RAM
 COLD
+#include utils/tester.fs
+
+#require 2ROT
+T{ 11 1 22 2 33 3 2ROT -> 22 2 33 3 11 1 }T
+#require 2OVER
+T{ 11 1 22 2 2OVER -> 11 1 22 2 11 1 }T
+#require 2SWAP
+T{ 11 1 22 2 2SWAP -> 22 2 11 1 }T
+
+#require DNEGATE
+#require DABS
+#require D+
+#require D-
+#require D<
+#require D=
+T{ 27774 1 DNEGATE -> -27774 -2 }T
+T{ -27774 -2 DABS -> 27774 1 }T
+T{ -27774 1 DABS -> -27774 1 }T
+T{ 1 -1 1 2 D+ -> 2 1 }T
+T{ 2 1 1 2 D- -> 1 -1 }T
+T{ 1 -1 2 -1 D< -> -1 }T
+T{ 2 -1 1 -1 D< -> 0 }T
+T{ 1 1 1 1 D< -> 0 }T
+T{ 2 1 1 1 D< -> 0 }T
+T{ 1 1 2 1 D< -> -1 }T
+T{ 1 1 1 1 D= -> -1 }T
+
+\ start over - we'll need some RAM
+COLD
+#include utils/tester.fs
+
+#require DSQRT
+T{ 16960 15 DSQRT -> 1000 }T
 
 \ start over and check if words were persisted
+COLD
 #include utils/tester.fs
+
 T{e startNVM e-> 4 260 }T
 T{ varNVM -> 128 }T
 
@@ -142,7 +177,7 @@ RAM
 T{ 400 CD>TEST cdram -> }T
 T{ cdram -> 800 }T
 
-T{e WORDS e-> 1005 1743 }T
+T{e WORDS e-> 990 728 }T
 
 
 \ compile CURRENT and VOC as a test
