@@ -111,6 +111,7 @@
         STM8S103F3       = 103  ; like STM8S003F3, 640 EEPROM
         STM8S105K4       = 105  ; 16K flash, 2K RAM, 1K EEPROM, UART2
         STM8S105C6       = 105  ; 32K flash, 2K RAM, 1K EEPROM, UART2
+        STM8S207RB       = 207  ; 32K+96K flash, 6K RAM, 2K EEPROM, UART1
 
 
         ;********************************************
@@ -3164,7 +3165,7 @@ DOTOK:
         CALL    DOTQP            ; e4thcom handshake (which also works with " ok")
         .db     4
         .ascii  " OK"
-        .db     10
+        .db     LF
         RET
         .endif
 
