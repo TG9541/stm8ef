@@ -1,4 +1,4 @@
-\ STM8S103 Register ans Bit Identifiers                                MM-170928
+\ STM8S103 Low Density Registers and Bit Identifiers                   MM-170928
 
 \ Bitmasks (probably names should be changed to BMx ?)
   01 equ BIT0

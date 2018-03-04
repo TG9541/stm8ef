@@ -139,6 +139,7 @@
         CLK_CSSR     = 0x50C8   ; Clock security system register        (0x00)
         CLK_CCOR     = 0x50C9   ; Configurable clock control register   (0x00)
         CLK_PCKENR2  = 0x50CA   ; Peripheral clock gating register 2    (0xFF)
+        CLK_CANCCR   = 0x50CB   ; CAN clock control register            (0x00)
         CLK_HSITRIMR = 0x50CC   ; HSI clock calibration trimming register (0x00)
         CLK_SWIMCCR  = 0x50CD   ; SWIM clock control register     (0bXXXXXXX0)
 ;.endif
@@ -215,18 +216,29 @@
         UART1_GTR    = 0x5239   ; UART1 guard time register             (0x00)
         UART1_PSCR   = 0x523A   ; UART1 prescaler register              (0x00)
 
-        UART2_SR     = 0x5240   ; UART1 status register                 (0xC0)
-        UART2_DR     = 0x5241   ; UART1 data register                   (0xXX)
-        UART2_BRR1   = 0x5242   ; UART1 baud rate register 1            (0x00)
-        UART2_BRR2   = 0x5243   ; UART1 baud rate register 2            (0x00)
-        UART2_CR1    = 0x5244   ; UART1 control register 1              (0x00)
-        UART2_CR2    = 0x5245   ; UART1 control register 2              (0x00)
-        UART2_CR3    = 0x5246   ; UART1 control register 3              (0x00)
-        UART2_CR4    = 0x5247   ; UART1 control register 4              (0x00)
-        UART2_CR5    = 0x5248   ; UART1 control register 5              (0x00)
-        UART2_CR6    = 0x5249   ; UART1 control register 6              (0x00)
-        UART2_GTR    = 0x524A   ; UART1 guard time register             (0x00)
-        UART2_PSCR   = 0x524B   ; UART1 prescaler register              (0x00)
+        UART2_SR     = 0x5240   ; UART2 status register                 (0xC0)
+        UART2_DR     = 0x5241   ; UART2 data register                   (0xXX)
+        UART2_BRR1   = 0x5242   ; UART2 baud rate register 1            (0x00)
+        UART2_BRR2   = 0x5243   ; UART2 baud rate register 2            (0x00)
+        UART2_CR1    = 0x5244   ; UART2 control register 1              (0x00)
+        UART2_CR2    = 0x5245   ; UART2 control register 2              (0x00)
+        UART2_CR3    = 0x5246   ; UART2 control register 3              (0x00)
+        UART2_CR4    = 0x5247   ; UART2 control register 4              (0x00)
+        UART2_CR5    = 0x5248   ; UART2 control register 5              (0x00)
+        UART2_CR6    = 0x5249   ; UART2 control register 6              (0x00)
+        UART2_GTR    = 0x524A   ; UART2 guard time register             (0x00)
+        UART2_PSCR   = 0x524B   ; UART2 prescaler register              (0x00)
+
+        UART3_SR     = 0x5240   ; UART3 status register                 (0xC0)
+        UART3_DR     = 0x5241   ; UART3 data register                   (0xXX)
+        UART3_BRR1   = 0x5242   ; UART3 baud rate register 1            (0x00)
+        UART3_BRR2   = 0x5243   ; UART3 baud rate register 2            (0x00)
+        UART3_CR1    = 0x5244   ; UART3 control register 1              (0x00)
+        UART3_CR2    = 0x5245   ; UART3 control register 2              (0x00)
+        UART3_CR3    = 0x5246   ; UART3 control register 3              (0x00)
+        UART3_CR4    = 0x5247   ; UART3 control register 4              (0x00)
+        ;              0x5248
+        UART3_CR6    = 0x5249   ; UART3 control register 6              (0x00)
 
         .ifeq   (TARGET - STM8S105K4)
         UART_DR   = UART2_DR
@@ -234,7 +246,7 @@
         UART_BRR1 = UART2_BRR1
         UART_CR2  = UART2_CR2
         .else
-        UART_DR   = UART1_DR
+        UART_DR   = UART1_DR    ; STM8S103 and STM8S207
         UART_SR   = UART1_SR
         UART_BRR1 = UART1_BRR1
         UART_CR2  = UART1_CR2
@@ -280,7 +292,7 @@
 ;.ifeq HAS_BACKGROUND
 
         TIM2_CR1     = 0x5300   ; TIM2 control register 1               (0x00)
-        .ifeq   (TARGET - STM8S105K4)
+        .ifne   (TARGET - STM8S103F3)
         TIM2_IER     = 0x5301   ; TIM2 interrupt enable register        (0x00)
         TIM2_SR1     = 0x5302   ; TIM2 status register 1                (0x00)
         TIM2_SR2     = 0x5303   ; TIM2 status register 2                (0x00)
@@ -325,6 +337,26 @@
         .endif
 ;.endif
 
+; ***** TIM3 (High Density)
+
+        TIM3_CR1     = 0x5320   ; TIM3 control register 1               (0x00)
+        TIM3_IER     = 0x5321   ; TIM3 interrupt enable register        (0x00)
+        TIM3_SR1     = 0x5322   ; TIM3 status register 1                (0x00)
+        TIM3_SR2     = 0x5323   ; TIM3 status register 2                (0x00)
+        TIM3_EGR     = 0x5324   ; TIM3 event generation register        (0x00)
+        TIM3_CCMR1   = 0x5325   ; TIM3 capture/compare mode register 1  (0x00)
+        TIM3_CCMR2   = 0x5326   ; TIM3 capture/compare mode register 2  (0x00)
+        TIM3_CCER1   = 0x5327   ; TIM3 capture/compare enable register 1 (0x00)
+        TIM3_CNTRH   = 0x5328   ; TIM3 counter high                     (0x00)
+        TIM3_CNTRL   = 0x5329   ; TIM3 counter low                      (0x00)
+        TIM3_PSCR    = 0x532A   ; TIM3 prescaler register               (0x00)
+        TIM3_ARRH    = 0x532B   ; TIM3 auto-reload register high        (0xFF)
+        TIM3_ARRL    = 0x532C   ; TIM3 auto-reload register low         (0xFF)
+        TIM3_CCR1H   = 0x532D   ; TIM3 capture/compare register 1 high  (0x00)
+        TIM3_CCR1L   = 0x532E   ; TIM3 capture/compare register 1 low   (0x00)
+        TIM3_CCR2H   = 0x532F   ; TIM3 capture/compare reg. 2 high      (0x00)
+        TIM3_CCR2L   = 0x5330   ; TIM3 capture/compare register 2 low   (0x00)
+
 ; ***** TIM4
 
 ;.ifeq HAS_TXSIM+HAS_RXSIM
@@ -352,6 +384,7 @@
 ;.ifeq HAS_ADC
 
         ADC_DBxR     = 0x53E0   ; ADC data buffer registers 0x53E0 to 0x53F3 (0x00)
+        ; High Density ADC2 start
         ADC_CSR      = 0x5400   ; ADC control/status register           (0x00)
         ADC_CR1      = 0x5401   ; ADC configuration register 1          (0x00)
         ADC_CR2      = 0x5402   ; ADC configuration register 2          (0x00)
@@ -360,6 +393,7 @@
         ADC_DRL      = 0x5405   ; ADC data register low                 (0xXX)
         ADC_TDRH     = 0x5406   ; ADC Schmitt trigger disable register high (0x00)
         ADC_TDRL     = 0x5407   ; ADC Schmitt trigger disable register low (0x00)
+        ; High Density ADC2 end
         ADC_HTRH     = 0x5408   ; ADC high threshold register high      (0x03)
         ADC_HTRL     = 0x5409   ; ADC high threshold register low       (0xFF)
         ADC_LTRH     = 0x540A   ; ADC low threshold register high       (0x00)
@@ -369,6 +403,32 @@
         ADC_AWCRH    = 0x540E   ; ADC analog watchdog control register high (0x00)
         ADC_AWCRL    = 0x540F   ; ADC analog watchdog control register low (0x00)
 ;.endif
+
+        CAN_MCR      = 0x5420 ; CAN master control register 0x02
+        CAN_MSR      = 0x5421 ; CAN master status register 0x02
+        CAN_TSR      = 0x5422 ; CAN transmit status register 0x00
+        CAN_TPR      = 0x5423 ; CAN transmit priority register 0x0C
+        CAN_RFR      = 0x5424 ; CAN receive FIFO register 0x00
+        CAN_IER      = 0x5425 ; CAN interrupt enable register 0x00
+        CAN_DGR      = 0x5426 ; CAN diagnosis register 0x0C
+        CAN_FPSR     = 0x5427 ; CAN page selection register 0x00
+
+        CAN_P0       = 0x5428 ; CAN paged register 0 0xXX (3)
+        CAN_P1       = 0x5429 ; CAN paged register 1 0xXX (3)
+        CAN_P2       = 0x542A ; CAN paged register 2 0xXX (3)
+        CAN_P3       = 0x542B ; CAN paged register 3 0xXX (3)
+        CAN_P4       = 0x542C ; CAN paged register 4 0xXX (3)
+        CAN_P5       = 0x542D ; CAN paged register 5 0xXX (3)
+        CAN_P6       = 0x542E ; CAN paged register 6 0xXX (3)
+        CAN_P7       = 0x542F ; CAN paged register 7 0xXX (3)
+        CAN_P8       = 0x5430 ; CAN paged register 8 0xXX (3)
+        CAN_P9       = 0x5431 ; CAN paged register 9 0xXX (3)
+        CAN_PA       = 0x5432 ; CAN paged register A 0xXX (3)
+        CAN_PB       = 0x5433 ; CAN paged register B 0xXX (3)
+        CAN_PC       = 0x5434 ; CAN paged register C 0xXX (3)
+        CAN_PD       = 0x5435 ; CAN paged register D 0xXX (3)
+        CAN_PE       = 0x5436 ; CAN paged register E 0xXX (3)
+        CAN_PF       = 0x5437 ; CAN paged register F 0xXX (3)
 
 ; ***** 6.2.3 CPU/SWIM/debug module/interrupt controller registers
 
