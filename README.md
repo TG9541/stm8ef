@@ -23,20 +23,23 @@ The interactive Forth console can use any GPIO, a pair of GPIOs, or the STM8 UAR
 
 For quick start binaries for generic targets (e.g. breadboards) are provided:
 
-* `CORE` a starting point for new boards - some features are disabled (e.g. no background task)
-* `SWIMCOM` communication through the SWIM interface for board exploration with a full feature set
-* [STM8S105K4](https://github.com/TG9541/stm8ef/tree/master/STM8S105K4), a starting point for STM8S Medium Density devices (Value Line / Access Line)
-* [STM8S001J3](https://github.com/TG9541/stm8ef/tree/master/STM8S001J3) target for STM8S Low Density devices with UART_TX in half-duplex mode (e.g. for µCs in an SO8N package)
+* STM8S003F3P6 (STM8S Low Density) configuations
+  * [CORE](https://github.com/TG9541/stm8ef/tree/master/CORE) a basic configuration for STM8S Low Density devices - some features are disabled (e.g. no background task)
+  * [SWIMCOM](https://github.com/TG9541/stm8ef/tree/master/SWIMCOM) an example configuration with a full feature set, and 2-wire communication through the SWIM interface 
+  * [DOUBLECOM](https://github.com/TG9541/stm8ef/tree/master/DOUBLECOM) console through the SWIM interface, the UART can be used, e.g. for background tasks
 * [STM8L051J3](https://github.com/TG9541/stm8ef/tree/master/STM8L051J3) initial support for STM8L Low Density devices (see [issue](https://github.com/TG9541/stm8ef/issues/137#issuecomment-354542670))
+* [STM8S001J3](https://github.com/TG9541/stm8ef/tree/master/STM8S001J3) target for STM8S Low Density devices with UART_TX in half-duplex mode (e.g. for µCs in an SO8N package)
+* [STM8S105K4](https://github.com/TG9541/stm8ef/tree/master/STM8S105K4) for STM8S Medium Density devices (Value Line / Access Line)
+* [STM8S207RB](https://github.com/TG9541/stm8ef/tree/master/STM8S207RB) for STM8S High Density devices (Value Line / Access Line)
 
 
-Various STM8 Discovery boards and [breakout boards](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for Low- and Medium Density devices can be used. Support for STM8S High Density, and STM8L Medium Density devices is under consideration.
+Various STM8 Discovery boards and [breakout boards](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for Low- and Medium Density devices can be used. Support for STM8L Medium Density devices is under consideration.
 
 ## Board support:
 
 TG9541/STM8EF provides board support for several common "Chinese gadgets", like the following:
 
-* [MINDEV](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for the STM8S103F3P6 $0.60 "minimum development board"
+* [MINDEV](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for the STM8S103F3P6 $0.65 "minimum development board"
 * [W1209](https://github.com/TG9541/stm8ef/wiki/Board-W1209) $1.50 thermostat board w/ 3 digit 7S-LED display, full- or half-duplex RS232
 * [W1219](https://github.com/TG9541/stm8ef/wiki/Board-W1219) low cost thermostat with 2x3 digit 7S-LED display, half-duplex RS232 through PD1/SWIM
 * [W1401](https://github.com/TG9541/stm8ef/wiki/Board-W1401) (also XH-W1401) thermostat with 3x2 digit 7S-LED display, half-duplex RS232 through SWIM
@@ -67,16 +70,16 @@ GND------------>>----------o serial GND
 ```
 Please note that some PC serial interfaces require matching logic levels (e.g. a low drop diode, a pull-up resistor, or buffers).
 
-## Steps for creating a new board variant
+## Steps for creating a board variant
 
 For creating a variant, copy and rename a base variant folder (e.g. CORE). Running `make BOARD=<folderName> flash` builds the code, and transfers it to the target.
 
-When working with 3rd party boards, it's recommended to have at least two boards for reverse engineering: one in original state, and one for testing new code. If you believe to have identified a target board of general interest, please [open a ticket here](https://github.com/TG9541/stm8ef/issues), or contact the STM8EF [Hackaday.io project](https://hackaday.io/project/16097-eforth-for-cheap-stm8s-value-line-gadgets)!
+When working on 3rd party boards, it's recommended to have at least two boards for reverse engineering: one in original state, and one for testing new code. If you've identified a target board of general interest, please [open a ticket here](https://github.com/TG9541/stm8ef/issues), or contact the STM8EF [Hackaday.io project](https://hackaday.io/project/16097-eforth-for-cheap-stm8s-value-line-gadgets)!
 
-In any case, please keep the following in mind:
+Please keep the following in mind:
 
-* when working with unknown boards make sure to have at least a basic understanding of the schematics and workings of the board! The author(s) of this software can't help you reverse-engineering an unsupported board. Working knowledge of electronics engineering is required!
-* the original ROM contents of most boards is read-protected and can't be read, and once erased the original function can't be restored (your board will be useless unless you write your own code)!
+* when working on unknown boards make sure to have at least a basic understanding of the schematics and workings of the board! The author(s) of this software can't help you reverse-engineering an unsupported board. Working knowledge of electronics is required!
+* the original ROM contents of most boards is read-protected and can't be read. Once erased the original function can't be restored (your board will be useless unless you write your own code)!
 * if your target board is designed to supply or control connected devices (e.g. a power supply unit) it's recommended not to assume fail-safe properties of the board (e.g. the output voltage of a power supply board might rise to the maximum without the proper software). Disconnect any connected equipment, and if possible only supply the µC with a current limiting power supply!
 
 Other than that, have fun, and consider sharing your results!
@@ -90,7 +93,7 @@ Other than that, have fun, and consider sharing your results!
   * [ALIAS words](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Alias-Words) for indirect dictionary entries
 * compile Forth to NVM (Non Volatile Memory with Flash IAP)
   * Words `NVM` and `RAM` switch between volatile (RAM) and non volatile (NVM) modes (*REMEMBER execute `RAM` before a power recycle or executing `COLD` if you want the words added to NVM to be available in future terminal sessions*)
-  * RAM allocation for `VARIABLE` and `ALLOT` fully transparent in NVM mode
+  * RAM allocation for `VARIABLE` and `ALLOT` is fully transparent in NVM mode
   * autostart feature for embedded applications
 * Low-level interrupts in Forth
   * lightweight context switch with `SAVEC` and `IRET`
@@ -107,7 +110,7 @@ Other than that, have fun, and consider sharing your results!
   * GPIO w/ Port edge & Timer4 interrupts: ?RXP TXP!
   * half-duplex "bus style" communication using a single GPIO (e.g. PD1/SWIM), or UART half-duplex mode
 * board support for Chinese made [STM8S based very-low-cost boards][WG1]:
-  * STM8S103F3 "$0.60" breakout board
+  * STM8S103F3 "$0.65" breakout board
   * Termostats, e.g. W1209, W1219, or W1401
   * Low cost power supply boards, e.g. XH-M188, DCDC w/ voltmeter
   * C0135 Relay Board
