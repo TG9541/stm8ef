@@ -2,7 +2,9 @@
 
 [![Test](https://travis-ci.org/TG9541/stm8ef.svg)](https://travis-ci.org/TG9541/stm8ef)
 
-TG9541/STM8EF extends [Dr. C.H. Ting's eForth for the *STM8S Discovery*](http://www.forth.org/svfig/kk/07-2010.html) into a lightweight self-hosted ("untethered") Forth system for STM8 µCs with a maximum "feature-to-binary-size" ratio. It provides a plug-in system for board support, base dictionary configuration, a library infrastructure, and uCsim based binary level simulation. With the kind permission of the original author TG9541/STM8EF has a permissive [FOSS license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md).
+STM8 eForth is a lightweight self-hosted Forth system for STM8 µCs that aims to have a very good "feature-to-binary-size" ratio. It provides a [binary release](https://github.com/TG9541/stm8ef/releases) easy configuration, a plug-in system for board support, a library infrastructure, and a uCsim based binary level simulation. With the help of [e4thcom](https://wiki.forth-ev.de/doku.php/en:projects:e4thcom) it can be used as a semi-tethered embedded Forth.
+
+STM8 eForth is based on [Dr. C.H. Ting's eForth for the *STM8S Discovery*](http://www.forth.org/svfig/kk/07-2010.html). With the kind permission of the original author, it comes with a permissive [FOSS license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md).
 
 The [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) covers various topics, e.g. using breakout boards, or the conversion of low-cost Chinese thermostats, voltmeters, or DC/DC-converters into Forth powered embedded control boards.
 
@@ -15,25 +17,25 @@ The project has the following goals:
 3. collaborate with the Forth community on core, development environment, libraries, and applications
 4. maximize the product *features* * *free space* for low-end STM8 *Value Line* µCs (see below)
 
-TG9541/STM8EF can be configured for a range of Forth features and different STM8 devices: a full featured binary requires betwenn 4.8KiB and 5.6KiB, a basic interactive Forth fits in about 3.5KiB, and building even smaller cores is possible (the unique `ALIAS` feature provides temporary access to unlinked words).
+TG9541/STM8EF can be configured for a range of Forth features and different STM8 devices: a full featured binary requires betwenn 4.8KiB and 5.6KiB, a basic interactive Forth fits in about 3.5KiB, and building even smaller cores is possible. The unique `ALIAS` feature provides temporary access to unlinked words.
 
-The interactive Forth console can use any GPIO, a pair of GPIOs, or the STM8 UART for 2-wire or 3-wire communication. Up to two serial interfaces can be configured and used with vectored I/O. It's also possible to reconfigure the console to use other types of I/O (e.g. keyboard and display).
+The interactive Forth console can use any single GPIO, a pair of GPIOs, or the STM8 UART for 2-wire or 3-wire communication. Up to two serial interfaces can be configured and used with vectored I/O. It's also possible to reconfigure the console to use other types of I/O (e.g. keyboard and display).
 
 ## Generic targets
 
 For quick start binaries for generic targets (e.g. breadboards) are provided:
 
-* STM8S003F3P6 (STM8S Low Density) configuations
-  * [CORE](https://github.com/TG9541/stm8ef/tree/master/CORE) a basic configuration for STM8S Low Density devices - some features are disabled (e.g. no background task)
+* STM8S Low Density devices (e.g. STM8S103x3, STM8S003x3, or STM8S001J3)
+  *  [CORE](https://github.com/TG9541/stm8ef/tree/master/CORE) a basic configuration for STM8S Low Density devices - some features are disabled (e.g. no background task)
   * [SWIMCOM](https://github.com/TG9541/stm8ef/tree/master/SWIMCOM) an example configuration with a full feature set, and 2-wire communication through the SWIM interface 
-  * [DOUBLECOM](https://github.com/TG9541/stm8ef/tree/master/DOUBLECOM) console through the SWIM interface, the UART can be used, e.g. for background tasks
-* [STM8L051J3](https://github.com/TG9541/stm8ef/tree/master/STM8L051J3) initial support for STM8L Low Density devices (see [issue](https://github.com/TG9541/stm8ef/issues/137#issuecomment-354542670))
-* [STM8S001J3](https://github.com/TG9541/stm8ef/tree/master/STM8S001J3) target for STM8S Low Density devices with UART_TX in half-duplex mode (e.g. for µCs in an SO8N package)
+  * [DOUBLECOM](https://github.com/TG9541/stm8ef/tree/master/DOUBLECOM) console through the SWIM interface, the UART can be used, 
+  * [STM8S001J3](https://github.com/TG9541/stm8ef/tree/master/STM8S001J3) console through UART_TX in half-duplex mode (e.g. for SO8N package STM8S Low Density devices)
+e.g. for background tasks
 * [STM8S105K4](https://github.com/TG9541/stm8ef/tree/master/STM8S105K4) for STM8S Medium Density devices (Value Line / Access Line)
 * [STM8S207RB](https://github.com/TG9541/stm8ef/tree/master/STM8S207RB) for STM8S High Density devices (Value Line / Access Line)
+* [STM8L051J3](https://github.com/TG9541/stm8ef/tree/master/STM8L051J3) initial support for STM8L Low Density devices (see [issue](https://github.com/TG9541/stm8ef/issues/137#issuecomment-354542670))
 
-
-Various STM8 Discovery boards and [breakout boards](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for Low- and Medium Density devices can be used. Support for STM8L Medium Density devices is under consideration.
+Various STM8 Discovery boards and [breakout boards](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for Low-, Medium-, and High-Density devices can be used. Initial support for STM8L Medium Density devices is available.
 
 ## Board support:
 
@@ -43,14 +45,14 @@ TG9541/STM8EF provides board support for several common "Chinese gadgets", like 
 * [W1209](https://github.com/TG9541/stm8ef/wiki/Board-W1209) $1.50 thermostat board w/ 3 digit 7S-LED display, full- or half-duplex RS232
 * [W1219](https://github.com/TG9541/stm8ef/wiki/Board-W1219) low cost thermostat with 2x3 digit 7S-LED display, half-duplex RS232 through PD1/SWIM
 * [W1401](https://github.com/TG9541/stm8ef/wiki/Board-W1401) (also XH-W1401) thermostat with 3x2 digit 7S-LED display, half-duplex RS232 through SWIM
-* [C0135](https://github.com/TG9541/stm8ef/wiki/Board-C0135) "Relay-4 Board" (can be used as a *Nano PLC*)
+* [C0135](https://github.com/TG9541/stm8ef/wiki/Board-C0135) "Relay-4 Board" - it can be used as a *Nano PLC*
 * [DCDC](https://github.com/TG9541/stm8ef/wiki/Board-CN2596) hacked DCDC converter with voltmeter
 
 The Wiki lists other supported "[Value Line Gadgets][WG1]", e.g. [voltmeters & power supplies](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets#voltmeters-and-power-supplies), [breakout boards](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards), and [thermostats](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets#thermostats).
 
 ## 2-Wire Communication
 
-The Forth console can be configured to use 3-wire interfaces in full-duplex, or 2-wire interface in half-duplex mode. For STM8S based boards without access to UART pins, the generic binary `SWIMCOM` is provided: it performs 2-wire communication through PD1 on the SWIM ICP header.
+The Forth console can be configured to use 3-wire interfaces in full-duplex, or 2-wire interface in half-duplex mode. For STM8S based boards without access to UART pins the generic binary `SWIMCOM` is provided: it performs 2-wire communication through PD1 on the SWIM ICP header.
 
 The following simple wired-or interface can be used:
 
