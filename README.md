@@ -10,16 +10,9 @@ The [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) covers various topic
 
 [![STM8EF Wiki](https://user-images.githubusercontent.com/5466977/28994765-3267d78c-79d6-11e7-927f-91751cd402db.jpg)](https://github.com/TG9541/stm8ef/wiki)
 
-The project has the following goals:
+STM8 eForth can be configured for a range of Forth features and different STM8 devices: a full featured binary requires betwenn 4.7K and 5.3K, a basic interactive Forth fits in about 3.5K, and building even smaller interactive cores is possible. The unique `ALIAS` feature provides temporary access to unlinked words.
 
-1. provide an easy to use [Forth kit](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Programming) for STM8 µCs
-2. provide board support for [common low-cost Chinese control boards][WG1]
-3. collaborate with the Forth community on core, development environment, libraries, and applications
-4. maximize the product *features* * *free space* for low-end STM8 *Value Line* µCs (see below)
-
-TG9541/STM8EF can be configured for a range of Forth features and different STM8 devices: a full featured binary requires betwenn 4.7K and 5.3K, a basic interactive Forth fits in about 3.5K, and building even smaller interactive cores is possible. The unique `ALIAS` feature provides temporary access to unlinked words.
-
-The interactive Forth console can use any single GPIO, a pair of GPIOs, or the STM8 UART for 2-wire or 3-wire communication. Up to two serial interfaces can be configured and used with vectored I/O. It's also possible to reconfigure the console to use other types of I/O (e.g. keyboard and display).
+The interactive Forth console can use any single GPIO, a pair of GPIOs, or the STM8 UART for 2-wire or 3-wire communication. Up to two serial interfaces used with vectored I/O. It's possible to reconfigure the console to use other types of I/O (e.g. keyboard and display), even at runtime.
 
 ## Generic targets
 
@@ -38,7 +31,7 @@ Various STM8 Discovery boards and [breakout boards](https://github.com/TG9541/st
 
 ## Board support:
 
-TG9541/STM8EF provides board support for several common "Chinese gadgets", like the following:
+TG9541/STM8EF provides board support for several common "Chinese gadgets" like the following:
 
 * [MINDEV](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for the STM8S103F3P6 $0.65 "minimum development board"
 * [W1209](https://github.com/TG9541/stm8ef/wiki/Board-W1209) $1.50 thermostat board w/ 3 digit 7S-LED display, full- or half-duplex RS232
@@ -48,28 +41,6 @@ TG9541/STM8EF provides board support for several common "Chinese gadgets", like 
 * [DCDC](https://github.com/TG9541/stm8ef/wiki/Board-CN2596) hacked DCDC converter with voltmeter
 
 The Wiki lists other supported "[Value Line Gadgets][WG1]", e.g. [voltmeters & power supplies](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets#voltmeters-and-power-supplies), [breakout boards](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards), and [thermostats](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets#thermostats).
-
-## 2-Wire Communication
-
-The Forth console can be configured to use 3-wire interfaces in full-duplex, or 2-wire interface in half-duplex mode. For STM8S based boards without access to UART pins the generic binary `SWIMCOM` is provided: it performs 2-wire communication through PD1 on the SWIM ICP header.
-
-The following simple wired-or interface can be used:
-
-```
-
-STM8 device    .      .----o serial TxD "TTL"
-               .      |      (e.g. "CH340 USB serial converter")
-               .     ---
-               .     / \  1N4148
-               .     ---
-               .      |
-STM8 PD1/SWIM-->>-----*----o serial RxD "TTL
-               .
-GND------------>>----------o serial GND
-               .
-................
-```
-Please note that some PC serial interfaces require some efforts to matching logic levels (e.g. a low drop diode, a pull-up resistor, or buffers).
 
 # Feature Overview
 
