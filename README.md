@@ -17,22 +17,21 @@ The project has the following goals:
 3. collaborate with the Forth community on core, development environment, libraries, and applications
 4. maximize the product *features* * *free space* for low-end STM8 *Value Line* µCs (see below)
 
-TG9541/STM8EF can be configured for a range of Forth features and different STM8 devices: a full featured binary requires betwenn 4.8KiB and 5.6KiB, a basic interactive Forth fits in about 3.5KiB, and building even smaller cores is possible. The unique `ALIAS` feature provides temporary access to unlinked words.
+TG9541/STM8EF can be configured for a range of Forth features and different STM8 devices: a full featured binary requires betwenn 4.7K and 5.3K, a basic interactive Forth fits in about 3.5K, and building even smaller interactive cores is possible. The unique `ALIAS` feature provides temporary access to unlinked words.
 
 The interactive Forth console can use any single GPIO, a pair of GPIOs, or the STM8 UART for 2-wire or 3-wire communication. Up to two serial interfaces can be configured and used with vectored I/O. It's also possible to reconfigure the console to use other types of I/O (e.g. keyboard and display).
 
 ## Generic targets
 
-For quick start binaries for generic targets (e.g. breadboards) are provided:
+Generic target binaries are provided for a quick start:
 
 * STM8S Low Density devices (e.g. STM8S103x3, STM8S003x3, or STM8S001J3)
-  *  [CORE](https://github.com/TG9541/stm8ef/tree/master/CORE) a basic configuration for STM8S Low Density devices - some features are disabled (e.g. no background task)
-  * [SWIMCOM](https://github.com/TG9541/stm8ef/tree/master/SWIMCOM) an example configuration with a full feature set, and 2-wire communication through the SWIM interface 
-  * [DOUBLECOM](https://github.com/TG9541/stm8ef/tree/master/DOUBLECOM) console through the SWIM interface, the UART can be used, 
-  * [STM8S001J3](https://github.com/TG9541/stm8ef/tree/master/STM8S001J3) console through UART_TX in half-duplex mode (e.g. for SO8N package STM8S Low Density devices)
-e.g. for background tasks
+  *  [CORE](https://github.com/TG9541/stm8ef/tree/master/CORE), a basic configuration for STM8S Low Density devices, some features are disabled (e.g. no background task)
+  * [SWIMCOM](https://github.com/TG9541/stm8ef/tree/master/SWIMCOM), a full feature set, and 2-wire communication through PD1/SWIM (i.e. ICP pins) 
+  * [DOUBLECOM](https://github.com/TG9541/stm8ef/tree/master/DOUBLECOM) console through the SWIM interface, the UART can be used, e.g. for background tasks
+  * [STM8S001J3](https://github.com/TG9541/stm8ef/tree/master/STM8S001J3) like SWIMCOM but with console through PD5/UART_TX in half-duplex mode (not limited to STM8S devices in SO8N package)
 * [STM8S105K4](https://github.com/TG9541/stm8ef/tree/master/STM8S105K4) for STM8S Medium Density devices (Value Line / Access Line)
-* [STM8S207RB](https://github.com/TG9541/stm8ef/tree/master/STM8S207RB) for STM8S High Density devices (Value Line / Access Line)
+* [STM8S207RB](https://github.com/TG9541/stm8ef/tree/master/STM8S207RB) initial support for STM8S High Density devices (Performance Line)
 * [STM8L051J3](https://github.com/TG9541/stm8ef/tree/master/STM8L051J3) initial support for STM8L Low Density devices (see [issue](https://github.com/TG9541/stm8ef/issues/137#issuecomment-354542670))
 
 Various STM8 Discovery boards and [breakout boards](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for Low-, Medium-, and High-Density devices can be used. Initial support for STM8L Medium Density devices is available.
@@ -70,66 +69,56 @@ GND------------>>----------o serial GND
                .
 ................
 ```
-Please note that some PC serial interfaces require matching logic levels (e.g. a low drop diode, a pull-up resistor, or buffers).
-
-## Steps for creating a board variant
-
-For creating a variant, copy and rename a base variant folder (e.g. CORE). Running `make BOARD=<folderName> flash` builds the code, and transfers it to the target.
-
-When working on 3rd party boards, it's recommended to have at least two boards for reverse engineering: one in original state, and one for testing new code. If you've identified a target board of general interest, please [open a ticket here](https://github.com/TG9541/stm8ef/issues), or contact the STM8EF [Hackaday.io project](https://hackaday.io/project/16097-eforth-for-cheap-stm8s-value-line-gadgets)!
-
-Please keep the following in mind:
-
-* when working on unknown boards make sure to have at least a basic understanding of the schematics and workings of the board! The author(s) of this software can't help you reverse-engineering an unsupported board. Working knowledge of electronics is required!
-* the original ROM contents of most boards is read-protected and can't be read. Once erased the original function can't be restored (your board will be useless unless you write your own code)!
-* if your target board is designed to supply or control connected devices (e.g. a power supply unit) it's recommended not to assume fail-safe properties of the board (e.g. the output voltage of a power supply board might rise to the maximum without the proper software). Disconnect any connected equipment, and if possible only supply the µC with a current limiting power supply!
-
-Other than that, have fun, and consider sharing your results!
+Please note that some PC serial interfaces require some efforts to matching logic levels (e.g. a low drop diode, a pull-up resistor, or buffers).
 
 # Feature Overview
 
+Even though the binaries are very small, STM8 eForth offers many features:
+
 * Subroutine Threaded Code (STC) with improved code density
-  * native BRANCH (JP), and EXIT (RET)
+  * native `BRANCH` (JP), and `EXIT` (RET)
   * relative CALL with two bytes where possible
   * pseudo-opcode for DOLIT using TRAP: compiled literals 3 instead of 5 bytes
   * [ALIAS words](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Alias-Words) for indirect dictionary entries
-* compile Forth to NVM (Non Volatile Memory with Flash IAP)
+* compile Forth to NVM (Non Volatile Memory) with IAP
   * Words `NVM` and `RAM` switch between volatile (RAM) and non volatile (NVM) modes (*REMEMBER execute `RAM` before a power recycle or executing `COLD` if you want the words added to NVM to be available in future terminal sessions*)
-  * RAM allocation for `VARIABLE` and `ALLOT` is fully transparent in NVM mode
+  * RAM allocation for `VARIABLE` and `ALLOT` is transparent in NVM mode (basic RAM management)
   * autostart feature for embedded applications
 * Low-level interrupts in Forth
   * lightweight context switch with `SAVEC` and `IRET`
   * example code for HALT is in the [Wiki](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Interrupts)
 * preemptive background tasks with fixed cycle time
   * configurable cycle (default: 5ms)
-  * `INPUT-PROCESS-OUTPUT` processing indepent from the Forth console
+  * `INPUT-PROCESS-OUTPUT` task indepent of the Forth console
   * robust and fast context switch with a "clean stack" approach
-  * concurrent interactive console, e.g. for setting control process parameters
-  * in background tasks `?KEY` can read board keys, and [boards with 7Seg-LED UI](https://github.com/TG9541/stm8ef/wiki/eForth-Background-Task) can simply output to the LED display
+  * concurrent interactive Forth console, e.g. for setting control process parameters
+  * in background tasks `?KEY` reads board keys, and [boards with 7Seg-LED UI](https://github.com/TG9541/stm8ef/wiki/eForth-Background-Task) can simply `EMIT` to the LED display
 * configuration options for serial console or dual serial interface
-  * UART: ?RX TX!
+  * UART: `?RX` and `TX!`
   * any GPIO or pair of GPIOs from ports PA through PD can be used as a simulated COM port
-  * GPIO w/ Port edge & Timer4 interrupts: ?RXP TXP!
-  * half-duplex "bus style" communication using a single GPIO (e.g. PD1/SWIM), or UART half-duplex mode
+  * GPIO w/ Port edge & Timer4 interrupts: `?RXP .. TXP!`
+  * half-duplex "bus style" communication using simulated COM port or UART
+  * option for `TX! .. ?RX` on simulated COM port, and `?RXP .. TXP!` on UART 
+* Extended vocabulary:
+  * `CREATE ... DOES>` for defining *defining words*
+  * Vectored I/O: `'KEY?` and `'EMIT`
+  * Loop structure words: `DO .. LEAVE .. LOOP`, `+LOOP`
+  * STM8S ADC control: `ADC!`, `ADC@`
+  * board keys, outputs, LEDs: `BKEY`, `KEYB?`, `EMIT7S`, `OUT`, `OUT!`
+  * EEPROM, FLASH lock/unlock: `LOCK`, `ULOCK`, `LOCKF`, `ULOCKF`
+  * native bit set/reset: `B!` (b a u -- ), `[ .. ]B!`
+  * 16bit STM8 timer register access: `2C@`, `2C!`
+  * compile to Flash memory: `NVR`, `RAM`, `WIPE`, `RESET`
+  * autostart applications: `'BOOT`
 * board support for Chinese made [STM8S based very-low-cost boards][WG1]:
-  * STM8S103F3 "$0.65" breakout board
+  * STM8S103F3P6 "$0.65" breakout board
   * Termostats, e.g. W1209, W1219, or W1401
   * Low cost power supply boards, e.g. XH-M188, DCDC w/ voltmeter
   * C0135 Relay Board
-  * configuration folders for easy application to other boards
-* Extended vocabulary:
-  * `CREATE ... DOES>` for defining *defining words*
-  * Vectored I/O: 'KEY? 'EMIT
-  * Loop structure words: DO LEAVE LOOP +LOOP
-  * STM8 ADC control: ADC! ADC@
-  * board keys, outputs, LEDs: BKEY KEYB? EMIT7S OUT OUT!
-  * EEPROM, FLASH lock/unlock: LOCK ULOCK LOCKF ULOCKF
-  * native bit set/reset: B! (b a u -- )
-  * 16bit STM8 timer register access: 2C@ 2C!
-  * compile to Flash memory: NVR RAM RESET
-  * autostart applications: 'BOOT
-  * ASCII file transfer: FILE HAND
+  * configuration folders for easy application to new boards
 * configurable vocabulary subsets for binary size optimization
+  * configuration possible down to the level of single words
+  * export of `ALIAS` definitions for unlinked words
 
 ## Other changes to the original STM8EF code:
 
@@ -137,7 +126,7 @@ Other than that, have fun, and consider sharing your results!
 * hard STM8S105C6 dependencies removed (e.g. RAM layout, UART2)
 * flexible RAM layout, basic RAM memory management, meaningful symbols for RAM locations
 * conditional code for different target boards with a subdirectory based configuration framework
-* bugs fixed (e.g. COMPILE, DEPTH, R!)
+* bugs fixed (e.g. `COMPILE`, `DEPTH`, `R!`)
 * significant binary size reduction
 
 # Disclaimer, copyright
