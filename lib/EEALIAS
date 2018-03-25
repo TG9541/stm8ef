@@ -1,0 +1,84 @@
+#require WIPE
+#require CP
+#require CONTEXT
+#require LAST
+#require ULOCK
+#require LOCK
+#require ULOCKF
+#require LOCKF
+#require ABORT"
+
+$4000     CONSTANT EELINK
+
+: setroot ( a -- )
+  \ set dictionary root in flash memory to a
+  [ ( . used as anchor ) ' . 2- 2- @ ] LITERAL BEGIN
+    DUP 2- @ DUP 0<
+  WHILE NIP
+  REPEAT DROP 2-
+  ( la a ) ULOCKF ! LOCKF
+;
+
+: EECLOSE ( -- )
+  \ link dictionary, end EEPROM mode, and return to RAM mode with WIPE
+  0 EELINK !  LOCK
+  CONTEXT @ setroot
+  WIPE
+;
+
+: EERESET ( -- )
+  \ remove link to ALIAS dictionary in EEPROM
+  0 setroot
+;
+
+: NVM ( -- )
+  EECLOSE
+  1 ABORT" NVM IN EEPROM MODE"
+;
+
+: CONSTANT ( -- )
+  EECLOSE
+  1 ABORT" CONSTANT IN EEPROM MODE"
+;
+
+: VARIABLE ( -- )
+  EECLOSE
+  1 ABORT" VARIABLE IN EEPROM MODE"
+;
+
+: ; ( -- )
+  EECLOSE
+  1 ABORT" NON-ALIAS IN EEPROM MODE"
+; IMMEDIATE
+
+
+\ initialize and link dictionary in EEPROM
+EERESET             \ unlink any existing dictionary in the EEPROM
+ULOCK               \ keep the EEPROM unlocked from here on
+CONTEXT @ EELINK !  \ create dummy word in EEPROM
+EELINK 2+ 0 OVER !  \ word length=0
+DUP  LAST !         \ set context to dummy word
+DUP  CONTEXT !
+1+ CP !             \ from here on, use EEPROM instead of RAM
+
+\ now #require some ALIAS files, finalize with EECLOSE 
+
+
+\\ Example:
+
+\ EEPROM MODE:
+\ * define ALIAS words in the EEPROM, 
+\ * abort if a normal compilation (non-ALIAS words) is attemted
+\   note: the STM8 resets when executing plain compiled words from EEPROM!
+\ * return to RAM MODE with EECLOSE when done
+\ * remove ALIAS words in EEPROM from dictionary with EERESET
+
+#include EEALIAS
+
+\ load ALIAS words
+#require SPACES
+#require DIGIT
+#require DNEGATE
+
+\ done: return to normal, and WIPE RAM
+EECLOSE
