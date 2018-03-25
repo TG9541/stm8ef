@@ -266,7 +266,7 @@
 ;        ==============================================
 ;        Forth header macros
 ;        Macro support in SDCC's assembler "SDAS" has some quirks:
-;          * strings with "," and ";" arn't allowed in parameters
+;          * strings with "," and ";" aren't allowed in parameters
 ;          * after include files, the first macro call may fail
 ;            unless it's preceded by unconditional code
 ;         ==============================================
@@ -801,14 +801,12 @@ QDQBRAN:
         HEADFLG QBRAN "?branch" COMPO
         .endif
 QBRAN:
-        LDW     Y,X
-        INCW    X
-        INCW    X
-        LDW     Y,(Y)
+        CALL    YFLAGS          ; Pull TOS to Y, flags
         JREQ    BRAN
 POPYJPY:
         POPW    Y
         JP      (2,Y)
+
 
 ;       branch  ( -- )
 ;       Branch to an inline address.
@@ -818,7 +816,6 @@ POPYJPY:
         .endif
 BRAN:
         POPW    Y
-YJPIND:
         LDW     Y,(Y)
         JP      (Y)
 
@@ -828,10 +825,9 @@ YJPIND:
 
         HEADER  EXECU "EXECUTE"
 EXECU:
-        LDW     Y,X
-        INCW    X
-        INCW    X
-        JRA     YJPIND
+        CALL    YFLAGS          ; Pull TOS to Y, flags
+        JP      (Y)
+
 
         .ifeq   REMOVE_EXIT
 ;       EXIT    ( -- )
@@ -871,17 +867,19 @@ DAT:
 
 
         .ifne   WORDS_EXTRAMEM
-;       2C!  ( n b -- )
+;       2C!  ( n a -- )
 ;       Store word C-wise to 16 bit HW registers "MSB first"
 
         HEADER  DCSTOR "2C!"
 DCSTOR:
-        CALL    DDUP
-        LD      A,(2,X)
-        LD      (3,X),A
-        CALLR   CSTOR
-        CALL    ONEP
-        JRA     CSTOR
+        CALL    YFLAGS          ; a
+        LD      A,(X)
+        LD      (Y),A           ; write MSB(n) to a
+        INCW    X
+        LD      A,(X)
+        LD      (1,Y),A         ; write LSB(n) to a+1
+        INCW    X
+        RET
 
 
 ;       2C@  ( a -- n )
@@ -889,13 +887,15 @@ DCSTOR:
 
         HEADER  DCAT "2C@"
 DCAT:
-        CALL    DOXCODE
         LDW     Y,X
+        LDW     X,(X)
         LD      A,(X)
-        LD      XH,A
-        LD      A,(1,Y)
-        LD      XL,A
+        LD      (Y),A
+        LD      A,(1,X)
+        EXGW    X,Y
+        LD      (1,X),A
         RET
+
 
 ;       B! ( t a u -- )
 ;       Set/reset bit #u (0..7) in the byte at address a to bool t
@@ -938,21 +938,20 @@ AT:
 
         HEADER  STORE "!"
 STORE:
-        LDW     Y,X
-        LDW     Y,(Y)
+        CALL    YFLAGS          ; a
         PUSHW   X
-        LDW     X,(2,X)
+        LDW     X,(X)           ; w
         LDW     (Y),X
         POPW    X
-        JRA     DDROP
+        JRA     DROP
 
-;       C@      ( b -- c )      ( TOS STM8: -- A,Z,N )
+;       C@      ( a -- c )      ( TOS STM8: -- A,Z,N )
 ;       Push byte in memory to stack.
 ;       STM8: Z,N
 
         HEADER  CAT "C@"
 CAT:
-        LDW     Y,X             ; Y=b
+        LDW     Y,X             ; Y=a
         LDW     Y,(Y)
 YCAT:
         LD      A,(Y)
@@ -960,16 +959,18 @@ YCAT:
         LD      (1,X),A
         RET
 
-;       C!      ( c b -- )
+;       C!      ( c a -- )
 ;       Pop     data stack to byte memory.
 
         HEADER  CSTOR "C!"
 CSTOR:
-        LDW     Y,X
-        LDW     Y,(Y)           ; Y=b
-        LD      A,(3,X)         ; D = c
-        LD      (Y),A           ; store c at b
-        JRA     DDROP
+        CALL    YFLAGS
+        INCW    X
+        LD      A,(X)
+        LD      (Y),A
+        INCW    X
+        RET
+
 
 ;       R>      ( -- w )     ( TOS STM8: -- Y,Z,N )
 ;       Pop return stack to data stack.
@@ -1321,7 +1322,11 @@ LAST:
 ASTOR:
         CLRW    Y
         LD      YL,A
-        JP      YSTOR
+AYSTOR:
+        DECW    X               ; SUBW  X,#2
+        DECW    X
+        LDW     (X),Y           ; push on stack
+        RET
 
 
 ;       ATOKEY core ( - c T | f )    ( TOS STM8: - Y,Z,N )
@@ -1392,8 +1397,7 @@ ONE:
         .endif
 MONE:
         LDW     Y,#0xFFFF
-AYSTOR:
-        JP      YSTOR
+        JRA     AYSTOR
 
         .ifne   HAS_BACKGROUND
 ;       TIM     ( -- T)     ( TOS STM8: -- Y,Z,N )
@@ -1491,6 +1495,8 @@ ROT:
         CALLR   1$
         CALL    RFROM
 1$:     JP      SWAPP
+
+
         .endif
 
 ;       2DUP    ( w1 w2 -- w1 w2 w1 w2 )
@@ -3906,6 +3912,10 @@ IMMED:
         LD      [USRLAST],A
         RET
 
+DUPPCAT:
+        CALL    DUPP
+        JP      CAT
+
         .ifeq   BOOTSTRAP
 ;       _TYPE   ( b u -- )
 ;       Display a string. Filter
@@ -3917,7 +3927,7 @@ IMMED:
 UTYPE:
         CALL    TOR             ; start count down loop
         JRA     UTYP2           ; skip first pass
-UTYP1:  CALL    DUPPCAT
+UTYP1:  CALLR   DUPPCAT
         CALL    TCHAR
         CALL    [USREMIT]       ; display only printable
         CALL    ONEP            ; increment address
@@ -3941,7 +3951,7 @@ DUMPP:
         CALL    SPACE
         CALL    TOR             ; start count down loop
         JRA     PDUM2           ; skip first pass
-PDUM1:  CALL    DUPPCAT
+PDUM1:  CALLR   DUPPCAT
         DoLitC  3
         CALL    UDOTR           ; display numeric data
         CALL    ONEP            ; increment address
@@ -3958,7 +3968,7 @@ PDUM2:  CALL    DONXT
         HEADER  DUMP "DUMP"
 DUMP:
         PUSH    USRBASE+1       ; BASE AT TOR save radix
-        CALL    HEX
+        CALL    HEX             ; leaves 16 in A
         CALL    YFLAGS
         DIV     Y,A             ; / change count to lines
         PUSHW   Y               ; start count down loop
@@ -4019,11 +4029,6 @@ DOTI1:  CALL    DOTQP
         .ascii  " (noName)"
         RET
         .endif
-
-DUPPCAT:
-        CALL    DUPP
-        JP      CAT
-
 
 
         .ifeq   REMOVE_TNAME
@@ -4103,10 +4108,7 @@ RPAT:
 RPSTO:
         POPW    Y
         LDW     YTEMP,Y
-        LDW     Y,X
-        INCW    X               ; fixed error: TOS not consumed
-        INCW    X
-        LDW     Y,(Y)
+        CALL    YFLAGS          ; fixed error: TOS not consumed
         LDW     SP,Y
         JP      [YTEMP]
 
