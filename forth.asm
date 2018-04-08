@@ -226,14 +226,14 @@
         ISPPSIZE  =     0       ; no interrupt tasks without NVM
         .endif
 
-        UPP   = UPPLOC          ; offset user area
+        UPP   = UPPLOC          ; "UPP"  offset user area
         CTOP  = CTOPLOC         ; dictionary start, growing up
                                 ; note: PAD is inbetween CTOP and SPP
-        SPP   = ISPP-ISPPSIZE   ; data stack, growing down (with SPP-1 first)
+        SPP   = ISPP-ISPPSIZE   ; "SPP"  data stack, growing down (with SPP-1 first)
         ISPP  = SPPLOC-BSPPSIZE ; "ISPP" Interrupt data stack, growing down
         BSPP  = SPPLOC          ; "BSPP" Background data stack, growing down
-        TIBB  = SPPLOC          ; "TIBB" Term. Input Buf. TIBLENGTH between SPPLOC and RPP
-        RPP   = RPPLOC          ; "RPP" return stack, growing down
+        TIBB  = SPPLOC          ; "TIB"  Term. Input Buf. TIBLENGTH between SPPLOC and RPP
+        RPP   = RPPLOC          ; "RPP"  return stack, growing down
 
         ; Core variables (same order as 'BOOT initializer block)
 

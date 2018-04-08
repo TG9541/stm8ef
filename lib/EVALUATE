@@ -1,0 +1,25 @@
+\ EVALUATE                   STM8 eForth string evaluation 
+\ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
+
+#require BUFFER
+#require TIB
+#require >IN
+#require #TIB
+#require 'EVAL
+#require TOKEN
+
+: EVALUATE ( a u -- results )
+  >IN @ >R   #TIB @ >R
+  #TIB !      0 >IN !
+  BUFFER !
+
+  BEGIN
+    TOKEN 
+    DUP C@ WHILE 
+    [ $92CD , 'EVAL C, ] 
+  REPEAT
+  DROP
+  
+  TIB BUFFER !
+  R> #TIB ! R> >IN !
+;
