@@ -257,7 +257,10 @@
         USRHLD  =    UPP+24     ; "HLD" hold a pointer of output string
         USRNTIB =    UPP+26     ; "#TIB" count in terminal input buffer
         USR_IN  =    UPP+28     ; ">IN" hold parsing pointer
-        YTEMP   =    UPP+30     ; extra working register for core words
+        USRBUFFER =  UPP+30     ; "BUFFER" address, defaults to TIBB
+
+        ; temporary core variables
+        RamWord YTEMP           ; extra working register for core words
 
         ;***********************
         ;******  7) Code  ******
@@ -2068,8 +2071,8 @@ COUNT:
 RAMHERE:
         TNZ     USRCP
         JRPL    HERE            ; NVM: CP points to NVM, NVMCP points to RAM
-        DoLitW  NVMCP           ; 'eval in Interpreter mode: HERE returns pointer to RAM
-        JP      AT
+        LD      A,#(NVMCP)      ; 'eval in Interpreter mode: HERE returns pointer to RAM
+        JP      AAT
         .else
         RAMHERE = HERE
         .endif
@@ -2747,7 +2750,8 @@ SUBPARS:
 
         HEADER  PARSE "PARSE"
 PARSE:
-        DoLitW  TIBB
+        LD      A,#(USRBUFFER)
+        CALL    AAT
         ADDW    Y,USR_IN        ; current input buffer pointer
         LDW     (X),Y
         LD      A,USRNTIB+1
@@ -2848,7 +2852,6 @@ NAMET:
 1$:     RET                     ; THEN
         .endif
 
-
 ;       R@ indexed char lookup for SAME?
 SAMEQCAT:
         CALL    OVER
@@ -2925,8 +2928,7 @@ FIND:
         CALLR   SWAPPF
 FIND1:  CALL    AT
         JREQ    FIND6
-        CALL    DUPP
-        CALL    AT
+        CALL    YAT             ; DUPP AT
         DoLitW  MASKK
         CALL    ANDD
         .ifne   CASEINSENSITIVE
@@ -3056,7 +3058,8 @@ ACCP4:  CALL    DROP
 
         HEADER  QUERY "QUERY"
 QUERY:
-        DoLitW  TIBB
+        LD      A,#(USRBUFFER)
+        CALL    AAT
         DoLitC  TIBLENGTH
         CALLR   ACCEP
         CALL    AFLAGS          ; NTIB !
@@ -3103,6 +3106,8 @@ ABOR2:  CALL    DOSTR
 PRESE:
         CLRW    X
         LDW     USRNTIB,X
+        LDW     X,#(TIBB)
+        LDW     USRBUFFER,X
         LDW     X,#SPP          ; initialize data stack
         RET
 
@@ -3760,7 +3765,6 @@ RBRAC:
         LDW     USREVAL,Y
         RET
 
-
 ; Defining words
 
         .ifne   HAS_DOES
@@ -3793,8 +3797,8 @@ DOESS:
         HEADER  DODOES "dodoes"
         .endif
 DODOES:
-        CALL    LAST            ; ( link field of current word )
-        CALL    AT
+        LD      A,#(USRLAST)    ; ( link field of current word )
+        CALLR   AAT
         CALL    NAMET           ; ' ( 'last  )
         DoLitC  BRAN_OPC        ; ' JP
         CALL    OVER            ; ' JP '
@@ -3817,6 +3821,21 @@ DODOES:
         .db     BRAN_OPC        ; \ HERE <- DOLIT <- ('+3) <- branch
         RET
         .endif
+
+;       A@   ( A:shortAddr -- n )
+;       push contents of A:shortAddr on stack
+;       HEADER  AAT "A@"
+AAT:
+        CLRW    Y
+        LD      YL,A
+        ; fall through
+
+;       Y@   ( Y:Addr -- n )
+;       push contents of Y:Addr on stack
+;       HEADER  YAT "Y@"
+YAT:
+        LDW     Y,(Y)
+        JP      YSTOR
 
 ;       CREATE  ( -- ; <string> )
 ;       Compile a new array
@@ -3849,8 +3868,8 @@ CONST:
 
         HEADER  DOCON "docon"
 DOCON:
-        CALL    RFROM
-        CALL    AT              ; push constant in interpreter mode
+        POPW    Y
+        CALLR   YAT             ; R> AT push constant in interpreter mode
         CALL    COMPIQ
         JREQ    1$
         CALL    LITER           ; compile constant in compiler mode
