@@ -3765,7 +3765,6 @@ RBRAC:
         LDW     USREVAL,Y
         RET
 
-
 ; Defining words
 
         .ifne   HAS_DOES
@@ -3790,21 +3789,6 @@ DOESS:
         CALL    CCOMMALIT
         .db     EXIT_OPC        ; 1 RET (EXIT)
         RET
-
-;       A@   ( A:shortAddr -- n )
-;       push contents of A:shortAddr on stack
-;       HEADER  AAT "A@"
-AAT:
-        CLRW    Y
-        LD      YL,A
-        ; fall through
-
-;       Y@   ( Y:Addr -- n )
-;       push contents of Y:Addr on stack
-;       HEADER  YAT "Y@"
-YAT:
-        LDW     Y,(Y)
-        JP      YSTOR
 
 ;       dodoes  ( -- )
 ;       link action to words created by defining words
@@ -3837,6 +3821,21 @@ DODOES:
         .db     BRAN_OPC        ; \ HERE <- DOLIT <- ('+3) <- branch
         RET
         .endif
+
+;       A@   ( A:shortAddr -- n )
+;       push contents of A:shortAddr on stack
+;       HEADER  AAT "A@"
+AAT:
+        CLRW    Y
+        LD      YL,A
+        ; fall through
+
+;       Y@   ( Y:Addr -- n )
+;       push contents of Y:Addr on stack
+;       HEADER  YAT "Y@"
+YAT:
+        LDW     Y,(Y)
+        JP      YSTOR
 
 ;       CREATE  ( -- ; <string> )
 ;       Compile a new array
