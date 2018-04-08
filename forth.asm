@@ -242,7 +242,7 @@
         USREMIT  =   UPP+0      ; "'EMIT" execution vector of EMIT
         USRQKEY =    UPP+2      ; "'?KEY" execution vector of QKEY
         USRBASE =    UPP+4      ; "BASE" radix base for numeric I/O
-        USREVAL =    UPP+6      ; "'EVAL" execution vector of EVAL
+        USRIDLE =    UPP+6      ; "'IDLE" idle routine in KEY (default: RET)
         USRPROMPT =  UPP+8      ; "'PROMPT" point to prompt word (default .OK)
         USRCP   =    UPP+10     ; "CP" point to top of dictionary
         USRLAST =    UPP+12     ; "LAST" currently last name in dictionary
@@ -254,12 +254,13 @@
         USRVAR  =    UPP+18     ; "VAR" point to next free USR RAM location
         NVMCONTEXT = UPP+20     ; point to top of dictionary in Non Volatile Memory
         USRCONTEXT = UPP+22     ; "CONTEXT" start vocabulary search
-        USRHLD  =    UPP+24     ; "HLD" hold a pointer of output string
+        USREVAL =    UPP+24     ; "'EVAL" execution vector of EVAL
         USRNTIB =    UPP+26     ; "#TIB" count in terminal input buffer
         USR_IN  =    UPP+28     ; ">IN" hold parsing pointer
         USRBUFFER =  UPP+30     ; "BUFFER" address, defaults to TIBB
 
-        ; temporary core variables
+        ; More core variables in zero page (instead of assigning fixed addresses)
+        RamWord USRHLD          ; "HLD" hold a pointer of output string
         RamWord YTEMP           ; extra working register for core words
 
         ;***********************
@@ -442,7 +443,7 @@ TBOOT:
         .dw     QRXP            ; ?RXP as ?KEY vector
         .endif
         .dw     BASEE           ; BASE
-        .dw     INTER           ; 'EVAL
+        .dw     RETIDLE         ; 'IDLE
         .dw     DOTOK           ; 'PROMPT
         COLDCTOP = .
         .dw     CTOP            ; CP in RAM
@@ -464,7 +465,7 @@ TBOOT:
         .dw     QRXP            ; ?RXP as ?KEY vector
         .endif
         .dw     BASEE           ; BASE
-        .dw     INTER           ; 'EVAL
+        .dw     RETIDLE         ; 'IDLE
         .dw     DOTOK           ; 'PROMPT
         .dw     CTOP            ; CP in RAM
         .dw     LASTN           ; CONTEXT pointer
@@ -2459,8 +2460,11 @@ DGTQ1:  LD      (1,X),A
         HEADER  KEY "KEY"
 KEY:
 KEY1:   CALL    [USRQKEY]
-        CALL    QBRAN
-        .dw     KEY1
+        CALL    YFLAGS
+        JRNE    RETIDLE
+        CALL    [USRIDLE]       ; IDLE must be fast (unless ?RX is buffered) and stack neutral
+        JRA     KEY1
+RETIDLE:
         RET
 
         .ifeq   REMOVE_NUFQ
