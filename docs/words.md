@@ -1,12 +1,12 @@
 # STM8EF Words
 ```
-;       COLD    ( -- )
-;       The hilevel cold start sequence.
+;       'BOOT   ( -- a )
+;       The application startup vector and NVM USR setting array
 ```
 
 ```
-;       'BOOT   ( -- a )
-;       The application startup vector and NVM USR setting array
+;       COLD    ( -- )
+;       The hilevel cold start sequence.
 ```
 
 ```
@@ -80,7 +80,7 @@
 ```
 
 ```
-;       2C!  ( n b -- )
+;       2C!  ( n a -- )
 ;       Store word C-wise to 16 bit HW registers "MSB first"
 ```
 
@@ -106,13 +106,13 @@
 ```
 
 ```
-;       C@      ( b -- c )      ( TOS STM8: -- A,Z,N )
+;       C@      ( a -- c )      ( TOS STM8: -- A,Z,N )
 ;       Push byte in memory to stack.
 ;       STM8: Z,N
 ```
 
 ```
-;       C!      ( c b -- )
+;       C!      ( c a -- )
 ;       Pop     data stack to byte memory.
 ```
 
@@ -1054,6 +1054,18 @@
 ```
 
 ```
+;       A@   ( A:shortAddr -- n )
+;       push contents of A:shortAddr on stack
+;       HEADER  AAT "A@"
+```
+
+```
+;       Y@   ( Y:Addr -- n )
+;       push contents of Y:Addr on stack
+;       HEADER  YAT "Y@"
+```
+
+```
 ;       CREATE  ( -- ; <string> )
 ;       Compile a new array
 ;       without allocating space.
@@ -1123,31 +1135,6 @@
 ```
 ;       WORDS   ( -- )
 ;       Display names in vocabulary.
-```
-
-```
-;       E7S  ( c -- )
-;       Convert char to 7-seg LED pattern, and insert it in display buffer
-```
-
-```
-;       P7S  ( c -- )
-;       Right aligned 7S-LED pattern output, rotates LED group buffer
-```
-
-```
-;       ?KEYB   ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
-;       Return keyboard char and true, or false if no key pressed.
-```
-
-```
-;       ADC!  ( c -- )
-;       Init ADC, select channel for conversion
-```
-
-```
-;       ADC@  ( -- w )
-;       start ADC conversion, read result
 ```
 
 ```
