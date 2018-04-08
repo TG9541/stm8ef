@@ -5,7 +5,7 @@ BEGIN {
   }
 }
 
-$3!~/(LINK|RAMPOOL)/ && $4=="=" && $5~/(UPP|RAMPOOL)/ && $1~/^00/ {
+$3!~/(LINK|RAMPOOL)/ && $4=="=" && $5~/(SPP|UPP|RAMPOOL)/ && $1~/^00/ {
   if (split($0,b,"\"") == 3) {
     symbol = b[2]
   }

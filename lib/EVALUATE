@@ -1,0 +1,24 @@
+#require TIB
+#require >IN
+#require #TIB
+#require 'PROMPT
+#require 'EVAL
+#require BUFFER
+#require TOKEN
+#require ?STACK
+
+: EVALUATE ( a u -- results )
+  >IN @ >R   #TIB @ >R
+  #TIB !      0 >IN !
+  BUFFER !
+
+  BEGIN
+    TOKEN 
+    DUP C@ WHILE 
+    [ $92CD , 'EVAL C, ] 
+  REPEAT
+  DROP
+  
+  TIB BUFFER !
+  R> #TIB ! R> >IN !
+;
