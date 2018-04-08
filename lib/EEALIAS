@@ -1,3 +1,12 @@
+\ EEPROM MODE                       STM8 eForth memory ALIAS utility words
+\ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
+\
+\ * define ALIAS words in the EEPROM,
+\ * compilation aborts if the compilation of non-ALIAS words is attemted
+\   note: the STM8 resets when executing plain compiled words from EEPROM!
+\ * return to RAM MODE with EECLOSE when done
+\ * remove ALIAS words in EEPROM from dictionary with EERESET
+
 #require WIPE
 #require CP
 #require CONTEXT
@@ -61,17 +70,11 @@ DUP  LAST !         \ set context to dummy word
 DUP  CONTEXT !
 1+ CP !             \ from here on, use EEPROM instead of RAM
 
-\ now #require some ALIAS files, finalize with EECLOSE 
+\ now #require some ALIAS files, finalize with EECLOSE
 
 
 \\ Example:
 
-\ EEPROM MODE:
-\ * define ALIAS words in the EEPROM, 
-\ * abort if a normal compilation (non-ALIAS words) is attemted
-\   note: the STM8 resets when executing plain compiled words from EEPROM!
-\ * return to RAM MODE with EECLOSE when done
-\ * remove ALIAS words in EEPROM from dictionary with EERESET
 
 #include EEALIAS
 
@@ -80,5 +83,5 @@ DUP  CONTEXT !
 #require DIGIT
 #require DNEGATE
 
-\ done: return to normal, and WIPE RAM
+\ done: return to RAM mode with WIPE
 EECLOSE
