@@ -34,6 +34,11 @@ _EXTI2_IRQHandler:
 _EXTI3_IRQHandler:
         .endif
 
+        .ifne   PSIM-PORTE
+;       Dummy label for _EXTIE_IRQHandler
+_EXTI4_IRQHandler:
+        .endif
+
 ;===============================================================
 
         .ifne   HAS_LED7SEG
