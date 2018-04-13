@@ -46,6 +46,7 @@
         .globl _EXTI1_IRQHandler
         .globl _EXTI2_IRQHandler
         .globl _EXTI3_IRQHandler
+        .globl _EXTI4_IRQHandler
         .globl _TIM2_UO_IRQHandler
         .globl _TIM4_IRQHandler
         .globl _forth
