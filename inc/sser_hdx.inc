@@ -79,6 +79,10 @@ _EXTI2_IRQHandler:
 _EXTI3_IRQHandler:
         .endif
 
+        .ifeq   PSIM-PORTE
+_EXTI4_IRQHandler:
+        .endif
+
         BRES    PSIM+CR2,#PNRX    ; disable PNRX external interrupt
 
         ; Set-up TIM4 for 8N1 Rx sampling at half bit time
