@@ -1,31 +1,33 @@
 ; XH-M194:
 ; - 7S-LED 4digit clock-style display w/ 74HC595 shift register
-; - MPX through PD7, PD3, PD2, and PD0
+; - 7S-LED MPX PD7, PD3, PD2, PD0
 ; - Clock-style second indicator dots PD1/SWIM
 ; - STM8S10S4 PD1/SWIM single pin communication
+; - DS1302 RTC PA6, PB6, PB7
 
 ;       BOARDINIT  ( -- )
 ;       Init board GPIO (except COM ports)
 
 BOARDINIT:
-        ; XH-M194 STM8S105S4 init GPIO
-        MOV     PA_DDR,#0b00110110 ; --FE-DC- LED green
-        MOV     PA_CR1,#0b00110110 ;
 
-        ;MOV     PB_DDR,#0b00000000 ; --- key inputs
-        ;MOV     PB_CR1,#0b00000000 ; ---
+        ; XH-M194 STM8S105S4 init GPIO
+        MOV     PA_DDR,#0b01110110 ; -kFE-DC- LED green k:CLK-RTC
+        MOV     PA_CR1,#0b01110110
+
+        MOV     PB_DDR,#0b01000000 ; dc<^v>LR keys c:CE-RTC d:DAT-RTC
+        MOV     PB_CR1,#0b01000000
 
         MOV     PC_DDR,#0b11101110 ; 123-56A- LED red, green
-        MOV     PC_CR1,#0b11101110 ;
+        MOV     PC_CR1,#0b11101110
 
         MOV     PD_DDR,#0b11111101 ; thd123-4 t:STCP h:SHCP d:DS
         MOV     PD_CR1,#0b11111101 ; thd123-4 1:D1 2:D2 3:D3 4:D4
 
         MOV     PE_DDR,#0b00100000 ; --B----- LED green
-        MOV     PE_CR1,#0b00100000 ;
+        MOV     PE_CR1,#0b00100000
 
         MOV     PG_DDR,#0b00000001 ; -------4 LED red
-        MOV     PG_CR1,#0b00000001 ;
+        MOV     PG_CR1,#0b00000001
 
         RET
 
@@ -66,8 +68,7 @@ _EXTI4_IRQHandler:
 ;       Code called from ISR for LED MPX
 
 LED_MPX:
-
-;       turn off all digits
+        ;       turn off all digits
         LD      A,#0b11100010   ; Digits 123.4
         AND     A,PD_ODR
         LD      PD_ODR,A
@@ -81,24 +82,24 @@ LED_MPX:
         LD      A,(LED7FIRST,X)
         CPL     A               ; common anode
 
-;       LED segment clock out
-LEDMPXGO:
+        ;       LED segment clock out
         PUSH    A               ; LED pattern (2,SP)
-        LD      A,#8            ; 8 clock pulses for 74HC164
+        LD      A,#8            ; 8 clock pulses for 74HC595
         PUSH    A               ; set counter (1,SP)
 
-7$:     SLL     (2,SP)
+LED_CLK:
+        SLL     (2,SP)
         BCCM    PD_ODR,#5       ; 74HC595 serial data in
         BRES    PD_ODR,#6       ; 74HC595 serial clock
         BSET    PD_ODR,#6
         DEC     (1,SP)
-        JRNE    7$
+        JRNE    LED_CLK
 
         BSET    PD_DDR,#7       ; 74HC595 parallel clock
         POPW    X               ; discard counter and LED pattern
         BRES    PD_DDR,#7
 
-;       Set active LED digit
+        ;       Set active LED digit
         POP     A               ; digit #
 
         TNZ     A
@@ -153,7 +154,6 @@ OUTSTOR:
         BCCM    PA_ODR,#4       ; E: R5 LED green
         RRC     A
         BCCM    PA_ODR,#5       ; F: R6 LED green
-
         LD      A,(X)
         INCW    X
         LD      OUTPUTS+1,A
@@ -183,8 +183,8 @@ OUTSTOR:
         .db     (4)
         .ascii  "BKEY"
 BKEY:
-        ; Keys ">>" (0x01), "<<" (0x02), ">" (0x04)
-        ;       "v" (0x08),  "^" (0x10), "<" (0x20)
+        ; Keys "R" (0x01), "L" (0x02), ">" (0x04)
+        ;      "v" (0x08), "^" (0x10), "<" (0x20)
         LD      A, PB_IDR
         CPL     A
         AND     A, #0x3F
@@ -201,4 +201,3 @@ BKEYCHAR:
 1$:     RET
 
        .endif
-
