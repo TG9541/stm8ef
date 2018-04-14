@@ -2,7 +2,7 @@
 
 [![Test](https://travis-ci.org/TG9541/stm8ef.svg)](https://travis-ci.org/TG9541/stm8ef)
 
-STM8 eForth is a lightweight self-hosted Forth system for STM8 µCs that aims to have a very good "feature-to-binary-size" ratio. It provides a [binary release](https://github.com/TG9541/stm8ef/releases) easy configuration, a plug-in system for board support, a library infrastructure, and a uCsim based binary level simulation. With the help of [e4thcom](https://wiki.forth-ev.de/doku.php/en:projects:e4thcom) it can be used as a semi-tethered embedded Forth.
+STM8 eForth is a lightweight self-hosted Forth system for STM8 µCs that aims to have a very good "feature-to-binary-size" ratio. It provides a [binary release](https://github.com/TG9541/stm8ef/releases), easy configuration, a plug-in system for board support, a library infrastructure, and uCsim based binary level simulation. With the help of [e4thcom](https://wiki.forth-ev.de/doku.php/en:projects:e4thcom) it can be used as a semi-tethered embedded Forth.
 
 STM8 eForth is based on [Dr. C.H. Ting's eForth for the *STM8S Discovery*](http://www.forth.org/svfig/kk/07-2010.html). With the kind permission of the original author, it comes with a permissive [FOSS license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md).
 
