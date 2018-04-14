@@ -2660,9 +2660,10 @@ QUEST:
 
 ; Parsing
 
-;       YFLAGS  ( n - )       ( TOS STM8: - Y,Z,N )
+;       YFLAGS  ( n -- )       ( TOS STM8: - Y,Z,N )
 ;       Consume TOS to CPU Y and Flags
 
+;       HEADER  YFLAGS "YFLAGS"
 YFLAGS:
         LDW     Y,X
         INCW    X
@@ -2671,9 +2672,10 @@ YFLAGS:
         RET
 
 
-;       AFLAGS  ( c - )       ( TOS STM8: - A,Z,N )
+;       AFLAGS  ( c -- )       ( TOS STM8: - A,Z,N )
 ;       Consume TOS to CPU A and Flags
 
+;       HEADER  AFLAGS "AFLAGS"
 AFLAGS:
         INCW    X
         LD      A,(X)
