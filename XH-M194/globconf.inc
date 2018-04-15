@@ -6,9 +6,10 @@
         HAS_TXUART       = 0    ; No UART TXD, word TX!
         HAS_RXSIM        = 1    ; Enable RxD via GPIO/TIM4, word ?RXGP
         HAS_TXSIM        = 1    ; Like HAS_RXSIM, word TXGP!, use for console if > HAS_TXUART
-        PSIM     = PORTD        ; Port for UART simulation
+        PSIM         = PORTD    ; Port for UART simulation
         PNRX             = 1    ; Port GPIO# for HAS_RXDSIM
         PNTX             = 1    ; Port GPIO# for HAS_TXDSIM
+        SERPRIOTIM   = 30000    ; RXSIM priority in BG ticks
 
         EMIT_BG  = EMIT7S       ; 7S-LED background EMIT vector
         QKEY_BG  = QKEYB        ; Board keys background QKEY vector

@@ -1,9 +1,0 @@
-\ STM8EF : ]BCCM                                               TG9541, MM-170927
-\ ------------------------------------------------------------------------------
-  RAM
-
-  \ compile BCCM addr,#bit - copies carry to addr.bit
-  : ]BCCM ( [CY] addr bit -- )
-    $90 C, 2* $11 OR C, , ]
-  ; IMMEDIATE
-
