@@ -15,6 +15,7 @@
         PSIM     = PORTX        ; Port for UART simulation
         PNRX             = 1    ; Port GPIO# for HAS_RXDSIM
         PNTX             = 1    ; Port GPIO# for HAS_TXDSIM
+        SERPRIOTIM       = 0    ; RXSIM priority in BG ticks
 
         EMIT_BG  = DROP         ; TODO: vectored NUL background EMIT vector
         QKEY_BG  = ZERO         ; TODO: NUL background QKEY vector

@@ -67,18 +67,44 @@ _EXTI4_IRQHandler:
 ;       LED_MPX driver ( -- )
 ;       Code called from ISR for LED MPX
 
+        .db     2
+
 LED_MPX:
         ;       turn off all digits
-        LD      A,#0b11100010   ; Digits 123.4
+        LD      A,#0b11100010   ; Digits ...123.4
         AND     A,PD_ODR
         LD      PD_ODR,A
 
         LD      A,TICKCNT+1
         AND     A,#3            ; 4 digits MPX
+        PUSH    A               ; digit #
 
+        ; clock dots shared with the console
+        LDW     Y,TIMSERIAL     ; decrement COM use timer
+        JREQ    LEDMPXDOTS
+        DECW    Y               ; active COM: don't change PNRX properties
+        LDW     TIMSERIAL,Y
+        JRA     LEDMPXGO
+
+LEDMPXDOTS:
+        BTJF    PD_DDR,#PNRX,LEDDOTS
+        BRES    PD_DDR,#PNRX
+        BRES    PD_CR1,#PNRX
+        BSET    PD_CR2,#PNRX
+
+LEDDOTS:                        ; CFG "CFGDOTS" digit # test used for colon dots
+        CP      A,#2
+        JRNE    LEDMPXGO
+        TNZ     LED7FIRST+1     ; dots: decimal point of 2nd digit
+        JRPL    LEDMPXGO
+        BRES    PD_ODR,#PNRX    ; clock dots shared with the console
+        BRES    PD_CR2,#PNRX
+        BSET    PD_CR1,#PNRX
+        BSET    PD_DDR,#PNRX
+
+LEDMPXGO:
         CLRW    X
         LD      XL,A
-        PUSH    A               ; digit #
         LD      A,(LED7FIRST,X)
         CPL     A               ; common anode
 

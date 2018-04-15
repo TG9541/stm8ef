@@ -14,6 +14,7 @@ tgz: build
 build: words
 	make BOARD=CORE
 	make BOARD=XH-M188
+	make BOARD=XH-M194
 	make BOARD=W1209
 	make BOARD=W1209-FD
 	make BOARD=W1209-CA
