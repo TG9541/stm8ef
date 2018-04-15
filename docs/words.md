@@ -697,6 +697,16 @@
 ```
 
 ```
+;       YFLAGS  ( n -- )       ( TOS STM8: - Y,Z,N )
+;       Consume TOS to CPU Y and Flags
+```
+
+```
+;       AFLAGS  ( c -- )       ( TOS STM8: - A,Z,N )
+;       Consume TOS to CPU A and Flags
+```
+
+```
 ;       parse   ( b u c -- b u delta ; <string> )
 ;       Scan string delimited by c.
 ;       Return found string and its offset.
