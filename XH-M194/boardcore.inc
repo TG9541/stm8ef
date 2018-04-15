@@ -87,6 +87,7 @@ LED_MPX:
         JRA     LEDMPXGO
 
 LEDMPXDOTS:
+        MOV     TIMRELOAD,#1    ; Reset TIMSERIAL reload value
         BTJF    PD_DDR,#PNRX,LEDDOTS
         BRES    PD_DDR,#PNRX
         BRES    PD_CR1,#PNRX

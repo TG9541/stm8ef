@@ -10,6 +10,7 @@
         PSIM     = PORTC        ; Port for UART simulation
         PNRX             = 7    ; Port GPIO# for HAS_RXDSIM
         PNTX             = 7    ; Port GPIO# for HAS_TXDSIM
+        SERPRIOTIM   = 30000    ; RXSIM priority in BG ticks
 
         EMIT_BG  = EMIT7S       ; 7S-LED background EMIT vector
         QKEY_BG  = QKEYB        ; Board keys background QKEY vector

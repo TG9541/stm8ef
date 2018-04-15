@@ -13,6 +13,7 @@
 
         .ifne   SERPRIOTIM
         RamWord TIMSERIAL       ; "TIMSERIAL" Timer: use PSIM,PNRX for serial while not 0
+        RamByte TIMRELOAD       ; Reload value for TIMSERIAL, set by receive interrupt, reset by timer 
         .endif
 
         .ifne   HAS_RXSIM
@@ -52,7 +53,7 @@ TXSTOR:
         .endif
 TXPSTOR:
         .ifne   SERPRIOTIM
-        MOV     TIMSERIAL,#(SERPRIOTIM/256) ; load MSB msec ticker
+        MOV     TIMSERIAL,TIMRELOAD ; load MSB msec ticker
         .endif
 
         INCW    X
@@ -95,7 +96,8 @@ _EXTI3_IRQHandler:
         BRES    PSIM+CR2,#PNRX  ; disable PNRX external interrupt
 
         .ifne   SERPRIOTIM
-        MOV     TIMSERIAL,#(SERPRIOTIM/256) ; load MSB msec ticker
+        MOV     TIMRELOAD,#(SERPRIOTIM/256) ; load MSB msec reload
+        MOV     TIMSERIAL,TIMRELOAD ; load MSB msec ticker
         .endif
 
         MOV     TIM4RCNT,#9     ; set sequence counter for RX
