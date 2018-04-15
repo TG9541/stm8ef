@@ -56,7 +56,6 @@ _EXTI4_IRQHandler:
 ;===============================================================
 
         .ifne   HAS_LED7SEG
-        RamWord TIMSERIAL       ; Timer: use PC7 for serial while > 0
         RamByte BKEYLMPX        ; status of board keys
 
 ;       LED_MPX driver ( -- )
@@ -70,10 +69,6 @@ LED_MPX:
 ;       PNRX=PC7 dual use for simulated serial port and segment DP
 ;       disaable DP while the simulated COM port is active (with time delay)
 
-        TNZ     TIM4TCNT        ; active sim COM: disable DP for some time
-        JREQ    LMPX1
-        MOV     TIMSERIAL,#(60000/256); load MSB msec ticker
-LMPX1:
         LDW     X,TIMSERIAL     ; decrement COM use timer
         JREQ    LMPX3           ; no COM: use DP
         DECW    X               ; active COM: don't change PNRX properties
@@ -109,12 +104,15 @@ LMPX3:
         ; fall through
 
 LMPXSEGS:
-        LD      A,YL           ; 8 bit LED pattern
+        LD      A,YL            ; 8 bit LED pattern
         TNZ     TIMSERIAL
-        JREQ    1$
-        CP      A,#0x40        ; compare patter with sign ("-", segment G set)
+        JRNE    2$
+        MOV     TIMRELOAD,#1    ; Reset TIMSERIAL reload value
+        JRA     1$
+2$:
+        CP      A,#0x40         ; compare patter with sign ("-", segment G set)
         JRNE    1$
-        OR      A,#0x02        ; set one more segment, or else COM simulation won't work
+        OR      A,#0x02         ; set one more segment, or else COM simulation won't work
 
 1$:
         ; DCDC 7S LED display row
