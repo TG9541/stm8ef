@@ -1,0 +1,8 @@
+\ STM8 eForth ]BC  copy addr.bit to carry in-line              TG9541, MM-170927
+\ ------------------------------------------------------------------------------
+  RAM
+
+  : ]BC ( addr bit -- [CY] )
+    \ compile BTJT addr,#bit,0 - copies addr.bit to carry
+    $72 C, 2* C, , 0 C, ]
+  ; IMMEDIATE
