@@ -67,23 +67,12 @@ BOARDINIT:
         CALLR   LCD_CMD
 
         ; Reset display data
-        LD      A, #0
-        LDW     Y, #0xffff ; #0xfafa
-        CALL    LCD_DATA
-        LD      A, #4
-        LDW     Y, #0xffff ; #0xfafb
-        CALL    LCD_DATA
-        LD      A, #8
-        LDW     Y, #0xffff ; #0x0afa
-        CALL    LCD_DATA
-        LD      A, #12
-        LDW     Y, #0xffff ; #0x0000
-        CALL    LCD_DATA
-        LD      A, #16
-        LDW     Y, #0xff00 ; #0x0100
-        CALL    LCD_DATA
+        LDW     Y, #LCD_LOGO
+        JP     _LCD_UP
 
-        RET
+LCD_LOGO:
+        .db 0xe4, 0x36, 0x24, 0x74
+        .db 0x0a, 0xf0, 0x74, 0xfe, 0x60
 
 ; ==============================================
 
@@ -109,6 +98,44 @@ BOARDINIT:
 ; 16    1.1A    1.1F    1.1E    1.1A
 ; 17    1.IN    1.OUT   2.SET   1.°C
 
+; Alphanum codes
+; 0 - $FA
+; 1 - $0A
+; 2 - $BC
+; 3 - $9E
+; 4 - $4E
+; 5 - $D6
+; 6 - $F6
+; 7 - $8A
+; 8 - $FE
+; 9 - $DE
+; A - $EE
+; b - $76
+; C - $F0
+; c - $34
+; d - $3E
+; E - $F4
+; F - $E4
+; G - $F2
+; H - $6E
+; I - $60
+; J - $1A
+; k - $66 (like h)
+; L - $70
+; M -
+; n - $26
+; o - $36
+; P - $EC
+; Q - 
+; r - $24
+; s - $D6 (like 5)
+; t - $74
+; u - $32
+; y - $53
+; - - $04
+; ^ - $C8
+; ° - $CC
+
 ; Send command to LCD. reg A - command
 LCD_CMD:
         BRES    PC_ODR, #5 ; CS active
@@ -122,6 +149,7 @@ LCD_CMD:
         RET
 
 
+        .ifne   LCD_DIRECT
 ; ==============================================
 ;       LCD!  ( w addr -- )
 ;       Put w (4 nibbles) to LCD data registers
@@ -181,6 +209,7 @@ LCDC_DATA:
         BSET    PC_ODR, #5 ; CS inactive
         RET
 
+       .endif
 
 LCD_ADDR:
         BRES    PC_ODR, #5 ; CS active
@@ -207,13 +236,14 @@ LCD_BIT0:
         JRA     LCD_CLK
 
 LCD_BYTE_A:
+        CALLR   LCD_BIT_A ; bit 7
         CALLR   LCD_BIT_A
         CALLR   LCD_BIT_A
         CALLR   LCD_BIT_A
         CALLR   LCD_BIT_A
         CALLR   LCD_BIT_A
-        CALLR   LCD_BIT_A
-        CALLR   LCD_BIT_A
+        CALLR   LCD_BIT_A ; bit 1
+        ; bit 0
 LCD_BIT_A:
         RLC     A
         BCCM    PC_ODR, #7 ; Data
@@ -221,6 +251,38 @@ LCD_CLK:
         BRES    PC_ODR, #6 ; Clock down
         BSET    PC_ODR, #6 ; Clock up
         RET
+
+; ==============================================
+;       LCDUP  ( ref -- )
+;       Copy 9 bytes from memory ref addr to LCD data registers
+        .dw     LINK
+
+        LINK =  .
+        .db     (5)
+        .ascii  "LCDUP"
+LCD_UP:
+        ; Load address
+        LDW     Y,X
+        LDW     Y,(Y)
+        INCW    X
+        INCW    X
+_LCD_UP:
+        CLR     A
+        CALLR   LCD_ADDR
+        LD      A, #9
+        ; Send data
+1$:
+        PUSH    A
+        LD      A,(Y)
+        CALLR   LCD_BYTE_A
+        POP     A
+        INCW    Y
+        DEC     A
+        JRNE    1$
+
+        BSET    PC_ODR, #5 ; CS inactive
+        RET
+
 
 ; ==============================================
 

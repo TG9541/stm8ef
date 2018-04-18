@@ -17,6 +17,7 @@
         HAS_KEYS         = 1    ; no
         HAS_OUTPUTS      = 1    ; no
         HAS_ADC          = 1    ; Analog input words
+        LCD_DIRECT       = 0    ; Eanble direct lcd access
         
         HAS_BACKGROUND   = 1    ; Background Forth task (TIM2 ticker)
         HAS_CPNVM        = 1    ; Can compile to Flash, always interpret to RAM 
