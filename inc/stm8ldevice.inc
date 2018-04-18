@@ -6,11 +6,11 @@
         PORTB        = PB_ODR
         PORTC        = PC_ODR
         PORTD        = PD_ODR
-        PORTE        = PD_ODR
-        PORTF        = PD_ODR
-        PORTG        = PD_ODR
-        PORTH        = PD_ODR
-        PORTI        = PD_ODR
+        PORTE        = PE_ODR
+        PORTF        = PF_ODR
+        PORTG        = PG_ODR
+        PORTH        = PH_ODR
+        PORTI        = PI_ODR
         PORTX        = 0
 
         ODR          = 0
@@ -33,7 +33,7 @@
  PB_CR2 = 0x5009 ; Port B control register 2 0x00
 ; Port C
  PC_ODR = 0x500A ; Port C data output latch register 0x00
- PB_IDR = 0x500B ; Port C input pin value register 0xXX
+ PC_IDR = 0x500B ; Port C input pin value register 0xXX
  PC_DDR = 0x500C ; Port C data direction register 0x00
  PC_CR1 = 0x500D ; Port C control register 1 0x00
  PC_CR2 = 0x500E ; Port C control register 2 0x00
@@ -43,6 +43,36 @@
  PD_DDR = 0x5011 ; Port D data direction register 0x00
  PD_CR1 = 0x5012 ; Port D control register 1 0x00
  PD_CR2 = 0x5013 ; Port D control register 2 0x00
+; Port E
+ PE_ODR = 0x5014 ; Port E data output latch register 0x00
+ PE_IDR = 0x5015 ; Port E input pin value register 0xXX
+ PE_DDR = 0x5016 ; Port E data direction register 0x00
+ PE_CR1 = 0x5017 ; Port E control register 1 0x00
+ PE_CR2 = 0x5018 ; Port E control register 2 0x00
+; Port F
+ PF_ODR = 0x5019 ; Port F data output latch register 0x00
+ PF_IDR = 0x501A ; Port F input pin value register 0xXX
+ PF_DDR = 0x501B ; Port F data direction register 0x00
+ PF_CR1 = 0x501C ; Port F control register 1 0x00
+ PF_CR2 = 0x501D ; Port F control register 2 0x00
+; Port G
+ PG_ODR = 0x501E ; Port G data output latch register 0x00
+ PG_IDR = 0x501F ; Port G input pin value register 0xXX
+ PG_DDR = 0x5020 ; Port G data direction register 0x00
+ PG_CR1 = 0x5021 ; Port G control register 1 0x00
+ PG_CR2 = 0x5022 ; Port G control register 2 0x00
+; Port H
+ PH_ODR = 0x5023 ; Port H data output latch register 0x00
+ PH_IDR = 0x5024 ; Port H input pin value register 0xXX
+ PH_DDR = 0x5025 ; Port H data direction register 0x00
+ PH_CR1 = 0x5026 ; Port H control register 1 0x00
+ PH_CR2 = 0x5027 ; Port H control register 2 0x00
+; Port I
+ PI_ODR = 0x5028 ; Port I data output latch register 0x00
+ PI_IDR = 0x5029 ; Port I input pin value register 0xXX
+ PI_DDR = 0x502A ; Port I data direction register 0x00
+ PI_CR1 = 0x502B ; Port I control register 1 0x00
+ PI_CR2 = 0x502C ; Port I control register 2 0x00
 ; 0x00 5014 to 0x00 501D Reserved area (0 bytes)
 ; 0x00 502E to 0x00 5049 Reserved area (44 bytes)
 ; Flash
@@ -406,3 +436,24 @@
  DM_ENFCTR = 0x7F9A ; DM enable function register 0xFF
 ; 0x00 7F9B to 0x00 7F9F Reserved area (5 bytes)
 ; 1.   Accessible by debug module only
+
+
+; LCD 
+ LCD_CR1 = 0x5400 ; LCD control register 1 0x00
+ LCD_CR2 = 0x5401 ; LCD control register 2 0x00
+ LCD_CR3 = 0x5402 ; LCD control register 3 0x00
+ LCD_FRQ = 0x5403 ; LCD frequency selection register 0x00
+ LCD_PM0 = 0x5404 ; LCD Port mask register 0 0x00
+ LCD_PM1 = 0x5405 ; LCD Port mask register 1 0x00
+ LCD_PM2 = 0x5406 ; LCD Port mask register 2 0x00
+ LCD_PM3 = 0x5407 ; LCD Port mask register 3 0x00
+ LCD_PM4 = 0x5408 ; LCD Port mask register 4 0x00
+ LCD_PM5 = 0x5409 ; LCD Port mask register 5 0x00
+; 0x00 540A to 0x00 540B Reserved area (2 bytes)
+ LCD_RAM0 = 0x540C ; LCD display memory 0 0x00
+; ...
+ LCD_RAM21 = 0x5421 ; LCD display memory 21 0x00
+; 0x00 5422 to 0x00 542E Reserved area
+ LCD_CR4 = 0x542F ; LCD control register 4 0x00
+
+
