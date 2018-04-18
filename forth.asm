@@ -46,6 +46,7 @@
         .globl _EXTI1_IRQHandler
         .globl _EXTI2_IRQHandler
         .globl _EXTI3_IRQHandler
+        .globl _EXTI4_IRQHandler
         .globl _TIM2_UO_IRQHandler
         .globl _TIM4_IRQHandler
         .globl _forth
@@ -231,14 +232,14 @@
         ISPPSIZE  =     0       ; no interrupt tasks without NVM
         .endif
 
-        UPP   = UPPLOC          ; offset user area
+        UPP   = UPPLOC          ; "UPP"  offset user area
         CTOP  = CTOPLOC         ; dictionary start, growing up
                                 ; note: PAD is inbetween CTOP and SPP
-        SPP   = ISPP-ISPPSIZE   ; data stack, growing down (with SPP-1 first)
+        SPP   = ISPP-ISPPSIZE   ; "SPP"  data stack, growing down (with SPP-1 first)
         ISPP  = SPPLOC-BSPPSIZE ; "ISPP" Interrupt data stack, growing down
         BSPP  = SPPLOC          ; "BSPP" Background data stack, growing down
-        TIBB  = SPPLOC          ; "TIBB" Term. Input Buf. TIBLENGTH between SPPLOC and RPP
-        RPP   = RPPLOC          ; "RPP" return stack, growing down
+        TIBB  = SPPLOC          ; "TIB"  Term. Input Buf. TIBLENGTH between SPPLOC and RPP
+        RPP   = RPPLOC          ; "RPP"  return stack, growing down
 
         ; Core variables (same order as 'BOOT initializer block)
 
@@ -247,7 +248,7 @@
         USREMIT  =   UPP+0      ; "'EMIT" execution vector of EMIT
         USRQKEY =    UPP+2      ; "'?KEY" execution vector of QKEY
         USRBASE =    UPP+4      ; "BASE" radix base for numeric I/O
-        USREVAL =    UPP+6      ; "'EVAL" execution vector of EVAL
+        USRIDLE =    UPP+6      ; "'IDLE" idle routine in KEY (default: RET)
         USRPROMPT =  UPP+8      ; "'PROMPT" point to prompt word (default .OK)
         USRCP   =    UPP+10     ; "CP" point to top of dictionary
         USRLAST =    UPP+12     ; "LAST" currently last name in dictionary
@@ -259,10 +260,14 @@
         USRVAR  =    UPP+18     ; "VAR" point to next free USR RAM location
         NVMCONTEXT = UPP+20     ; point to top of dictionary in Non Volatile Memory
         USRCONTEXT = UPP+22     ; "CONTEXT" start vocabulary search
-        USRHLD  =    UPP+24     ; "HLD" hold a pointer of output string
+        USREVAL =    UPP+24     ; "'EVAL" execution vector of EVAL
         USRNTIB =    UPP+26     ; "#TIB" count in terminal input buffer
         USR_IN  =    UPP+28     ; ">IN" hold parsing pointer
-        YTEMP   =    UPP+30     ; extra working register for core words
+        USRBUFFER =  UPP+30     ; "BUFFER" address, defaults to TIBB
+
+        ; More core variables in zero page (instead of assigning fixed addresses)
+        RamWord USRHLD          ; "HLD" hold a pointer of output string
+        RamWord YTEMP           ; extra working register for core words
 
         ;***********************
         ;******  7) Code  ******
@@ -444,7 +449,7 @@ TBOOT:
         .dw     QRXP            ; ?RXP as ?KEY vector
         .endif
         .dw     BASEE           ; BASE
-        .dw     INTER           ; 'EVAL
+        .dw     RETIDLE         ; 'IDLE
         .dw     DOTOK           ; 'PROMPT
         COLDCTOP = .
         .dw     CTOP            ; CP in RAM
@@ -466,7 +471,7 @@ TBOOT:
         .dw     QRXP            ; ?RXP as ?KEY vector
         .endif
         .dw     BASEE           ; BASE
-        .dw     INTER           ; 'EVAL
+        .dw     RETIDLE         ; 'IDLE
         .dw     DOTOK           ; 'PROMPT
         .dw     CTOP            ; CP in RAM
         .dw     LASTN           ; CONTEXT pointer
@@ -2073,8 +2078,8 @@ COUNT:
 RAMHERE:
         TNZ     USRCP
         JRPL    HERE            ; NVM: CP points to NVM, NVMCP points to RAM
-        DoLitW  NVMCP           ; 'eval in Interpreter mode: HERE returns pointer to RAM
-        JP      AT
+        LD      A,#(NVMCP)      ; 'eval in Interpreter mode: HERE returns pointer to RAM
+        JP      AAT
         .else
         RAMHERE = HERE
         .endif
@@ -2461,8 +2466,11 @@ DGTQ1:  LD      (1,X),A
         HEADER  KEY "KEY"
 KEY:
 KEY1:   CALL    [USRQKEY]
-        CALL    QBRAN
-        .dw     KEY1
+        CALL    YFLAGS
+        JRNE    RETIDLE
+        CALL    [USRIDLE]       ; IDLE must be fast (unless ?RX is buffered) and stack neutral
+        JRA     KEY1
+RETIDLE:
         RET
 
         .ifeq   REMOVE_NUFQ
@@ -2657,9 +2665,10 @@ QUEST:
 
 ; Parsing
 
-;       YFLAGS  ( n - )       ( TOS STM8: - Y,Z,N )
+;       YFLAGS  ( n -- )       ( TOS STM8: - Y,Z,N )
 ;       Consume TOS to CPU Y and Flags
 
+;       HEADER  YFLAGS "YFLAGS"
 YFLAGS:
         LDW     Y,X
         INCW    X
@@ -2668,9 +2677,10 @@ YFLAGS:
         RET
 
 
-;       AFLAGS  ( c - )       ( TOS STM8: - A,Z,N )
+;       AFLAGS  ( c -- )       ( TOS STM8: - A,Z,N )
 ;       Consume TOS to CPU A and Flags
 
+;       HEADER  AFLAGS "AFLAGS"
 AFLAGS:
         INCW    X
         LD      A,(X)
@@ -2752,7 +2762,8 @@ SUBPARS:
 
         HEADER  PARSE "PARSE"
 PARSE:
-        DoLitW  TIBB
+        LD      A,#(USRBUFFER)
+        CALL    AAT
         ADDW    Y,USR_IN        ; current input buffer pointer
         LDW     (X),Y
         LD      A,USRNTIB+1
@@ -2853,7 +2864,6 @@ NAMET:
 1$:     RET                     ; THEN
         .endif
 
-
 ;       R@ indexed char lookup for SAME?
 SAMEQCAT:
         CALL    OVER
@@ -2930,8 +2940,7 @@ FIND:
         CALLR   SWAPPF
 FIND1:  CALL    AT
         JREQ    FIND6
-        CALL    DUPP
-        CALL    AT
+        CALL    YAT             ; DUPP AT
         DoLitW  MASKK
         CALL    ANDD
         .ifne   CASEINSENSITIVE
@@ -3061,7 +3070,8 @@ ACCP4:  CALL    DROP
 
         HEADER  QUERY "QUERY"
 QUERY:
-        DoLitW  TIBB
+        LD      A,#(USRBUFFER)
+        CALL    AAT
         DoLitC  TIBLENGTH
         CALLR   ACCEP
         CALL    AFLAGS          ; NTIB !
@@ -3108,6 +3118,8 @@ ABOR2:  CALL    DOSTR
 PRESE:
         CLRW    X
         LDW     USRNTIB,X
+        LDW     X,#(TIBB)
+        LDW     USRBUFFER,X
         LDW     X,#SPP          ; initialize data stack
         RET
 
@@ -3765,7 +3777,6 @@ RBRAC:
         LDW     USREVAL,Y
         RET
 
-
 ; Defining words
 
         .ifne   HAS_DOES
@@ -3798,8 +3809,8 @@ DOESS:
         HEADER  DODOES "dodoes"
         .endif
 DODOES:
-        CALL    LAST            ; ( link field of current word )
-        CALL    AT
+        LD      A,#(USRLAST)    ; ( link field of current word )
+        CALLR   AAT
         CALL    NAMET           ; ' ( 'last  )
         DoLitC  BRAN_OPC        ; ' JP
         CALL    OVER            ; ' JP '
@@ -3822,6 +3833,21 @@ DODOES:
         .db     BRAN_OPC        ; \ HERE <- DOLIT <- ('+3) <- branch
         RET
         .endif
+
+;       A@   ( A:shortAddr -- n )
+;       push contents of A:shortAddr on stack
+;       HEADER  AAT "A@"
+AAT:
+        CLRW    Y
+        LD      YL,A
+        ; fall through
+
+;       Y@   ( Y:Addr -- n )
+;       push contents of Y:Addr on stack
+;       HEADER  YAT "Y@"
+YAT:
+        LDW     Y,(Y)
+        JP      YSTOR
 
 ;       CREATE  ( -- ; <string> )
 ;       Compile a new array
@@ -3854,8 +3880,8 @@ CONST:
 
         HEADER  DOCON "docon"
 DOCON:
-        CALL    RFROM
-        CALL    AT              ; push constant in interpreter mode
+        POPW    Y
+        CALLR   YAT             ; R> AT push constant in interpreter mode
         CALL    COMPIQ
         JREQ    1$
         CALL    LITER           ; compile constant in compiler mode

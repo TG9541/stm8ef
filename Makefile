@@ -14,6 +14,7 @@ tgz: build
 build: words
 	make BOARD=CORE
 	make BOARD=XH-M188
+	make BOARD=XH-M194
 	make BOARD=W1209
 	make BOARD=W1209-FD
 	make BOARD=W1209-CA
@@ -28,6 +29,7 @@ build: words
 
 clean:
 	rm -rf out/*
+	rm target
 
 words:
 	awk 'BEGIN { print "# STM8EF Words"} /^; +[^ ]+ +.+--/&&!p {p=1;print "```"} !/^;/&&p {p=0; print "```\n"} p' forth.asm > docs/words.md

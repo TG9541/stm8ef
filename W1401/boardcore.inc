@@ -45,11 +45,14 @@ _EXTI2_IRQHandler:
 _EXTI3_IRQHandler:
         .endif
 
+        .ifne   PSIM-PORTE
+;       Dummy label for _EXTIE_IRQHandler
+_EXTI4_IRQHandler:
+        .endif
+
 ;===============================================================
 
         .ifne   HAS_LED7SEG
-
-        RamWord TIMSERIAL       ; Timer: use PD1 for serial while > 0
 
 ;       LED_MPX driver ( -- )
 ;       Code called from ISR for LED MPX
@@ -77,11 +80,6 @@ LED_MPX:
         LD      A,(LED7LAST-5,X)
         CPL     A
 
-        TNZ     TIM4TCNT
-        JREQ    1$
-        MOV     TIMSERIAL,#(1000/256); load MSB msec ticker
-        JRNE    LEDMPXEND
-1$:
         LDW     Y,TIMSERIAL     ; decrement COM use timer
         JREQ    LEDMPXGO
         DECW    Y               ; active COM: don't change PNRX properties
@@ -90,6 +88,7 @@ LED_MPX:
 
 ;       LED segment clock out while PD1/SWIM is not used as UART
 LEDMPXGO:
+        MOV     TIMRELOAD,#1    ; Reset TIMSERIAL reload value
         BRES    PD_CR2,#PNRX    ; disable PNRX external interrupt
         PUSH    A               ; LED pattern (2,SP)
         LD      A,#8            ; 8 clock pulses for 74HC164

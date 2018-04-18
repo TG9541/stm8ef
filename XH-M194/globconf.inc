@@ -1,29 +1,29 @@
 ; STM8EF Global Configuration File
-; Config for W1209 Thermostat Module
 ; Clock: HSI (no crystal)
 
         HALF_DUPLEX      = 0    ; Use UART in half duplex mode
-        HAS_TXUART       = 0    ; No UART TXD, word TX!
         HAS_RXUART       = 0    ; No UART RXD, word ?RX
-        HAS_TXSIM        = 1    ; Like HAS_RXSIM, word TXGP!, use for console if > HAS_TXUART
+        HAS_TXUART       = 0    ; No UART TXD, word TX!
         HAS_RXSIM        = 1    ; Enable RxD via GPIO/TIM4, word ?RXGP
-        PSIM     = PORTC        ; Port for UART simulation
-        PNRX             = 7    ; Port GPIO# for HAS_RXDSIM
-        PNTX             = 7    ; Port GPIO# for HAS_TXDSIM
+        HAS_TXSIM        = 1    ; Like HAS_RXSIM, word TXGP!, use for console if > HAS_TXUART
+        PSIM         = PORTD    ; Port for UART simulation
+        PNRX             = 1    ; Port GPIO# for HAS_RXDSIM
+        PNTX             = 1    ; Port GPIO# for HAS_TXDSIM
         SERPRIOTIM   = 30000    ; RXSIM priority in BG ticks
 
         EMIT_BG  = EMIT7S       ; 7S-LED background EMIT vector
         QKEY_BG  = QKEYB        ; Board keys background QKEY vector
 
-        HAS_LED7SEG      = 1    ; yes, 1*3 dig. 7-seg LED on module
-
-        HAS_KEYS         = 2    ; yes, 3 keys on module
-        HAS_OUTPUTS      = 1    ; yes, power on/off
-        HAS_ADC          = 1    ; Analog input words
+        HAS_LED7SEG      = 1    ; yes, 1*4 dig. 7-seg LED on module
+        LEN_7SGROUP      = 4    ; 4 dig. 7-seg LED
+        HAS_KEYS         = 6    ; yes, 6 keys
+        HAS_OUTPUTS      = 12   ; yes, 6 relais, 6 LEDs
+        HAS_ADC          = 0    ; Analog input words
 
         HAS_BACKGROUND   = 1    ; Background Forth task (TIM2 ticker)
-        BG_TIM2_REL = 0x08FC    ; 1ms ticker for 7S-LED MPX
-        BG_RUNMASK  =      0    ; BG task runs if "(BG_RUNMASK AND TICKCNT) equals 0"
+        BG_TIM2_REL = 0x09BA    ; 5ms/4 = 1.25ms ticker for 7S-LED MPX
+        BG_RUNMASK  =      3    ; BG task runs "in one out of four" cycles
+
         HAS_CPNVM        = 1    ; Can compile to Flash, always interpret to RAM
         HAS_DOES         = 1    ; CREATE-DOES> extension
         HAS_DOLOOP       = 1    ; DO .. LOOP extension: DO LEAVE LOOP +LOOP

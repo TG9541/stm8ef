@@ -22,6 +22,9 @@ void EXTI2_IRQHandler() __interrupt (INTVEC_EXTI2);
 // declare interrupt handler for Port D external interrupts
 void EXTI3_IRQHandler() __interrupt (INTVEC_EXTI3);
 
+// declare interrupt handler for Port E external interrupts
+void EXTI4_IRQHandler() __interrupt (INTVEC_EXTI4);
+
 // declare interrupt handler for TIM2 update overflow
 void TIM2_UO_IRQHandler() __interrupt (INTVEC_TIM2_UPDATE);
 

@@ -11,6 +11,11 @@
         RamByte TIM4RXBUF       ; TIM4 RX receive buffer
         .endif
 
+        .ifne   SERPRIOTIM
+        RamWord TIMSERIAL       ; "TIMSERIAL" Timer: use PSIM,PNRX for serial while not 0
+        RamByte TIMRELOAD       ; Reload value for TIMSERIAL, set by receive interrupt, reset by timer 
+        .endif
+
         .ifne   HAS_RXSIM
 ;       ?RXP     ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
 ;       Return char from a simulated serial interface and true, or false.
@@ -47,6 +52,10 @@ QRXP:
 TXSTOR:
         .endif
 TXPSTOR:
+        .ifne   SERPRIOTIM
+        MOV     TIMSERIAL,TIMRELOAD ; load MSB msec ticker
+        .endif
+
         INCW    X
         LD      A,(X)
         INCW    X
@@ -85,6 +94,11 @@ _EXTI3_IRQHandler:
         .endif
 
         BRES    PSIM+CR2,#PNRX  ; disable PNRX external interrupt
+
+        .ifne   SERPRIOTIM
+        MOV     TIMRELOAD,#(SERPRIOTIM/256) ; load MSB msec reload
+        MOV     TIMSERIAL,TIMRELOAD ; load MSB msec ticker
+        .endif
 
         MOV     TIM4RCNT,#9     ; set sequence counter for RX
 
