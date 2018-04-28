@@ -364,7 +364,24 @@
  ADC1_TRIGR2 = 0x534F ; ADC1 trigger disable 2 0x00
  ADC1_TRIGR3 = 0x5350 ; ADC1 trigger disable 3 0x00
  ADC1_TRIGR4 = 0x5351 ; ADC1 trigger disable 4 0x00
-; 0x00 53C8 to 0x00 542F Reserved area(104 bytes)
+; 0x00 53C8 to 0x00 53FF Reserved area
+; LCD
+ LCD_CR1 = 0x5400 ; LCD control register 1 0x00
+ LCD_CR2 = 0x5401 ; LCD control register 2 0x00
+ LCD_CR3 = 0x5402 ; LCD control register 3 0x00
+ LCD_FRQ = 0x5403 ; LCD frequency selection register 0x00
+ LCD_PM0 = 0x5404 ; LCD Port mask register 0 0x00
+ LCD_PM1 = 0x5405 ; LCD Port mask register 1 0x00
+ LCD_PM2 = 0x5406 ; LCD Port mask register 2 0x00
+ LCD_PM3 = 0x5407 ; LCD Port mask register 3 0x00
+ LCD_PM4 = 0x5408 ; LCD Port mask register 4 0x00
+ LCD_PM5 = 0x5409 ; LCD Port mask register 5 0x00
+; 0x00 540A to 0x00 540B Reserved area (2 bytes)
+ LCD_RAM0 = 0x540C ; LCD display memory 0 0x00
+; ...
+ LCD_RAM21 = 0x5421 ; LCD display memory 21 0x00
+; 0x00 5422 to 0x00 542E Reserved area
+ LCD_CR4 = 0x542F ; LCD control register 4 0x00
 ; RI
 ; 0x00 5430 Reserved area (1 byte)
  RI_ICR1 = 0x5431 ; RI Timer input capture routing register 1 0x00
@@ -392,7 +409,6 @@
  RI_IOIR4 = 0x5455 ; RI I/O input register 4 0xXX
  RI_IOCMR4 = 0x5456 ; RI I/O control mode register 4 0x00
  RI_IOSR4 = 0x5457 ; RI I/O switch register 4 0x00
-; 1.   These registers are not impacted by a system reset. They are reset at power-on. 
 ; CPU(1)
  A = 0x7F00 ; Accumulator 0x00
  PCE = 0x7F01 ; Program counter extended  0x00
@@ -436,24 +452,3 @@
  DM_ENFCTR = 0x7F9A ; DM enable function register 0xFF
 ; 0x00 7F9B to 0x00 7F9F Reserved area (5 bytes)
 ; 1.   Accessible by debug module only
-
-
-; LCD 
- LCD_CR1 = 0x5400 ; LCD control register 1 0x00
- LCD_CR2 = 0x5401 ; LCD control register 2 0x00
- LCD_CR3 = 0x5402 ; LCD control register 3 0x00
- LCD_FRQ = 0x5403 ; LCD frequency selection register 0x00
- LCD_PM0 = 0x5404 ; LCD Port mask register 0 0x00
- LCD_PM1 = 0x5405 ; LCD Port mask register 1 0x00
- LCD_PM2 = 0x5406 ; LCD Port mask register 2 0x00
- LCD_PM3 = 0x5407 ; LCD Port mask register 3 0x00
- LCD_PM4 = 0x5408 ; LCD Port mask register 4 0x00
- LCD_PM5 = 0x5409 ; LCD Port mask register 5 0x00
-; 0x00 540A to 0x00 540B Reserved area (2 bytes)
- LCD_RAM0 = 0x540C ; LCD display memory 0 0x00
-; ...
- LCD_RAM21 = 0x5421 ; LCD display memory 21 0x00
-; 0x00 5422 to 0x00 542E Reserved area
- LCD_CR4 = 0x542F ; LCD control register 4 0x00
-
-
