@@ -20,7 +20,7 @@
 
 8002 equ RESET_VECTOR
 8006 equ TRAP_VETCOR
-                         \ Interrupt vectors (16 bit part)            
+                         \ Interrupt vectors (16 bit part)
 800A equ INT_TLI         \ 0 External top level interrupt
 800E equ INT_FLASH       \ 1 Flash EOP/WR_PG_DIS
 8012 equ INT_DMA1_01     \ 2
@@ -67,7 +67,7 @@
 5009 equ PB_CR2 \ Port B control register 2 (0x00)
 \ Port C
 500A equ PC_ODR \ Port C data output latch register (0x00)
-500B equ PB_IDR \ Port C input pin value register (0xXX)
+500B equ PC_IDR \ Port C input pin value register (0xXX)
 500C equ PC_DDR \ Port C data direction register (0x00)
 500D equ PC_CR1 \ Port C control register 1 (0x00)
 500E equ PC_CR2 \ Port C control register 2 (0x00)
@@ -77,6 +77,37 @@
 5011 equ PD_DDR \ Port D data direction register (0x00)
 5012 equ PD_CR1 \ Port D control register 1 (0x00)
 5013 equ PD_CR2 \ Port D control register 2 (0x00)
+\ Port E
+5014 equ PE_ODR \ Port E data output latch register (0x00)
+5015 equ PE_IDR \ Port E input pin value register (0xXX)
+5016 equ PE_DDR \ Port E data direction register (0x00)
+5017 equ PE_CR1 \ Port E control register 1 (0x00)
+5018 equ PE_CR2 \ Port E control register 2 (0x00)
+\ Port F
+5019 equ PF_ODR \ Port F data output latch register (0x00)
+501A equ PF_IDR \ Port F input pin value register (0xXX)
+501B equ PF_DDR \ Port F data direction register (0x00)
+501C equ PF_CR1 \ Port F control register 1 (0x00)
+501D equ PF_CR2 \ Port F control register 2 (0x00)
+\ Port G
+501E equ PG_ODR \ Port G data output latch register (0x00)
+501F equ PG_IDR \ Port G input pin value register (0xXX)
+5020 equ PG_DDR \ Port G data direction register (0x00)
+5021 equ PG_CR1 \ Port G control register 1 (0x00)
+5022 equ PG_CR2 \ Port G control register 2 (0x00)
+\ Port H
+5023 equ PH_ODR \ Port H data output latch register (0x00)
+5024 equ PH_IDR \ Port H input pin value register (0xXX)
+5025 equ PH_DDR \ Port H data direction register (0x00)
+5026 equ PH_CR1 \ Port H control register 1 (0x00)
+5027 equ PH_CR2 \ Port H control register 2 (0x00)
+\ Port I
+5028 equ PI_ODR \ Port I data output latch register (0x00)
+5029 equ PI_IDR \ Port I input pin value register (0xXX)
+502A equ PI_DDR \ Port I data direction register (0x00)
+502B equ PI_CR1 \ Port I control register 1 (0x00)
+502C equ PI_CR2 \ Port I control register 2 (0x00)
+
 \ 0x00 5014 to 0x00 501D Reserved area (0 bytes)
 \ 0x00 502E to 0x00 5049 Reserved area (44 bytes)
 \ Flash
@@ -362,7 +393,24 @@
 534F equ ADC1_TRIGR2 \ ADC1 trigger disable 2 (0x00)
 5350 equ ADC1_TRIGR3 \ ADC1 trigger disable 3 (0x00)
 5351 equ ADC1_TRIGR4 \ ADC1 trigger disable 4 (0x00)
-\ 0x00 53C8 to 0x00 542F Reserved area(104 bytes)
+\ 0x00 53C8 to 0x00 53FF Reserved area
+\ LCD
+5400 equ LCD_CR1 \ LCD control register 1 0x00
+5401 equ LCD_CR2 \ LCD control register 2 0x00
+5402 equ LCD_CR3 \ LCD control register 3 0x00
+5403 equ LCD_FRQ \ LCD frequency selection register 0x00
+5404 equ LCD_PM0 \ LCD Port mask register 0 0x00
+5405 equ LCD_PM1 \ LCD Port mask register 1 0x00
+5406 equ LCD_PM2 \ LCD Port mask register 2 0x00
+5407 equ LCD_PM3 \ LCD Port mask register 3 0x00
+5408 equ LCD_PM4 \ LCD Port mask register 4 0x00
+5409 equ LCD_PM5 \ LCD Port mask register 5 0x00
+\ 0x00 540A to 540B 0x00 Reserved area (2 bytes)
+540C equ LCD_RAM0 \ LCD display memory 0 0x00
+\ ...
+5421 equ LCD_RAM21 \ LCD display memory 21 0x00
+\ 0x00 5422 to 0x00 542E Reserved area
+542F equ LCD_CR4 \ LCD control register 4 0x00
 \ RI
 \ 0x00 5430 Reserved area (1 byte)
 5431 equ RI_ICR1 \ RI Timer input capture routing register 1 (0x00)
@@ -390,7 +438,7 @@
 5455 equ RI_IOIR4 \ RI I/O input register 4 (0xXX)
 5456 equ RI_IOCMR4 \ RI I/O control mode register 4 (0x00)
 5457 equ RI_IOSR4 \ RI I/O switch register 4 (0x00)
-\ 1.   These registers are not impacted by a system reset. They are reset at power-on. 
+\ 1.   These registers are not impacted by a system reset. They are reset at power-on.
 \ CPU(1)
 7F00 equ A \ Accumulator (0x00)
 7F01 equ PCE \ Program counter extended  (0x00)
