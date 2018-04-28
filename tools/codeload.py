@@ -239,13 +239,14 @@ def upload(path):
                         else:
                             readEfr(mcuFile)
                     elif resSplit[1] == 'export':
-                        symbol = resSplit[2]
-                        if not symbol in resources:
-                            error('symbol not found: %s' % symbol, line, path, lineNr)
-                        if required(symbol):
-                            CN.transfer("$%s CONSTANT %s" % (resources[symbol], symbol))
-                        else:
-                            vprint("\\res export %s: skipped" % symbol)
+                        for i in range(2, len(resSplit)):
+                            symbol = resSplit[i]
+                            if not symbol in resources:
+                                error('symbol not found: %s' % symbol, line, path, lineNr)
+                            if required(symbol):
+                                CN.transfer("$%s CONSTANT %s" % (resources[symbol], symbol))
+                            else:
+                                vprint("\\res export %s: skipped" % symbol)
                     continue
 
                 reInclude = re.search('^#(include|require) +(.+?)$', line)
