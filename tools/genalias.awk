@@ -1,4 +1,4 @@
-#! /usr/bin/gawk -f
+#!/usr/bin/gawk -f
 # usage: ./genalias.awk [-v dolog=1] [-v ITCindex=1] <path to forth.rst>
 # source: tg9541/stm8ef
 

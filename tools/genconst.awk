@@ -7,7 +7,7 @@ BEGIN {
 
 # extract lines like:
 # USRNTIB =    UPP+26     ; "#TIB" count in terminal input buffer
-$3!~/(LINK|RAMPOOL)/ && $4=="=" && $5~/(SPP|UPP)/ && $1~/^00/ {
+$3!~/(LINK|RAMPOOL)/ && $4~/[=;]/ && $5~/(SPP|UPP|CFG)/ && $1~/^00/ {
   if (split($0,b,"\"") == 3) {
     symbol = b[2]
   }
