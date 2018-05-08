@@ -71,12 +71,16 @@ BOARDINIT:
         JP     _LCD_UP
 
 LCD_LOGO:
-        .db 0xe4, 0x36, 0x24, 0x74
-        .db 0x0a, 0xf0, 0x74, 0xfe, 0x60
+        .db 0x6E, 0xF4, 0x70, 0xFA          ; 'HELO'
+        .db 0xE4, 0x36, 0x24, 0x74          ; 'Fort'
+        .db 0x02                            ; Signs
+
+        ; .db 0xe4, 0x36, 0x24, 0x74
+        ; .db 0x0a, 0xf0, 0x74, 0xfe, 0x60
 
 ; ==============================================
 
-; HT1621B address map
+; HT1621B segments map
 ; addr  b3      b2      b1      b0
 ; -------------------------------------
 ;  0    2.1A    2.1F    2.1E    2.1D
@@ -87,15 +91,15 @@ LCD_LOGO:
 ;  5    2.3B    2.3G    2.3C    2.3dot
 ;  6    2.4A    2.4F    2.4E    2.4D
 ;  7    2.4B    2.4G    2.4C    2.colon
-;  8    2.W     2.%     2.h     2.A
+;  8    2.W     2.%     2.h     2.A(mp)
 ;  9    1.4B    1.4G    1.4C    1.V
-; 10    1.4A    1.4F    1.4E    1.4A
+; 10    1.4A    1.4F    1.4E    1.4D
 ; 11    1.3B    1.3G    1.3C    1.3dot
-; 12    1.3A    1.3F    1.3E    1.3A
+; 12    1.3A    1.3F    1.3E    1.3D
 ; 13    1.2B    1.2G    1.2C    1.2dot
-; 14    1.2A    1.2F    1.2E    1.2A
+; 14    1.2A    1.2F    1.2E    1.2D
 ; 15    1.1B    1.1G    1.1C    1.1dot
-; 16    1.1A    1.1F    1.1E    1.1A
+; 16    1.1A    1.1F    1.1E    1.1D
 ; 17    1.IN    1.OUT   2.SET   1.°C
 
 ; Alphanum codes
@@ -117,24 +121,29 @@ LCD_LOGO:
 ; E - $F4
 ; F - $E4
 ; G - $F2
-; H - $6E
+; h - $66
 ; I - $60
 ; J - $1A
-; k - $66 (like h)
+; k - $7c
 ; L - $70
-; M -
+; M - $A6
 ; n - $26
 ; o - $36
 ; P - $EC
-; Q - 
+; Q - $CE
 ; r - $24
-; s - $D6 (like 5)
+; s - $D6
 ; t - $74
-; u - $32
+; U - $7A
+; v - $32
+; w - $B2
+; X - $6E
 ; y - $53
+; Z - $BC
 ; - - $04
 ; ^ - $C8
 ; ° - $CC
+; _ - $10
 
 ; Send command to LCD. reg A - command
 LCD_CMD:
@@ -209,6 +218,7 @@ LCDC_DATA:
         BSET    PC_ODR, #5 ; CS inactive
         RET
 
+        ; LCD_DIRECT
        .endif
 
 LCD_ADDR:
@@ -235,12 +245,16 @@ LCD_BIT0:
         BRES    PC_ODR, #7 ; Data 0
         JRA     LCD_CLK
 
+
+LCD_BYTE_SWAP_A:
+        SWAP    A
 LCD_BYTE_A:
         CALLR   LCD_BIT_A ; bit 7
         CALLR   LCD_BIT_A
         CALLR   LCD_BIT_A
-        CALLR   LCD_BIT_A
-        CALLR   LCD_BIT_A
+        CALLR   LCD_BIT_A ; bit 4
+LCD_NIBBLE_A:
+        CALLR   LCD_BIT_A ; bit 3
         CALLR   LCD_BIT_A
         CALLR   LCD_BIT_A ; bit 1
         ; bit 0
@@ -252,14 +266,19 @@ LCD_CLK:
         BSET    PC_ODR, #6 ; Clock up
         RET
 
+
 ; ==============================================
-;       LCDUP  ( ref -- )
-;       Copy 9 bytes from memory ref addr to LCD data registers
+;       >LCD  ( ref -- )
+;       Update LCD data.
+;       Copy 9 bytes from memory ref addr to LCD data registers.
+;       Bytes 0-3 mapped to 4 digits, dots and sign V (3 bit0) on upper row.
+;       Bytes 4-7 mapped to 4 digits, dots and semicolon (7 bit0) on lower row.
+;       Byte  8 mapped to signs ( IN, OUT, SET, °C, W, %, h, A )
         .dw     LINK
 
         LINK =  .
-        .db     (5)
-        .ascii  "LCDUP"
+        .db     (4)
+        .ascii  ">LCD"
 LCD_UP:
         ; Load address
         LDW     Y,X
@@ -267,22 +286,62 @@ LCD_UP:
         INCW    X
         INCW    X
 _LCD_UP:
+        ; Remap to LCD
         CLR     A
         CALLR   LCD_ADDR
-        LD      A, #9
-        ; Send data
-1$:
-        PUSH    A
-        LD      A,(Y)
+        ; Lower row
+        LD      A, (#4, Y)
         CALLR   LCD_BYTE_A
-        POP     A
-        INCW    Y
-        DEC     A
-        JRNE    1$
+        LD      A, (#5, Y)
+        CALLR   LCD_BYTE_A
+        LD      A, (#6, Y)
+        CALLR   LCD_BYTE_A
+        LD      A, (#7, Y)
+        CALLR   LCD_BYTE_A
+        ; Signs ( W, %, h, A )
+        LD      A, (#8, Y)
+        SWAP    A
+        CALLR   LCD_NIBBLE_A
+
+        ; Upper row
+        LD      A, (#3, Y)
+        CALLR   LCD_BYTE_SWAP_A
+        LD      A, (#2, Y)
+        CALLR   LCD_BYTE_SWAP_A
+        LD      A, (#1, Y)
+        CALLR   LCD_BYTE_SWAP_A
+        LD      A, (Y)
+        CALLR   LCD_BYTE_SWAP_A
+        ; Signs ( IN, OUT, SET, °C )
+        LD      A, (#8, Y)
+        CALLR   LCD_NIBBLE_A
 
         BSET    PC_ODR, #5 ; CS inactive
         RET
 
+; ==============================================
+;       'LCD  ( -- ref )
+;       Get address of LCD double buffer
+        RamBlck LCD_BUF,9
+        .dw     LINK
+
+        LINK =  .
+        .db     (4)
+        .ascii  "'LCD"
+LCD7FIRST:
+        LDW     Y,#(LCD_BUF)
+        JP      YSTOR
+
+; ==============================================
+;       C7S  ( c -- 7s )
+;       Convert char to 7 seg code
+        .dw     LINK
+
+        LINK =  .
+        .db     (3)
+        .ascii  "C7S"
+C7S:
+        RET
 
 ; ==============================================
 
