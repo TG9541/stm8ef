@@ -311,10 +311,13 @@ OUTSTOR:
 ;===============================================================
 
         .ifne   HAS_KEYS
-;       BKEY  ( -- f )     ( TOS STM8: -- A,Z,N )
-;       Read board key state as a bitfield
-;       Inputs: Freq+ [PC4], Freq- [PC3]
-;       Inputs: Duty+ [PA1], Duty- [PA2]
+;       BKEY  ( -- c )     ( TOS STM8: -- A,Z,N )
+;       Read board keys state as a bitfield.
+;       Bits:
+;           bit 3: Freq+ [PC4]
+;           bit 2: Freq- [PC3]
+;           bit 1: Duty+ [PA1]
+;           bit 0: Duty- [PA2]
         .dw     LINK
 
         LINK =  .
@@ -330,6 +333,8 @@ BKEY:
 3$:     RLC     A
         BTJF    PA_IDR, #2, 4$
 4$:     RLC     A
+        CPL     A
+        AND     A, #0x0F
         JP      ASTOR
 
 
