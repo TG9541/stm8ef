@@ -75,8 +75,17 @@ LCD_LOGO:
         .db 0xE4, 0x36, 0x24, 0x74          ; 'Fort'
         .db 0x02                            ; Signs
 
-        ; .db 0xe4, 0x36, 0x24, 0x74
-        ; .db 0x0a, 0xf0, 0x74, 0xfe, 0x60
+LCD_FONT:
+; 2.             !    "    #    $    %    &    '    (    )    *    +    ,    -    .    /
+        .db      0x60,0x48,0x7E,0xD6,0x46,0xFC,0x08,0xF0,0x9A,0xCC,0x0c,0x02,0x04,0x02,0x28
+; 3.        0    1    2    3    4    5    6    7    8    9    :    ;    <    =    >    ?
+        .db 0xFA,0x0A,0xBC,0x9E,0x4E,0xD6,0xF6,0x8A,0xFE,0xDE,0x00,0x00,0x30,0x14,0x88,0xAC
+; 4.        @    A    B    C    D    E    F    G    H    I    J    K    L    M    N    O
+        .db 0xBE,0xEE,0x76,0x34,0x3E,0xF4,0xE4,0xF2,0x66,0x60,0x1A,0x7C,0x70,0xA6,0x26,0x36
+; 5.        P    Q    R    S    T    U    V    W    X    Y    Z    [    \    ]    ^    _
+        .db 0xEC,0xCE,0x24,0xD6,0x74,0x7A,0x32,0xB2,0x6E,0x5e,0xBC,0xF0,0x42,0x9A,0xC8,0x10
+; 6.        `    a    b    c    d    e    f    g    h    i    j    k    l    m    n    o
+; 7.        p    q    r    s    t    u    v    w    x    y    z    {    |    }    ~    DEL
 
 ; ==============================================
 
@@ -138,7 +147,7 @@ LCD_LOGO:
 ; v - $32
 ; w - $B2
 ; X - $6E
-; y - $53
+; y - $5e
 ; Z - $BC
 ; - - $04
 ; ^ - $C8
@@ -333,7 +342,7 @@ LCD7FIRST:
         JP      YSTOR
 
 ; ==============================================
-;       C7S  ( c -- 7s )
+;       C7S  ( c -- c7s )
 ;       Convert char to 7 seg code
         .dw     LINK
 
@@ -341,6 +350,25 @@ LCD7FIRST:
         .db     (3)
         .ascii  "C7S"
 C7S:
+        ; Load char
+        LD      A, (#1, X)
+        CP      A, #0x7F ; A <= $7F
+        JRULE   1$
+        SLL     A
+        JRA     3$
+1$:
+        CP      A, #0x5F ; A <= $5F
+        JRULE   2$
+        SUB     A, #0x20
+2$:
+        SUB     A, #0x21
+3$:
+        CLRW    Y
+        LD      YL, A
+        LD      A, (#LCD_FONT, Y)
+        LD      (#1, X), A
+        CLR     A
+        LD      (X), A
         RET
 
 ; ==============================================
