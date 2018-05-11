@@ -1,3 +1,7 @@
+E4THCOM=e4thcom-0.6.3
+TERM_PORT=ttyUSB0
+TERM_BAUD=9600
+TERM_FLAGS=
 
 ifeq ($(BOARD),)
 
@@ -70,6 +74,11 @@ forth: main.ihx
 forthflash: forth
 	stm8flash -c stlinkv2 -p $(TARGET) -w out/$(BOARD)/$(BOARD)-forth.ihx
 
+# Usage:
+# 	make term BOARD=<board dir> [TERM_PORT=ttyXXXX] [TERM_BAUD=nnnn] [TERM_FLAGS="--half-duplex --idm"]
+term:
+	cd $(BOARD) && $(E4THCOM) -t stm8ef -p .:../lib $(TERM_FLAGS) -d $(TERM_PORT) -b B$(TERM_BAUD)
+
 directories: out
 
 out:
@@ -84,5 +93,5 @@ endif
 #out:
 #	${MKDIR_P}
 
-.PHONY: all zip build defaults
+.PHONY: all zip build defaults term
 
