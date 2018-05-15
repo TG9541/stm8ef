@@ -13,6 +13,7 @@
         EMIT_BG  = DROP         ; 7S-LED background EMIT vector
         QKEY_BG  = ZERO         ; Board keys background QKEY vector
 
+        HAS_LCD          = 14   ; yes, internal LCD controller, Use 14 bytes of ram
         HAS_LED7SEG      = 0    ; no 7S-Display
         HAS_KEYS         = 0    ; no (i2c conflict)
         HAS_OUTPUTS      = 1    ; yes, two LEDs
