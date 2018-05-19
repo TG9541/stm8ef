@@ -91,7 +91,7 @@ NVM
 : init
   [ $18 PC_DDR ]C!
   [ $18 PC_CR1 ]C!
-  SPIon
+  1 SPIon
   65 LCDinit  \ init, set contrast value
 ;
 
