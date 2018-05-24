@@ -26,6 +26,8 @@ build: words
 	make BOARD=W1401
 	make BOARD=C0135
 	make BOARD=DCDC
+	make BOARD=XY-PWM
+	make BOARD=XY-LPWM
 	make BOARD=MINDEV
 	make BOARD=SWIMCOM
 	make BOARD=STM8S105K4
@@ -43,6 +45,9 @@ defaults:
 
 defaults105:
 	stm8flash -c stlinkv2 -p stm8s105k4 -s opt -w tools/stm8s105FactoryDefaults.bin
+
+readflash:
+	stm8flash -c stlinkv2 -p stm8s103f3 -s flash -r readflash.ihx
 
 else
 
