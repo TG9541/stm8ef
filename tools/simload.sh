@@ -8,13 +8,13 @@ export object="$1"
 export ucsimstart=`mktemp`
 echo "load \"out/$object/$object.ihx\""  > "$ucsimstart"
 
-# gawk: set breakpoint at binary code address of HI
+# awk: set breakpoint at binary code address of HI
 read -d '' setbreak << 'EOF'
 /^ +([0-9A-F]){6}.* HI:/ {
   print "break 0x" $1
 }
 EOF
-gawk "$setbreak" out/$object/forth.rst >> "$ucsimstart"
+awk "$setbreak" out/$object/forth.rst >> "$ucsimstart"
 
 echo "simload.sh: run STM8EF in uCsim with breakpoint at HI"
 
@@ -54,7 +54,7 @@ tools/codeload.py -b "out/$object" telnet "$boardcode" || exit
 
 echo "simload.sh: prepare uCsim memory dump to .ihx script"
 
-# gawk: uCsim "dch" dump to Intel HEX conversion
+# awk: uCsim "dch" dump to Intel HEX conversion
 read -d '' makeHex << 'EOF'
 /^0x/ {
   cs=0; a=":"; g=$0; n=gsub(/ 0x/,"",g)
@@ -70,7 +70,7 @@ EOF
 echo "simload.sh: extract $boardihx binary and exit uCsim"
 
 # dump flash data, convert to Intel Hex, hard exit uCsim
-nc -w 1 localhost 10001 <<EOF | gawk "$makeHex" > "$boardihx"
+nc -w 1 localhost 10001 <<EOF | awk "$makeHex" > "$boardihx"
 dch 0x8000 0x9FFF 16
 kill
 EOF
