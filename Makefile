@@ -63,8 +63,8 @@ main.ihx: main.c $(MDEPS)
 	rm -f out/$(BOARD)/target/*
 	rm -f target
 	ln -s out/$(BOARD)/target/ target
-	tools/genalias.awk -v target="out/$(BOARD)/target/" out/$(BOARD)/forth.rst
-	tools/genconst.awk -v target="out/$(BOARD)/target/" out/$(BOARD)/forth.rst
+	awk -f tools/genalias.awk -v target="out/$(BOARD)/target/" out/$(BOARD)/forth.rst
+	awk -f tools/genconst.awk -v target="out/$(BOARD)/target/" out/$(BOARD)/forth.rst
 
 forth.rel: forth.asm
 	mkdir -p out/$(BOARD)
