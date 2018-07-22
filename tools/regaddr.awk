@@ -1,4 +1,4 @@
-#!/usr/bin/gawk -f
+#!/usr/bin/awk -f
 
 # Print formatted STM8 register addresses from an edited datasheet table
 # 

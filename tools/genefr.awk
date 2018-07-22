@@ -1,4 +1,4 @@
-#!/usr/bin/gawk -f
+#!/usr/bin/awk -f
 
 $3!~/(LINK|RAMPOOL)/ && $4=="=" && $5~/(UPP|RAMPOOL)/ && $1~/^00/ {
   if (split($0,b,"\"") == 3) {
