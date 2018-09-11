@@ -10,31 +10,32 @@
 ;		ADC for L051F3
 	HEADER  ADCSTOR "ADC!"
 ADCSTOR:
-		BSET	CLK_PCKENR2,#0	        ; enable clock for ADC
-		BSET    ADC1_CR1,#0             ; enable ADC
+		BSET	CLK_PCKENR2,#0	; enable clock for ADC
+		BSET    ADC1_CR1,#0     ; enable ADC
 		LD		A,#4
 		LDW		Y,#ADC1_LTRL
-0$:		INCW	Y		        ; clear DAC1_SQRx
+0$:		INCW	Y				; clear DAC1_SQRx
 		CLR		(Y)
 		DEC		A
 		JRUGT	0$
-		CALL	AFLAGS	                ; A = adc channel#
+		CALL	AFLAGS	; A = adc channel#
+		INC		A
 		LDW		Y,#4
-1$:		DECW	Y		        ; select appropriate ADC1-SQR#
+1$:		DECW	Y		; select appropriate ADC1-SQR#
 		SUB		A,#8
-		JRUGE	1$
-		ADD		A,#8
-		CALL	YSTOR	                ; offset to DAC_SQR1 -> tos
+		JRUGT	1$
+		ADD		A,#7
+		CALL	YSTOR	; offset to DAC_SQR1 -> tos
 		CLRW	Y
 		LD		YL,A
 		LD		A,#1
-2$:		JREQ 	3$
-		SLL		A
-		DECW	Y
-		JP		2$
-3$:		CALL	YFLAGS
+		JP		3$
+2$:		SLL		A
+3$:		DECW	Y
+		JRSGE	2$
+		CALL	YFLAGS
 		LD		(ADC1_SQR1,Y),A	; set channel bit
-		BSET    ADC1_SQR1,#7            ; DMA disabled for single conversion
+		BSET    ADC1_SQR1,#7    ; DMA disabled for single conversion
 		BRES    ADC1_CR1,#0		; disable ADC
 		RET
 
