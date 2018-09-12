@@ -13,9 +13,13 @@
 \res export RTC_DR1
 \res export RTC_DR2
 \res export RTC_DR3
+\res export RTC_CR1
+
 
 #require ]C!
 #require ]B!
+
+nvm
 
 \ Print BCD byte with leading zero
 : BCD. ( b -- )
@@ -23,6 +27,17 @@
     [ $6E01 , ] \ Swap nibbles
     $0F AND $30 + EMIT \ MSD
     $0F AND $30 + EMIT \ LSD
+;
+
+\ Unlock RTC regs
+: RTC-U  ( -- )
+    [ $CA RTC_WPR ]C!
+    [ $53 RTC_WPR ]C!
+;
+
+\ Lock RTC regs
+: RTC-L
+   [ $FF RTC_WPR ]C!
 ;
 
 \ Enable LSE generator
@@ -39,6 +54,9 @@
     [ $10 CLK_CRTCR ]C!         \ Select LSE for RTC
     \ Enable RTC
     [ 1 CLK_PCKENR2 2 ]B!       \ RTC[2]
+    RTC-U
+    [ 1 RTC_CR1 4 ]B!           \ Set BYPSHAD to acces rtc-regs
+    RTC-L                       \ directly
 ;
 
 \ Read RTC time registers
@@ -79,8 +97,7 @@
 
 \ Enable edit RTC registers
 : RTC-EDIT  ( -- )
-    [ $CA RTC_WPR ]C!
-    [ $53 RTC_WPR ]C!
+    RTC-U
     [ 1 RTC_ISR1 7 ]B!          \ Enter initialization mode
     [ $720D , $514C , $FB C, ]  \ 1$:     BTJF    RTC_ISR1,#6,1$   ; wait until enter init mode (bit INITF)
 ;
@@ -105,6 +122,7 @@
     RTC-DONE
 ;
 
+ram
 
 \ ------------------------------------------------------------------------------
 \\ Example:
@@ -115,7 +133,7 @@
 rtc-init 
 hex
 \ Set date/time
-18 5 11 5 14 11 00 rtc-set \ may 11 2018, friday, 14:11:00
+18 5 11 5 14 11 00 rtc! \ may 11 2018, friday, 14:11:00
 
 decimal
 \ Print date and time. It is independet of radix.
