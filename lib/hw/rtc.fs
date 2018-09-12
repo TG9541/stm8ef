@@ -17,6 +17,8 @@
 #require ]C!
 #require ]B!
 
+nvm
+
 \ Print BCD byte with leading zero
 : BCD. ( b -- )
     DUP
@@ -46,6 +48,7 @@
     RTC_TR1 c@ \ Seconds in BCD
     RTC_TR2 c@ \ Minutes in BCD
     RTC_TR3 c@ \ Hours in BCD
+    RTC_DR3 C@ DROP
 ;
 
 \ Output time hh:mm:ss
@@ -105,6 +108,7 @@
     RTC-DONE
 ;
 
+ram
 
 \ ------------------------------------------------------------------------------
 \\ Example:
@@ -115,7 +119,7 @@
 rtc-init 
 hex
 \ Set date/time
-18 5 11 5 14 11 00 rtc-set \ may 11 2018, friday, 14:11:00
+18 5 11 5 14 11 00 rtc! \ may 11 2018, friday, 14:11:00
 
 decimal
 \ Print date and time. It is independet of radix.
