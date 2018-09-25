@@ -1,4 +1,4 @@
-## Homemade STM8S001J3M3 Breakout Board
+## STM8S001J3M3
 
 The STM8S001J3M3 is a member of the STM8S *low density* family. As described [here](https://github.com/TG9541/stm8ef/wiki/STM8-Low-Density-Devices#stm8s001j3) it behaves very much like an STM8S903x3 chip with 1 to 4 GPIOs bonded to the same pin. Out of 8 pins, 3 are used for the power supply (Vss, Vdd, and Vcap, and since NRST was sacrificed, 5 pins are connected to GPIOs. 
 
