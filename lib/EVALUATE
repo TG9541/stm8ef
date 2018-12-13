@@ -33,4 +33,4 @@
 #require EVALUATE
 
 : test S" 2 7 +" ;
-test EVALUATE . 9 ok
+test count EVALUATE . 9 ok
