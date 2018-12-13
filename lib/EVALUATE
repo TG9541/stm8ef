@@ -24,3 +24,13 @@
   TIB BUFFER !
   R> #TIB ! R> >IN !
 ;
+
+\\ Example
+
+\ Test STM8 eForth String Evaluate feature
+\ Note: EVALUATE can be used in an 'IDLE task but it's not allowed in a Background Task
+#require S"
+#require EVALUATE
+
+: test S" 2 7 +" ;
+test EVALUATE . 9 ok
