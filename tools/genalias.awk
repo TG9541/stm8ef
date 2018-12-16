@@ -6,8 +6,13 @@ BEGIN {
   if (!target) {
     target = "target/"
   }
+
   if (!dolog) {
-    dolog = 2                          # log warnings to STDOUT
+    dolog = 2
+    logfile = "/dev/stderr"    # log warnings to STDERR
+  }
+  else {
+    logfile = target "genalias.log"
   }
 
   windx = 0                            # word #
@@ -16,6 +21,8 @@ BEGIN {
   p = 0                                # state
   worddef = ""                         # word definition
   wordcomment = ""                     # word comment
+  aliaslist = "aliaslist.fs"           # alias list file
+
 }
 
 {
@@ -49,7 +56,7 @@ BEGIN {
   next
 }
 
-/(HEADER|HEADFLG)/ && !/\.macro/ {
+/(HEADER|HEADFLG)/ && !/\.macro/ && (NoNOALIAS || !/NOALIAS/) {
   p = 2
   for (i=1; i<=NF; i++) {
     if (index($i,"HEAD")) {
@@ -68,7 +75,7 @@ BEGIN {
 
 $6 == "LINK" && cOneIsAddress {
   p = 0
-  info("standard header " word " " p)
+  info("standard header " word " p=" p )
   next
 }
 
@@ -93,6 +100,7 @@ p > 0 && index($2,label ":") {
 p == 3 && cOneIsAddress {
   p = 0
   addrstr = substr($1,3)
+  LINENR[word] = line
   ALIASADDR[word] = addrstr
   ALIASFLAG[word] = immediate
   WORD[addrstr] = word
@@ -102,6 +110,8 @@ p == 3 && cOneIsAddress {
 }
 
 END {
+  print "\\ Alias list for " target > target aliaslist
+
   if (ALIASADDR["OVERT"]) {
     print ": OVERT [ $CC C, $" ALIASADDR["OVERT"] " , ] ;"
   }
@@ -113,6 +123,7 @@ END {
   for (word in ALIASADDR) {
     if (word !~/(OVERT|\\)/) {
       makeAlias(word)
+      print "#require " word >> target aliaslist
     }
   }
 
@@ -125,7 +136,6 @@ END {
       a = aa
     }
   }
-
 }
 
 function makeAlias(word,addr) {
@@ -139,7 +149,7 @@ function makeAlias(word,addr) {
   }
 
   gsub("/", "_", filename)    # replace "/" - it's forbidden in Linux filenames
-  print ": " word " [ $CC C, $" ALIASADDR[word] " , OVERT" isImmediate > target filename
+  print ": " word " [ $CC C, $" ALIASADDR[word] " , OVERT" isImmediate  " \\ " target " line " line > target filename
 }
 
 function result (text) {
@@ -156,6 +166,7 @@ function warning (text) {
 
 function logger (type, text, level) {
   if (level >= dolog) {
-    print type " " line ":" text
+    print type " " line ":" text >> logfile
+
   }
 }

@@ -69,7 +69,7 @@ class ConnectUcsim(Connection):
             line = removeComment(line)
             if line:
                 self.tn.write(line+ '\r')
-                tnResult = self.tn.expect(['\?\a\r\n', 'k\r\n', 'K\r\n'],60)
+                tnResult = self.tn.expect(['\?\a\r\n', 'k\r\n', 'K\r\n'],5)
             else:
                 return "ok"
         except:
