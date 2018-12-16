@@ -109,10 +109,10 @@ Even though the binaries are very small, STM8 eForth offers many features:
 ## Other changes to the original STM8EF code:
 
 * "ASxxxx V2.0" syntax (the free [SDCC tool chain](http://sdcc.sourceforge.net/) allows mixing Forth, assembly, and C)
-* hard STM8S105C6 dependencies removed (e.g. RAM layout, UART2)
+* hard STM8S105C6 dependencies removed (e.g. initialization, clock, RAM layout, UART2)
 * flexible RAM layout, basic RAM memory management, meaningful symbols for RAM locations
 * conditional code for different target boards with a subdirectory based configuration framework
-* serious bugs fixed (e.g. `COMPILE`, `DEPTH`, `R!`)
+* original code bugs fixed (e.g. `COMPILE`, `DEPTH`, `R!`, `PICK`)
 * significant binary size reduction
 
 # Disclaimer, copyright

@@ -822,7 +822,7 @@ POPYJPY:
 ;       Branch to an inline address.
 
         .ifne   WORDS_LINKRUNTI
-        HEADFLG BRAN "branch" COMPO
+        HEADFLG BRAN "branch" COMPO    ; NOALIAS
         .endif
 BRAN:
         POPW    Y
@@ -1244,7 +1244,7 @@ CNTXT:
 ;       Point to top of dictionary.
 
         .ifne   WORDS_LINKCOMP
-        HEADER  CPP "cp"
+        HEADER  CPP "cp"               ; NOALIAS
         .endif
 CPP:
         LD      A,#(USRCP)
@@ -3806,7 +3806,7 @@ DOESS:
 ;       link action to words created by defining words
 
         .ifne   WORDS_LINKRUNTI
-        HEADER  DODOES "dodoes"
+        HEADER  DODOES "dodoes" ; NOALIAS
         .endif
 DODOES:
         LD      A,#(USRLAST)    ; ( link field of current word )
@@ -3878,7 +3878,7 @@ CONST:
 ;       docon ( -- )
 ;       state dependent action code of constant
 
-        HEADER  DOCON "docon"
+        HEADER  DOCON "docon"   ; NOALIAS
 DOCON:
         POPW    Y
         CALLR   YAT             ; R> AT push constant in interpreter mode
