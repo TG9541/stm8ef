@@ -24,6 +24,6 @@
 #require utils/tester.fs
 
 \ https://www.lammertbies.nl/comm/info/crc-calculation.html
-: testCRC -1 58 49 DO I CRC LOOP ;
+: testCRC -1 58 49 DO I CRC16 LOOP ;
 
 T{ testCRC -> $4B37 }T
