@@ -60,7 +60,7 @@ read -d '' makeHex << 'EOF'
   cs=0; a=":"; g=$0; n=gsub(/ 0x/,"",g)
   App(Xpr(n),1); App($1,4); App($1,6); App("00",1)
   for (i=2; i<=(n+1); i++) { App($i,3) }
-  print a Xpr(and(-cs,0xFF))
+  print a Xpr(and(256*int(cs/256+1)-cs,0xFF))
 }
 END { print ":00000001FF" }
 function Xpr(x) { return sprintf("%02x",x) }
