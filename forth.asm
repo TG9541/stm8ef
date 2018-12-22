@@ -4313,8 +4313,8 @@ WIPE:
 ;===============================================================
 
         LASTN   =       LINK    ;last name defined
+        END_SDCC_FLASH = .
 
         .area CODE
         .area INITIALIZER
-        END_SDCC_FLASH = .
         .area CABS (ABS)

@@ -6,7 +6,9 @@
 
 #require CURRENT  \ persistent support for context switching
 
-RAM WIPE
+NVM
+#require WIPE
+WIPE
 
 #require FORTH
 #require DEFINITIONS
@@ -33,7 +35,7 @@ NVM
 \ in RAM.)
 : NVM ( -- ) 0 CURRENT @ < ABORT" RAM only" NVM ;
 
-RAM WIPE
+WIPE
 
 #require .ID
 
