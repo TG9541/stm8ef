@@ -1,0 +1,10 @@
+\ STM8EF :  ]B?                                                       MM-180324
+\ ------------------------------------------------------------------------------
+
+  \ Enable the compile mode and compile the code to check the bit at byte addr
+  \ c-addr. At runtime return true if the bit is set, false otherwise.
+  : ]B? ( bit c-addr -- f )
+        $72 C, SWAP 2* C, ,  4 C,  $83 C, 0 , $81 C,   $83 C, -1 , ]
+  ; IMMEDIATE
+
+

@@ -1,0 +1,5 @@
+\ stm8ef : i2c loader                                                 MM-171129
+
+#include voc-i2c-core.fs
+#include voc-i2c.fs
+
