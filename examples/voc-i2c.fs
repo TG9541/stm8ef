@@ -1,16 +1,15 @@
 \ stm8ef : voc-i2c.fs                                                  MM-170928
 \ ------------------------------------------------------------------------------
-\           I2C Library, Extended Word Set ( extends voc-i2c-core.fs )
+\        I2C Bus Master, Extended Word Set ( extends voc-i2c-core.fs )
 \
-\               Copyright (C) 2017 manfred.mahlow@forth-ev.de
+\            Copyright (C) 2017,2018 manfred.mahlow@forth-ev.de
 \
-\ Requires: * STM8S eForth on STM8S103xy
-\           * e4thcom -t stm8ef
+\        License see github.com/TG9541/stm8ef/blob/master/LICENSE.md
+\
+\ Requires: * STM8S eForth on an STM8S MCU (tested with STM8S103xy  STM8S105xy)
+\           * e4thcom Terminal (e4thcom-x.y.z -t stm8ef) or codeload.py
 \           * voc-i2c-core-fs
 \
-
-\ #require LSHIFT
-\ #require RSHIFT
 
 #require WIPE
 #require ABORT"
@@ -40,12 +39,12 @@ BASE @ HEX
 \ ambiguous condition exists for n = 0.
   2* 1 OR i2c tx i2c ?ack 1 - FOR i2c rx R@ IF i2c ack ELSE i2c nak THEN NEXT ;
 
-: read ( +n c|a sid -- c1 .. cn )
-\ Send the command or address byte c|a to the I2C slave sid and read +n bytes
+: read ( c +n sid -- c1 .. cn )
+\ Send a command or address byte c to the I2C slave sid and read +n bytes
 \ back. sid is the slaves 7 bit identifier or address. An ambiguous condition
 \ exists for n = 0.
-  >R 1 R@ i2c start i2c out         \ send c|a
-  R> i2c start i2c in i2c stop ;    \ read data bytes
+  >R SWAP 1 R@ i2c start i2c out    \ send c
+  R> i2c start i2c in i2c stop ;    \ read +n data bytes
 
 \ A dummy for compatibility with the hardware based I2C version.
 : ?busy ( -- ) ;
@@ -57,6 +56,6 @@ FORTH DEFINITIONS
 RAM WIPE
 
 \ ------------------------------------------------------------------------------
-\ Last Revision: MM-171129 Comment updated
-\                MM-170928 ported from noForth V
-
+\ Last Revision: MM-181221 V1.1 stack diagramm of read changed
+\                MM-171129 Comments updated
+\                MM-170928 ported from MSP430 Version
