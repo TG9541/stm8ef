@@ -41,6 +41,7 @@ WIPE
 #require MARKER
 #require ALIAS
 #require :NVM
+#require BL
 
 #require ULOCKF
 #require LOCKF
