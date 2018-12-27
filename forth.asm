@@ -781,7 +781,7 @@ LEAVE:
         .endif
         .endif
 
-;       next    ( -- )
+;       donext    ( -- )
 ;       Code for single index loop.
 
         .ifne   WORDS_LINKRUNTI
@@ -1014,8 +1014,10 @@ DOVAR:
         POPW    Y               ; get return addr (pfa)
         ; fall through
 
-;       YSTOR core ( - n )     ( TOS STM8: - Y,Z,N )
+;       Y>  ( -- n )     ( TOS STM8: - Y,Z,N )
 ;       push Y to stack
+
+;       HEADER  YSTOR "Y>"
 YSTOR:
         DECW    X               ; SUBW  X,#2
         DECW    X
@@ -1327,8 +1329,10 @@ TQKEY:
 LAST:
         LD      A,#(USRLAST)
 
-;       ASTOR core ( - n )     ( TOS STM8: - Y,Z,N )
+;       A>  ( -- n )     ( TOS STM8: - Y,Z,N )
 ;       push A to stack
+
+;       HEADER  ASTOR "A>"
 ASTOR:
         CLRW    Y
         LD      YL,A
@@ -2665,10 +2669,10 @@ QUEST:
 
 ; Parsing
 
-;       YFLAGS  ( n -- )       ( TOS STM8: - Y,Z,N )
+;       >Y  ( n -- )       ( TOS STM8: - Y,Z,N )
 ;       Consume TOS to CPU Y and Flags
 
-;       HEADER  YFLAGS "YFLAGS"
+;       HEADER  YFLAGS ">Y"
 YFLAGS:
         LDW     Y,X
         INCW    X
@@ -2677,10 +2681,10 @@ YFLAGS:
         RET
 
 
-;       AFLAGS  ( c -- )       ( TOS STM8: - A,Z,N )
+;       >A   ( c -- )       ( TOS STM8: - A,Z,N )
 ;       Consume TOS to CPU A and Flags
 
-;       HEADER  AFLAGS "AFLAGS"
+;       HEADER  AFLAGS ">A"
 AFLAGS:
         INCW    X
         LD      A,(X)
@@ -2688,11 +2692,11 @@ AFLAGS:
         TNZ     A
         RET
 
-;       parse   ( b u c -- b u delta ; <string> )
+;       SPARSE   ( b u c -- b u delta ; <string> )
 ;       Scan string delimited by c.
 ;       Return found string and its offset.
 
-        HEADER  PARS "pars"
+        HEADER  PARS "SPARSE"
 PARS:
         CALLR   AFLAGS          ; TEMP CSTOR
         PUSH    A

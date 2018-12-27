@@ -45,7 +45,7 @@
 ```
 
 ```
-;       next    ( -- )
+;       donext    ( -- )
 ;       Code for single index loop.
 ```
 
@@ -124,6 +124,11 @@
 ```
 ;       doVAR   ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Code for VARIABLE and CREATE.
+```
+
+```
+;       Y>  ( -- n )     ( TOS STM8: - Y,Z,N )
+;       push Y to stack
 ```
 
 ```
@@ -255,6 +260,11 @@
 ```
 ;       LAST    ( -- a )        ( TOS STM8: -- Y,Z,N )
 ;       Point to last name in dictionary
+```
+
+```
+;       A>  ( -- n )     ( TOS STM8: - Y,Z,N )
+;       push A to stack
 ```
 
 ```
@@ -697,17 +707,17 @@
 ```
 
 ```
-;       YFLAGS  ( n -- )       ( TOS STM8: - Y,Z,N )
+;       >Y  ( n -- )       ( TOS STM8: - Y,Z,N )
 ;       Consume TOS to CPU Y and Flags
 ```
 
 ```
-;       AFLAGS  ( c -- )       ( TOS STM8: - A,Z,N )
+;       >A   ( c -- )       ( TOS STM8: - A,Z,N )
 ;       Consume TOS to CPU A and Flags
 ```
 
 ```
-;       parse   ( b u c -- b u delta ; <string> )
+;       SPARSE   ( b u c -- b u delta ; <string> )
 ;       Scan string delimited by c.
 ;       Return found string and its offset.
 ```
