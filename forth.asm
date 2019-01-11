@@ -115,6 +115,7 @@
         STM8S105C6       = 105  ; 32K flash, 2K RAM, 1K EEPROM, UART2
         STM8S207RB       = 207  ; 32K+96K flash, 6K RAM, 2K EEPROM, UART1
 
+        DEFOSCFREQ     = 16000  ; default oscillator frequency in kHz
 
         ;********************************************
         ;******  2) Device hardware addresses  ******
@@ -167,6 +168,7 @@
         CONSOLE_HALF_DUPLEX = HALF_DUPLEX ; use hardware UART settings
         .endif
 
+        OSCFREQ   = DEFOSCFREQ  ; "OSCFREQ" oscillator frequency in kHz
 
         ;**************************************
         ;******  5) Board Driver Memory  ******
