@@ -1,9 +1,12 @@
 \ STM8: CRC-16-ANSI,  polynomial x16 + x15 + x2 + 1
 \ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
 
-\ reversed implementation ($A001), for Modbus start with "-1" 
+\ reversed implementation ($A001), for Modbus start with "-1"
+
+#require WIPE
 #require DOXCODE
 
+NVM
   : CRC16 ( n c -- n )
   \ CRC-16-ANSI (seed with -1 for Modbus CRC)
     XOR DOXCODE [
@@ -11,13 +14,15 @@
       $54 C,   \ 1$:     SRLW    X
       $2407 ,  \         JRNC    2$
       $01 C,   \         RRWA    X   ; XOR X,#0xA001
-      $A801 ,  \         XOR     A,#0x01  
+      $A801 ,  \         XOR     A,#0x01
       $01 C,   \         RRWA    X
       $A8A0 ,  \         XOR     A,#0xA0
       $01 C,   \         RRWA    X
       $4A C,   \ 2$:     DEC     A
       $26F3 ,  \         JRNE    1$
-    ] ;
+    ]
+  ;
+WIPE RAM
 
 \\ Test
 
