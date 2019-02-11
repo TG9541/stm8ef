@@ -1,0 +1,31 @@
+\ STM8 UART UART_DIV calculation of UART_BRR constants
+\ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
+
+\ Calc BRR constants, RM0016 22.3.4 "High precision baud rate generator"
+: UART_DIV ( baud/10 kHz -- n )
+  ( b10 kHz ) 100 ROT */ 1+
+  DUP $FF0 AND $10 * \ BRR1 in MSB
+  SWAP DUP $F000 AND $100 /
+  SWAP $F AND + +
+;
+
+\\ Example
+
+\res MCU: STM8S103
+\res export UART1_CR2 UART1_BRR1
+
+#require WIPE
+#require UART_DIV
+#require OSCFREQ
+
+\ calculate UART_DIV settings for 9600 baud and 16MHz core clock
+960 OSCFREQ UART_DIV CONSTANT BRR9600  \ this equals $6803 for 16MHz
+
+NVM
+
+  : UARTinit ( )
+    BRR9600 UART1_BRR1 !   \ set both UART_DIV registers
+    $0C UART1_CR2 C!       \ enable TX and RX
+  ;
+
+WIPE RAM
