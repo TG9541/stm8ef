@@ -58,9 +58,9 @@ echo "simload.sh: prepare uCsim memory dump to .ihx script"
 # awk: uCsim "dch" dump to Intel HEX conversion
 read -d '' makeHex << 'EOF'
 /^0x/ {
-  cs=0; a=":"; g=$0; n=gsub(/ 0x/,"",g)
-  App(Xpr(n),1); App($1,4); App($1,6); App("00",1)
-  for (i=2; i<=(n+1); i++) { App($i,3) }
+  cs=0; a=":"
+  App(Xpr(16),1); App($1,4); App($1,6); App("00",1)
+  for (i=2; i<=17; i++) { App($i,1) }
   print a Xpr(and(256*int(cs/256+1)-cs,0xFF))
 }
 END { print ":00000001FF" }
