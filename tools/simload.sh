@@ -53,27 +53,11 @@ echo "simload.sh: transfer $boardcode"
 
 tools/codeload.py -b "out/$object" telnet "$boardcode" || exit
 
-echo "simload.sh: prepare uCsim memory dump to .ihx script"
-
-# awk: uCsim "dch" dump to Intel HEX conversion
-read -d '' makeHex << 'EOF'
-/^0x/ {
-  cs=0; a=":"
-  App(Xpr(16),1); App($1,4); App($1,6); App("00",1)
-  for (i=2; i<=17; i++) { App($i,1) }
-  print a Xpr(and(256*int(cs/256+1)-cs,0xFF))
-}
-END { print ":00000001FF" }
-function Xpr(x) { return sprintf("%02x",x) }
-function App(x,n) { s=substr(x,n,2); a=a s; cs+=strtonum("0x" s) }
-EOF
-
 echo "simload.sh: extract $boardihx binary and exit uCsim"
 
 # dump flash data, convert to Intel Hex, hard exit uCsim
-nc -w 1 localhost 10001 <<EOF | awk "$makeHex" > "$boardihx"
+nc -w 1 localhost 10001 <<EOF | python tools/dch2ihx.py > "$boardihx"
 dch 0x8000 0x9FFF 16
 kill
 EOF
-
 echo "simload.sh: complete - bye!"
