@@ -1764,7 +1764,7 @@ SLMOD:
 ;       Signed divide. Return mod only.
 
         HEADER  MMOD "MOD"
-MODD:
+MMOD:
         CALLR   SLMOD
         JP      DROP
 
