@@ -177,7 +177,7 @@ RAM
 T{ 400 CD>TEST cdram -> }T
 T{ cdram -> 800 }T
 
-T{e WORDS e-> 954 -2622 }T
+T{e WORDS e-> 949 -2963 }T
 
 
 \ compile CURRENT and VOC as a test
