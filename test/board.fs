@@ -1,7 +1,7 @@
 #include utils/tester.fs
 
 \ expected vocabulary (including tester.fs)
-T{e WORDS e-> 918 -5723 }T
+T{e WORDS e-> 913 -6064 }T
 
 \ core: string with capured EMIT
 : test-."" ." abc123" ;
