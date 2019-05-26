@@ -1,0 +1,3 @@
+\ S<  "non-modulo-2^16 <" operator    STM8 eForth math utility word
+\ refer to https://github.com/TG9541/stm8ef/issues/254
+: S< ( n1 n2 -- f ) $8000 + >R $8000 + R> U< ;
