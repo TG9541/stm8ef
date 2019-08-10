@@ -236,6 +236,8 @@
         UNLINK_EVAL      = 1    ; "EVAL"
         UNLINK_QUIT      = 1    ; "QUIT"
         UNLINK_TICK      = 0    ; "'"
+        UNLINK_COMMA     = 0    ; ","
+        UNLINK_CCOMMA    = 0    ; "C,"
         UNLINK_JSRC      = 0    ; "CALL,"
         UNLINK_LITER     = 0    ; "LITERAL"
         UNLINK_BCOMP     = 0    ; "[COMPILE]"

@@ -3294,12 +3294,8 @@ BCOMP:
 ;       Compile an integer into
 ;       code dictionary.
 
-;       HEADER  COMMA ","
-        .dw     LINK
-
-        LINK =  .
-        .db     1
-        .ascii  ","
+;       macro workaround: escape for ","
+        HEADER  COMMA "\054"
 COMMA:
         DoLitC  2
         CALLR   OMMA
@@ -3307,12 +3303,9 @@ COMMA:
 
 ;       C,      ( c -- )
 ;       Compile a byte into code dictionary.
-;       HEADER  CCOMMA "C,"
-        .dw     LINK
 
-        LINK =  .
-        .db     2
-        .ascii  "C,"
+;       macro workaround: escape for "C,"
+        HEADER  CCOMMA "C\054"
 CCOMMA:
         CALL    ONE
         CALLR   OMMA
@@ -3327,16 +3320,9 @@ OMMA:
 
 ;       CALL,   ( ca -- )
 ;       Compile a subroutine call.
-        .ifeq   BAREBONES
-        .ifeq   UNLINK_JSRC
-;       HEADER  JSRC "CALL,"
-        .dw     LINK
 
-        LINK =  .
-        .db     5
-        .ascii  "CALL,"
-        .endif
-        .endif
+;       macro workaround: escape for "CALL,"
+        HEADER  JSRC "CALL\054"
 JSRC:
         CALL    DUPP
         CALL    HERE
@@ -3422,14 +3408,9 @@ COMPIO2:
 ;       $,"     ( -- )
 ;       Compile a literal string
 ;       up to next " .
-        .ifeq   UNLINK_STRCQ
-;       HEADER  STRCQ '$,"'
-         .dw     LINK
 
-        LINK =  .
-        .db     3
-        .ascii  '$,"'
-        .endif
+;       macro workaround: escape for "$,""
+        HEADER  STRCQ '$\054"'
 STRCQ:
         DoLitC  34              ; "
         CALL    PARSE
@@ -3671,16 +3652,8 @@ UNIQ1:  JP      DROP
 ;       Build a new dictionary name
 ;       using string at na.
 
-        .ifne   WORDS_LINKCOMP
-        .ifeq   UNLINK_SNAME
-;       HEADER  SNAME "$,n"
-        .dw     LINK
-
-        LINK =  .
-        .db     3
-        .ascii  "$,n"
-        .endif
-        .endif
+;       macro workaround: escape for "$,n"
+        HEADER  SNAME "$\054n"
 SNAME:
         CALL    DUPPCAT         ; ?null input
         CALL    QBRAN
@@ -4313,8 +4286,8 @@ WIPE:
         INCW    X
         LDW     USRCP,X         ; done
         POPW    X
-        .endif
         JP      OVERT           ; initialize CONTEXT from USRLAST
+        .endif
 
 ;===============================================================
 
