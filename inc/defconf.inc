@@ -3,7 +3,7 @@
 ;       Default settings for all kinds of options
 ;--------------------------------------------------------
         RELVER1          = 2    ; Revision digit 1
-        RELVER0          = 3    ; Revision digit 0
+        RELVER0          = 4    ; Revision digit 0
 
         TERM_LINUX       = 1    ; LF terminates line
 
@@ -236,6 +236,8 @@
         UNLINK_EVAL      = 1    ; "EVAL"
         UNLINK_QUIT      = 1    ; "QUIT"
         UNLINK_TICK      = 0    ; "'"
+        UNLINK_COMMA     = 0    ; ","
+        UNLINK_CCOMMA    = 0    ; "C,"
         UNLINK_JSRC      = 0    ; "CALL,"
         UNLINK_LITER     = 0    ; "LITERAL"
         UNLINK_BCOMP     = 0    ; "[COMPILE]"
