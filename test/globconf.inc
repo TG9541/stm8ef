@@ -30,7 +30,7 @@
 
         WORDS_LINKINTER  = 1    ; Link interpreter words: ACCEPT QUERY TAP kTAP hi 'BOOT tmp >IN 'TIB #TIB eval CONTEXT pars PARSE NUMBER? DIGIT? WORD TOKEN NAME> SAME? find ABORT aborq $INTERPRET INTER? .OK ?STACK EVAL PRESET QUIT $COMPILE
         WORDS_LINKCOMP   = 1    ; Link compiler words: cp last OVERT $"| ."| $,n
-        WORDS_LINKRUNTI  = 1    ; Link runtime words: doLit do$ doVAR donxt dodoes ?branch branch
+        WORDS_LINKRUNTI  = 0    ; Link runtime words: doLit do$ doVAR donxt dodoes ?branch branch
         WORDS_LINKCHAR   = 1    ; Link char out words: DIGIT <# # #S SIGN #> str hld HOLD
         WORDS_LINKMISC   = 1    ; Link composing words of SEE DUMP WORDS: >CHAR _TYPE dm+ .ID >NAME
 
