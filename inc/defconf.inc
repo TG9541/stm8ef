@@ -265,6 +265,7 @@
         UNLINK_SNAME     = 1    ; "$,n"
         UNLINK_SCOMP     = 1    ; "$COMPILE"
         UNLINK_OVERT     = 0    ; "OVERT"
+        UNLINK_SEMIS     = 0    ; ";"
         UNLINK_COLON     = 0    ; ":"
         UNLINK_RBRAC     = 0    ; "]"
         UNLINK_DOESS     = 0    ; "DOES>"

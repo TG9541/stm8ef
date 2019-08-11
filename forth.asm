@@ -1019,7 +1019,7 @@ DOVAR:
 ;       Y>  ( -- n )     ( TOS STM8: - Y,Z,N )
 ;       push Y to stack
 
-;       HEADER  YSTOR "Y>"
+;       GENALIAS  YSTOR "Y>"
 YSTOR:
         DECW    X               ; SUBW  X,#2
         DECW    X
@@ -1334,7 +1334,7 @@ LAST:
 ;       A>  ( -- n )     ( TOS STM8: - Y,Z,N )
 ;       push A to stack
 
-;       HEADER  ASTOR "A>"
+;       GENALIAS  ASTOR "A>"
 ASTOR:
         CLRW    Y
         LD      YL,A
@@ -1949,7 +1949,7 @@ ONEP:
 ;       Caution: no other Forth word can be called from assembly!
 ;       In the assembly code: X=(TOS), YTEMP=TOS. (TOS)=X after RET
 
-;       HEADER  DOXCODE "DOXCODE"
+;       GENALIAS  DOXCODE "DOXCODE"
 DOXCODE:
         POPW    Y
         LDW     YTEMP,X
@@ -2674,7 +2674,7 @@ QUEST:
 ;       >Y  ( n -- )       ( TOS STM8: - Y,Z,N )
 ;       Consume TOS to CPU Y and Flags
 
-;       HEADER  YFLAGS ">Y"
+;       GENALIAS  YFLAGS ">Y"
 YFLAGS:
         LDW     Y,X
         INCW    X
@@ -2686,7 +2686,7 @@ YFLAGS:
 ;       >A   ( c -- )       ( TOS STM8: - A,Z,N )
 ;       Consume TOS to CPU A and Flags
 
-;       HEADER  AFLAGS ">A"
+;       GENALIAS  AFLAGS ">A"
 AFLAGS:
         INCW    X
         LD      A,(X)
@@ -3175,7 +3175,7 @@ CR:
 
 ;       COMPILE?   ( -- n )
 ;       0 if 'EVAL points to $INTERPRETER
-;       HEADER  COMPIQ "COMPILE?"
+;       GENALIAS  COMPIQ "COMPILE?"
 COMPIQ:
         LDW     Y,USREVAL
         SUBW    Y,#INTER
@@ -3294,8 +3294,7 @@ BCOMP:
 ;       Compile an integer into
 ;       code dictionary.
 
-;       macro workaround: escape for ","
-        HEADER  COMMA "\054"
+        HEADER  COMMA ^/","/
 COMMA:
         DoLitC  2
         CALLR   OMMA
@@ -3304,8 +3303,7 @@ COMMA:
 ;       C,      ( c -- )
 ;       Compile a byte into code dictionary.
 
-;       macro workaround: escape for "C,"
-        HEADER  CCOMMA "C\054"
+        HEADER  CCOMMA ^/"C,"/
 CCOMMA:
         CALL    ONE
         CALLR   OMMA
@@ -3321,8 +3319,7 @@ OMMA:
 ;       CALL,   ( ca -- )
 ;       Compile a subroutine call.
 
-;       macro workaround: escape for "CALL,"
-        HEADER  JSRC "CALL\054"
+        HEADER  JSRC ^/"CALL,"/
 JSRC:
         CALL    DUPP
         CALL    HERE
@@ -3409,8 +3406,7 @@ COMPIO2:
 ;       Compile a literal string
 ;       up to next " .
 
-;       macro workaround: escape for "$,""
-        HEADER  STRCQ '$\054"'
+        HEADER  STRCQ ^/'$,"'/
 STRCQ:
         DoLitC  34              ; "
         CALL    PARSE
@@ -3652,8 +3648,7 @@ UNIQ1:  JP      DROP
 ;       Build a new dictionary name
 ;       using string at na.
 
-;       macro workaround: escape for "$,n"
-        HEADER  SNAME "$\054n"
+        HEADER  SNAME ^/"$,n"/
 SNAME:
         CALL    DUPPCAT         ; ?null input
         CALL    QBRAN
@@ -3725,13 +3720,7 @@ OVERT:
 ;       ;       ( -- )
 ;       Terminate a colon definition.
 
-;       HEADFLG SEMIS ";" (IMEDD+COMPO)
-        .dw     LINK
-
-        LINK =  .
-        .db     (IMEDD+COMPO+1)
-        .ascii  ";"
-
+        HEADFLG SEMIS ^/";"/ (IMEDD+COMPO)
 SEMIS:
         CALL    CCOMMALIT
         .db     EXIT_OPC
@@ -3815,7 +3804,7 @@ DODOES:
 
 ;       A@   ( A:shortAddr -- n )
 ;       push contents of A:shortAddr on stack
-;       HEADER  AAT "A@"
+;       GENALIAS  AAT "A@"
 AAT:
         CLRW    Y
         LD      YL,A
@@ -3823,7 +3812,7 @@ AAT:
 
 ;       Y@   ( Y:Addr -- n )
 ;       push contents of Y:Addr on stack
-;       HEADER  YAT "Y@"
+;       GENALIAS  YAT "Y@"
 YAT:
         LDW     Y,(Y)
         JP      YSTOR
@@ -4269,7 +4258,9 @@ RESTC:
 
         HEADER  WIPE "WIPE"
 WIPE:
-        .ifne  HAS_CPNVM
+        .ifeq  HAS_CPNVM
+        JP      OVERT           ; initialize CONTEXT from USRLAST
+        .else
         CALLR   RAMM
         PUSHW   X
         LDW     X,COLDCTOP      ; reserve some space for user variable

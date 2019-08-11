@@ -56,10 +56,10 @@ BEGIN {
   next
 }
 
-/(HEADER|HEADFLG)/ && !/\.macro/ && (NoNOALIAS || !/NOALIAS/) {
+/(HEADER|HEADFLG|GENALIAS)/ && !/\.macro/ && (NoNOALIAS || !/NOALIAS/) {
   p = 2
   for (i=1; i<=NF; i++) {
-    if (index($i,"HEAD")) {
+    if (index($i,"HEAD") || $i~/GENALIAS/) {
       label = $(i+1)
       break
     }
