@@ -3294,8 +3294,7 @@ BCOMP:
 ;       Compile an integer into
 ;       code dictionary.
 
-;       macro workaround: escape for ","
-        HEADER  COMMA "\054"
+        HEADER  COMMA ^/","/
 COMMA:
         DoLitC  2
         CALLR   OMMA
@@ -3304,8 +3303,7 @@ COMMA:
 ;       C,      ( c -- )
 ;       Compile a byte into code dictionary.
 
-;       macro workaround: escape for "C,"
-        HEADER  CCOMMA "C\054"
+        HEADER  CCOMMA ^/"C,"/
 CCOMMA:
         CALL    ONE
         CALLR   OMMA
@@ -3321,8 +3319,7 @@ OMMA:
 ;       CALL,   ( ca -- )
 ;       Compile a subroutine call.
 
-;       macro workaround: escape for "CALL,"
-        HEADER  JSRC "CALL\054"
+        HEADER  JSRC ^/"CALL,"/
 JSRC:
         CALL    DUPP
         CALL    HERE
@@ -3409,8 +3406,7 @@ COMPIO2:
 ;       Compile a literal string
 ;       up to next " .
 
-;       macro workaround: escape for "$,""
-        HEADER  STRCQ '$\054"'
+        HEADER  STRCQ ^/'$,"'/
 STRCQ:
         DoLitC  34              ; "
         CALL    PARSE
@@ -3652,8 +3648,7 @@ UNIQ1:  JP      DROP
 ;       Build a new dictionary name
 ;       using string at na.
 
-;       macro workaround: escape for "$,n"
-        HEADER  SNAME "$\054n"
+        HEADER  SNAME ^/"$,n"/
 SNAME:
         CALL    DUPPCAT         ; ?null input
         CALL    QBRAN
@@ -3725,13 +3720,7 @@ OVERT:
 ;       ;       ( -- )
 ;       Terminate a colon definition.
 
-;       HEADFLG SEMIS ";" (IMEDD+COMPO)
-        .dw     LINK
-
-        LINK =  .
-        .db     (IMEDD+COMPO+1)
-        .ascii  ";"
-
+        HEADFLG SEMIS ^/";"/ (IMEDD+COMPO)
 SEMIS:
         CALL    CCOMMALIT
         .db     EXIT_OPC
