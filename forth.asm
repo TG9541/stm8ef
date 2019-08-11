@@ -4258,7 +4258,9 @@ RESTC:
 
         HEADER  WIPE "WIPE"
 WIPE:
-        .ifne  HAS_CPNVM
+        .ifeq  HAS_CPNVM
+        JP      OVERT           ; initialize CONTEXT from USRLAST
+        .else
         CALLR   RAMM
         PUSHW   X
         LDW     X,COLDCTOP      ; reserve some space for user variable
