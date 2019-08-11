@@ -1019,7 +1019,7 @@ DOVAR:
 ;       Y>  ( -- n )     ( TOS STM8: - Y,Z,N )
 ;       push Y to stack
 
-;       HEADER  YSTOR "Y>"
+;       GENALIAS  YSTOR "Y>"
 YSTOR:
         DECW    X               ; SUBW  X,#2
         DECW    X
@@ -1334,7 +1334,7 @@ LAST:
 ;       A>  ( -- n )     ( TOS STM8: - Y,Z,N )
 ;       push A to stack
 
-;       HEADER  ASTOR "A>"
+;       GENALIAS  ASTOR "A>"
 ASTOR:
         CLRW    Y
         LD      YL,A
@@ -1949,7 +1949,7 @@ ONEP:
 ;       Caution: no other Forth word can be called from assembly!
 ;       In the assembly code: X=(TOS), YTEMP=TOS. (TOS)=X after RET
 
-;       HEADER  DOXCODE "DOXCODE"
+;       GENALIAS  DOXCODE "DOXCODE"
 DOXCODE:
         POPW    Y
         LDW     YTEMP,X
@@ -2674,7 +2674,7 @@ QUEST:
 ;       >Y  ( n -- )       ( TOS STM8: - Y,Z,N )
 ;       Consume TOS to CPU Y and Flags
 
-;       HEADER  YFLAGS ">Y"
+;       GENALIAS  YFLAGS ">Y"
 YFLAGS:
         LDW     Y,X
         INCW    X
@@ -2686,7 +2686,7 @@ YFLAGS:
 ;       >A   ( c -- )       ( TOS STM8: - A,Z,N )
 ;       Consume TOS to CPU A and Flags
 
-;       HEADER  AFLAGS ">A"
+;       GENALIAS  AFLAGS ">A"
 AFLAGS:
         INCW    X
         LD      A,(X)
@@ -3175,7 +3175,7 @@ CR:
 
 ;       COMPILE?   ( -- n )
 ;       0 if 'EVAL points to $INTERPRETER
-;       HEADER  COMPIQ "COMPILE?"
+;       GENALIAS  COMPIQ "COMPILE?"
 COMPIQ:
         LDW     Y,USREVAL
         SUBW    Y,#INTER
@@ -3804,7 +3804,7 @@ DODOES:
 
 ;       A@   ( A:shortAddr -- n )
 ;       push contents of A:shortAddr on stack
-;       HEADER  AAT "A@"
+;       GENALIAS  AAT "A@"
 AAT:
         CLRW    Y
         LD      YL,A
@@ -3812,7 +3812,7 @@ AAT:
 
 ;       Y@   ( Y:Addr -- n )
 ;       push contents of Y:Addr on stack
-;       HEADER  YAT "Y@"
+;       GENALIAS  YAT "Y@"
 YAT:
         LDW     Y,(Y)
         JP      YSTOR
