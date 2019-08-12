@@ -60,22 +60,6 @@
         UNLINK_QUIT      = 0    ; "QUIT"  ; REPL
         .endif
 
-        .ifne  BAREBONES
-        EXTNUMPREFIX     = 0    ; Extended number prefix: %: binary, &: decimal
-        UNLINK_QRX       = 1    ; "?RX"
-        UNLINK_TXSTOR    = 1    ; "TX!"
-        UNLINK_LAST      = 1    ; "last"
-        UNLINK_DEPTH     = 1    ; "DEPTH"
-        UNLINK_COUNT     = 1    ; "COUNT"
-        UNLINK_UDOTR     = 1    ; "U.R"
-        UNLINK_NAMET     = 1    ; "NAME>"
-        UNLINK_BCOMP     = 1    ; "[COMPILE]"
-        UNLINK_COMPI     = 1    ; "COMPILE"
-        UNLINK_ABRTQ     = 1    ; 'ABORT"'
-        UNLINK_EXIT      = 1    ; "EXIT"
-        REMOVE_EXIT      = 1    ; remove "EXIT"
-        .endif
-
         .ifne   WORDS_LINKCHAR
         UNLINK_BDIGS     = 0    ; "<#"
         UNLINK_HOLD      = 0    ; "HOLD"
@@ -99,4 +83,65 @@
 
         .ifne   WORDS_EXTRACORE
         UNLINK_ZEQUAL    = 0    ; "0="
+        .endif
+
+         .ifne  BAREBONES
+        EXTNUMPREFIX     = 0    ; Extended number prefix: %: binary, &: decimal
+        UNLINK_QRX       = 1    ; "?RX"
+        UNLINK_TXSTOR    = 1    ; "TX!"
+        UNLINK_LAST      = 1    ; "last"
+        UNLINK_DEPTH     = 1    ; "DEPTH"
+        UNLINK_COUNT     = 1    ; "COUNT"
+        UNLINK_UDOTR     = 1    ; "U.R"
+        UNLINK_NAMET     = 1    ; "NAME>"
+        UNLINK_BCOMP     = 1    ; "[COMPILE]"
+        UNLINK_COMPI     = 1    ; "COMPILE"
+        UNLINK_ABRTQ     = 1    ; 'ABORT"'
+        UNLINK_EXIT      = 1    ; "EXIT"
+        REMOVE_EXIT      = 1    ; remove "EXIT"
+        .endif
+
+        .ifne  MINIDICT
+        UNLINK_EMIT      = 2    ; "EMIT"
+        UNLINK_EXECU     = 2    ; "EXECUTE"
+        UNLINK_DSTOR     = 2    ; "2!"
+        UNLINK_DAT       = 2    ; "2@"
+        UNLINK_DCSTOR    = 2    ; "2C!"
+        UNLINK_DCAT      = 2    ; "2C@"
+        UNLINK_NIP       = 2    ; "NIP"
+        UNLINK_BRSS      = 2    ; "B!"
+        UNLINK_IGET      = 2    ; "I"
+        UNLINK_DDROP     = 2    ; "2DROP"
+        UNLINK_XORR      = 2    ; "XOR"
+        UNLINK_UPLUS     = 2    ; "UM+"
+        UNLINK_ZERO      = 2    ; "0"
+        UNLINK_ONE       = 2    ; "1"
+        UNLINK_MONE      = 2    ; "-1"
+        UNLINK_BGG       = 2    ; "BG"
+        UNLINK_QDUP      = 2    ; "?DUP"
+        UNLINK_DDUP      = 2    ; "2DUP"
+        UNLINK_DNEGA     = 2    ; "DNEGATE"
+        UNLINK_ULESS     = 2    ; "U<"
+        UNLINK_MAX       = 2    ; "MAX"
+        UNLINK_MIN       = 2    ; "MIN"
+        UNLINK_WITHI     = 2    ; "WITHIN"
+        UNLINK_UMSTA     = 2    ; "UM*"
+        UNLINK_MSTAR     = 2    ; "M*"
+        UNLINK_CR        = 2    ; "CR"
+        UNLINK_DOTR      = 2    ; ".R"
+        UNLINK_UDOTR     = 2    ; "U.R"
+        UNLINK_UDOT      = 2    ; "U."
+        UNLINK_FOR       = 2    ; "FOR"
+        UNLINK_NEXT      = 2    ; "NEXT"
+        UNLINK_DOO       = 2    ; "DO"
+        UNLINK_LEAVE     = 2    ; "LEAVE"
+        UNLINK_LOOP      = 2    ; "LOOP"
+        UNLINK_PLOOP     = 2    ; "+LOOP"
+        UNLINK_AFT       = 2    ; "AFT"
+        UNLINK_DOESS     = 2    ; "DOES>"
+        UNLINK_DOTS      = 2    ; ".S"
+        UNLINK_ULOCK     = 1    ; "ULOCK"
+        UNLINK_LOCK      = 1    ; "LOCK"
+        UNLINK_SAVEC     = 2    ; "SAVEC"
+        UNLINK_RESTC     = 2    ; "IRET"
         .endif

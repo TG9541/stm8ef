@@ -23,7 +23,7 @@ $4000     CONSTANT EELINK
   \ set dictionary root in flash memory to a
   [ ( . used as anchor ) ' . 2- 2- @ ] LITERAL BEGIN
     DUP 2- @ DUP 0<
-  WHILE NIP
+  WHILE SWAP DROP
   REPEAT DROP 2-
   ( la a ) ULOCKF ! LOCKF
 ;

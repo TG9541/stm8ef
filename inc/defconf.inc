@@ -67,7 +67,7 @@
         WORDS_EXTRADEBUG = 0    ; Extra debug words: >NAME
         WORDS_EXTRACORE  = 0    ; Extra core words: 0= I
         WORDS_EXTRAMEM   = 0    ; Extra memory words: B! 2C@ 2C!
-        WORDS_EXTRAEEPR  = 0    ; Extra EEPROM lock/unlock words: LOCK ULOCK ULOCKF LOCKF
+        WORDS_EXTRAEEPR  = 0    ; Extra EEPROM lock/unlock words: LOCK ULOCK
 
 
         UNLINK_COLD      = 0    ; "COLD"
