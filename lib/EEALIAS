@@ -4,9 +4,10 @@
 \ * define ALIAS words in the EEPROM,
 \ * compilation aborts if the compilation of non-ALIAS words is attemted
 \   note: the STM8 resets when executing plain compiled words from EEPROM!
-\ * return to RAM MODE with EECLOSE when done
+\ * return to RAM MODE with EEND when done
 \ * remove ALIAS words in EEPROM from dictionary with EERESET
 
+\ beware: any of the words #required here won't be in the EEPROM
 #require WIPE
 #require CP
 #require CONTEXT
@@ -17,18 +18,18 @@
 #require LOCKF
 #require ABORT"
 
-$4000     CONSTANT EELINK
+$4020 CONSTANT EELINK  \ reserve some of the EEPROM for application 
 
 : setroot ( a -- )
-  \ set dictionary root in flash memory to a
-  [ ( . used as anchor ) ' . 2- 2- @ ] LITERAL BEGIN
-    DUP 2- @ DUP 0<
+  \ set a as dictionary root in Flash memory
+  [ ( ! used as anchor ) ' ! 4 - @ ] LITERAL BEGIN
+    DUP 2 - @ DUP 0<
   WHILE SWAP DROP
-  REPEAT DROP 2-
+  REPEAT DROP 2 -
   ( la a ) ULOCKF ! LOCKF
 ;
 
-: EECLOSE ( -- )
+: EEND ( -- )
   \ link dictionary, end EEPROM mode, and return to RAM mode with WIPE
   0 EELINK !  LOCK
   CONTEXT @ setroot
@@ -41,22 +42,22 @@ $4000     CONSTANT EELINK
 ;
 
 : NVM ( -- )
-  EECLOSE
+  EEND
   1 ABORT" NVM IN EEPROM MODE"
 ;
 
 : CONSTANT ( -- )
-  EECLOSE
+  EEND
   1 ABORT" CONSTANT IN EEPROM MODE"
 ;
 
 : VARIABLE ( -- )
-  EECLOSE
+  EEND
   1 ABORT" VARIABLE IN EEPROM MODE"
 ;
 
 : ; ( -- )
-  EECLOSE
+  EEND
   1 ABORT" NON-ALIAS IN EEPROM MODE"
 ; IMMEDIATE
 
@@ -65,12 +66,12 @@ $4000     CONSTANT EELINK
 EERESET             \ unlink any existing dictionary in the EEPROM
 ULOCK               \ keep the EEPROM unlocked from here on
 CONTEXT @ EELINK !  \ create dummy word in EEPROM
-EELINK 2+ 0 OVER !  \ word length=0
+EELINK 2 + 0 OVER !  \ word length=0
 DUP  LAST !         \ set context to dummy word
 DUP  CONTEXT !
-1+ CP !             \ from here on, use EEPROM instead of RAM
+1 + CP !             \ from here on, use EEPROM instead of RAM
 
-\ now #require some ALIAS files, finalize with EECLOSE
+\ now #require some ALIAS files, finalize with EEND
 
 
 \\ Example:
@@ -83,5 +84,5 @@ DUP  CONTEXT !
 #require DIGIT
 #require DNEGATE
 
-\ done: return to RAM mode with WIPE
-EECLOSE
+\ done: close and return to RAM mode
+EEND

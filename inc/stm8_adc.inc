@@ -54,6 +54,9 @@ ADCAT:
 
         .else
 
+;       ADC!  ( c -- )
+;       Init ADC, select channel for conversion
+
         HEADER  ADCSTOR "ADC!"
 ADCSTOR:
         INCW    X

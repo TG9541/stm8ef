@@ -29,7 +29,7 @@ BEGIN {
   line++
   wline++
   # print p " " $0
-  if (wline > 20 && p > 0) {
+  if (wline > 25 && p > 0) {
     warning("header too long " word " " label " " p)
     p = 0                              # too many lines since word comment
   }
