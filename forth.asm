@@ -1190,7 +1190,10 @@ ZL1:    LD      (X),A
         HEADER  SUBB "-"
 
 SUBB:
-        .ifne   SPEEDOVERSIZE
+        .ifeq   SPEEDOVERSIZE
+        CALL    NEGAT           ; (15 cy)
+        JRA     PLUS            ; 25 cy (15+10)
+        .else
         LDW     Y,X
         LDW     Y,(Y)
         LDW     YTEMP,Y
@@ -1201,9 +1204,6 @@ SUBB:
         SUBW    Y,YTEMP
         LDW     (X),Y
         RET                     ; 18 cy
-        .else
-        CALL    NEGAT           ; (15 cy)
-        JRA     PLUS            ; 25 cy (15+10)
         .endif
 
 
@@ -1366,9 +1366,7 @@ BLANK:
 ;       0       ( -- 0)     ( TOS STM8: -- Y,Z,N )
 ;       Return 0.
 
-        .ifne   SPEEDOVERSIZE
         HEADER  ZERO "0"
-        .endif
 ZERO:
         CLR     A
         JRA     ASTOR
@@ -1376,9 +1374,7 @@ ZERO:
 ;       1       ( -- 1)     ( TOS STM8: -- Y,Z,N )
 ;       Return 1.
 
-        .ifne   SPEEDOVERSIZE
         HEADER  ONE "1"
-        .endif
 ONE:
         LD      A,#1
         JRA     ASTOR
@@ -1386,9 +1382,7 @@ ONE:
 ;       -1      ( -- -1)     ( TOS STM8: -- Y,Z,N )
 ;       Return -1
 
-        .ifne   SPEEDOVERSIZE
         HEADER  MONE "-1"
-        .endif
 MONE:
         LDW     Y,#0xFFFF
         JRA     AYSTOR
@@ -1468,7 +1462,12 @@ QDUP1:  RET
 
         HEADER  ROT "ROT"
 ROT:
-        .ifne   SPEEDOVERSIZE
+        .ifeq   SPEEDOVERSIZE
+        CALL    TOR
+        CALLR   1$
+        CALL    RFROM
+1$:     JP      SWAPP
+        .else
         LDW     Y,X
         LDW     X,(4,X)
         PUSHW   X
@@ -1484,13 +1483,6 @@ ROT:
         POPW    Y
         LDW     (X),Y
         RET
-        .else
-        CALL    TOR
-        CALLR   1$
-        CALL    RFROM
-1$:     JP      SWAPP
-
-
         .endif
 
 ;       2DUP    ( w1 w2 -- w1 w2 w1 w2 )
@@ -1523,15 +1515,18 @@ DN1:    LDW     (X),Y
         RET
         .endif
 
-        .ifeq   BOOTSTRAP
+        ; .ifeq   BOOTSTRAP
 ;       =       ( w w -- t )    ( TOS STM8: -- Y,Z,N )
 ;       Return true if top two are equal.
 
         HEADER  EQUAL "="
 EQUAL:
-        .ifne   SPEEDOVERSIZE
-        LD      A,#0x0FF        ;true
-        LDW     Y,X     ;D = n2
+        .ifeq   SPEEDOVERSIZE
+        CALL    XORR
+        JP      ZEQUAL                 ; 31 cy= (18+13)
+        .else
+        LD      A,#0x0FF         ; true
+        LDW     Y,X              ; D = n2
         LDW     Y,(Y)
         LDW     YTEMP,Y
         INCW    X
@@ -1546,11 +1541,8 @@ EQ1:    LD      (X),A
         LDW     Y,X
         LDW     Y,(Y)
         RET                            ; 24 cy
-        .else
-        CALL    XORR
-        JP      ZEQUAL                 ; 31 cy= (18+13)
-        .endif
-        .endif
+       .endif
+        ; .endif
 
 
 ;       U<      ( u u -- t )    ( TOS STM8: -- Y,Z,N )
@@ -1573,7 +1565,10 @@ ULESS:
 
         HEADER  LESS "<"
 LESS:
-        .ifne   SPEEDOVERSIZE
+        .ifeq   SPEEDOVERSIZE
+        CALL    SUBB             ; (29cy)
+        JP      ZLESS            ; 41 cy (12+29)
+        .else
         CLR     A
         LDW     Y,X
         LDW     Y,(Y)
@@ -1590,9 +1585,6 @@ LESS:
         LDW     Y,X
         LDW     Y,(Y)
         RET                      ; 26 cy
-        .else
-        CALL    SUBB             ; (29cy)
-        JP      ZLESS            ; 41 cy (12+29)
         .endif
         .endif
 

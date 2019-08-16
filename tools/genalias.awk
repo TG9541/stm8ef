@@ -29,13 +29,17 @@ BEGIN {
   line++
   wline++
   # print p " " $0
-  if (wline > 20 && p > 0) {
+  if (wline > 25 && p > 0) {
     warning("header too long " word " " label " " p)
     p = 0                              # too many lines since word comment
   }
   cOneIsAddress = ($1~/^00[8-9A-F][0-9A-F]{3}$/)
 }
 
+$3~/^UNLINK_[A-Z]/ {
+  ulabel = substr($3,length("UNLINK_")+1)
+  unlstat[ulabel] = $5
+}
 
 /^ +[0-9]+ ; +[^ ]+ +.+-- / && !/ core / {
   if (p) {
@@ -104,6 +108,7 @@ p == 3 && cOneIsAddress {
   ALIASADDR[word] = addrstr
   ALIASFLAG[word] = immediate
   WORD[addrstr] = word
+  LSTAT[word] =  unlstat[label]
   INDEX[windx++] = addrstr
   result("alias " word)
   next
@@ -120,10 +125,26 @@ END {
     makeAlias("\\")
   }
 
+#   nwords = asorti(ALIASADDR, SORTEDWORDS)
+#   print nwords
+#   for (i = 1; i <= nwords; i++) {
+#     word = ALIASADDR[SORTEDWORDS[i]]
+#     print i, word
+#   # for (word in ALIASADDR) {
+#     if (word !~/(OVERT|\\)/) {
+#       makeAlias(word)
+#       if (LSTAT[word] == 2) {
+#         print "#require " word
+#       }
+#     }
+#   }
+  
   for (word in ALIASADDR) {
     if (word !~/(OVERT|\\)/) {
       makeAlias(word)
-      print "#require " word >> target aliaslist
+      if (LSTAT[word] == 2) {
+        print "#require " word >> target aliaslist
+      }
     }
   }
 
