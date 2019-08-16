@@ -852,7 +852,7 @@
 ```
 ;       COMPILE?   ( -- n )
 ;       0 if 'EVAL points to $INTERPRETER
-;       HEADER  COMPIQ "COMPILE?"
+;       GENALIAS  COMPIQ "COMPILE?"
 ```
 
 ```
@@ -902,7 +902,6 @@
 ```
 ;       C,      ( c -- )
 ;       Compile a byte into code dictionary.
-;       HEADER  CCOMMA "C,"
 ```
 
 ```
@@ -1076,13 +1075,13 @@
 ```
 ;       A@   ( A:shortAddr -- n )
 ;       push contents of A:shortAddr on stack
-;       HEADER  AAT "A@"
+;       GENALIAS  AAT "A@"
 ```
 
 ```
 ;       Y@   ( Y:Addr -- n )
 ;       push contents of Y:Addr on stack
-;       HEADER  YAT "Y@"
+;       GENALIAS  YAT "Y@"
 ```
 
 ```

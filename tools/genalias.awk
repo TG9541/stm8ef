@@ -125,6 +125,20 @@ END {
     makeAlias("\\")
   }
 
+#   nwords = asorti(ALIASADDR, SORTEDWORDS)
+#   print nwords
+#   for (i = 1; i <= nwords; i++) {
+#     word = ALIASADDR[SORTEDWORDS[i]]
+#     print i, word
+#   # for (word in ALIASADDR) {
+#     if (word !~/(OVERT|\\)/) {
+#       makeAlias(word)
+#       if (LSTAT[word] == 2) {
+#         print "#require " word
+#       }
+#     }
+#   }
+  
   for (word in ALIASADDR) {
     if (word !~/(OVERT|\\)/) {
       makeAlias(word)

@@ -1,7 +1,7 @@
 #include utils/tester.fs
 
 \ expected vocabulary (including tester.fs)
-T{e WORDS e-> 923 -5331 }T
+T{e WORDS e-> 930 -5044 }T
 
 \ core: string with capured EMIT
 : test-."" ." abc123" ;
@@ -177,7 +177,7 @@ RAM
 T{ 400 CD>TEST cdram -> }T
 T{ cdram -> 800 }T
 
-T{e WORDS e-> 959 -2230 }T
+T{e WORDS e-> 966 -1943 }T
 
 
 \ compile CURRENT and VOC as a test
