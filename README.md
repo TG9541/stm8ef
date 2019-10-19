@@ -20,7 +20,7 @@ STM8 eForth is configurable: a full featured binary needs between 4.7K and 5.5K,
 
 The Forth console works with an STM8 UART, a pair of GPIOs, or even any single GPIO and 3-wire or 2-wire communication. Up to two UARTs and a simulated serial interface are supported. The console can be configured for any type of [character I/O](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Board-Character-IO)  (e.g. keyboard and display), even at runtime!
 
-
+T
 The [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) covers various topics, e.g. using [Breakout Boards](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards), or the conversion of low-cost Chinese thermostats, voltmeters, or DC/DC-converters into Forth powered embedded control boards.
 
 ## Generic targets
@@ -54,6 +54,10 @@ TG9541/STM8EF provides board support for several common "Chinese gadgets" like t
 * [XY-LPWM](https://github.com/TG9541/stm8ef/wiki/Board-XY-LPWM) PWM board w/ 2x4 digit 7S-LCD display, 4 keys, PWM and full-duplex RS232
 
 The Wiki lists other supported "[Value Line Gadgets][WG1]", e.g. [voltmeters & power supplies](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets#voltmeters-and-power-supplies), [breakout boards](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards), and [thermostats](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets#thermostats).
+
+## Other target boards
+
+From STM8 eForth 2.2.24 on, the binary release contains all the files that are necessary for supporting a custom target board. For example, [STM8 eForth MODBUS](https://github.com/TG9541/stm8ef-modbus) uses the release files to combine target support with the application.
 
 # Feature Overview
 
