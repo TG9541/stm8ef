@@ -8,13 +8,7 @@ export object="$1"
 export ucsimstart=`mktemp`
 echo "load \"out/$object/$object.ihx\""  > "$ucsimstart"
 
-# awk: set breakpoint at binary code address of HI
-read -d '' setbreak << 'EOF'
-/^ +([0-9A-F]){6}.* HI:/ {
-  print "break 0x" $1
-}
-EOF
-awk "$setbreak" out/$object/forth.rst >> "$ucsimstart"
+cat out/$object/simbreak.txt >> "$ucsimstart"
 
 echo "simload.sh: run STM8EF in uCsim with breakpoint at HI"
 
