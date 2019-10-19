@@ -571,7 +571,7 @@ COLD:
         .endif
         .endif
         BRES    PSIM+DDR,#PNRX    ; 0: input (default)
-        BSET    PD_CR1,#PNRX    ; enable PNRX pull-up
+        BSET    PSIM+CR1,#PNRX    ; enable PNRX pull-up
         BSET    PSIM+CR2,#PNRX    ; enable PNRX external interrupt
         .endif
 
