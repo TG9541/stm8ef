@@ -1,5 +1,5 @@
 ; STM8EF Global Configuration File
-; Config for W1209 Thermostat Module
+; Config for W1209-CA-V2 Thermostat Module
 ; Clock: HSI (no crystal)
 
         HALF_DUPLEX      = 0    ; Use UART in half duplex mode

@@ -1,4 +1,4 @@
-; XH-W1209 STM8S device dependent HW routines
+; W1209-CA-V2 STM8S device dependent HW routines
 
 
 ;       BOARDINIT  ( -- )
@@ -12,7 +12,7 @@ BOARDINIT:
         MOV     PB_DDR,#0b00110000 ; A,F
         MOV     PB_CR1,#0b00110000
         MOV     PC_DDR,#0b11111000 ; D,DP,C,G,B
-        MOV     PC_CR1,#0b11111000 ; 
+        MOV     PC_CR1,#0b11111000 ;
         MOV     PD_DDR,#0b00000110 ; set,+,-, adc,E,relay
         MOV     PD_CR1,#0b11110111
         RET
@@ -137,7 +137,7 @@ OUTSTOR:
         .db     (4)
         .ascii  "BKEY"
 BKEY:
-        ; Keys "set" (1), "+" (2), and "-" (4) on PC.3:5 (PD 6,5,4) 
+        ; Keys "set" (1), "+" (2), and "-" (4) on PC.3:5 (PD 6,5,4)
         LD      A,PD_IDR
 ;        SLA     A
         SWAP    A
@@ -161,4 +161,3 @@ BKEYCHAR:
         LD      (1,X),A
 1$:     RET
        .endif
-
