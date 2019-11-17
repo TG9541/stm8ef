@@ -15,6 +15,8 @@ BOARDINIT:
         ; Board I/O initialization
         MOV     CLK_PCKENR1,#0x21   ; Enable USART1[5] and TIM2[0]
         MOV     SYSCFG_RMPCR1,#0x10 ; Map USART1 to PA2[TX] and PA3[RX]
+        BSET    PA_DDR,#2 ; Setup PA2[USART1_TX] as output
+        BSET    PA_CR1,#2 ; Setup PA2[USART1_TX] as push-pull output
 
         ; Leds init
         BSET    PE_DDR,#7 ; PE7 LED green
