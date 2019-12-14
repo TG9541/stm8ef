@@ -250,7 +250,7 @@
         USREMIT  =   UPP+0      ; "'EMIT" execution vector of EMIT
         USRQKEY =    UPP+2      ; "'?KEY" execution vector of QKEY
         USRBASE =    UPP+4      ; "BASE" radix base for numeric I/O
-        USRIDLE =    UPP+6      ; "'IDLE" idle routine in KEY (default: RET)
+        ; USR_6 =    UPP+6      ; free
         USRPROMPT =  UPP+8      ; "'PROMPT" point to prompt word (default .OK)
         USRCP   =    UPP+10     ; "CP" point to top of dictionary
         USRLAST =    UPP+12     ; "LAST" currently last name in dictionary
@@ -269,7 +269,8 @@
 
         ; More core variables in zero page (instead of assigning fixed addresses)
         RamWord USRHLD          ; "HLD" hold a pointer of output string
-        RamWord YTEMP           ; extra working register for core words
+        RamWord YTEMP           ; "YTEMP" extra working register for core words
+        RamWord USRIDLE         ; "'IDLE" idle routine in KEY
 
         ;***********************
         ;******  7) Code  ******
@@ -451,7 +452,7 @@ TBOOT:
         .dw     QRXP            ; ?RXP as ?KEY vector
         .endif
         .dw     BASEE           ; BASE
-        .dw     RETIDLE         ; 'IDLE
+        .dw     0               ; (vacant)
         .dw     DOTOK           ; 'PROMPT
         COLDCTOP = .
         .dw     CTOP            ; CP in RAM
@@ -473,7 +474,7 @@ TBOOT:
         .dw     QRXP            ; ?RXP as ?KEY vector
         .endif
         .dw     BASEE           ; BASE
-        .dw     RETIDLE         ; 'IDLE
+        .dw     0               ; (vacant)
         .dw     DOTOK           ; 'PROMPT
         .dw     CTOP            ; CP in RAM
         .dw     LASTN           ; CONTEXT pointer
@@ -2420,7 +2421,11 @@ KEY:
 KEY1:   CALL    [USRQKEY]
         CALL    YFLAGS
         JRNE    RETIDLE
+        LD      A,USRIDLE
+        OR      A,USRIDLE+1
+        JREQ    KEY2
         CALL    [USRIDLE]       ; IDLE must be fast (unless ?RX is buffered) and stack neutral
+KEY2:
         JRA     KEY1
 RETIDLE:
         RET
