@@ -29,7 +29,12 @@ BOARDINIT:
         MOV     PG_DDR,#0b00000001 ; -------4 LED red
         MOV     PG_CR1,#0b00000001
 
+        .ifne   HAS_OUTPUTS
+        CLRW    Y
+        JP      YOUTSTOR
+        .else
         RET
+        .endif
 
 ;===============================================================
 
@@ -158,6 +163,8 @@ LEDMPXEND:
 ;===============================================================
 
         .ifne   HAS_OUTPUTS
+        RamWord OUTPUTS         ; "OUT", e.g. relays, LEDs, etc. (16 bit)
+
 ;       OUT!  ( c -- )
 ;       Put c to board outputs, storing a copy in OUTPUTS
         .dw     LINK
@@ -166,9 +173,10 @@ LEDMPXEND:
         .db     (4)
         .ascii  "OUT!"
 OUTSTOR:
-        LD      A,(X)
-        INCW    X
-        LD      OUTPUTS,A
+        CALL    YFLAGS
+YOUTSTOR:
+        LDW     OUTPUTS,Y
+        LD      A,YH
         RRC     A
         BCCM    PC_ODR,#1       ; A: R1 LED green
         RRC     A
@@ -181,9 +189,7 @@ OUTSTOR:
         BCCM    PA_ODR,#4       ; E: R5 LED green
         RRC     A
         BCCM    PA_ODR,#5       ; F: R6 LED green
-        LD      A,(X)
-        INCW    X
-        LD      OUTPUTS+1,A
+        LD      A,YL
         RRC     A
         BCCM    PC_ODR,#7       ; 1: R1 LED red
         RRC     A

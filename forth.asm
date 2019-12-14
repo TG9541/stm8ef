@@ -193,9 +193,6 @@
         .endm
 
         ;******  Board variables  ******
-        .ifne   HAS_OUTPUTS
-        RamWord OUTPUTS         ; outputs, like relays, LEDs, etc. (16 bit)
-        .endif
 
         .ifne   HAS_BACKGROUND
 
@@ -593,11 +590,6 @@ COLD:
         CALL    CMOVE           ; initialize user area
 
         CALL    WIPE            ; initialize dictionary
-
-        .ifne   HAS_OUTPUTS
-        CALL    ZERO
-        CALL    OUTSTOR
-        .endif
 
         ; Hardware initialization complete
         RIM                     ; enable interrupts
@@ -1342,16 +1334,6 @@ ATOKEY:
 TIB:
         DoLitW  TIBB
         RET
-        .endif
-
-        .ifne   HAS_OUTPUTS
-;       OUT     ( -- a )     ( TOS STM8: -- Y,Z,N )
-;       Return address of OUTPUTS register
-
-        HEADER  OUTA "OUT"
-OUTA:
-        LD      A,#(OUTPUTS)
-        JRA     ASTOR
         .endif
 
 ; Constants

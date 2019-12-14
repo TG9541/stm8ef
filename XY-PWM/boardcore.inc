@@ -136,29 +136,6 @@ LED_MPX:
 4$:     RET
         .endif
 
-;===============================================================
-
-        .ifne   HAS_OUTPUTS
-;       OUT!  ( c -- )
-;       Put c to board outputs, storing a copy in OUTPUTS
-        .dw     LINK
-
-        LINK =  .
-        .db     (4)
-        .ascii  "OUT!"
-OUTSTOR:
-        INCW    X
-        LD      A,(X)
-        LD      OUTPUTS+1,A
-        INCW    X
-        RRC     A
-        ; BCCM    PA_ODR,#3       ; W1219 relay
-        RRC     A
-        CCF
-        ; BCCM    PD_ODR,#4       ; W1219 blue LED
-
-        RET
-        .endif
 
 ;===============================================================
 
