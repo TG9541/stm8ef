@@ -18,8 +18,40 @@ BOARDINIT:
 
         MOV     PD_DDR,#0b00001110 ; -k--46c- k:key     c:SRclk
         MOV     PD_CR1,#0b01001110 ; -v------ v:start-v
-        RET
 
+        .ifne   HAS_OUTPUTS
+        CLR     A
+        JRA     AOUTSTOR
+        .else
+        RET
+        .endif
+
+;===============================================================
+
+        .ifne   HAS_OUTPUTS
+        RamWord OUTPUTS         ; "OUT", e.g. relays, LEDs, etc. (16 bit)
+
+;       OUT!  ( c -- )
+;       Put c to board outputs, storing a copy in OUTPUTS
+        .dw     LINK
+
+        LINK =  .
+        .db     (4)
+        .ascii  "OUT!"
+OUTSTOR:
+        INCW    X
+        LD      A,(X)
+        INCW    X
+AOUTSTOR:
+        LD      OUTPUTS+1,A
+        RRC     A
+        BCCM    PA_ODR,#2       ; W1401 relay and red LED
+        RRC     A
+        CCF
+        BCCM    PB_ODR,#5       ; W1401 green LED
+
+        RET
+        .endif
 
 ;===============================================================
 
@@ -142,30 +174,6 @@ LEDMPXGO:
         ; fall through
 
 LEDMPXEND:
-        RET
-        .endif
-
-;===============================================================
-
-        .ifne   HAS_OUTPUTS
-;       OUT!  ( c -- )
-;       Put c to board outputs, storing a copy in OUTPUTS
-        .dw     LINK
-
-        LINK =  .
-        .db     (4)
-        .ascii  "OUT!"
-OUTSTOR:
-        INCW    X
-        LD      A,(X)
-        LD      OUTPUTS+1,A
-        INCW    X
-        RRC     A
-        BCCM    PA_ODR,#2       ; W1401 relay and red LED
-        RRC     A
-        CCF
-        BCCM    PB_ODR,#5       ; W1401 green LED
-
         RET
         .endif
 

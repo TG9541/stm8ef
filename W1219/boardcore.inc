@@ -18,8 +18,40 @@ BOARDINIT:
 
         MOV     PD_DDR,#0b00011110 ; -k-lcds-  l:led c:SRclk d:SRdata s:serialInterface 
         MOV     PD_CR1,#0b01011110 ; -m----i- 
-        RET
 
+        .ifne   HAS_OUTPUTS
+        CLR     A
+        JRA     AOUTSTOR
+        .else
+        RET
+        .endif
+
+;===============================================================
+
+        .ifne   HAS_OUTPUTS
+        RamWord OUTPUTS         ; "OUT", e.g. relays, LEDs, etc. (16 bit)
+
+;       OUT!  ( c -- )
+;       Put c to board outputs, storing a copy in OUTPUTS
+        .dw     LINK
+
+        LINK =  .
+        .db     (4)
+        .ascii  "OUT!"
+OUTSTOR:
+        INCW    X
+        LD      A,(X)
+        INCW    X
+AOUTSTOR:
+        LD      OUTPUTS+1,A
+        RRC     A
+        BCCM    PA_ODR,#3       ; W1219 relay
+        RRC     A
+        CCF
+        BCCM    PD_ODR,#4       ; W1219 blue LED
+
+        RET
+        .endif
 
 ;===============================================================
 
@@ -141,30 +173,6 @@ LEDMPXGO:
         ; fall through
 
 LEDMPXEND:
-        RET
-        .endif
-
-;===============================================================
-
-        .ifne   HAS_OUTPUTS
-;       OUT!  ( c -- )
-;       Put c to board outputs, storing a copy in OUTPUTS
-        .dw     LINK
-
-        LINK =  .
-        .db     (4)
-        .ascii  "OUT!"
-OUTSTOR:
-        INCW    X
-        LD      A,(X)
-        LD      OUTPUTS+1,A
-        INCW    X
-        RRC     A
-        BCCM    PA_ODR,#3       ; W1219 relay
-        RRC     A
-        CCF
-        BCCM    PD_ODR,#4       ; W1219 blue LED
-
         RET
         .endif
 

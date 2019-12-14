@@ -15,7 +15,13 @@ BOARDINIT:
         MOV     PC_CR1,#0b11111000 ; G,C-+S... Key pullups
         MOV     PD_DDR,#0b00111110 ; A,DP,D,d1,A
         MOV     PD_CR1,#0b00111110
+
+        .ifne   HAS_OUTPUTS
+        CLR     A
+        JRA     AOUTSTOR
+        .else
         RET
+        .endif
 
 ;===============================================================
 
@@ -106,6 +112,8 @@ LED_MPX:
 ;===============================================================
 
         .ifne   HAS_OUTPUTS
+        RamWord OUTPUTS         ; "OUT", e.g. relays, LEDs, etc. (16 bit)
+
 ;       OUT!  ( c -- )
 ;       Put c to board outputs, storing a copy in OUTPUTS
         .dw     LINK
@@ -116,8 +124,9 @@ LED_MPX:
 OUTSTOR:
         INCW    X
         LD      A,(X)
-        LD      OUTPUTS+1,A
         INCW    X
+AOUTSTOR:
+        LD      OUTPUTS+1,A
         RRC     A
         BCCM    PA_ODR,#3       ; W1209 relay
         RET

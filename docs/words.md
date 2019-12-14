@@ -273,11 +273,6 @@
 ```
 
 ```
-;       OUT     ( -- a )     ( TOS STM8: -- Y,Z,N )
-;       Return address of OUTPUTS register
-```
-
-```
 ;       BL      ( -- 32 )     ( TOS STM8: -- Y,Z,N )
 ;       Return 32, blank character.
 ```

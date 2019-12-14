@@ -8,7 +8,13 @@ BOARDINIT:
         ; Board I/O initialization
         BSET    PE_DDR,#5
         BSET    PE_CR1,#5
+
+        .ifne   HAS_OUTPUTS
+        CLR     A
+        JRA     AOUTSTOR
+        .else
         RET
+        .endif
 
 ;===============================================================
 
@@ -53,6 +59,8 @@ LED_MPX:
 ;===============================================================
 
         .ifne   HAS_OUTPUTS
+        RamWord OUTPUTS         ; "OUT", e.g. relays, LEDs, etc. (16 bit)
+
 ;       OUT!  ( c -- )
 ;       Put c to board outputs, storing a copy in OUTPUTS  
         .dw     LINK
@@ -63,8 +71,9 @@ LED_MPX:
 OUTSTOR:
         INCW    X
         LD      A,(X)
-        LD      OUTPUTS+1,A
         INCW    X
+AOUTSTOR:
+        LD      OUTPUTS+1,A
         RRC     A
         CCF
         BCCM    PE_ODR,#5       ; STM8105K4 dev board: PE5 LED
@@ -92,4 +101,3 @@ BKEY:
 BKEYCHAR:
         JRA     BKEY            ; Dummy: get "no key" and leave it as it is 
        .endif
-

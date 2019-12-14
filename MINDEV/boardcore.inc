@@ -6,10 +6,15 @@
 
 BOARDINIT:
         ; Board I/O initialization
-        BSET     PB_DDR,#5
-        BSET     PB_CR1,#5
+        BSET    PB_DDR,#5
+        BSET    PB_CR1,#5
 
+        .ifne   HAS_OUTPUTS
+        CLR     A
+        JRA     AOUTSTOR
+        .else
         RET
+        .endif
 
 ;===============================================================
 
@@ -54,6 +59,8 @@ LED_MPX:
 ;===============================================================
 
         .ifne   HAS_OUTPUTS
+        RamWord OUTPUTS         ; "OUT", e.g. relays, LEDs, etc. (16 bit)
+
 ;       OUT!  ( c -- )
 ;       Put c to board outputs, storing a copy in OUTPUTS
 
@@ -65,8 +72,9 @@ LED_MPX:
 OUTSTOR:
         INCW    X
         LD      A,(X)
-        LD      OUTPUTS+1,A
         INCW    X
+AOUTSTOR:
+        LD      OUTPUTS+1,A
         RRC     A
         CCF
         BCCM    PB_ODR,#5       ; PB5 LED

@@ -22,6 +22,9 @@ BOARDINIT:
         CALL    INITPWM
 
         CALL    ZERO
+        CALL    OUTSTOR
+
+        CALL    ZERO
         JP      PWMM
 
 ;===============================================================
@@ -182,6 +185,8 @@ LMPXEXIT:
 ;===============================================================
 
         .ifne   HAS_OUTPUTS
+        RamWord OUTPUTS         ; "OUT", e.g. relays, LEDs, etc. (16 bit)
+
 ;       OUT!  ( c -- )
 ;       Put c to board outputs, storing a copy in OUTPUTS
         .dw     LINK
@@ -192,8 +197,8 @@ LMPXEXIT:
 OUTSTOR:
         INCW    X
         LD      A,(X)
-        LD      OUTPUTS+1,A
         INCW    X
+        LD      OUTPUTS+1,A
         CPL     A
         RRC     A
         BCCM    PB_ODR,#4       ; DCDC LED out (or LM2596 !ON/OFF)
