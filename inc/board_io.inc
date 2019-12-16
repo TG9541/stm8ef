@@ -5,6 +5,8 @@
 
         .ifne   HAS_KEYS
 
+        RamByte KEYREPET        ; board key repetition control (8 bit)
+
 ;       ?KEYB   ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
 ;       Return keyboard char and true, or false if no key pressed.
 
@@ -33,6 +35,15 @@ NOKEYB:
         .endif
 
         .ifne   HAS_LED7SEG
+
+        .if     gt,(HAS_LED7SEG-1)
+        RamByte LED7GROUP       ; byte index of 7-SEG digit group
+        .endif
+
+        DIGITS = HAS_LED7SEG*LEN_7SGROUP
+        RamBlck LED7FIRST,DIGITS ; leftmost 7S-LED digit
+        LED7LAST = RAMPOOL-1    ; save memory location of rightmost 7S-LED digit
+
 
 ;       7-seg LED patterns, "70s chique"
 PAT7SM9:
@@ -178,6 +189,20 @@ PUT7S:
         CALL    AFLAGS
         LD      LED7LAST,A
         .endif
-
         RET
+
+        .macro  Board_IO_Init
+        .if     gt,(HAS_LED7SEG-1)
+        MOV     LED7GROUP,#0     ; one of position HAS_LED7SEG 7-SEG digit groups
+        .endif
+        MOV     LED7FIRST  ,#0x66 ; 7S LEDs 4..
+        MOV     LED7FIRST+1,#0x78 ; 7S LEDs .t.
+        MOV     LED7FIRST+2,#0x74 ; 7S LEDs ..h
+        .endm
+
+        .else
+        .macro  Board_IO_Init
+        ; no LED-7Seg
+        .endm
+
         .endif
