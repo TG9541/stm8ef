@@ -540,6 +540,27 @@ COLD:
         .ifne   HAS_RXUART*HAS_TXUART
         MOV     UART_CR2,#0x0C  ; Use UART1 full duplex
         .ifne   HALF_DUPLEX
+        .ifeq   (HALF_DUPLEX - 1)
+        ; pull-up for PD5 single-wire UART
+        BRES    PD_DDR,#5       ; PD5 GPIO input high
+        BSET    PD_CR1,#5       ; PD5 GPIO pull-up
+        .endif
+        .ifeq   (HALF_DUPLEX - 2)
+        ; STM8S903 type Low Density devices can re-map UART-TX to PA3
+        LD      A,OPT2
+        AND     A,#0x03
+        CP      A,#0x03
+        JREQ    $1
+        ; pull-up for PD5 single-wire UART
+        BRES    PD_DDR,#5       ; PD5 GPIO input high
+        BSET    PD_CR1,#5       ; PD5 GPIO pull-up
+        JRA     $2
+$1:
+        ; pull-up for PA3 single-wire UART
+        BRES    PA_DDR,#3       ; PA3 GPIO input high
+        BSET    PA_CR1,#3       ; PA3 GPIO pull-up
+$2:
+        .endif
         MOV     UART1_CR5,#0x08 ; UART1 Half-Duplex
         .endif
         .else

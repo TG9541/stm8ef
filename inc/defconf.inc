@@ -7,7 +7,7 @@
 
         TERM_LINUX       = 1    ; LF terminates line
 
-        HALF_DUPLEX      = 0    ; Use UART in half duplex mode
+        HALF_DUPLEX      = 0    ; Use UART in half duplex mode (1: PD5, 2: PA3)
         HAS_RXUART       = 1    ; Enable UART RXD, word ?RX
         HAS_TXUART       = 1    ; Enable UART TXD, word TX!
         HAS_RXSIM        = 0    ; Enable RxD via GPIO/TIM4, word ?RXGP

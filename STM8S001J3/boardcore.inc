@@ -83,9 +83,6 @@ BKEYCHAR:
 
 BOARDINIT:
         ; Board I/O initialization
-        ; pull-up for PD5 single-wire UART
-        BRES    PD_DDR,#5       ; PD5 GPIO input high
-        BRES    PD_CR1,#5       ; PD5 GPIO pull-up
 
         RET
 
