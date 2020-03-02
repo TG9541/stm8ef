@@ -52,13 +52,16 @@
 \ 807A
 \ 807E
 
-                 \ Register name                      \ Reset status
-4800 equ OPT0    \ Options 0
-4801 equ OPT1    \ Options 1
-4803 equ OPT2    \ Options 2
-4805 equ OPT3    \ Options 3
-4807 equ OPT4    \ Options 4
-4809 equ OPT5    \ Options 5
+                 \ Register name
+4800 equ OPT0    \ Options 0 Read-out protection
+4801 equ OPT1    \ Options 1 User boot code
+4803 equ OPT2    \ Options 2 Alternate function remapping
+4805 equ OPT3    \ Options 3 Watchdog option
+4807 equ OPT4    \ Options 4 Clock option
+4809 equ OPT5    \ Options 5 HSE clock startup
+480B equ OPT6    \ Options 6 TMU (reserved)
+480D equ OPT7    \ Options 7 Flash wait states
+487E equ OPTBL   \ Options Bootloader
 
                  \ Register name                      \ Reset status
 5000 equ PA_ODR  \ Port A data output latch register         0x00

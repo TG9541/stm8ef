@@ -21,8 +21,28 @@
 
 ; ***** Option Bytes in EEPROM
 
+        OPT0         = 0x4800   ; Read-out protection                   (0x00)
+        OPT1         = 0x4801   ; User Boot Code (UBC)                  (0x00)
+        NOPT1        = 0x4802   ;                                       (0xFF)
         OPT2         = 0x4803   ; Alternate Function Mapping            (0x00)
-        NOPT2        = 0x4804   ; Alternate Function Mapping            (0xFF)
+        NOPT2        = 0x4804   ;                                       (0xFF)
+        OPT3         = 0x4805   ; Watchdog option                       (0x00)
+        NOPT3        = 0x4806   ;                                       (0xFF)
+        OPT4         = 0x4807   ; Clock option                          (0x00)
+        NOPT4        = 0x4808   ;                                       (0xFF)
+        OPT5         = 0x4809   ; HSE Clock startup                     (0x00)
+        NOPT5        = 0x480A   ;                                       (0xFF)
+        OPT6         = 0x480B   ; TMU (Reserved)                        (0x00)
+        NOPT6        = 0x480C   ;                                       (0xFF)
+        OPT7         = 0x480D   ; Alternate Function Mapping            (0x00)
+        NOPT7        = 0x480E   ;                                       (0xFF)
+
+;       OPT8         = 0x4810   ; TMU_KEY 1
+;       ...
+;       OPT16        = 0x4818   ; TMU_KEY 8
+
+        OPTBL        = 0x487E   ; Bootloader                            (0x00)
+        NOPTBL       = 0x487F   ;                                       (0xFF)
 
 ; ***** Port A
 

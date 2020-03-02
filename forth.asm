@@ -196,22 +196,8 @@
 
         .ifne   HAS_BACKGROUND
 
-        .ifne   HAS_LED7SEG
-        .if     gt,(HAS_LED7SEG-1)
-        RamByte LED7GROUP       ; index [0..(HAS_LED7SEG-1)] of 7-SEG digit group
-        .endif
-
-        DIGITS = HAS_LED7SEG*LEN_7SGROUP
-        RamBlck LED7FIRST,DIGITS ; leftmost 7S-LED digit
-        LED7LAST = RAMPOOL-1    ; save memory location of rightmost 7S-LED digit
-        .endif
-
         RamWord BGADDR          ; address of background routine (0: off)
-        RamWord TICKCNT         ; 16 bit ticker (counts up)
-
-        .ifne   HAS_KEYS
-        RamByte KEYREPET        ; board key repetition control (8 bit)
-        .endif
+        RamWord TICKCNT         ; "TICKCNT" 16 bit ticker (counts up)
 
         BSPPSIZE  =     32      ; Size of data stack for background tasks
         PADBG     =     0x5F    ; PAD in background task growing down from here
@@ -266,7 +252,7 @@
 
         ; More core variables in zero page (instead of assigning fixed addresses)
         RamWord USRHLD          ; "HLD" hold a pointer of output string
-        RamWord YTEMP           ; "YTEMP" extra working register for core words
+        RamWord YTEMP           ; extra working register for core words
         RamWord USRIDLE         ; "'IDLE" idle routine in KEY
 
         ;***********************
@@ -355,6 +341,38 @@ _TRAP_Handler:
         .endm
 
         .endif
+
+; ==============================================
+
+;       Includes for board support code
+;       Board I/O initialization and E/E mapping code
+;       Hardware dependent words, e.g.  BKEY, OUT!
+        .include "boardcore.inc"
+
+;       ADC routines depending on STM8 family
+        .include "stm8_adc.inc"
+
+;       Generic board I/O: 7S-LED rendering, board key mapping
+        .include "board_io.inc"
+
+; ==============================================
+
+;       Simulated serial I/O
+;       either full or half duplex
+
+        .ifeq  HAS_TXSIM + HAS_RXSIM
+_TIM4_IRQHandler:
+        ; dummy for linker - can be overwritten by Forth application
+        .else
+        ; include required serial I/O code
+          .ifne  PNRX^PNTX
+            .include "sser_fdx.inc" ; Full Duplex serial
+          .else
+            .include "sser_hdx.inc" ; Half Duplex serial
+          .endif
+        .endif
+
+; ==============================================
 
 ;       TIM2 interrupt handler for background task
 _TIM2_UO_IRQHandler:
@@ -502,7 +520,7 @@ COLD:
         LDW     X,#RPP          ; initialize return stack
         LDW     SP,X
 
-        CALLR   BOARDINIT       ; Board initialization (see "boardcore.inc")
+        CALL    BOARDINIT       ; Board initialization (see "boardcore.inc")
 
         .ifne   HAS_BACKGROUND
         ; init BG timer interrupt
@@ -522,6 +540,27 @@ COLD:
         .ifne   HAS_RXUART*HAS_TXUART
         MOV     UART_CR2,#0x0C  ; Use UART1 full duplex
         .ifne   HALF_DUPLEX
+        .ifeq   (HALF_DUPLEX - 1)
+        ; pull-up for PD5 single-wire UART
+        BRES    PD_DDR,#5       ; PD5 GPIO input high
+        BSET    PD_CR1,#5       ; PD5 GPIO pull-up
+        .endif
+        .ifeq   (HALF_DUPLEX - 2)
+        ; STM8S903 type Low Density devices can re-map UART-TX to PA3
+        LD      A,OPT2
+        AND     A,#0x03
+        CP      A,#0x03
+        JREQ    $1
+        ; pull-up for PD5 single-wire UART
+        BRES    PD_DDR,#5       ; PD5 GPIO input high
+        BSET    PD_CR1,#5       ; PD5 GPIO pull-up
+        JRA     $2
+$1:
+        ; pull-up for PA3 single-wire UART
+        BRES    PA_DDR,#3       ; PA3 GPIO input high
+        BSET    PA_CR1,#3       ; PA3 GPIO pull-up
+$2:
+        .endif
         MOV     UART1_CR5,#0x08 ; UART1 Half-Duplex
         .endif
         .else
@@ -573,14 +612,7 @@ COLD:
         BSET    PSIM+CR2,#PNRX    ; enable PNRX external interrupt
         .endif
 
-        .ifne   HAS_LED7SEG
-        .if     gt,(HAS_LED7SEG-1)
-        MOV     LED7GROUP,#0     ; one of position HAS_LED7SEG 7-SEG digit groups
-        .endif
-        MOV     LED7FIRST  ,#0x66 ; 7S LEDs 4..
-        MOV     LED7FIRST+1,#0x78 ; 7S LEDs .t.
-        MOV     LED7FIRST+2,#0x74 ; 7S LEDs ..h
-        .endif
+        Board_IO_Init           ; macro board_io initialization (7S-LED)
 
         CALL    PRESE           ; initialize data stack, TIB
 
@@ -596,21 +628,6 @@ COLD:
 
         CALL    [TBOOT+3]       ; application boot
         JP      QUIT            ; start interpretation
-
-; ==============================================
-
-;       Includes for board support code
-;       Board I/O initialization and E/E mapping code
-;       Hardware dependent words, e.g.  BKEY, OUT!
-        .include "boardcore.inc"
-
-;       Generic board I/O: 7S-LED rendering, board key mapping
-        .include "board_io.inc"
-
-; ==============================================
-
-;       ADC routines depending on STM8 family
-        .include "stm8_adc.inc"
 
 ; ==============================================
 
@@ -652,20 +669,6 @@ TXSTOR:
         RET
         .endif
 
-;       Simulated serial I/O
-;       either full or half duplex
-
-        .ifeq  HAS_TXSIM + HAS_RXSIM
-_TIM4_IRQHandler:
-        ; dummy for linker - can be overwritten by Forth application
-        .else
-        ; include required serial I/O code
-          .ifne  PNRX^PNTX
-            .include "sser_fdx.inc" ; Full Duplex serial
-          .else
-            .include "sser_hdx.inc" ; Half Duplex serial
-          .endif
-        .endif
 
 ; ==============================================
 
