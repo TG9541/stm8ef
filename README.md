@@ -2,9 +2,9 @@
 
 [![Travis-CI](https://travis-ci.org/TG9541/stm8ef.svg)](https://travis-ci.org/TG9541/stm8ef)
 
-STM8 eForth is a very compact interactive Forth system for STM8 µCs. It provides a [binary release](https://github.com/TG9541/stm8ef/releases), a library, a plug-in system for board support and automated tests with uCsim. Core features include simple multitasking with interactive parameter setting and autostart-operation.
+STM8 eForth is a very compact interactive Forth system for STM8 µCs. It's much like a tiny operating system with a built-in compiler-interpreter that interacts with the user through a serial console (e.g. using [e4thcom](https://wiki.forth-ev.de/doku.php/en:projects:e4thcom) or a serial terminal). Simple multi-tasking features allow running a control application in the background while tuning parameters (or even change the program!) through the CLI.
 
-It runs on an STM8 µC as a compiler-interpreter and interacts with the user through a console (e.g. using [e4thcom](https://wiki.forth-ev.de/doku.php/en:projects:e4thcom) or a serial terminal).
+The [release](https://github.com/TG9541/stm8ef/releases) provides a library, STM8 register definitions and a plug-in system for board support. Core features include compiling Forth to Flash memory, autostart-operation, and all that's needed for creating a custom Forth core. The release process automatically runs a [self-test in the uCsim STM8S simulator](https://travis-ci.org/TG9541/stm8ef) with Travis-CI.
 
 [![STM8EF Wiki](https://user-images.githubusercontent.com/5466977/28994765-3267d78c-79d6-11e7-927f-91751cd402db.jpg)](https://github.com/TG9541/stm8ef/wiki)
 
@@ -16,11 +16,10 @@ Forth is a simple but highly extensible [programming language](https://github.co
 : hello ."  Hello World!" ;
 ```
 
-STM8 eForth is configurable: a full featured binary needs between 4.7K and 5.5K, a basic interactive Forth fits in just 3.5K. The unique `ALIAS` feature provides access to headerless Forth words enables interactive programming even on the smallest available STM8 device (e.g. STM8S003F2 with 4K Flash memory).
+STM8 eForth is configurable: a full featured binary needs between 4.7K and 5.5K, a basic interactive Forth fits in just 3.5K. The unique `ALIAS` feature provides convenient access to headerless Forth words which enables even more code economy (interactive programming is possible on the smallest STM8 device with 4K Flash memory).
 
-The Forth console works with an STM8 UART, a pair of GPIOs, or even any single GPIO and 3-wire or 2-wire communication. Up to two UARTs and a simulated serial interface are supported. The console can be configured for any type of [character I/O](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Board-Character-IO)  (e.g. keyboard and display), even at runtime!
+The Forth console works with an STM8 UART, a pair of GPIOs, or even any single GPIO and 3-wire or 2-wire communication (up to two UARTs and a simulated serial interface are supported). The console can be configured at runtime and use any type of [character I/O](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Board-Character-IO)  (e.g. keyboard and display)!
 
-T
 The [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) covers various topics, e.g. using [Breakout Boards](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards), or the conversion of low-cost Chinese thermostats, voltmeters, or DC/DC-converters into Forth powered embedded control boards.
 
 ## Generic targets
@@ -31,9 +30,9 @@ Generic target binaries are provided as examples and for evaluation:
   *  [CORE](https://github.com/TG9541/stm8ef/tree/master/CORE), a basic configuration for STM8S Low Density devices, some features are disabled (e.g. no background task)
   * [SWIMCOM](https://github.com/TG9541/stm8ef/tree/master/SWIMCOM), a full feature set, and 2-wire communication through PD1/SWIM (i.e. the ICP pin)
   * [DOUBLECOM](https://github.com/TG9541/stm8ef/tree/master/DOUBLECOM) console through the SWIM interface, UART I/O words are provided for applications
-  * [STM8S001J3](https://github.com/TG9541/stm8ef/tree/master/STM8S001J3) like SWIMCOM but with console through PD5/UART_TX in half-duplex mode (this binary is compatible with all STM8S Low Density devices)
-* [STM8S105K4](https://github.com/TG9541/stm8ef/tree/master/STM8S105K4) for STM8S Medium Density devices (Value Line / Access Line)
-* [STM8S207RB](https://github.com/TG9541/stm8ef/tree/master/STM8S207RB) initial support for STM8S High Density devices (Performance Line)
+  * [STM8S001J3](https://github.com/TG9541/stm8ef/tree/master/STM8S001J3) like SWIMCOM but with console through UART_TX (PA3 or PD5) in half-duplex mode (this binary supports STM8S001J3 / STM8S903K3 UART remapping but it's compatible with all STM8S Low Density devices)
+* [STM8S105K4](https://github.com/TG9541/stm8ef/tree/master/STM8S105K4) for STM8S Medium Density devices (Value Line / Access Line) with 2K RAM and up to 32K Flash
+* [STM8S207RB](https://github.com/TG9541/stm8ef/tree/master/STM8S207RB) support for STM8S High Density devices (Performance Line) with 6K RAM and up to 32K + 96K Flash
 * [STM8L051J3](https://github.com/TG9541/stm8ef/tree/master/STM8L051J3) support for STM8L Low Density devices (see [issue](https://github.com/TG9541/stm8ef/issues/137#issuecomment-354542670))
 * [STM8L-DISCOVERY](https://github.com/TG9541/stm8ef/tree/master/STM8L-DISCOVERY) support for STM8L Medium Density devices
 
@@ -61,17 +60,18 @@ From STM8 eForth 2.2.24 on, the binary release contains all the files that are n
 
 # Feature Overview
 
-In addition to basic eForth, STM8 eForth offers many features:
+In addition to the initial code STM8 eForth offers many features:
 
 * Subroutine Threaded Code (STC) with improved code density
   * native `BRANCH` (JP), and `EXIT` (RET)
   * relative CALL where possible (2 instead of 3 bytes)
   * TRAP as pseudo-opcode for literals (3 instead of 5 bytes)
   * [ALIAS words](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Alias-Words) for indirect dictionary entries ([even in EEPROM!](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Alias-Words#dictionary-with-alias-words-in-the-eeprom))
+  * Forth - machine-code interface using STM8 registers
 * compile Forth to NVM (Non Volatile Memory) with IAP (In Application Programming)
-  * Words `NVM` and `RAM` switch between volatile (RAM) and non volatile (NVM) modes (*REMEMBER execute `RAM` after `NVM` if you want your new words to be available after power-cycle or `COLD`*)
-  * RAM allocation for `VARIABLE` and `ALLOT` is transparent in NVM mode (basic RAM management)
+  * Words `NVM` and `RAM` switch between volatile (RAM) and non volatile (NVM) modes (*execute `RAM` after `NVM` if you want your new words to be available after power-cycle or `COLD`*)
   * autostart feature for embedded applications
+  * RAM allocation for `VARIABLE` and `ALLOT` in NVM mode (basic RAM management)
 * Low-level interrupts in Forth
   * lightweight context switch with `SAVEC` and `IRET`
   * example code for HALT is in the [Wiki](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Interrupts)
@@ -125,6 +125,7 @@ In addition to basic eForth, STM8 eForth offers many features:
 
 This is a hobby project! Don't use the code if support or correctness are required.
 
-Additional licenses might apply to the code which might require derived work to be made public! Please refer to LICENSE.md for details.
+There is a policy to keep the code free from 3rd party licenses but it can't be guaranteed that no additional licenses apply which, in the worst case, may require derived work to be made public! Please refer to LICENSE.md for details.
 
 [WG1]: https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets
+
