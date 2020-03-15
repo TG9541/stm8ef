@@ -382,7 +382,7 @@
 ;.ifeq HAS_TXSIM+HAS_RXSIM
 
         TIM4_CR1     = 0x5340   ; TIM4 control register 1               (0x00)
-        .ifeq   (TARGET - STM8S105K4)
+        .ifeq   (TARGET - STM8S105K4) * (TARGET - STM8S207RB)
         TIM4_IER     = 0x5341   ; TIM4 interrupt enable register        (0x00)
         TIM4_SR      = 0x5342   ; TIM4 status register                  (0x00)
         TIM4_EGR     = 0x5343   ; TIM4 event generation register        (0x00)
