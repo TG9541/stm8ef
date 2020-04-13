@@ -3,6 +3,8 @@ BEGIN {
   if (!target) {
     target = "target/"
   }
+  split(target,t,/\//)
+  board = t[2]
 }
 
 # extract lines like:
@@ -16,7 +18,7 @@ $1~/^00/ && $3!~/(LINK|RAMPOOL)/ && $4~/[=;]/ && $7~/^"/ {
   }
   split($0,a,";");
   addr = "$" substr($1,3)
-  comment = " \\ " a[2]
+  comment = " \\ " board ":" a[2]
   print  addr " CONSTANT " symbol comment > target symbol
   next
 }
@@ -28,13 +30,14 @@ $1~/^00/ && $3!~/(LINK|RAMPOOL)/ && $4~/[=;]/ && $7~/^"/ {
 preLine~/Ram(Word|Byte|Blck)/ && $3!~/RAMPOOL/ && $4=="=" && $5~/RAMPOOL/ {
   if (split(preLine,b,"\"") == 3) {
     symbol = b[2]           # use case 1
-    comment = " \\ " b[3]
+    addr = "$" substr($1,3)
+    comment = " \\ " board ":" b[3]
   }
   else {
     symbol = $3             # use case 2
     split(preLine,a,";");
     addr = "$" substr($1,3)
-    comment = " \\ " a[2]
+    comment = " \\ " board ":" a[2]
   }
   print  addr " CONSTANT " symbol comment > target symbol
   next
