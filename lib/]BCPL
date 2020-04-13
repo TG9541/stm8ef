@@ -1,0 +1,18 @@
+\ STM8EF : ]BCPL                                                       MM-170927
+\ ------------------------------------------------------------------------------
+  RAM
+
+  \ Compile the code to toggle a bit at addr.
+  : ]BCPL ( addr bit -- )
+    \ compile BCPL addr,#bit
+    $90 C, 2* $10 OR C, , ]
+  ; IMMEDIATE
+
+\ ------------------------------------------------------------------------------
+\\ Example:
+
+\res MCU: STM8S103
+
+\res export PB_ODR
+
+: LED.toggle ( -- )  [ 0 PB_ODR 5 ]BCPL ;
