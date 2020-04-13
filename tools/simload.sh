@@ -31,12 +31,12 @@ uart1_flowctrl=1
 run
 EOF
 
-export boardcode="main.fs"
-export boardihx="$object-forth.ihx"
+export boardihx="out/$object/$object-forth.ihx"
+export boardcode="$object/board.fs"
 if [ ! -f "$boardcode" ]; then
   echo "local $boardcode not found ..."
-  export boardcode="$object/board.fs"
-  export boardihx="out/$object/$object-forth.ihx"
+  export boardcode="main.fs"
+  export boardihx="$object-forth.ihx"
   echo "... trying $boardcode"
 fi
 

@@ -34,7 +34,7 @@
         WORDS_LINKCHAR   = 1    ; Link char out words: DIGIT <# # #S SIGN #> str hld HOLD
         WORDS_LINKMISC   = 0    ; Link composing words of SEE DUMP WORDS: >CHAR _TYPE dm+ .ID >NAME
 
-        WORDS_EXTRASTACK = 0    ; Link/include stack core words: rp@ rp! sp! sp@ DEPTH
+        WORDS_EXTRASTACK = 1    ; Link/include stack core words: rp@ rp! sp! sp@ DEPTH
         WORDS_EXTRADEBUG = 0    ; Extra debug words: SEE
         WORDS_EXTRACORE  = 1    ; Extra core words: =0 I
         WORDS_EXTRAMEM   = 1    ; Extra memory words: B! 2C@ 2C!
