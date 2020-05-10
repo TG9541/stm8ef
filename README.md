@@ -42,13 +42,13 @@ Various STM8 Discovery boards and [breakout boards](https://github.com/TG9541/st
 
 TG9541/STM8EF provides board support for several common "Chinese gadgets" like the following:
 
-* [MINDEV](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for the STM8S103F3P6 $0.65 "minimum development board"
-* [C0135](https://github.com/TG9541/stm8ef/wiki/Board-C0135) "Relay-4 Board" - it can be used as a *Nano PLC*
-* [W1209](https://github.com/TG9541/stm8ef/wiki/Board-W1209) $1.50 thermostat board w/ 3 digit 7S-LED display, full- or half-duplex RS232
-* [W1219](https://github.com/TG9541/stm8ef/wiki/Board-W1219) low cost thermostat with 2x3 digit 7S-LED display, half-duplex RS232 through PD1/SWIM
-* [W1401](https://github.com/TG9541/stm8ef/wiki/Board-W1401) (also XH-W1401) thermostat with 3x2 digit 7S-LED display, half-duplex RS232 through SWIM
+* [MINDEV](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for the STM8S103F3P6 $0.80 "minimum development board"
+* [C0135](https://github.com/TG9541/stm8ef/wiki/Board-C0135) the "Relay-4 Board" can be used as a *Nano PLC* (Forth MODBUS support is available)
+* [W1209](https://github.com/TG9541/stm8ef/wiki/Board-W1209) $1.50 thermostat board w/ 3 digit 7S-LED display, full- or half-duplex RS232 (some board variants, e.g. with CA LED displays, are supported)
+* [W1219](https://github.com/TG9541/stm8ef/wiki/Board-W1219) low cost thermostat with 2x3 digit 7S-LED display with half-duplex RS232 through PD1/SWIM
+* [W1401](https://github.com/TG9541/stm8ef/wiki/Board-W1401) (also XH-W1401) thermostat with 3x2 digit 7S-LED display with half-duplex RS232 through shared PD1/SWIM
 * [DCDC](https://github.com/TG9541/stm8ef/wiki/Board-CN2596) hacked DCDC converter with voltmeter
-* [XH-M194](https://github.com/TG9541/stm8ef/wiki/Board-XH-M194) Timer board with 6 relays, RTC with clock display, and 6 keys
+* [XH-M194](https://github.com/TG9541/stm8ef/wiki/Board-XH-M194) Timer board with STM8S105K4T6C, 6 relays, RTC with clock display, 6 keys with half-duplex RS232 through PD1/SWIM
 * [XY-PWM](https://github.com/TG9541/stm8ef/wiki/XY-PWM) PWM board w/ 3 digit 7S-LED display, 3 keys, dual PWM and full-duplex RS232
 * [XY-LPWM](https://github.com/TG9541/stm8ef/wiki/Board-XY-LPWM) PWM board w/ 2x4 digit 7S-LCD display, 4 keys, PWM and full-duplex RS232
 
@@ -62,9 +62,9 @@ From STM8 eForth 2.2.24 on, the binary release contains all the files that are n
 
 In addition to the initial code STM8 eForth offers many features:
 
-* Subroutine Threaded Code (STC) with improved code density
+* Subroutine Threaded Code (STC) with improved code density that rivals DTC
   * native `BRANCH` (JP), and `EXIT` (RET)
-  * relative CALL where possible (2 instead of 3 bytes)
+  * relative CALL when possible (2 instead of 3 bytes)
   * TRAP as pseudo-opcode for literals (3 instead of 5 bytes)
   * [ALIAS words](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Alias-Words) for indirect dictionary entries ([even in EEPROM!](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Alias-Words#dictionary-with-alias-words-in-the-eeprom))
   * Forth - machine-code interface using STM8 registers
@@ -81,51 +81,46 @@ In addition to the initial code STM8 eForth offers many features:
   * [on supported boards](https://github.com/TG9541/stm8ef/wiki/eForth-Background-Task) `?KEY` reads board keys, `EMIT` uses board display
   * robust context switch with "clean stack" approach
 * cooperative multitasking with `'IDLE`
-  * [idle task](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Idle-Task) execution while there is no console input
-  * very fast idle loop (< 10µs)
+  * [idle task](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Idle-Task) execution while there is no console input with < 10µs cycle time
+  * code in the `'IDLE` task can use the interpreter with `EVALUATE`
 * configuration options for serial console or dual serial interface
-  * UART: `?RX` and `TX!`
-  * any GPIO or pair of GPIOs from ports PA through PD can be used as a simulated COM port
+  * UART: `?RX` and `TX!` full-duplex w/ half-duplex option on STM8 Low Density devices
   * GPIO w/ Port edge & Timer4 interrupts: `?RXP .. TXP!`
   * half-duplex "bus style" communication using simulated COM port or UART
+  * any GPIO or pair of GPIOs from ports PA through PD can be used as a simulated COM port
   * option for `TX! .. ?RX` on simulated COM port, and `?RXP .. TXP!` on UART
 * configurable vocabulary subsets for binary size optimization
-  * configuration possible down to the level of single words
-  * export of `ALIAS` definitions for unlinked words
+  * board dependent configuration possible down to the level of single words
+  * export of `ALIAS` definitions for any unlinked words
 * Extended vocabulary:
-  * `CREATE ... DOES>` for defining *defining words*
-  * Vectored I/O: `'KEY?` and `'EMIT`
-  * Loop structure words: `DO .. LEAVE .. LOOP`, `+LOOP`
+  * `CONSTANT` (yes, that was missing in the original code)
+  * `'KEY?` and `'EMIT` for I/O redirection (that was missing, too)
+  * `CREATE ... DOES>` for *defining words* (few eForth variants have it)
+  * `DO .. LEAVE .. LOOP`, `+LOOP` for better compatibility with generic Forth
   * STM8S ADC control: `ADC!`, `ADC@`
   * board keys, outputs, LEDs: `BKEY`, `KEYB?`, `EMIT7S`, `OUT`, `OUT!`
   * EEPROM, FLASH lock/unlock: `LOCK`, `ULOCK`, `LOCKF`, `ULOCKF`
   * native bit set/reset: `B!` (b a u -- ), `[ .. ]B!` (and more)
   * native 16bit STM8 timer register access: `2C@`, `2C!`
-  * compile to Flash memory: `NVR`, `RAM`, `WIPE`, `RESET`
+  * compile to Flash memory: `NVR`, `RAM`, `WIPE`, `RESET` and `PERSIST`
   * autostart applications: `'BOOT`
-  * `EVALUATE` for interpreting text strings (even in the idle task!)
-  * many words that were missing in eForth compared to Forth systems popular in the 1980s
-* board support for [STM8S based very-low-cost boards][WG1]:
-  * STM8S103F3P6 "$0.80" breakout board
-  * Termostats, e.g. W1209, W1219, or W1401
-  * Low cost power supply boards, e.g. XH-M188, DCDC w/ voltmeter
-  * C0135 Relay Board
-  * configuration folders for easy application to new boards
+  * `EVALUATE` can run the Forth interpreter on text strings (even compilation is possible!)
+  * many words from Forth systems that were popular in the 1980s are provided in the library
 
 ## Other changes to the original STM8EF code:
 
 * "ASxxxx V2.0" syntax (the free [SDCC tool chain](http://sdcc.sourceforge.net/) allows mixing Forth, assembly, and C)
-* hard STM8S105C6 dependencies removed (e.g. initialization, clock, RAM layout, UART2)
+* hard STM8S105C6 dependencies were removed (e.g. initialization, clock, RAM layout, UART2)
 * flexible RAM layout, basic RAM memory management, meaningful symbols for RAM locations
 * conditional code for different target boards with a subdirectory based configuration framework
 * original code bugs fixed (e.g. `COMPILE`, `DEPTH`, `R!`, `PICK`)
 * significant binary size reduction
+* many more
 
 # Disclaimer, copyright
 
 This is a hobby project! Don't use the code if support or correctness are required.
 
-There is a policy to keep the code free from 3rd party licenses but it can't be guaranteed that no additional licenses apply which, in the worst case, may require derived work to be made public! Please refer to LICENSE.md for details.
+The license is MIT. Please refer to LICENSE.md for details.
 
 [WG1]: https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets
-
