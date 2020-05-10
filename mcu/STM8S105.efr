@@ -38,11 +38,11 @@
 8042 equ INT_TIM2CC  \ TIM2 capture/compare
 8046 equ INT_TIM3    \ TIM3 update /overflow
 804A equ INT_TIM3CC  \ TIM3 capture/compare
-\ 804E
+\ 804E - no 1st UART
 \ 8052
 8056 equ INT_I2C     \ I2C interrupt
-805A equ INT_UARTTX  \ UART2 Tx complete
-805C equ INT_UARTRX  \ UART2 Receive register DATA FULL
+805A equ INT_UARTTX \ UART2 Tx complete
+805C equ INT_UARTRX \ UART2 Receive register DATA FULL
 8062 equ INT_ADC1    \ ADC1 end of conversion/analog watchdog interrupt
 8066 equ INT_TIM4    \ TIM4 update/overflow
 806A equ INT_FLASH   \ Flash EOP/WR_PG_DIS
@@ -194,29 +194,21 @@
 521D  equ  I2C_TRISER    \ I2C TRISE register                    (0x02)
 521E  equ  I2C_PECR    \ I2C packet error checking register    (0x00)
 
-5230  equ  UART1_SR    \ UART1 status register                 (0xC0)
-5231  equ  UART1_DR    \ UART1 data register                   (0xXX)
-5232  equ  UART1_BRR1    \ UART1 baud rate register 1            (0x00)
-5233  equ  UART1_BRR2    \ UART1 baud rate register 2            (0x00)
-5234  equ  UART1_CR1    \ UART1 control register 1              (0x00)
-5235  equ  UART1_CR2    \ UART1 control register 2              (0x00)
-5236  equ  UART1_CR3    \ UART1 control register 3              (0x00)
-5237  equ  UART1_CR4    \ UART1 control register 4              (0x00)
-5238  equ  UART1_CR5    \ UART1 control register 5              (0x00)
-5239  equ  UART1_GTR    \ UART1 guard time register             (0x00)
-523A  equ  UART1_PSCR    \ UART1 prescaler register              (0x00)
-5240  equ  UART2_SR    \ UART1 status register                 (0xC0)
-5241  equ  UART2_DR    \ UART1 data register                   (0xXX)
-5242  equ  UART2_BRR1    \ UART1 baud rate register 1            (0x00)
-5243  equ  UART2_BRR2    \ UART1 baud rate register 2            (0x00)
-5244  equ  UART2_CR1    \ UART1 control register 1              (0x00)
-5245  equ  UART2_CR2    \ UART1 control register 2              (0x00)
-5246  equ  UART2_CR3    \ UART1 control register 3              (0x00)
-5247  equ  UART2_CR4    \ UART1 control register 4              (0x00)
-5248  equ  UART2_CR5    \ UART1 control register 5              (0x00)
-5249  equ  UART2_CR6    \ UART1 control register 6              (0x00)
-524A  equ  UART2_GTR    \ UART1 guard time register             (0x00)
-524B  equ  UART2_PSCR    \ UART1 prescaler register              (0x00)
+\ Medium Density devices use 2nd UART addresses
+\ in this case UART2 is identical with the name in the datasheet
+5240  equ  UART2_SR      \ UART2 status register                 (0xC0)
+5241  equ  UART2_DR      \ UART2 data register                   (0xXX)
+5242  equ  UART2_BRR1    \ UART2 baud rate register 1            (0x00)
+5243  equ  UART2_BRR2    \ UART2 baud rate register 2            (0x00)
+5244  equ  UART2_CR1     \ UART2 control register 1              (0x00)
+5245  equ  UART2_CR2     \ UART2 control register 2              (0x00)
+5246  equ  UART2_CR3     \ UART2 control register 3              (0x00)
+5247  equ  UART2_CR4     \ UART2 control register 4              (0x00)
+5248  equ  UART2_CR5     \ UART2 control register 5              (0x00)
+5249  equ  UART2_CR6     \ UART2 control register 6              (0x00)
+524A  equ  UART2_GTR     \ UART2 guard time register             (0x00)
+524B  equ  UART2_PSCR    \ UART2 prescaler register              (0x00)
+
 5250  equ  TIM1_CR1    \ TIM1 control register 1               (0x00)
 5251  equ  TIM1_CR2    \ TIM1 control register 2               (0x00)
 5252  equ  TIM1_SMCR    \ TIM1 slave mode control register      (0x00)

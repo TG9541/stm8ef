@@ -38,10 +38,10 @@
 8042 equ INT_TIM2CC  \ TIM2 capture/compare
 \ 8046
 \ 804A
-804E equ INT_UARTTX  \ UART1 Tx complete
+804E equ INT_UARTTX  \ UART1 Tx complete (1st UART)
 8052 equ INT_UARTRX  \ UART1 Receive register DATA FULL
 8056 equ INT_I2C     \ I2C interrupt
-\ 805A
+\ 805A - no 2nd UART
 \ 805E
 8062 equ INT_ADC1    \ ADC1 end of conversion/analog watchdog interrupt
 8066 equ INT_TIM4    \ TIM4 update/overflow
@@ -203,6 +203,8 @@
 521D  equ  I2C_TRISER    \ I2C TRISE register                    (0x02)
 521E  equ  I2C_PECR    \ I2C packet error checking register    (0x00)
 
+\ Low Density devices use "1st UART" addresses which in this case
+\ is the same as the name in the datasheet
 5230  equ  UART1_SR    \ UART1 status register                 (0xC0)
 5231  equ  UART1_DR    \ UART1 data register                   (0xXX)
 5232  equ  UART1_BRR1    \ UART1 baud rate register 1            (0x00)
@@ -214,18 +216,7 @@
 5238  equ  UART1_CR5    \ UART1 control register 5              (0x00)
 5239  equ  UART1_GTR    \ UART1 guard time register             (0x00)
 523A  equ  UART1_PSCR    \ UART1 prescaler register              (0x00)
-5240  equ  UART2_SR    \ UART1 status register                 (0xC0)
-5241  equ  UART2_DR    \ UART1 data register                   (0xXX)
-5242  equ  UART2_BRR1    \ UART1 baud rate register 1            (0x00)
-5243  equ  UART2_BRR2    \ UART1 baud rate register 2            (0x00)
-5244  equ  UART2_CR1    \ UART1 control register 1              (0x00)
-5245  equ  UART2_CR2    \ UART1 control register 2              (0x00)
-5246  equ  UART2_CR3    \ UART1 control register 3              (0x00)
-5247  equ  UART2_CR4    \ UART1 control register 4              (0x00)
-5248  equ  UART2_CR5    \ UART1 control register 5              (0x00)
-5249  equ  UART2_CR6    \ UART1 control register 6              (0x00)
-524A  equ  UART2_GTR    \ UART1 guard time register             (0x00)
-524B  equ  UART2_PSCR    \ UART1 prescaler register              (0x00)
+
 5250  equ  TIM1_CR1    \ TIM1 control register 1               (0x00)
 5251  equ  TIM1_CR2    \ TIM1 control register 2               (0x00)
 5252  equ  TIM1_SMCR    \ TIM1 slave mode control register      (0x00)
