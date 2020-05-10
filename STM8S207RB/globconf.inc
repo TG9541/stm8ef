@@ -3,6 +3,7 @@
 ; Clock: HSI (no crystal)
 
         HALF_DUPLEX      = 0    ; Use UART in half duplex mode
+        USE_UART2        = 0    ; Use the 2nd UART for the console (STM8S207: optional)
         HAS_TXUART       = 1    ; No UART TXD, word TX!
         HAS_RXUART       = 1    ; No UART RXD, word ?RX
         HAS_TXSIM        = 0    ; Enable TxD via GPIO/TIM4, word TXGP!

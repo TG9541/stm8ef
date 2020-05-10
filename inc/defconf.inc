@@ -7,7 +7,8 @@
 
         TERM_LINUX       = 1    ; LF terminates line
 
-        HALF_DUPLEX      = 0    ; Use UART in half duplex mode (1: PD5, 2: PA3)
+        HALF_DUPLEX      = 0    ; Use the STM8S Low Density UART in half duplex mode (1: PD5, 2: PA3)
+        USE_UART2        = 0    ; Use the 2nd UART for the console (STM8S207: optional, STM8S105: default)
         HAS_RXUART       = 1    ; Enable UART RXD, word ?RX
         HAS_TXUART       = 1    ; Enable UART TXD, word TX!
         HAS_RXSIM        = 0    ; Enable RxD via GPIO/TIM4, word ?RXGP

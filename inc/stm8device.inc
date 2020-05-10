@@ -249,24 +249,13 @@
         UART2_GTR    = 0x524A   ; UART2 guard time register             (0x00)
         UART2_PSCR   = 0x524B   ; UART2 prescaler register              (0x00)
 
-        UART3_SR     = 0x5240   ; UART3 status register                 (0xC0)
-        UART3_DR     = 0x5241   ; UART3 data register                   (0xXX)
-        UART3_BRR1   = 0x5242   ; UART3 baud rate register 1            (0x00)
-        UART3_BRR2   = 0x5243   ; UART3 baud rate register 2            (0x00)
-        UART3_CR1    = 0x5244   ; UART3 control register 1              (0x00)
-        UART3_CR2    = 0x5245   ; UART3 control register 2              (0x00)
-        UART3_CR3    = 0x5246   ; UART3 control register 3              (0x00)
-        UART3_CR4    = 0x5247   ; UART3 control register 4              (0x00)
-        ;              0x5248
-        UART3_CR6    = 0x5249   ; UART3 control register 6              (0x00)
-
-        .ifeq   (TARGET - STM8S105K4)
-        UART_DR   = UART2_DR
+        .ifeq   (TARGET - STM8S105K4) * (USE_UART2 - 1)
+        UART_DR   = UART2_DR    ; STM8S105 or STM8S207
         UART_SR   = UART2_SR
         UART_BRR1 = UART2_BRR1
         UART_CR2  = UART2_CR2
         .else
-        UART_DR   = UART1_DR    ; STM8S103 and STM8S207
+        UART_DR   = UART1_DR    ; STM8S103 or STM8S207
         UART_SR   = UART1_SR
         UART_BRR1 = UART1_BRR1
         UART_CR2  = UART1_CR2
