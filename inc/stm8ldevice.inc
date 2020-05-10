@@ -304,7 +304,19 @@
  TIM2_CCR2L = 0x5264 ; TIM2 capture/compare register 2 low 0x00
  TIM2_BKR = 0x5265 ; TIM2 break register 0x00
  TIM2_OISR = 0x5266 ; TIM2 output idle state register 0x00
+
+        .ifne   BG_USE_TIM1
+        error: BG_USE_TIM1 not supported
+        .else
+        BG_TIM_CR1   = TIM2_CR1
+        BG_TIM_IER   = TIM2_IER
+        BG_TIM_SR1   = TIM2_SR1
+        BG_TIM_ARRH  = TIM2_ARRH
+        BG_TIM_ARRL  = TIM2_ARRL
+        .endif
+
 ; 0x00 5267 to 0x00 527F Reserved area (25 bytes)
+
 ; TIM3
  TIM3_CR1 = 0x5280 ; TIM3 control register 1 0x00
  TIM3_CR2 = 0x5281 ; TIM3 control register 2 0x00

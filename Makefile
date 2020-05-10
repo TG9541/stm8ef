@@ -1,7 +1,7 @@
-E4THCOM=e4thcom-0.6.3
+E4THCOM=e4thcom
 TERM_PORT=ttyUSB0
 TERM_BAUD=9600
-TERM_FLAGS=
+TERM_FLAGS="-p mcu:target:lib"
 
 ifeq ($(BOARD),)
 
@@ -49,6 +49,9 @@ defaults:
 
 defaults105:
 	stm8flash -c stlinkv2 -p stm8s105k4 -s opt -w tools/stm8s105FactoryDefaults.bin
+
+term:
+	$(E4THCOM) -t stm8ef -p .:lib $(TERM_FLAGS) -d $(TERM_PORT) -b B$(TERM_BAUD)
 
 else
 include forth.mk
