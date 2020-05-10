@@ -18,8 +18,8 @@
         PNTX             = 1    ; Port GPIO# for HAS_TXDSIM
         SERPRIOTIM       = 0    ; RXSIM priority in BG ticks
 
-        EMIT_BG  = DROP         ; TODO: vectored NUL background EMIT vector
-        QKEY_BG  = ZERO         ; TODO: NUL background QKEY vector
+        EMIT_BG  = DROP         ; vectored NUL background EMIT vector
+        QKEY_BG  = ZERO         ; NUL background QKEY vector
 
         HAS_LED7SEG      = 0    ; 7-seg LED display, number of groups (0: none)
         LEN_7SGROUP      = 3    ; default: 3 dig. 7-seg LED
@@ -29,9 +29,11 @@
         HAS_INPUTS       = 0    ; Board digital inputs
         HAS_ADC          = 0    ; Board analog inputs
 
-        HAS_BACKGROUND   = 0    ; Background Forth task (TIM2 ticker)
-        BG_TIM2_REL = 0x26DE    ; Reload value for TIM2 background ticker (default 0x26DE @ 5ms HSE)
+        HAS_BACKGROUND   = 0    ; Background Forth task (TIM1 or TIM2 ticker)
+        BG_USE_TIM1      = 0    ; Use TIM1 for the Background Task (instead of TIM2)
+        BG_TIM_REL  = 0x26DE    ; Reload value for background ticker timer (default 0x26DE @ 5ms HSE)
         BG_RUNMASK  =      0    ; BG task runs if "(BG_RUNMASK AND TICKCNT) equals 0"
+
         HAS_CPNVM        = 0    ; Can compile to Flash, always interpret to RAM
         HAS_DOES         = 0    ; DOES> extension
         HAS_DOLOOP       = 0    ; DO .. LOOP extension: DO LEAVE LOOP +LOOP

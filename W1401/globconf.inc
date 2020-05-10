@@ -23,7 +23,7 @@
         HAS_ADC          = 1    ; Analog input words
 
         HAS_BACKGROUND   = 1    ; Background Forth task (TIM2 ticker)
-        BG_TIM2_REL = 0x09BA    ; 5ms/4 = 1.25ms ticker for 7S-LED MPX
+        BG_TIM_REL  = 0x09BA    ; 5ms/4 = 1.25ms ticker for 7S-LED MPX
         BG_RUNMASK  =      3    ; BG task runs "in one out of four" cycles
 
         HAS_CPNVM        = 1    ; Can compile to Flash, always interpret to RAM
