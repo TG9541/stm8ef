@@ -1051,9 +1051,8 @@ DROP:
 
         HEADER  DDROP "2DROP"
 DDROP:
-        INCW    X
-        INCW    X
-        JRA     DROP
+        ADDW    X,#4
+        RET
 
 ;       DUP     ( w -- w w )    ( TOS STM8: -- Y,Z,N )
 ;       Duplicate top stack item.
