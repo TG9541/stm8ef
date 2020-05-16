@@ -4,7 +4,7 @@
 
 STM8 eForth is a very compact interactive Forth system for STM8 µCs. It's much like a tiny operating system with a built-in compiler-interpreter that interacts with the user through a serial console (e.g. using [e4thcom](https://wiki.forth-ev.de/doku.php/en:projects:e4thcom) or a serial terminal). Simple multi-tasking features allow running a control application in the background while tuning parameters (or even change the program!) through the CLI.
 
-The [release](https://github.com/TG9541/stm8ef/releases) provides binaries, a library, STM8 register definitions and a plug-in system for board support. Core features include compiling Forth to Flash memory, autostart-operation and all that's needed for creating a custom Forth core. The release process automatically runs a [self-test in the uCsim STM8S simulator](https://travis-ci.org/TG9541/stm8ef) with Travis-CI.
+The [release](https://github.com/TG9541/stm8ef/releases) provides binaries, a library, STM8 register definitions and a [plug-in system for board support](https://github.com/TG9541/stm8ef-modular-build). Core features include compiling Forth to Flash memory, autostart-operation and all that's needed for creating a custom Forth core. The release process automatically runs a [self-test in the uCsim STM8S simulator](https://travis-ci.org/TG9541/stm8ef) with Travis-CI.
 
 [![STM8EF Wiki](https://user-images.githubusercontent.com/5466977/28994765-3267d78c-79d6-11e7-927f-91751cd402db.jpg)](https://github.com/TG9541/stm8ef/wiki)
 
