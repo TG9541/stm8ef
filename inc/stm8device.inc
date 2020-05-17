@@ -249,7 +249,7 @@
         UART2_GTR    = 0x524A   ; UART2 guard time register             (0x00)
         UART2_PSCR   = 0x524B   ; UART2 prescaler register              (0x00)
 
-        .ifeq   (TARGET - STM8S105K4) * (USE_UART2 - 1)
+        .ifeq   (TARGET - STM8S_MED) * (USE_UART2 - 1)
         UART_DR   = UART2_DR    ; STM8S105 or STM8S207
         UART_SR   = UART2_SR
         UART_BRR1 = UART2_BRR1
@@ -300,7 +300,7 @@
 ; ***** TIM2
 
         TIM2_CR1     = 0x5300   ; TIM2 control register 1               (0x00)
-        .ifne   (TARGET - STM8S103F3)
+        .ifne   (TARGET - STM8S_LOD)
         TIM2_IER     = 0x5301   ; TIM2 interrupt enable register        (0x00)
         TIM2_SR1     = 0x5302   ; TIM2 status register 1                (0x00)
         TIM2_SR2     = 0x5303   ; TIM2 status register 2                (0x00)
@@ -369,7 +369,7 @@
 ;.ifeq HAS_TXSIM+HAS_RXSIM
 
         TIM4_CR1     = 0x5340   ; TIM4 control register 1               (0x00)
-        .ifeq   (TARGET - STM8S105K4) * (TARGET - STM8S207RB)
+        .ifeq   (TARGET - STM8S_MED) * (TARGET - STM8S_HID)
         TIM4_IER     = 0x5341   ; TIM4 interrupt enable register        (0x00)
         TIM4_SR      = 0x5342   ; TIM4 status register                  (0x00)
         TIM4_EGR     = 0x5343   ; TIM4 event generation register        (0x00)
