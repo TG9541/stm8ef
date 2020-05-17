@@ -344,22 +344,6 @@
         TIM2_CCR3L   = 0x5316   ; TIM2 capture/compare register 3 low   (0x00)
         .endif
 
-; define symbols for the background task timer
-        .ifne   BG_USE_TIM1
-        BG_TIM_CR1   = TIM1_CR1
-        BG_TIM_IER   = TIM1_IER
-        BG_TIM_SR1   = TIM1_SR1
-        BG_TIM_ARRH  = TIM1_ARRH
-        BG_TIM_ARRL  = TIM1_ARRL
-        .else
-        BG_TIM_CR1   = TIM2_CR1
-        BG_TIM_IER   = TIM2_IER
-        BG_TIM_SR1   = TIM2_SR1
-        BG_TIM_ARRH  = TIM2_ARRH
-        BG_TIM_ARRL  = TIM2_ARRL
-        .endif
-
-
 ; ***** TIM3 (High Density)
 
         TIM3_CR1     = 0x5320   ; TIM3 control register 1               (0x00)
@@ -401,6 +385,35 @@
         TIM4_ARR     = 0x5348   ; TIM4 auto-reload register             (0xFF)
         .endif
 ;.endif
+
+; define symbols for the background task timer
+        .ifne   BG_USE_TIM1
+        .ifne   BG_USE_TIM3
+        Error: either BG_USE_TIM1 or BG_USE_TIM3 can be selected but not both
+        .else
+        BG_TIM_CR1   = TIM1_CR1
+        BG_TIM_IER   = TIM1_IER
+        BG_TIM_SR1   = TIM1_SR1
+        BG_TIM_ARRH  = TIM1_ARRH
+        BG_TIM_ARRL  = TIM1_ARRL
+        .endif
+        .else
+        .ifne   BG_USE_TIM3
+        BG_TIM_CR1   = TIM3_CR1
+        BG_TIM_IER   = TIM3_IER
+        BG_TIM_SR1   = TIM3_SR1
+        BG_TIM_ARRH  = TIM3_ARRH
+        BG_TIM_ARRL  = TIM3_ARRL
+        BG_TIM_PSCR  = TIM3_PSCR
+        .else
+        BG_TIM_CR1   = TIM2_CR1
+        BG_TIM_IER   = TIM2_IER
+        BG_TIM_SR1   = TIM2_SR1
+        BG_TIM_ARRH  = TIM2_ARRH
+        BG_TIM_ARRL  = TIM2_ARRL
+        BG_TIM_PSCR  = TIM2_PSCR
+        .endif
+        .endif
 
 ; ***** ADC1
 

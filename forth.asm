@@ -47,8 +47,9 @@
         .globl _EXTI2_IRQHandler
         .globl _EXTI3_IRQHandler
         .globl _EXTI4_IRQHandler
-        .globl _TIM1_UO_IRQHandler
-        .globl _TIM2_UO_IRQHandler
+        .globl _TIM1_IRQHandler
+        .globl _TIM2_IRQHandler
+        .globl _TIM3_IRQHandler
         .globl _TIM4_IRQHandler
         .globl _forth
 
@@ -376,10 +377,11 @@ _TIM4_IRQHandler:
 ; ==============================================
 
 ;       TIM1 or TIM2 interrupt handler for background task
-_TIM1_UO_IRQHandler:
-_TIM2_UO_IRQHandler:
+_TIM1_IRQHandler:
+_TIM2_IRQHandler:
+_TIM3_IRQHandler:
         .ifne   (HAS_LED7SEG + HAS_BACKGROUND)
-        BRES    BG_TIM_SR1,#0   ; clear TIM1 or TIM2 UIF
+        BRES    BG_TIM_SR1,#0   ; clear TIMx UIF
 
         .ifne   HAS_LED7SEG
         CALL    LED_MPX         ; board dependent code for 7Seg-LED-Displays
@@ -527,11 +529,15 @@ COLD:
         .ifne   HAS_BACKGROUND
         ; init BG timer interrupt
         .ifne   BG_USE_TIM1
-        MOV     ITC_SPR3,#0x3F  ; Interrupt prio. low for TIM1 (Int11)
+        BRES    ITC_SPR3,#7     ; 0x7F Interrupt prio. low for TIM1 (Int11)
         MOV     TIM1_PSCRL,#7   ; prescaler 1/(7+1) = 1/8
         .else
-        MOV     ITC_SPR4,#0xF7  ; Interrupt prio. low for TIM2 (Int13)
-        MOV     TIM2_PSCR,#0x03 ; prescaler 1/(2^3) = 1/8
+        .ifne   BG_USE_TIM3
+        BRES    ITC_SPR4,#7     ; 0x7F Interrupt prio. low for TIM3 (Int15)
+        .else
+        BRES    ITC_SPR4,#3     ; 0xF7 Interrupt prio. low for TIM2 (Int13)
+        .endif
+        MOV     BG_TIM_PSCR,#3  ; prescaler 1/(2^3) = 1/8
         .endif
         MOV     BG_TIM_ARRH,#(BG_TIM_REL/256)  ; reload H
         MOV     BG_TIM_ARRL,#(BG_TIM_REL%256)  ;        L

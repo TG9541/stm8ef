@@ -29,9 +29,10 @@
         HAS_INPUTS       = 0    ; Board digital inputs
         HAS_ADC          = 0    ; Board analog inputs
 
-        HAS_BACKGROUND   = 0    ; Background Forth task (TIM1 or TIM2 ticker)
+        HAS_BACKGROUND   = 0    ; Background Forth task (TIM1, TIM2 or TIM3 ticker)
         BG_USE_TIM1      = 0    ; Use TIM1 for the Background Task (instead of TIM2)
-        BG_TIM_REL  = 0x26DE    ; Reload value for background ticker timer (default 0x26DE @ 5ms HSE)
+        BG_USE_TIM3      = 0    ; Use TIM3 for the Background Task (instead of TIM2)
+        BG_TIM_REL  = 0x26DE    ; Reload value for Background Task timer (default for 5ms @ HSI 16MHz/8)
         BG_RUNMASK  =      0    ; BG task runs if "(BG_RUNMASK AND TICKCNT) equals 0"
 
         HAS_CPNVM        = 0    ; Can compile to Flash, always interpret to RAM
