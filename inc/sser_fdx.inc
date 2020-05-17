@@ -13,7 +13,7 @@
 
         .ifne   SERPRIOTIM
         RamWord TIMSERIAL       ; "TIMSERIAL" Timer: use PSIM,PNRX for serial while not 0
-        RamByte TIMRELOAD       ; Reload value for TIMSERIAL, set by receive interrupt, reset by timer 
+        RamByte TIMRELOAD       ; Reload value for TIMSERIAL, set by receive interrupt, reset by timer
         .endif
 
         .ifne   HAS_RXSIM
@@ -91,6 +91,10 @@ _EXTI2_IRQHandler:
 
         .ifeq   PSIM-PORTD
 _EXTI3_IRQHandler:
+        .endif
+
+        .ifeq   PSIM-PORTE
+_EXTI4_IRQHandler:
         .endif
 
         BRES    PSIM+CR2,#PNRX  ; disable PNRX external interrupt

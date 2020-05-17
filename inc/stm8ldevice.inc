@@ -305,16 +305,6 @@
  TIM2_BKR = 0x5265 ; TIM2 break register 0x00
  TIM2_OISR = 0x5266 ; TIM2 output idle state register 0x00
 
-        .ifne   BG_USE_TIM1
-        error: BG_USE_TIM1 not supported
-        .else
-        BG_TIM_CR1   = TIM2_CR1
-        BG_TIM_IER   = TIM2_IER
-        BG_TIM_SR1   = TIM2_SR1
-        BG_TIM_ARRH  = TIM2_ARRH
-        BG_TIM_ARRL  = TIM2_ARRL
-        .endif
-
 ; 0x00 5267 to 0x00 527F Reserved area (25 bytes)
 
 ; TIM3
@@ -353,6 +343,27 @@
  TIM4_CNTR = 0x52E7 ; TIM4 counter 0x00
  TIM4_PSCR = 0x52E8 ; TIM4 prescaler register  0x00
  TIM4_ARR = 0x52E9 ; TIM4 Auto-reload register 0x00
+
+        .ifne   BG_USE_TIM1
+        error: BG_USE_TIM1 currently unsupported (please check datasheet)
+        .else
+        .ifne   BG_USE_TIM3
+        BG_TIM_CR1   = TIM3_CR1
+        BG_TIM_IER   = TIM3_IER
+        BG_TIM_SR1   = TIM3_SR1
+        BG_TIM_ARRH  = TIM3_ARRH
+        BG_TIM_ARRL  = TIM3_ARRL
+        BG_TIM_PSCR  = TIM3_PSCR
+        .else
+        BG_TIM_CR1   = TIM2_CR1
+        BG_TIM_IER   = TIM2_IER
+        BG_TIM_SR1   = TIM2_SR1
+        BG_TIM_ARRH  = TIM2_ARRH
+        BG_TIM_ARRL  = TIM2_ARRL
+        BG_TIM_PSCR  = TIM2_PSCR
+        .endif
+        .endif
+
 ; 0x00 52EA to 0x00 52FE Reserved area (21 bytes)
 ; IRTIM
  IR_CR = 0x52FF ; Infrared control register 0x00

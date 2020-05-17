@@ -47,8 +47,9 @@
         .globl _EXTI2_IRQHandler
         .globl _EXTI3_IRQHandler
         .globl _EXTI4_IRQHandler
-        .globl _TIM1_UO_IRQHandler
-        .globl _TIM2_UO_IRQHandler
+        .globl _TIM1_IRQHandler
+        .globl _TIM2_IRQHandler
+        .globl _TIM3_IRQHandler
         .globl _TIM4_IRQHandler
         .globl _forth
 
@@ -108,15 +109,22 @@
         BRAN_OPC =    0xCC      ; JP opcode
         CALL_OPC =    0xCD      ; CALL opcode
 
-        STM8L051F3       = 051  ; L core, 8K flash, 1K RAM, 256 EEPROM, UART1
-        STM8L152C6       = 152  ; L core, 32K flash, 2K RAM, 1K EEPROM, UART1
-        STM8S003F3       = 103  ; 8K flash, 1K RAM, 128 EEPROM, UART1
-        STM8S103F3       = 103  ; like STM8S003F3, 640 EEPROM
-        STM8S105K4       = 105  ; 16K flash, 2K RAM, 1K EEPROM, UART2
-        STM8S105C6       = 105  ; 32K flash, 2K RAM, 1K EEPROM, UART2
-        STM8S207RB       = 207  ; 32K+96K flash, 6K RAM, 2K EEPROM, UART1
+        ; Chip type (set of peripheral addresses and features)
+        STM8L_LOD        = 051  ; STM8L Low Density
+        STM8L_MHD        = 152  ; STM8L Medium and High Density
+        STM8S_LOD        = 103  ; STM8S Low Density
+        STM8S_MED        = 105  ; STM8S Medium Density
+        STM8S_HID        = 207  ; STM8S High Density
 
-        DEFOSCFREQ     = 16000  ; default oscillator frequency in kHz
+        ; legacy chip type (use the chip type constants instead)
+        STM8L051F3 = STM8L_LOD  ; L core, 8K flash, 1K RAM, 256 EEPROM, UART1
+        STM8L152C6 = STM8L_MHD  ; L core, 32K flash, 2K RAM, 1K EEPROM, UART1
+        STM8S003F3 = STM8S_LOD  ; 8K flash, 1K RAM, 128 EEPROM, UART1
+        STM8S103F3 = STM8S_LOD  ; like STM8S003F3, 640 EEPROM
+        STM8S105K4 = STM8S_MED  ; 16K/32K flash, 2K RAM, 1K EEPROM, UART2
+        STM8S207RB = STM8S_HID  ; 32K+96K flash, 6K RAM, 2K EEPROM, UART1 or UART2
+
+        DEFOSCFREQ     = 16000  ; default oscillator frequency in kHz (HSI)
 
         ;********************************************
         ;******  2) Device hardware addresses  ******
@@ -376,10 +384,11 @@ _TIM4_IRQHandler:
 ; ==============================================
 
 ;       TIM1 or TIM2 interrupt handler for background task
-_TIM1_UO_IRQHandler:
-_TIM2_UO_IRQHandler:
+_TIM1_IRQHandler:
+_TIM2_IRQHandler:
+_TIM3_IRQHandler:
         .ifne   (HAS_LED7SEG + HAS_BACKGROUND)
-        BRES    BG_TIM_SR1,#0   ; clear TIM1 or TIM2 UIF
+        BRES    BG_TIM_SR1,#0   ; clear TIMx UIF
 
         .ifne   HAS_LED7SEG
         CALL    LED_MPX         ; board dependent code for 7Seg-LED-Displays
@@ -527,11 +536,15 @@ COLD:
         .ifne   HAS_BACKGROUND
         ; init BG timer interrupt
         .ifne   BG_USE_TIM1
-        MOV     ITC_SPR3,#0x3F  ; Interrupt prio. low for TIM1 (Int11)
+        BRES    ITC_SPR3,#7     ; 0x7F Interrupt prio. low for TIM1 (Int11)
         MOV     TIM1_PSCRL,#7   ; prescaler 1/(7+1) = 1/8
         .else
-        MOV     ITC_SPR4,#0xF7  ; Interrupt prio. low for TIM2 (Int13)
-        MOV     TIM2_PSCR,#0x03 ; prescaler 1/(2^3) = 1/8
+        .ifne   BG_USE_TIM3
+        BRES    ITC_SPR4,#7     ; 0x7F Interrupt prio. low for TIM3 (Int15)
+        .else
+        BRES    ITC_SPR4,#3     ; 0xF7 Interrupt prio. low for TIM2 (Int13)
+        .endif
+        MOV     BG_TIM_PSCR,#3  ; prescaler 1/(2^3) = 1/8
         .endif
         MOV     BG_TIM_ARRH,#(BG_TIM_REL/256)  ; reload H
         MOV     BG_TIM_ARRL,#(BG_TIM_REL%256)  ;        L
