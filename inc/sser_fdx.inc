@@ -93,6 +93,10 @@ _EXTI2_IRQHandler:
 _EXTI3_IRQHandler:
         .endif
 
+        .ifeq   PSIM-PORTE
+_EXTI4_IRQHandler:
+        .endif
+
         BRES    PSIM+CR2,#PNRX  ; disable PNRX external interrupt
 
         .ifne   SERPRIOTIM
