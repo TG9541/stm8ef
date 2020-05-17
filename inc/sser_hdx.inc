@@ -10,7 +10,7 @@
 
         .ifne   SERPRIOTIM
         RamWord TIMSERIAL       ; "TIMSERIAL" Timer: use PSIM,PNRX for serial while not 0
-        RamByte TIMRELOAD       ; Reload value for TIMSERIAL, set by receive interrupt, reset by timer 
+        RamByte TIMRELOAD       ; Reload value for TIMSERIAL, set by receive interrupt, reset by timer
         .endif
 
         .ifne   HAS_RXSIM
