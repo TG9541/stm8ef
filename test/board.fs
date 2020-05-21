@@ -1,7 +1,22 @@
+NVM
 #include utils/tester.fs
+RAM
+
+\ test background and idle tasks
+#require 'IDLE
+VARIABLE BGTEST
+VARIABLE IDTEST
+: bgd -1 BGTEST ! ;
+: idl BGTEST @ IDTEST ! ;
+0 IDTEST !
+1 BGTEST !
+' idl 'IDLE !
+T{ IDTEST @ -> 1 }T
+' bgd BG !
+T{ IDTEST @ -> -1 }T
 
 \ expected vocabulary (including tester.fs)
-T{e WORDS e-> 930 -5044 }T
+T{e WORDS e-> 937 -4609 }T
 
 \ core: string with capured EMIT
 : test-."" ." abc123" ;
@@ -125,7 +140,7 @@ T{  -20 29 -10 gd7 -> 29 19  9 -1 -11     5  }T
 
 \ start over - we'll need some RAM
 COLD
-#include utils/tester.fs
+\ #include utils/tester.fs
 
 #require 2ROT
 T{ 11 1 22 2 33 3 2ROT -> 22 2 33 3 11 1 }T
@@ -154,17 +169,17 @@ T{ 1 1 1 1 D= -> -1 }T
 
 \ start over - we'll need some RAM
 COLD
-#include utils/tester.fs
+\ #include utils/tester.fs
 
 #require DSQRT
 T{ 16960 15 DSQRT -> 1000 }T
 
 \ start over and check if words were persisted
 COLD
-#include utils/tester.fs
+\ #include utils/tester.fs
 
 T{e startNVM e-> 4 260 }T
-T{ varNVM -> 128 }T
+T{ varNVM -> 158 }T
 
 \ test adding new words to NVM
 NVM
@@ -177,7 +192,7 @@ RAM
 T{ 400 CD>TEST cdram -> }T
 T{ cdram -> 800 }T
 
-T{e WORDS e-> 966 -1943 }T
+T{e WORDS e-> 973 -1508 }T
 
 
 \ compile CURRENT and VOC as a test
@@ -185,7 +200,7 @@ T{e WORDS e-> 966 -1943 }T
 #require CURRENT
 #require VOC
 
-#include utils/tester.fs
+\ #include utils/tester.fs
 
 T{ : a 1 ; -> }T
 T{ : b 11 ; -> }T
