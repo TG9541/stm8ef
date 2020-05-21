@@ -2,19 +2,6 @@ NVM
 #include utils/tester.fs
 RAM
 
-\ test background and idle tasks
-#require 'IDLE
-VARIABLE BGTEST
-VARIABLE IDTEST
-: bgd -1 BGTEST ! ;
-: idl BGTEST @ IDTEST ! ;
-0 IDTEST !
-1 BGTEST !
-' idl 'IDLE !
-T{ IDTEST @ -> 1 }T
-' bgd BG !
-T{ IDTEST @ -> -1 }T
-
 \ expected vocabulary (including tester.fs)
 T{e WORDS e-> 937 -4609 }T
 
@@ -89,6 +76,19 @@ T{ 1000 -100 500 */ -> -200 }T
 T{ -1000 55 101 */MOD -> 45 -545 }T
 T{ -1 -1 UM* -> 1 -2 }T
 T{ 31 -3010 M* -> -27774 -2 }T
+
+\ test background and idle tasks
+#require 'IDLE
+VARIABLE BGTEST
+VARIABLE IDTEST
+: bgd -1 BGTEST ! ;
+: idl BGTEST @ IDTEST ! ;
+0 IDTEST !
+1 BGTEST !
+' idl 'IDLE !
+T{ IDTEST @ -> 1 }T
+' bgd BG !
+T{ IDTEST @ -> -1 }T
 
 \ NVM features, 'BOOT vector, and COLD
 NVM
