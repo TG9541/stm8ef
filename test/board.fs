@@ -79,15 +79,17 @@ T{ 31 -3010 M* -> -27774 -2 }T
 
 \ test background and idle tasks
 #require 'IDLE
-VARIABLE BGTEST
-VARIABLE IDTEST
-: bgd -1 BGTEST ! ;
+VARIABLE BGTEST  1 BGTEST !   \ flag: bgd not run
+VARIABLE IDTEST  0 IDTEST !   \ flag: idl not run
 : idl BGTEST @ IDTEST ! ;
-0 IDTEST !
-1 BGTEST !
-' idl 'IDLE !
+' idl 'IDLE !  \ activate IDLE task
+T{ 'IDLE @ -> ' idl }T
+\ assumption: idl has been called at least once
 T{ IDTEST @ -> 1 }T
-' bgd BG !
+: bgd -1 BGTEST ! ;
+' bgd BG !     \ activate background task
+T{ BG @ -> ' bgd }T
+\ assumption bgd and idl have been called at least once
 T{ IDTEST @ -> -1 }T
 
 \ NVM features, 'BOOT vector, and COLD
@@ -140,7 +142,6 @@ T{  -20 29 -10 gd7 -> 29 19  9 -1 -11     5  }T
 
 \ start over - we'll need some RAM
 COLD
-\ #include utils/tester.fs
 
 #require 2ROT
 T{ 11 1 22 2 33 3 2ROT -> 22 2 33 3 11 1 }T
@@ -169,14 +170,12 @@ T{ 1 1 1 1 D= -> -1 }T
 
 \ start over - we'll need some RAM
 COLD
-\ #include utils/tester.fs
 
 #require DSQRT
 T{ 16960 15 DSQRT -> 1000 }T
 
 \ start over and check if words were persisted
 COLD
-\ #include utils/tester.fs
 
 T{e startNVM e-> 4 260 }T
 T{ varNVM -> 158 }T
@@ -199,8 +198,6 @@ T{e WORDS e-> 973 -1508 }T
 
 #require CURRENT
 #require VOC
-
-\ #include utils/tester.fs
 
 T{ : a 1 ; -> }T
 T{ : b 11 ; -> }T
