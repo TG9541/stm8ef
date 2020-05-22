@@ -6,7 +6,7 @@
 \     NOTICE REMAINS.
 
 VARIABLE #RESULTS
-CREATE RESULTS 12 2* ALLOT
+VARIABLE RESULTS 10 2* ALLOT
 
 : SHOWRES   ( -- 1 )
    #RESULTS @ ?DUP IF
@@ -35,11 +35,12 @@ CREATE RESULTS 12 2* ALLOT
 \ usage e.g. T{e WORDS e-> 1005 1916 }T
 VARIABLE Char#
 VARIABLE CharSum
-VARIABLE EmitV 'EMIT @ EmitV !
+VARIABLE EmitV
 
 : tEmit ( c -- )
    1 Char# +!  CharSum +! ;
 : T{e ( -- )
+   'EMIT @ EmitV !
    [ ' tEmit ] LITERAL 'EMIT !
    0 Char# ! 0 CharSum ! ;
 : e-> ( -- n n )
