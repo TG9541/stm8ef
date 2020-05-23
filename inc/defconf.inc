@@ -9,6 +9,7 @@
 
         HALF_DUPLEX      = 0    ; Use the STM8S Low Density UART in half duplex mode (1: PD5, 2: PA3)
         USE_UART2        = 0    ; Use the 2nd UART for the console (STM8S207: optional, STM8S105: default)
+        CUARTBRR = 0x6803       ; default value for UARTBRR 9600 baud (refer to mcu/UART_DIV)
         HAS_RXUART       = 1    ; Enable UART RXD, word ?RX
         HAS_TXUART       = 1    ; Enable UART TXD, word TX!
         HAS_RXSIM        = 0    ; Enable RxD via GPIO/TIM4, word ?RXGP
@@ -33,7 +34,9 @@
         BG_USE_TIM1      = 0    ; Use TIM1 for the Background Task (instead of TIM2)
         BG_USE_TIM3      = 0    ; Use TIM3 for the Background Task (instead of TIM2)
         BG_TIM_REL  = 0x26DE    ; Reload value for Background Task timer (default for 5ms @ HSI 16MHz/8)
-        BG_RUNMASK  =      0    ; BG task runs if "(BG_RUNMASK AND TICKCNT) equals 0"
+        BG_RUNMASK       = 0    ; BG task runs if "(BG_RUNMASK AND TICKCNT) equals 0"
+        BG_STACKSIZE     = 32   ; Default size in bytes of data stack for background tasks
+        BSPPSIZE         = 0    ; BG task data stack size (bytes) for memory calculation
 
         HAS_CPNVM        = 0    ; Can compile to Flash, always interpret to RAM
         HAS_DOES         = 0    ; DOES> extension
