@@ -142,11 +142,11 @@
         .ifeq   (TARGET - STM8L051F3)
         .include        "stm8ldevice.inc"
         .else
-			.ifeq   (TARGET - STM8L152C6)
-				.include        "stm8ldevice.inc"
-			.else
-				.include        "stm8device.inc"
-			.endif
+          .ifeq   (TARGET - STM8L152C6)
+            .include    "stm8ldevice.inc"
+          .else
+           .include     "stm8device.inc"
+          .endif
         .endif
 
         ;**********************************
@@ -208,11 +208,9 @@
         RamWord BGADDR          ; address of background routine (0: off)
         RamWord TICKCNT         ; "TICKCNT" 16 bit ticker (counts up)
 
-        BSPPSIZE  =     32      ; Size of data stack for background tasks
-        PADBG     =     0x5F    ; PAD in background task growing down from here
-        .else
-        BSPPSIZE  =     0       ;  no background, no extra data stack
-        .endif
+        BSPPSIZE = BG_STACKSIZE ; Size of data stack for background tasks
+
+       .endif
 
 
         ;**************************************************
@@ -227,6 +225,7 @@
         .endif
 
         UPP   = UPPLOC          ; "UPP"  offset user area
+        PADBG = UPPLOC-1        ; PAD in background task growing down from here
         CTOP  = CTOPLOC         ; dictionary start, growing up
                                 ; note: PAD is inbetween CTOP and SPP
         SPP   = ISPP-ISPPSIZE   ; "SPP"  data stack, growing down (with SPP-1 first)
@@ -420,20 +419,20 @@ _TIM3_IRQHandler:
 
         LDW     X,USREMIT       ; save EMIT exection vector
         PUSHW   X
-        LDW     X,#(EMIT_BG)
+        LDW     X,#EMIT_BG      ; "EMITBG" xt of EMIT for BG task
         LDW     USREMIT,X
 
         LDW     X,USRQKEY       ; save QKEY exection vector
         PUSHW   X
-        LDW     X,#(QKEY_BG)
+        LDW     X,#QKEY_BG      ; "?KEYBG" xt of ?KEY for BG task
         LDW     USRQKEY,X
 
         LDW     X,USRHLD
         PUSHW   X
-        LDW     X,#(PADBG)      ; in background task, alway start with an empty PAD
+        LDW     X,#PADBG        ; "PADBG" empty PAD for BG task
         LDW     USRHLD,X
 
-        LDW     X,#(BSPP)       ; init data stack for background task to BSPP
+        LDW     X,#BSPP         ; "BSPP" data stack for BG task
         CALL    (Y)
 
         POPW    X
@@ -445,7 +444,7 @@ _TIM3_IRQHandler:
         POPW    X
         LDW     USREMIT,X
 
-        POP     USRBASE+1       ; this may not work in uCsim
+        POP     USRBASE+1
 
         POPW    X
         LDW     YTEMP,X
@@ -528,8 +527,8 @@ COLD:
         DECW    X
         JRPL    1$
 
-        LDW     X,#RPP          ; initialize return stack
-        LDW     SP,X
+        LDW     X,#RPP          ; "RPP" of return stack, growing down
+        LDW     SP,X            ; initialize return stack
 
         CALL    BOARDINIT       ; Board initialization (see "boardcore.inc")
 
@@ -555,7 +554,7 @@ COLD:
         .ifne   HAS_RXUART+HAS_TXUART
         ; Init RS232 communication port
         ; STM8S[01]003F3 init UART
-        LDW     X,#0x6803       ; 9600 baud
+        LDW     X,#CUARTBRR      ; "UARTBRR" def. $6803 / 9600 baud
         LDW     UART_BRR1,X
         .ifne   HAS_RXUART*HAS_TXUART
         MOV     UART_CR2,#0x0C  ; Use UART1 full duplex
@@ -3071,9 +3070,9 @@ ABOR2:  CALL    DOSTR
 PRESE:
         CLRW    X
         LDW     USRNTIB,X
-        LDW     X,#(TIBB)
+        LDW     X,#TIBB         ; "TIBB" addr. const. Terminal Input Buffer
         LDW     USRBUFFER,X
-        LDW     X,#SPP          ; initialize data stack
+        LDW     X,#SPP          ; "SPP" addr. const. top of data stack
         RET
 
 ; The text interpreter
@@ -4148,7 +4147,7 @@ SAVEC:
         POPW    Y
         LDW     X,YTEMP
         PUSHW   X
-        LDW     X,#(ISPP)       ; init data stack for interrupt ISPP
+        LDW     X,#ISPP         ; "ISPP" const. top of int. data stack
         JP      (Y)
 
 ;       IRET ( -- )
