@@ -1,22 +1,7 @@
-\ STM8S207 High Density Registers and Bit Identifiers                  MM-170928
-
-\ Bitmasks (probably names should be changed to BMx ?)
-  01 equ BIT0
-  02 equ BIT1
-  04 equ BIT2
-  08 equ BIT3
-  10 equ BIT4
-  20 equ BIT5
-  40 equ BIT6
-  80 equ BIT7
- 100 equ BIT8
- 200 equ BIT9
- 400 equ BIT10
- 800 equ BIT11
-1000 equ BIT12
-2000 equ BIT13
-4000 equ BIT14
-8000 equ BIT15
+\ STM8S Common Registers and Bit Identifiers                   MM-170928
+\ Most of the registers addresses are shared across LD, MD und HD
+\ with the notable exception of TIM2, TIM4 and UART
+\ for which STM8S Low Density (LD) addresses differ
 
 8002 equ RESET_VECTOR
 8006 equ TRAP_VETCOR
@@ -29,8 +14,8 @@
 801E equ INT_EXTI2   \ Port C external interrupts
 8022 equ INT_EXTI3   \ Port D external interrupts
 8026 equ INT_EXTI4   \ Port E external interrupts
-802A equ INT_CANRX   \ beCAN RX
-802E equ INT_CANTXER \ beCAN TX/ER/SC
+\ 802A CAN not common
+\ 802E
 8032 equ INT_SPI     \ End of transfer
 8036 equ INT_TIM1    \ TIM1 update/overflow/underflow/ trigger/break
 803A equ INT_TIM1CC  \ TIM1 capture/compare
@@ -38,16 +23,15 @@
 8042 equ INT_TIM2CC  \ TIM2 capture/compare
 8046 equ INT_TIM3    \ TIM3 update /overflow
 804A equ INT_TIM3CC  \ TIM3 capture/compare
-804E equ INT_UART1TX \ UART1 Tx complete (1st UART)
-8052 equ INT_UART1RX \ UART1 Receive register DATA FULL
+804E equ INT_UART1TX \ LD/HD UART1 Tx complete
+8052 equ INT_UART1RX \ LD/HD UART1 Receive register DATA FULL
 8056 equ INT_I2C     \ I2C interrupt
 805A equ INT_UART2TX \ MD/HD UART Tx complete
 805C equ INT_UART2RX \ MD/HD UART Receive register DATA FULL
-805A equ INT_UARTTX  \ UART3 Tx complete (STM8 eForth common UART)
-805C equ INT_UARTRX  \ UART3 Receive register DATA FULL
 8062 equ INT_ADC1    \ ADC1 end of conversion/analog watchdog interrupt
 8066 equ INT_TIM4    \ TIM4 update/overflow
 806A equ INT_FLASH   \ Flash EOP/WR_PG_DIS
+\ 806E .. 807F
 
 \ Option registers - use OPT! for OPT1 .. OPT7 and OPT_BL
 4800 equ OPT0    \ Options 0 Read-out protection
@@ -56,11 +40,13 @@
 4805 equ OPT3    \ Options 3 Watchdog option
 4807 equ OPT4    \ Options 4 Clock option
 4809 equ OPT5    \ Options 5 HSE clock startup
-480B equ OPT6    \ Options 6 TMU (reserved)
-480D equ OPT7    \ Options 7 Flash wait states
-487E equ OPTBL   \ Options Bootloader
+480B equ OPT6    \ MD/HD Options 6 TMU (reserved)
+480D equ OPT7    \ MD/HD Options 7 Flash wait states
+487E equ OPTBL   \ MD/HD Options Bootloader
 
-                 \ Register name                      \ Reset status
+                 \ Register name                    \ Reset status
+
+\ GPIO common STM8S LD, MD and HD
 5000 equ PA_ODR  \ Port A data output latch register         0x00
 5001 equ PA_IDR  \ Port A input pin value register           0xXX
 5002 equ PA_DDR  \ Port A data direction register            0x00
@@ -97,6 +83,7 @@
 501C equ PF_CR1  \ Port F control register 1                 0x00
 501D equ PF_CR2  \ Port F control register 2                 0x00
 
+\ GPIO only STM8S MD and HD
 501E equ PG_ODR  \ Port G data output latch register     (0x00)
 501F equ PG_IDR  \ Port G input pin value register       (0xXX)
 5020 equ PG_DDR  \ Port G data direction register        (0x00)
@@ -138,7 +125,7 @@
 50C8 equ CLK_CSSR     \ Clock security system register        (0x00)
 50C9 equ CLK_CCOR     \ Configurable clock control register   (0x00)
 50CA equ CLK_PCKENR2  \ Peripheral clock gating register 2    (0xFF)
-50CB equ CLK_CANCCR   \ CAN clock control register    (0x00)
+
 50CC equ CLK_HSITRIMR \ HSI clock calibration trimming register (0x00)
 50CD equ CLK_SWIMCCR  \ SWIM clock control register     (0bXXXXXXX0)
 
@@ -177,7 +164,6 @@
 5214 equ I2C_OARH     \ I2C own address register high         (0x00)
    6 equ I2C_OARH_ADDCONF  \ must be set by sofware as '1'
    7 equ I2C_OARH_ADDMODE  \ 0|1 = 7|10 slave address
-
 5216 equ I2C_DR       \ I2C data register                     (0x00)
 5217 equ I2C_SR1      \ I2C status register 1                 (0x00)
 5219 equ I2C_SR3      \ I2C status register 3                 (0x00)
@@ -195,47 +181,32 @@
    2 equ I2C_SR3_TRA
    4 equ I2C_SR3_GENCALL
    7 equ I2C_SR3_DUALF
-
 521A equ I2C_ITR      \ I2C interrupt control register        (0x00)
 521B equ I2C_CCRL     \ I2C clock control register low        (0x00)
 521C equ I2C_CCRH     \ I2C clock control register high       (0x00)
-521D equ I2C_TRISER   \ I2C TRISE register  21E  equ  I2C_PECR    \ I2C packet error checking register    (0x00)
-521E equ I2C_PECR     \ I2C packet error check. reg (obsolete)(0x00)
+521D equ I2C_TRISER   \ I2C TRISE register
 
-\ High Density devices have a 1st and a 2nd UART -
-\ the datasheet name is in the comment
-5230 equ UART1_SR     \ UART1 status register                 (0xC0)
-5231 equ UART1_DR     \ UART1 data register                   (0xXX)
-5232 equ UART1_BRR1   \ UART1 baud rate register 1            (0x00)
-5233 equ UART1_BRR2   \ UART1 baud rate register 2            (0x00)
-5234 equ UART1_CR1    \ UART1 control register 1              (0x00)
-5235 equ UART1_CR2    \ UART1 control register 2              (0x00)
-5236 equ UART1_CR3    \ UART1 control register 3              (0x00)
-5237 equ UART1_CR4    \ UART1 control register 4              (0x00)
-5238 equ UART1_CR5    \ UART1 control register 5              (0x00)
-5239 equ UART1_GTR    \ UART1 guard time register             (0x00)
-523A equ UART1_PSCR   \ UART1 prescaler register              (0x00)
+\ 1st UART (LD/HD) common subset
+5230 equ UART1_SR     \ 1st UART status register                 (0xC0)
+5231 equ UART1_DR     \ 1st UART data register                   (0xXX)
+5232 equ UART1_BRR1   \ 1st UART baud rate register 1            (0x00)
+5233 equ UART1_BRR2   \ 1st UART baud rate register 2            (0x00)
+5234 equ UART1_CR1    \ 1st UART control register 1              (0x00)
+5235 equ UART1_CR2    \ 1st UART control register 2              (0x00)
+5236 equ UART1_CR3    \ 1st UART control register 3              (0x00)
+5237 equ UART1_CR4    \ 1st UART control register 4
 
-5240 equ UART2_SR     \ UART3 status register                 (0xC0)
-5241 equ UART2_DR     \ UART3 data register                   (0xXX)
-5242 equ UART2_BRR1   \ UART3 baud rate register 1            (0x00)
-5243 equ UART2_BRR2   \ UART3 baud rate register 2            (0x00)
-5244 equ UART2_CR1    \ UART3 control register 1              (0x00)
-5245 equ UART2_CR2    \ UART3 control register 2              (0x00)
-5246 equ UART2_CR3    \ UART3 control register 3              (0x00)
-5247 equ UART2_CR4    \ UART3 control register 4              (0x00)
-5249 equ UART2_CR6    \ UART3 control register 6              (0x00)
+\ 2nd UART (MD/HD) common subset
+5240 equ UART2_SR     \ 2nd UART status register                 (0xC0)
+5241 equ UART2_DR     \ 2nd UART data register                   (0xXX)
+5242 equ UART2_BRR1   \ 2nd UART baud rate register 1            (0x00)
+5243 equ UART2_BRR2   \ 2nd UART baud rate register 2            (0x00)
+5244 equ UART2_CR1    \ 2nd UART control register 1              (0x00)
+5245 equ UART2_CR2    \ 2nd UART control register 2              (0x00)
+5246 equ UART2_CR3    \ 2nd UART control register 3              (0x00)
+5247 equ UART2_CR4    \ 2nd UART control register 4
 
-\ STM8 eForth common UART for HD is UART3
-5240 equ UART_SR      \ UART3 status register                 (0xC0)
-5241 equ UART_DR      \ UART3 data register                   (0xXX)
-5242 equ UART_BRR1    \ UART3 baud rate register 1            (0x00)
-5243 equ UART_BRR2    \ UART3 baud rate register 2            (0x00)
-5244 equ UART_CR1     \ UART3 control register 1              (0x00)
-5245 equ UART_CR2     \ UART3 control register 2              (0x00)
-5246 equ UART_CR3     \ UART3 control register 3              (0x00)
-5247 equ UART_CR4     \ UART3 control register 4              (0x00)
-
+\ TIM1 addresses are common
 5250 equ TIM1_CR1     \ TIM1 control register 1               (0x00)
 5251 equ TIM1_CR2     \ TIM1 control register 2               (0x00)
 5252 equ TIM1_SMCR    \ TIM1 slave mode control register      (0x00)
@@ -269,6 +240,7 @@
 526E equ TIM1_DTR     \ TIM1 dead-time register               (0x00)
 526F equ TIM1_OISR    \ TIM1 output idle state register       (0x00)
 
+\ TIM2 is only common in MD/HD - LD has a different address map
 5300 equ TIM2_CR1     \ TIM2 control register 1               (0x00)
 5301 equ TIM2_IER     \ TIM2 interrupt enable register        (0x00)
 5302 equ TIM2_SR1     \ TIM2 status register 1                (0x00)
@@ -291,6 +263,7 @@
 5313 equ TIM2_CCR3H   \ TIM2 capture/compare register 3 high  (0x00)
 5314 equ TIM2_CCR3L   \ TIM2 capture/compare register 3 low   (0x00)
 
+\ TIM3/5 is common in MD/HD - there is none on LD
 5320 equ TIM3_CR1     \ TIM3 control register 1               (0x00)
 5321 equ TIM3_IER     \ TIM3 interrupt enable register        (0x00)
 5322 equ TIM3_SR1     \ TIM3 status register 1                (0x00)
@@ -309,6 +282,7 @@
 532F equ TIM3_CCR2H   \ TIM3 capture/compare reg. 2 high      (0x00)
 5330 equ TIM3_CCR2L   \ TIM3 capture/compare register 2 low   (0x00)
 
+\ TIM4/6 is only common in MD/HD - LD has a different address map
 5340 equ TIM4_CR1     \ TIM4 control register 1               (0x00)
 5341 equ TIM4_IER     \ TIM4 interrupt enable register        (0x00)
 5342 equ TIM4_SR      \ TIM4 status register                  (0x00)
@@ -317,6 +291,10 @@
 5345 equ TIM4_PSCR    \ TIM4 prescaler register               (0x00)
 5346 equ TIM4_ARR     \ TIM4 auto-reload register             (0xFF)
 
+\ ADC scan mode common in LD/MD only
+53E0 equ ADC_DBxR     \ ADC data buffer registers 0x53E0 to 0x53F3 (0x00)
+
+\ ADC common sub-set of LD, MD and HD
 5400 equ ADC_CSR      \ ADC control/status register           (0x00)
 5401 equ ADC_CR1      \ ADC configuration register 1          (0x00)
 5402 equ ADC_CR2      \ ADC configuration register 2          (0x00)
@@ -326,30 +304,15 @@
 5406 equ ADC_TDRH     \ ADC Schmitt trigger disable reg. high (0x00)
 5407 equ ADC_TDRL     \ ADC Schmitt trigger disable reg. low  (0x00)
 
-5420 equ CAN_MCR      \ CAN master control reg. (0x02)
-5421 equ CAN_MSR      \ CAN master status reg. (0x02)
-5422 equ CAN_TSR      \ CAN transmit status reg. (0x00)
-5423 equ CAN_TPR      \ CAN transmit priority reg. (0x0C)
-5424 equ CAN_RFR      \ CAN receive FIFO reg. (0x00)
-5425 equ CAN_IER      \ CAN interrupt enable reg. (0x00)
-5426 equ CAN_DGR      \ CAN diagnosis reg. (0x0C)
-5427 equ CAN_FPSR     \ CAN page selection reg. (0x00)
-5428 equ CAN_P0       \ CAN paged register 0 (0xXX)
-5429 equ CAN_P1       \ CAN paged register 1 (0xXX)
-542A equ CAN_P2       \ CAN paged register 2 (0xXX)
-542B equ CAN_P3       \ CAN paged register 3 (0xXX)
-542C equ CAN_P4       \ CAN paged register 4 (0xXX)
-542D equ CAN_P5       \ CAN paged register 5 (0xXX)
-542E equ CAN_P6       \ CAN paged register 6 (0xXX)
-542F equ CAN_P7       \ CAN paged register 7 (0xXX)
-5430 equ CAN_P8       \ CAN paged register 8 (0xXX)
-5431 equ CAN_P9       \ CAN paged register 9 (0xXX)
-5432 equ CAN_PA       \ CAN paged register A (0xXX)
-5433 equ CAN_PB       \ CAN paged register B (0xXX)
-5434 equ CAN_PC       \ CAN paged register C (0xXX)
-5435 equ CAN_PD       \ CAN paged register D (0xXX)
-5436 equ CAN_PE       \ CAN paged register E (0xXX)
-5437 equ CAN_PF       \ CAN paged register F (0xXX)
+\ ADC analog watchdog is common in LD/MD only
+5408 equ ADC_HTRH     \ ADC high threshold register high      (0x03)
+5409 equ ADC_HTRL     \ ADC high threshold register low       (0xFF)
+540A equ ADC_LTRH     \ ADC low threshold register high       (0x00)
+540B equ ADC_LTRL     \ ADC low threshold register low        (0x00)
+540C equ ADC_AWSRH    \ ADC analog watchdog status reg. high  (0x00)
+540D equ ADC_AWSRL    \ ADC analog watchdog status reg. low   (0x00)
+540E equ ADC_AWCRH    \ ADC analog watchdog control reg. high (0x00)
+540F equ ADC_AWCRL    \ ADC analog watchdog control reg. low  (0x00)
 
 7F60 equ CFG_GCR      \ Global configuration register         (0x00)
 7F70 equ ITC_SPR1     \ Interrupt software priority register 1 (0xFF)
@@ -360,3 +323,4 @@
 7F75 equ ITC_SPR6     \ Interrupt software priority register 6 (0xFF)
 7F76 equ ITC_SPR7     \ Interrupt software priority register 7 (0xFF)
 7F77 equ ITC_SPR8     \ Interrupt software priority register 8 (0xFF)
+
