@@ -390,7 +390,7 @@ _TIM3_IRQHandler:
         BRES    BG_TIM_SR1,#0   ; clear TIMx UIF
 
         .ifne   HAS_LED7SEG
-        CALL    LED_MPX         ; board dependent code for 7Seg-LED-Displays
+        CALL    LED_MPX         ; "PC_LEDMPX" board dependent code for 7Seg-LED-Displays
         .endif
 
 ;       Background operation saves & restores the context of the interactive task
@@ -530,7 +530,8 @@ COLD:
         LDW     X,#RPP          ; "RPP" of return stack, growing down
         LDW     SP,X            ; initialize return stack
 
-        CALL    BOARDINIT       ; Board initialization (see "boardcore.inc")
+        ; see "boardcore.inc")
+        CALL    BOARDINIT       ; "PC_BOARDINIT" Board initialization
 
         .ifne   HAS_BACKGROUND
         ; init BG timer interrupt
@@ -2782,10 +2783,12 @@ CPPACKS:
         CALL    CELLP
         JP      PACKS
 
-;       TOKEN_$,n  ( <word> - <dict header> )
+;       TOKEN_$,n  ( <word> -- <dict header> )
 ;       copy token to the code dictionary
 ;       and build a new dictionary name
 ;       note: for defining words (e.g. :, CREATE)
+
+;       GENALIAS  TOKSNAME "TOKEN_$,n"
 TOKSNAME:
         CALL    BLANK
         CALLR   PARSE
@@ -2870,7 +2873,7 @@ CUPPER:
         HEADER  NAMEQ "NAME?"
 NAMEQ:
         .ifne   HAS_ALIAS
-        CALL    CNTXT_ALIAS
+        CALL    CNTXT_ALIAS     ; "PC_NAME?" patch point for CURRENT
         .else
         CALL    CNTXT
         .endif
@@ -3567,8 +3570,8 @@ DOTQ:
         HEADER  UNIQU "?UNIQUE"
 UNIQU:
         CALL    DUPP
-        CALL    NAMEQ           ; ?name exists
-        CALL    QBRAN
+        CALL    NAMEQ           ; "PC_?UNIQUE" patch point for CURRENT
+        CALL    QBRAN           ;  name exists?
         .dw     UNIQ1
         CALL    DOTQP           ; redef are OK
         .db     7
@@ -3988,7 +3991,7 @@ WORDS:
 WORS1:  CALL    AT              ; @ sets Z and N
         JREQ    1$              ; ?at end of list
         CALL    DUPP
-        CALL    SPACE
+        CALL    SPACE           ; "PC_WORDS" patch point for CURRENT
         CALL    DOTID           ; display a name
         CALL    CELLM
         JRA     WORS1

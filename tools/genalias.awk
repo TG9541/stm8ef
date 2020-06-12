@@ -30,7 +30,7 @@ BEGIN {
   wline++
   # print p " " $0
   if (wline > 25 && p > 0) {
-    warning("header too long " word " " label " " p)
+    warning("header too long " word " " label " " p " - hint: check for '--' in word comment" )
     p = 0                              # too many lines since word comment
   }
   cOneIsAddress = ($1~/^00[8-9A-F][0-9A-F]{3}$/)

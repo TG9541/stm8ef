@@ -753,6 +753,13 @@
 ```
 
 ```
+;       TOKEN_$,n  ( <word> -- <dict header> )
+;       copy token to the code dictionary
+;       and build a new dictionary name
+;       note: for defining words (e.g. :, CREATE)
+```
+
+```
 ;       NAME>   ( na -- ca )
 ;       Return a code address given
 ;       a name address.

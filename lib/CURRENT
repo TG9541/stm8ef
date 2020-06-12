@@ -93,25 +93,25 @@ NVM VARIABLE CONTEXT   2 ALLOT   0 0 CONTEXT !   \ hides the stm8ef CONTEXT !
 
 RAM MARKER <NAME?>  \ Patching NAME? to use the new context sensitive FIND :
 
-#require NAME?
+#require PC_NAME?
 
   :NVM ( a va -- xt na | a f )
   \ search in only one vocabulary
     \ CONTEXT find R> DROP
   \ search in two vocabularies
     CONTEXT find ?DUP 0= IF [ CONTEXT 2+ ] LITERAL find THEN R> DROP
-  ;RAM ' NAME? 1+ ULOCKF ! LOCKF  \ patching
+  ;RAM PC_NAME? ULOCKF ! LOCKF  \ patching
 
 <NAME?>
 
 
 RAM MARKER <?UNIQUE>  \ Patching ?UNIQUE to only search the CURRENT wordlist :
 
-#require ?UNIQUE
+#require PC_?UNIQUE
 
   :NVM ( a va -- xt na | a f )
     CURRENT find
-  ;RAM ' ?UNIQUE 4 + ULOCKF ! LOCKF  \ patching
+  ;RAM PC_?UNIQUE ULOCKF ! LOCKF  \ patching
 
 <?UNIQUE>
 
@@ -119,11 +119,12 @@ RAM MARKER <?UNIQUE>  \ Patching ?UNIQUE to only search the CURRENT wordlist :
 RAM MARKER <WORDS>  \ Patching WORDS to make it context sensitive :
 
 #require .ID
+#require PC_WORDS
 {
 \ -- Version 1, MM --
 
 \ Print the name of the word at name address a if it's a member of the wordlist
-\ CONTEXT is ponting to.
+\ CONTEXT is pointing to.
 \ ?id ( a -- )
   :NVM
     CONTEXT @ OVER ( a wid a ) id? IF SPACE .ID ELSE DROP THEN R> 3 + >R
@@ -142,7 +143,7 @@ RAM MARKER <WORDS>  \ Patching WORDS to make it context sensitive :
 \ ?id ( a -- )
   :NVM
     CONTEXT @ OVER ( a wid a ) id? IF SPACE .ID ELSE DROP THEN
-  ;RAM ' WORDS $0E + ULOCKF 3 nops 1+ ! LOCKF   \ patching
+  ;RAM PC_WORDS 1- ULOCKF 3 nops 1+ ! LOCKF   \ patching
 
   \ ' WORDS $0C + :  dup space .id cell-   \ before patching
   \                  dup NOP   ?id cell-   \ after  patching
@@ -184,6 +185,7 @@ RAM MARKER <tg+>
 #require PARSE
 #require PACK$
 #require $,n
+#require TOKEN_$,n
 
   \ nTOKSNAME ( "name" -- )
   :NVM
@@ -195,12 +197,7 @@ RAM MARKER <tg+>
       2+ PACK$
       $,n
       tg? IF tg+ THEN
-  ;RAM ALIAS nTOKSNAME
-
-
-  :NVM \ patching TOKSNAME
-    nTOKSNAME R> DROP
-  ;RAM ' CREATE 1+ @ 1+ ULOCKF ! LOCKF   \ patching
+  ;RAM ' TOKEN_$,n ULOCKF $CC ( JP ) OVER C! 1+ ! LOCKF   \ patching
 
 <TOKSNAME>
 
@@ -217,7 +214,8 @@ PERSIST
 WIPE
 
 \ ------------------------------------------------------------------------------
-\ Last Revision: MM-180116 Bug fix in nTOKSNAME
+\ Last Revision: TG-200612 use constants exported by forth.asm for patching
+\                MM-180116 Bug fix in nTOKSNAME
 \                MM-171220 stm8ef License added, V1.0 released
 \                MM-171204 WORDS patch: Proposal from TG9541 applied
 \                MM-171127 Introduction, Glossary and Implementation Notes
