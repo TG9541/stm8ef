@@ -419,20 +419,20 @@ _TIM3_IRQHandler:
 
         LDW     X,USREMIT       ; save EMIT exection vector
         PUSHW   X
-        LDW     X,#EMIT_BG      ; "EMITBG" xt of EMIT for BG task
+        LDW     X,#EMIT_BG      ; "'BGEMIT" xt of EMIT for BG task
         LDW     USREMIT,X
 
         LDW     X,USRQKEY       ; save QKEY exection vector
         PUSHW   X
-        LDW     X,#QKEY_BG      ; "?KEYBG" xt of ?KEY for BG task
+        LDW     X,#QKEY_BG      ; "'?BGKEY" xt of ?KEY for BG task
         LDW     USRQKEY,X
 
         LDW     X,USRHLD
         PUSHW   X
-        LDW     X,#PADBG        ; "PADBG" empty PAD for BG task
+        LDW     X,#PADBG        ; "BGPAD" empty PAD for BG task
         LDW     USRHLD,X
 
-        LDW     X,#BSPP         ; "BSPP" data stack for BG task
+        LDW     X,#BSPP         ; "BGSPP" data stack for BG task
         CALL    (Y)
 
         POPW    X
@@ -527,7 +527,7 @@ COLD:
         DECW    X
         JRPL    1$
 
-        LDW     X,#RPP          ; "RPP" of return stack, growing down
+        LDW     X,#RPP          ; return stack, growing down
         LDW     SP,X            ; initialize return stack
 
         ; see "boardcore.inc")
@@ -546,8 +546,8 @@ COLD:
         .endif
         MOV     BG_TIM_PSCR,#3  ; prescaler 1/(2^3) = 1/8
         .endif
-        MOV     BG_TIM_ARRH,#(BG_TIM_REL/256)  ; reload H
-        MOV     BG_TIM_ARRL,#(BG_TIM_REL%256)  ;        L
+        LDW     X,#BG_TIM_REL   ; "BGTIMREL" timer reload for BG task
+        LDW     BG_TIM_ARRH,X   ; timer not yet started - use 16bit transfer
         MOV     BG_TIM_CR1,#0x01 ; enable background timer
         MOV     BG_TIM_IER,#0x01 ; enable background timer interrupt
         .endif
