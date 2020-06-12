@@ -7,9 +7,10 @@ BEGIN {
   board = t[2]
 }
 
-# extract lines like:
+# extract lines like the following:
 #   LDW     X,#(EMIT_BG)    ; "EMITBG" xt of EMIT for BG task
-$2=="AE" && $8=="LDW"  {
+#   CALL    NAMEQ           ; "PC_?UNIQUE" name exists
+($2=="AE" && $8=="LDW") ||  ($2=="CD" && $8=="CALL") {
   if (split($0,b,"\"") == 3) {
     symbol = b[2]
     split($0,a,";");
