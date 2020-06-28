@@ -338,7 +338,8 @@
  TIM4_SMCR = 0x52E2 ; TIM4 Slave mode control register  0x00
  TIM4_DER = 0x52E3 ; TIM4 DMA1 request enable register 0x00
  TIM4_IER = 0x52E4 ; TIM4 Interrupt enable register  0x00
- TIM4_SR1 = 0x52E5 ; TIM4 status register 1 0x00
+ TIM4_SR  = 0x52E5 ; TIM4 status register 1 0x00
+ TIM4_SR1 = TIM4_SR ; STM8L051F3 data sheet error
  TIM4_EGR = 0x52E6 ; TIM4 Event generation register  0x00
  TIM4_CNTR = 0x52E7 ; TIM4 counter 0x00
  TIM4_PSCR = 0x52E8 ; TIM4 prescaler register  0x00
