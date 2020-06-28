@@ -110,13 +110,17 @@
         CALL_OPC =    0xCD      ; CALL opcode
 
         ; Chip type (set of peripheral addresses and features)
-        STM8L_LOD        = 051  ; STM8L Low Density
-        STM8L_MHD        = 152  ; STM8L Medium and High Density
         STM8S_LOD        = 103  ; STM8S Low Density
         STM8S_MED        = 105  ; STM8S Medium Density
         STM8S_HID        = 207  ; STM8S High Density
+        STM8L_LOD        = 051  ; STM8L Low Density
+        STM8L_MHD        = 152  ; STM8L Medium and High Density
 
-        ; legacy chip type (use the chip type constants instead)
+        ; STM8 family flags
+        STM8S            = 0    ; FAMILY: STM8S device
+        STM8L            = 1    ; FAMILY: STM8L device
+
+        ; legacy chip type (deprecated - preferably use the chip type constants)
         STM8L051F3 = STM8L_LOD  ; L core, 8K flash, 1K RAM, 256 EEPROM, UART1
         STM8L152C6 = STM8L_MHD  ; L core, 32K flash, 2K RAM, 1K EEPROM, UART1
         STM8S003F3 = STM8S_LOD  ; 8K flash, 1K RAM, 128 EEPROM, UART1
@@ -130,24 +134,24 @@
         ;******  2) Device hardware addresses  ******
         ;********************************************
 
-        ;******  STM8S memory addresses ******
-        RAMBASE =       0x0000  ; STM8S RAM start
-        EEPROMBASE =    0x4000  ; STM8S EEPROM start
+        ;******  STM8 memory addresses ******
+        RAMBASE =       0x0000  ; STM8 RAM start
+        EEPROMBASE =    0x4000  ; STM8 EEPROM start
 
         ; STM8 device specific include (provided by file in board folder)
         ; sets "TARGET" and memory layout
         .include        "target.inc"
 
-        ; STM8 unified register addresses (depends on "TARGET")
-        .ifeq   (TARGET - STM8L051F3)
-        .include        "stm8ldevice.inc"
-        .else
-          .ifeq   (TARGET - STM8L152C6)
-            .include    "stm8ldevice.inc"
-          .else
-           .include     "stm8device.inc"
-          .endif
+        ; STM8 family register addresses (depends on "TARGET")
+        .ifeq   (TARGET - STM8S_LOD) * (TARGET - STM8S_MED) * (TARGET - STM8S_HID)
+          FAMILY = STM8S
+          .include  "stm8device.inc"
         .endif
+        .ifeq   (TARGET - STM8L_LOD) * (TARGET - STM8L_MHD)
+          FAMILY = STM8L
+          .include  "stm8ldevice.inc"
+        .endif
+
 
         ;**********************************
         ;******  3) Global defaults  ******
