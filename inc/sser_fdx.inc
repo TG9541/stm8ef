@@ -75,29 +75,31 @@ TXPSTOR:
 
 ;       RxD through GPIO start-bit interrupt handler
 
+
         .ifne   HAS_RXSIM
+        .globl _EXTI0_IRQHandler
+        .globl _EXTI1_IRQHandler
+        .globl _EXTI2_IRQHandler
+        .globl _EXTI3_IRQHandler
+        .globl _EXTI4_IRQHandler
+        .globl _EXTI5_IRQHandler
+        .globl _EXTI6_IRQHandler
+        .globl _EXTI7_IRQHandler
 
-        .ifeq   PSIM-PORTA
 _EXTI0_IRQHandler:
-        .endif
-
-        .ifeq   PSIM-PORTB
 _EXTI1_IRQHandler:
-        .endif
-
-        .ifeq   PSIM-PORTC
 _EXTI2_IRQHandler:
-        .endif
-
-        .ifeq   PSIM-PORTD
 _EXTI3_IRQHandler:
-        .endif
-
-        .ifeq   PSIM-PORTE
 _EXTI4_IRQHandler:
-        .endif
+_EXTI5_IRQHandler:
+_EXTI6_IRQHandler:
+_EXTI7_IRQHandler:
 
         BRES    PSIM+CR2,#PNRX  ; disable PNRX external interrupt
+
+        .ifeq   (FAMILY - STM8L)
+        BSET    EXTI_SR1,#PNRX  ; STM8L: clear interrupt
+        .endif
 
         .ifne   SERPRIOTIM
         MOV     TIMRELOAD,#(SERPRIOTIM/256) ; load MSB msec reload
@@ -107,12 +109,13 @@ _EXTI4_IRQHandler:
         MOV     TIM4RCNT,#9     ; set sequence counter for RX
 
         ; Set-up Rx sampling at quarter bit time (compromise with TX)
-        MOV     TIM4_CNTR,#(TIM4RELOAD/4)
+        MOV     TIM4_CNTR,#(CTIM4ARR/4)
         BRES    TIM4_SR,#0      ; clear TIM4 UIF
         BSET    TIM4_IER,#0     ; enable TIM4 interrupt
         IRET
         .endif
 
+        .globl _TIM4_IRQHandler
 _TIM4_IRQHandler:
         ; TIM4 interrupt handler for software Rx/Tx
         BRES    TIM4_SR,#0      ; clear TIM4 UIF
