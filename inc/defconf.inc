@@ -9,14 +9,17 @@
 
         HALF_DUPLEX      = 0    ; Use the STM8S Low Density UART in half duplex mode (1: PD5, 2: PA3)
         USE_UART2        = 0    ; Use the 2nd UART for the console (STM8S207: optional, STM8S105: default)
-        CUARTBRR = 0x6803       ; default value for UARTBRR 9600 baud (refer to mcu/UART_DIV)
+        CUARTBRR    = 0x6803    ; default value for UARTBRR 9600 baud (refer to mcu/UART_DIV)
         HAS_RXUART       = 1    ; Enable UART RXD, word ?RX
         HAS_TXUART       = 1    ; Enable UART TXD, word TX!
+
         HAS_RXSIM        = 0    ; Enable RxD via GPIO/TIM4, word ?RXGP
         HAS_TXSIM        = 0    ; like HAS_RXSIM, word TXGP!, use for console if > HAS_TXUART
-        PSIM     = PORTX        ; Port for UART simulation
+        PSIM         = PORTX    ; Port for UART simulation
         PNRX             = 1    ; Port GPIO# for HAS_RXDSIM
         PNTX             = 1    ; Port GPIO# for HAS_TXDSIM
+        CTIM4ARR      = 0xCF    ; reload 104 µs (9600 baud) @ CTIM4PSCR=3
+        CTIM4PSCR        = 3    ; TIM4 prescaler 1/(2^n), n: (STM8S 0..7), (STM8L: 0..15)
         SERPRIOTIM       = 0    ; PSIM-PRNX priority to anything that uses that GPIO -> TIMRELOAD
 
         EMIT_BG  = DROP         ; vectored NUL background EMIT vector

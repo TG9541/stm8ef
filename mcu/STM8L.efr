@@ -37,15 +37,16 @@
 803E equ INT_EXTI5       \ 13
 8042 equ INT_EXTI6       \ 14
 8046 equ INT_EXTI7       \ 15
-\ 804A                   \ 16
+804A equ INT_LCD         \ 16 STM8L152
 804E equ INT_CLK         \ 17
 8052 equ INT_ADC1        \ 18
 8056 equ INT_TIM2        \ 19
 805A equ INT_TIM2CC      \ 20
 805E equ INT_TIM3        \ 21
 8062 equ INT_TIM3CC      \ 22
-8066 equ INT_RI          \ 23
-\ 806A                   \ 24
+8066 equ INT_RI          \ 23 STM8L051
+8056 equ INT_TIM2        \ 23 STM8L151/STM8L152
+805A equ INT_TIM2CC      \ 24
 806E equ INT_TIM4        \ 25
 8072 equ INT_SPI1        \ 26
 8076 equ INT_UARTTX      \ 27 USART1_TXD
@@ -110,6 +111,7 @@
 
 \ 0x00 5014 to 0x00 501D Reserved area (0 bytes)
 \ 0x00 502E to 0x00 5049 Reserved area (44 bytes)
+
 \ Flash
 5050 equ FLASH_CR1 \ Flash control register 1 (0x00)
 5051 equ FLASH_CR2 \ Flash control register 2 (0x00)
@@ -117,6 +119,7 @@
 5053 equ FLASH_DUKR \ Data EEPROM unprotection key register (0x00)
 5054 equ FLASH_IAPSR \ Flash in-application programming status register (0x00)
 \ 0x00 5055 to 0x00 506F Reserved area (27 bytes)
+
 \ DMA1
 5070 equ DMA1_GCSR \ DMA1 global configuration & status register (0xFC)
 5071 equ DMA1_GIR1 \ DMA1 global interrupt register 1 (0x00)
@@ -153,15 +156,17 @@
 5095 equ DMA1_C3NDTR \ DMA1 number of data to transfer register (channel 3) (0x00)
 5096 equ DMA1_C3PARH_C3M1ARH \ DMA1 peripheral address high register (channel 3) (0x40)
 5097 equ DMA1_C3PARL_C3M1ARL \ DMA1 peripheral address low register (channel 3) (0x00)
-\ DMA1
 5098 equ DMA_C3M0EAR \ DMA channel 3 memory 0 extended address register (0x00)
 5099 equ DMA1_C3M0ARH \ DMA1 memory 0 address high register (channel 3) (0x00)
 509A equ DMA1_C3M0ARL \ DMA1 memory 0 address low register (channel 3) (0x00)
+
 \ 0x00 509B to 0x00 509C Reserved area (3 bytes)
+
 \ SYSCFG
 509D equ SYSCFG_RMPCR3 \ Remapping register 3 (0x00)
 509E equ SYSCFG_RMPCR1 \ Remapping register 1 (0x00)
 509F equ SYSCFG_RMPCR2 \ Remapping register 2 (0x00)
+
 \ ITC - EXTI
 50A0 equ EXTI_CR1 \ External interrupt control register 1 (0x00)
 50A1 equ EXTI_CR2 \ External interrupt control register 2 (0x00)
@@ -169,28 +174,34 @@
 50A3 equ EXTI_SR1 \ External interrupt status register 1 (0x00)
 50A4 equ EXTI_SR2 \ External interrupt status register 2 (0x00)
 50A5 equ EXTI_CONF1 \ External interrupt port select register 1 (0x00)
+
 \ WFE
 50A6 equ WFE_CR1 \ WFE control register 1 (0x00)
 50A7 equ WFE_CR2 \ WFE control register 2 (0x00)
 50A8 equ WFE_CR3 \ WFE control register 3 (0x00)
 50A9 equ WFE_CR4 \ WFE control register 4 (0x00)
+
 \ ITC - EXTI
 50AA equ EXTI_CR4 \ External interrupt control register 4 (0x00)
 50AB equ EXTI_CONF2 \ External interrupt port select register 2 (0x00)
-\ 0x00 50A9 to 0x00 50AF Reserved area (7 bytes)
+
+\ 0x00 50AC to 0x00 50AF Reserved area (4 bytes)
+
 \ RST
 50B0 equ RST_CR \ Reset control register (0x00)
 50B1 equ RST_SR \ Reset status register (0x01)
+
 \ PWR
 50B2 equ PWR_CSR1 \ Power control and status register 1 (0x00)
 50B3 equ PWR_CSR2 \ Power contro l and status register 2 (0x00)
+
 \ 0x00 50B4 to 0x00 50BF Reserved area (12 bytes)
+
 \ CLK
 50C0 equ CLK_CKDIVR \ CLK Clock master divider register (0x03)
 50C1 equ CLK_CRTCR \ CLK Clock RTC register (0x00 (1))
 50C2 equ CLK_ICKCR \ CLK Internal clock control register  (0x11)
 50C3 equ CLK_PCKENR1 \ CLK Peripheral clock gating register 1 (0x00)
-\ CLK
 50C4 equ CLK_PCKENR2 \ CLK Peripheral clock gating register 2 (0x00)
 50C5 equ CLK_CCOR \ CLK Configurable clock control register (0x00)
 50C6 equ CLK_ECKCR \ CLK External clock control register (0x00)
@@ -204,27 +215,33 @@
 50CE equ CLK_HSIUNLCKR \ CLK HSI unlock register  (0x00)
 50CF equ CLK_REGCSR \ CLK Main regulator control status register (0bxx11100X)
 50D0 equ CLK_PCKENR3 \ CLK Peripheral clock gating register 3 (0x00)
+
 \ 0x00 50D1 to 0x00 50D2 Reserved area (2 bytes)
+
 \ WWDG
 50D3 equ WWDG_CR \ WWDG control register (0x7F)
 50D4 equ WWDG_WR \ WWDR window register (0x7F)
+
 \ 0x00 50D5 to 00 50DF Reserved area (11 bytes)
+
 \ IWDG
 50E0 equ IWDG_KR \ IWDG key register (0x01)
 50E1 equ IWDG_PR \ IWDG prescaler register (0x00)
 50E2 equ IWDG_RLR \ IWDG reload register (0xFF)
+
 \ 0x00 50E3 to 0x00 50EF Reserved area (13 bytes)
+
 \ BEEP
 50F0 equ BEEP_CSR1 \ BEEP control/status register 1 (0x00)
 \ 0x00 50F1 0x00 50F2 Reserved area (2 bytes)
 50F3 equ BEEP_CSR2 \ BEEP control/status register 2 (0x1F)
 \ 0x00 50F4 to 0x00 513F Reserved area (76 bytes)
+
 \ RTC
 5140 equ RTC_TR1 \ RTC Time register 1 (0x00)
 5141 equ RTC_TR2 \ RTC Time register 2 (0x00)
 5142 equ RTC_TR3 \ RTC Time register 3 (0x00)
 \ 0x00 5143 Reserved area (1 byte)
-\ RTC
 5144 equ RTC_DR1 \ RTC Date register 1 (0x01)
 5145 equ RTC_DR2 \ RTC Date register 2 (0x21)
 5146 equ RTC_DR3 \ RTC Date register 3 (0x00)
@@ -257,16 +274,19 @@
 \ 0x00 5160 to 0x00 5163 Reserved area (4 bytes)
 5164 equ RTC_ALRMASSRH \ RTC Alarm A subsecond register high  (0x00 (1))
 5165 equ RTC_ALRMASSRL \ RTC Alarm A subsecond register low (0x00 (1))
-\ RTC
 5166 equ RTC_ALRMASSMSKR \ RTC Alarm A masking register  (0x00 (1))
 \ 0x00 5167 to 0x00 5169 Reserved area (3 bytes)
 516A equ RTC_CALRH \ RTC Calibration register high (0x00 (1))
 516B equ RTC_CALRL \ RTC Calibration register low (0x00 (1))
 516C equ RTC_TCR1 \ RTC Tamper control register 1 (0x00 (1))
 516D equ RTC_TCR2 \ RTC Tamper control register 2 (0x00 (1))
+
 \ 0x00 516E to 0x00 518A Reserved area (36 bytes)
+
 5190 equ CSSLSE_CSR \ CSS on LSE control and status register (0x00 (1))
+
 \ 0x00 519A to 0x00 51FF Reserved area (111 bytes)
+
 \ SPI1
 5200 equ SPI1_CR1 \ SPI1 control register 1 (0x00)
 5201 equ SPI1_CR2 \ SPI1 control register 2 (0x00)
@@ -276,7 +296,9 @@
 5205 equ SPI1_CRCPR \ SPI1 CRC polynomial register (0x07)
 5206 equ SPI1_RXCRCR \ SPI1 Rx CRC register (0x00)
 5207 equ SPI1_TXCRCR \ SPI1 Tx CRC register (0x00)
+
 \ 0x00 5208 to 0x00 520F Reserved area (8 bytes)
+
 \ I2C1
 5210 equ I2C1_CR1 \ I2C1 control register 1 (0x00)
 5211 equ I2C1_CR2 \ I2C1 control register 2 (0x00)
@@ -291,10 +313,11 @@
 521A equ I2C1_ITR \ I2C1 interrupt control register (0x00)
 521B equ I2C1_CCRL \ I2C1 clock control register low (0x00)
 521C equ I2C1_CCRH \ I2C1 clock control register high (0x00)
-\ I2C1
 521D equ I2C1_TRISER \ I2C1 TRISE register (0x02)
 521E equ I2C1_PECR \ I2C1 packet error checking register (0x00)
+
 \ 0x00 521F to 0x00 522F Reserved area (17 bytes)
+
 \ USART1
 5230 equ USART1_SR \ USART1 status register (0xC0)
 5231 equ USART1_DR \ USART1 data register (0xXX)
@@ -307,7 +330,9 @@
 5238 equ USART1_CR5 \ USART1 control register 5 (0x00)
 5239 equ USART1_GTR \ USART1 guard time register  (0x00)
 523A equ USART1_PSCR \ USART1 prescaler register  (0x00)
+
 \ 0x00 523B to 0x00 524F Reserved area (21 bytes)
+
 \ TIM2
 5250 equ TIM2_CR1 \ TIM2 control register 1 (0x00)
 5251 equ TIM2_CR2 \ TIM2 control register 2 (0x00)
@@ -325,7 +350,6 @@
 525D equ TIM2_CNTRL \ TIM2 counter low (0x00)
 525E equ TIM2_PSCR \ TIM2 prescaler register (0x00)
 525F equ TIM2_ARRH \ TIM2 auto-reload register high (0xFF)
-\ TIM2
 5260 equ TIM2_ARRL \ TIM2 auto-reload register low (0xFF)
 5261 equ TIM2_CCR1H \ TIM2 capture/compare register 1 high (0x00)
 5262 equ TIM2_CCR1L \ TIM2 capture/compare register 1 low (0x00)
@@ -333,7 +357,9 @@
 5264 equ TIM2_CCR2L \ TIM2 capture/compare register 2 low (0x00)
 5265 equ TIM2_BKR \ TIM2 break register (0x00)
 5266 equ TIM2_OISR \ TIM2 output idle state register (0x00)
+
 \ 0x00 5267 to 0x00 527F Reserved area (25 bytes)
+
 \ TIM3
 5280 equ TIM3_CR1 \ TIM3 control register 1 (0x00)
 5281 equ TIM3_CR2 \ TIM3 control register 2 (0x00)
@@ -358,7 +384,49 @@
 5294 equ TIM3_CCR2L \ TIM3 Capture/Compare register 2 low (0x00)
 5295 equ TIM3_BKR \ TIM3 break register (0x00)
 5296 equ TIM3_OISR \ TIM3 output idle state register (0x00)
-\ 0x00 5297 to 0x00 52DF Reserved area (72 bytes)
+
+\ 0x00 5297 to 0x00 52AF Reserved area (25 bytes)
+
+\ TIM1
+52B0 equ TIM1_CR1 \ TIM1 control register 1 (0x00)
+52B1 equ TIM1_CR2 \ TIM1 control register 2 (0x00)
+52B2 equ TIM1_SMCR \ TIM1 Slave mode control register  (0x00)
+52B3 equ TIM1_ETR \ TIM1 external trigger register (0x00)
+52B4 equ TIM1_DER \ TIM1 DMA1 request enable register (0x00)
+52B5 equ TIM1_IER \ TIM1 interrupt enable register  (0x00)
+52B6 equ TIM1_SR1 \ TIM1 status register 1 (0x00)
+52B7 equ TIM1_SR2 \ TIM1 status register 2 (0x00)
+52B8 equ TIM1_EGR \ TIM1 event generation register  (0x00)
+52B9 equ TIM1_CCMR1 \ TIM1 Capture/Compare mode register 1 (0x00)
+52BA equ TIM1_CCMR2 \ TIM1 Capture/Compare mode register 2 (0x00)
+52BB equ TIM1_CCMR3 \ TIM1 Capture/Compare mode register 3 (0x00)
+52BC equ TIM1_CCMR4 \ TIM1 Capture/Compare mode register 4 (0x00)
+52BD equ TIM1_CCER1 \ TIM1 Capture/Compare enable register 1 (0x00)
+52BE equ TIM1_CCER3 \ TIM1 Capture/Compare enable register 2 (0x00)
+52BF equ TIM1_CNTRH \ TIM1 counter high (0x00)
+52C0 equ TIM1_CNTRL \ TIM1 counter low (0x00)
+52C1 equ TIM1_PSCRH \ TIM1 prescaler register high (0x00)
+52C2 equ TIM1_PSCRL \ TIM1 prescaler register low (0x00)
+52C3 equ TIM1_ARRH \ TIM1 Auto-reload register high (0xFF)
+52C4 equ TIM1_ARRL \ TIM1 Auto-reload register low (0xFF)
+52C5 equ TIM1_RCR  \ TIM1 Repetition counter register (0x00)
+52C6 equ TIM1_CCR1H \ TIM1 Capture/Compare register 1 high (0x00)
+52C7 equ TIM1_CCR1L \ TIM1 Capture/Compare register 1 low (0x00)
+52C8 equ TIM1_CCR2H \ TIM1 Capture/Compare register 2 high (0x00)
+52C9 equ TIM1_CCR2L \ TIM1 Capture/Compare register 2 low (0x00)
+52CA equ TIM1_CCR3H \ TIM1 Capture/Compare register 3 high (0x00)
+52CB equ TIM1_CCR3L \ TIM1 Capture/Compare register 3 low (0x00)
+52CC equ TIM1_CCR4H \ TIM1 Capture/Compare register 4 high (0x00)
+52CD equ TIM1_CCR4L \ TIM1 Capture/Compare register 4 low (0x00)
+52CE equ TIM1_BKR \ TIM1 break register (0x00)
+52CF equ TIM1_DTR \ TIM1 dead time register (0x00)
+52D0 equ TIM1_OISR \ TIM1 output idle state register (0x00)
+52D1 equ TIM1_DCR1 \ TIM1 DMA1 control register 1 (0x00)
+52D2 equ TIM1_DCR2 \ TIM1 DMA1 control register 1 (0x00)
+52D3 equ TIM1_DMA1R \ TIM1 DMA1 address for burst mode (0x00)
+
+\ 0x00 52D4 to 0x00 52DF Reserved area (12 bytes)
+
 \ TIM4
 52E0 equ TIM4_CR1 \ TIM4 control register 1 (0x00)
 52E1 equ TIM4_CR2 \ TIM4 control register 2 (0x00)
@@ -394,7 +462,29 @@
 534F equ ADC1_TRIGR2 \ ADC1 trigger disable 2 (0x00)
 5350 equ ADC1_TRIGR3 \ ADC1 trigger disable 3 (0x00)
 5351 equ ADC1_TRIGR4 \ ADC1 trigger disable 4 (0x00)
-\ 0x00 53C8 to 0x00 53FF Reserved area
+
+\ 5352 to 537F Reserved area (46 bytes)
+
+\ DAC
+5380 equ DAC_CR1     \ DAC control register 1 (0x00)
+5381 equ DAC_CR2     \ DAC control register 2 (0x00)
+\ 5382 to 5383 Reserved area (2 bytes)
+5384 equ DAC_SWTRIGR \ DAC software trigger register (0x00)
+5385 equ DAC_SR      \ DAC status register (0x00)
+\ 5386 to 5387 Reserved area (2 bytes)
+5388 equ DAC_RDHRH   \ DAC right aligned data holding register high (0x00)
+5389 equ DAC_RDHRL   \ DAC right aligned data holding register low (0x00) 
+\ 538A to 538B Reserved area (2 bytes)
+538C equ DAC_LDHRH   \ DAC left aligned data holding register high (0x00)
+538D equ DAC_LDHRL   \ DAC left aligned data holding register low (0x00)
+\ 538E to 538F Reserved area (2 bytes)
+5390 equ DAC_DHRDAC  \ 8-bit data holding register (0x00)8
+\ 5391 to 53AB Reserved area (27 bytes)
+53AC equ DAC_DORH    \ DAC data output register high (0x00)
+53AD equ DAC_DORL    \ DAC data output register low (0x00)
+
+\ 0x00 53AE to 0x00 53FF Reserved area
+
 \ LCD
 5400 equ LCD_CR1 \ LCD control register 1 0x00
 5401 equ LCD_CR2 \ LCD control register 2 0x00
@@ -412,6 +502,7 @@
 5421 equ LCD_RAM21 \ LCD display memory 21 0x00
 \ 0x00 5422 to 0x00 542E Reserved area
 542F equ LCD_CR4 \ LCD control register 4 0x00
+
 \ RI
 \ 0x00 5430 Reserved area (1 byte)
 5431 equ RI_ICR1 \ RI Timer input capture routing register 1 (0x00)
@@ -429,7 +520,16 @@
 543D equ RI_ASCR1 \ Analog switch register 1 (0x00)
 543E equ RI_ASCR2 \ RI Analog switch register 2 (0x00)
 543F equ RI_RCR \ RI Resistor control register  (0x00)
-\ 0x00 5440 to 0x00 544F Reserved area (16 bytes)
+
+\ Comparator
+5440 equ COMP_CSR1 Comparator control and status register 1 (0x00)
+5441 equ COMP_CSR2 Comparator control and status register 2 (0x00)
+5442 equ COMP_CSR3 Comparator control and status register 3 (0x00)
+5443 equ COMP_CSR4 Comparator control and status register 4 (0x00)
+5444 equ COMP_CSR5 Comparator control and status register 5 (0x00)
+
+\ 0x00 5444 to 0x00 544F Reserved area (16 bytes)
+
 \ RI
 5450 equ RI_CR \ RI I/O control register (0x00)
 5451 equ RI_MASKR1 \ RI I/O mask register 1 (0x00)
@@ -439,6 +539,7 @@
 5455 equ RI_IOIR4 \ RI I/O input register 4 (0xXX)
 5456 equ RI_IOCMR4 \ RI I/O control mode register 4 (0x00)
 5457 equ RI_IOSR4 \ RI I/O switch register 4 (0x00)
+
 \ 1.   These registers are not impacted by a system reset. They are reset at power-on.
 \ CPU(1)
 7F00 equ A \ Accumulator (0x00)

@@ -3,6 +3,8 @@
 ;       Simulated serial I/O - single GPIO - Half Duplex
 ;--------------------------------------------------------
 
+
+
         RamByte TIM4TCNT        ; TIM4 RX/TX interrupt counter
         RamByte TIM4TXREG       ; TIM4 TX transmit buffer and shift register
         RamByte TIM4RXREG       ; TIM4 RX shift register
@@ -69,30 +71,32 @@ TXPSTOR:
         .endif
 
 ;       RxD through GPIO start-bit interrupt handler
+;       of course, the interrupt vectors can set anew by Forth code
 
         .ifne   HAS_RXSIM
+        .globl _EXTI0_IRQHandler
+        .globl _EXTI1_IRQHandler
+        .globl _EXTI2_IRQHandler
+        .globl _EXTI3_IRQHandler
+        .globl _EXTI4_IRQHandler
+        .globl _EXTI5_IRQHandler
+        .globl _EXTI6_IRQHandler
+        .globl _EXTI7_IRQHandler
 
-        .ifeq   PSIM-PORTA
 _EXTI0_IRQHandler:
-        .endif
-
-        .ifeq   PSIM-PORTB
 _EXTI1_IRQHandler:
-        .endif
-
-        .ifeq   PSIM-PORTC
 _EXTI2_IRQHandler:
-        .endif
-
-        .ifeq   PSIM-PORTD
 _EXTI3_IRQHandler:
-        .endif
-
-        .ifeq   PSIM-PORTE
 _EXTI4_IRQHandler:
-        .endif
+_EXTI5_IRQHandler:
+_EXTI6_IRQHandler:
+_EXTI7_IRQHandler:
 
         BRES    PSIM+CR2,#PNRX    ; disable PNRX external interrupt
+
+        .ifeq   (FAMILY - STM8L)
+        BSET    EXTI_SR1,#PNRX  ; STM8L: clear interrupt
+        .endif
 
         .ifne   SERPRIOTIM
         MOV     TIMRELOAD,#(SERPRIOTIM/256) ; load MSB msec reload
@@ -101,12 +105,13 @@ _EXTI4_IRQHandler:
 
         ; Set-up TIM4 for 8N1 Rx sampling at half bit time
         MOV     TIM4TCNT,#(-9)  ; set sequence counter for RX
-        MOV     TIM4_CNTR,#(TIM4RELOAD/2)
+        MOV     TIM4_CNTR,#(CTIM4ARR/2)
         BRES    TIM4_SR,#0      ; clear TIM4 UIF
         BSET    TIM4_IER,#0     ; enable TIM4 interrupt
         IRET
         .endif
 
+        .globl _TIM4_IRQHandler
 _TIM4_IRQHandler:
         ; TIM4 interrupt handler for half-duplex Rx+Tx
 

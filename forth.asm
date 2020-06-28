@@ -42,15 +42,9 @@
 ;--------------------------------------------------------
 
         .globl _TRAP_Handler
-        .globl _EXTI0_IRQHandler
-        .globl _EXTI1_IRQHandler
-        .globl _EXTI2_IRQHandler
-        .globl _EXTI3_IRQHandler
-        .globl _EXTI4_IRQHandler
         .globl _TIM1_IRQHandler
         .globl _TIM2_IRQHandler
         .globl _TIM3_IRQHandler
-        .globl _TIM4_IRQHandler
         .globl _forth
 
 ;--------------------------------------------------------
@@ -110,13 +104,17 @@
         CALL_OPC =    0xCD      ; CALL opcode
 
         ; Chip type (set of peripheral addresses and features)
-        STM8L_LOD        = 051  ; STM8L Low Density
-        STM8L_MHD        = 152  ; STM8L Medium and High Density
         STM8S_LOD        = 103  ; STM8S Low Density
         STM8S_MED        = 105  ; STM8S Medium Density
         STM8S_HID        = 207  ; STM8S High Density
+        STM8L_LOD        = 051  ; STM8L Low Density
+        STM8L_MHD        = 152  ; STM8L Medium and High Density
 
-        ; legacy chip type (use the chip type constants instead)
+        ; STM8 family flags
+        STM8S            = 0    ; FAMILY: STM8S device
+        STM8L            = 1    ; FAMILY: STM8L device
+
+        ; legacy chip type (deprecated - preferably use the chip type constants)
         STM8L051F3 = STM8L_LOD  ; L core, 8K flash, 1K RAM, 256 EEPROM, UART1
         STM8L152C6 = STM8L_MHD  ; L core, 32K flash, 2K RAM, 1K EEPROM, UART1
         STM8S003F3 = STM8S_LOD  ; 8K flash, 1K RAM, 128 EEPROM, UART1
@@ -130,24 +128,24 @@
         ;******  2) Device hardware addresses  ******
         ;********************************************
 
-        ;******  STM8S memory addresses ******
-        RAMBASE =       0x0000  ; STM8S RAM start
-        EEPROMBASE =    0x4000  ; STM8S EEPROM start
+        ;******  STM8 memory addresses ******
+        RAMBASE =       0x0000  ; STM8 RAM start
+        EEPROMBASE =    0x4000  ; STM8 EEPROM start
 
         ; STM8 device specific include (provided by file in board folder)
         ; sets "TARGET" and memory layout
         .include        "target.inc"
 
-        ; STM8 unified register addresses (depends on "TARGET")
-        .ifeq   (TARGET - STM8L051F3)
-        .include        "stm8ldevice.inc"
-        .else
-          .ifeq   (TARGET - STM8L152C6)
-            .include    "stm8ldevice.inc"
-          .else
-           .include     "stm8device.inc"
-          .endif
+        ; STM8 family register addresses (depends on "TARGET")
+        .ifeq   (TARGET - STM8S_LOD) * (TARGET - STM8S_MED) * (TARGET - STM8S_HID)
+          FAMILY = STM8S
+          .include  "stm8device.inc"
         .endif
+        .ifeq   (TARGET - STM8L_LOD) * (TARGET - STM8L_MHD)
+          FAMILY = STM8L
+          .include  "stm8ldevice.inc"
+        .endif
+
 
         ;**********************************
         ;******  3) Global defaults  ******
@@ -363,22 +361,8 @@ _TRAP_Handler:
 ;       Generic board I/O: 7S-LED rendering, board key mapping
         .include "board_io.inc"
 
-; ==============================================
-
-;       Simulated serial I/O
-;       either full or half duplex
-
-        .ifeq  HAS_TXSIM + HAS_RXSIM
-_TIM4_IRQHandler:
-        ; dummy for linker - can be overwritten by Forth application
-        .else
-        ; include required serial I/O code
-          .ifne  PNRX^PNTX
-            .include "sser_fdx.inc" ; Full Duplex serial
-          .else
-            .include "sser_hdx.inc" ; Half Duplex serial
-          .endif
-        .endif
+;       Simulate serial interface code
+        .include "sser.inc"
 
 ; ==============================================
 
@@ -593,44 +577,7 @@ $2:
         .endif
         .endif
 
-        .ifne   HAS_RXSIM+HAS_TXSIM
-        ; TIM4 based RXD or TXD: initialize timer
-        TIM4RELOAD = 0xCF       ; reload 0.104 ms (9600 baud)
-        MOV     TIM4_ARR,#TIM4RELOAD
-        MOV     TIM4_PSCR,#0x03 ; prescaler 1/8
-        MOV     TIM4_CR1,#0x01  ; enable TIM4
-        .endif
-
-        .ifne   HAS_TXSIM*((PNRX-PNTX)+(1-HAS_RXSIM))
-        ; init TxD through GPIO if not shared pin with PNRX
-        BSET    PSIM+ODR,#PNTX    ; PNTX GPIO high
-        BSET    PSIM+DDR,#PNTX    ; PNTX GPIO output
-        BSET    PSIM+CR1,#PNTX    ; enable PNTX push-pull
-        .endif
-
-        .ifne   (HAS_RXSIM)
-        ; init RxD through GPIO
-
-        .ifeq   (PSIM-PORTA)
-        BSET    EXTI_CR1,#1     ; External interrupt Port A falling edge
-        .else
-
-        .ifeq   (PSIM-PORTB)
-        BSET    EXTI_CR1,#3     ; External interrupt Port B falling edge
-        .else
-
-        .ifeq   (PSIM-PORTC)
-        BSET    EXTI_CR1,#5     ; External interrupt Port C falling edge
-        .else
-        BSET    EXTI_CR1,#7     ; External interrupt Port D falling edge
-        .endif
-
-        .endif
-        .endif
-        BRES    PSIM+DDR,#PNRX    ; 0: input (default)
-        BSET    PSIM+CR1,#PNRX    ; enable PNRX pull-up
-        BSET    PSIM+CR2,#PNRX    ; enable PNRX external interrupt
-        .endif
+        SSER_Init               ; macro for init of simulated serial, refer to sser.inc
 
         Board_IO_Init           ; macro board_io initialization (7S-LED)
 

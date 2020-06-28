@@ -87,11 +87,11 @@ class ConnectUcsim(Connection):
 # serial line transfer
 class ConnectSerial(Connection):
     port = { }
-    def __init__(self, ttydev):
+    def __init__(self, ttydev, rate):
         try:
             self.port = serial.Serial(
                 port     = ttydev,
-                baudrate = 9600,
+                baudrate = rate,
                 parity   = serial.PARITY_NONE,
                 stopbits = serial.STOPBITS_ONE,
                 bytesize = serial.EIGHTBITS,
@@ -291,6 +291,8 @@ parser.add_argument("-b", "--target-base", dest="base", default="",
         help="target base folder, default: ./", metavar="base")
 parser.add_argument("-p", "--port", dest="port",
         help="PORT for transfer, default: /dev/ttyUSB0, localhost:10000", metavar="port")
+parser.add_argument("-r", "--rate", dest="rate", default=9600,
+        help="RATE for serial transfer, default: 9600", metavar="rate")
 parser.add_argument("-q", "--quiet", action="store_false", dest="verbose", default=True,
         help="don't print status messages to stdout")
 parser.add_argument("-t", "--trace", dest="tracefile",
@@ -311,7 +313,7 @@ else:
 if args.method == "telnet":
     CN = ConnectUcsim(args.port or 'localhost:10000')
 elif args.method == "serial":
-    CN = ConnectSerial(args.port or '/dev/ttyUSB0')
+    CN = ConnectSerial(args.port or '/dev/ttyUSB0', args.rate)
 else:
     CN = ConnectDryRun()
 
