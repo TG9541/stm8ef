@@ -1,10 +1,10 @@
 # Notes on XY-LPWM
 
-The board support code in this folder is the work of @plumbum. It uses the serial interface pin header for console communication and provides code for writing text to the LCD. 
+The board support code in this folder was contributed by @plumbum. It uses the serial interface pin header for console communication and provides code for writing text to the LCD.
+
+The GitHub project [STM8S eForth XY-LPWM](https://github.com/TG9541/XY-LPWM) is based on the code here: it has full background task LCD and key support and it enables the original use case by freeing up the UART for a bus protocol, e.g. MODBUS or even for supporting the original (rather minimalistic) XY-LPWM protocol. TIM1 is used for the background task so that TIM2 can be used for PWM.
 
 If you order a XY-LPWM board today expect it to have a N76E003AT20 chip. It's still worth it since the Nuvoton chip is easy to replace with an STM8S003F3P6.
-
-There is now also a [STM8S eForth XY-LPWM](https://github.com/TG9541/XY-LPWM) project that enables the original use case (e.g. free up the UART for MODBUS or even for the original protocol, TIM1 for the background task, full background task LCD support). 
 
 ## Hardware
 

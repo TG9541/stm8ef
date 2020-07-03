@@ -1,6 +1,6 @@
-## About STM8 eForth `CORE`
+## STM8 eForth "CORE" configuration
 
-`CORE` is a minimal self-contained Forth system for STM8S Low Density devices (e.g. STM8S003F3P6 or STM8S103K3T6C). It's close to the original eForth feature set but it still contains the most important STM8 eForth features like `NVM`, `CONSTANT`, `'IDLE`.  and `SAVEC .. IRET` for interrupt handlers, and `WIPE` for removing temporary words.
+`CORE` is a configuration for a minimal Forth system for STM8S Low Density devices (e.g. STM8S003F3P6 or STM8S103K3T6C). It's close to the original eForth feature set but it still contains the most important STM8 eForth features like `NVM`, `CONSTANT`, `'IDLE`.  and `SAVEC .. IRET` for interrupt handlers, and `WIPE` for removing temporary words.
 
 Compared to full-featured STM8 eForth binaries the following limitations apply to `CORE`:
 
@@ -10,14 +10,16 @@ Compared to full-featured STM8 eForth binaries the following limitations apply t
 * just eForth counted loops (no `DO .. LEAVE .. LOOP/+LOOP`)
 * no `CREATE .. DOES>`
 
-`CORE` requires about 4000 bytes Flash, about 800 bytes less than `MINDEV`.`CORE` has the following vocabulary:
+`CORE` requires about 4000 bytes Flash, about 800 bytes less than [MINDEV](https://github.com/TG9541/stm8ef/tree/master/MINDEV).
+
+`CORE` has the following vocabulary:
 
 ```Forth
-WORDS 
-  WIPE IRET SAVEC RESET RAM NVM WORDS .S DUMP IMMEDIATE ALLOT VARIABLE CONSTANT CREATE ] : ; OVERT ." AFT 
-REPEAT WHILE ELSE THEN IF AGAIN UNTIL BEGIN NEXT FOR LITERAL C, , ' CR [ \ ( .( ? . U. TYPE SPACE KEY 
-DECIMAL HEX FILL CMOVE HERE +! PICK 0= ABS NEGATE NOT 1+ 1- 2+ 2- 2* 2/ */ */MOD M* * UM* / MOD /MOD M/MOD 
-UM/MOD WITHIN MIN MAX < U< = 2DUP ROT ?DUP BASE - 0< OR AND XOR + UM+ I OVER SWAP DUP 2DROP DROP NIP >R R@ 
+WORDS
+  WIPE IRET SAVEC RESET RAM NVM WORDS .S DUMP IMMEDIATE ALLOT VARIABLE CONSTANT CREATE ] : ; OVERT ." AFT
+REPEAT WHILE ELSE THEN IF AGAIN UNTIL BEGIN NEXT FOR LITERAL C, , ' CR [ \ ( .( ? . U. TYPE SPACE KEY
+DECIMAL HEX FILL CMOVE HERE +! PICK 0= ABS NEGATE NOT 1+ 1- 2+ 2- 2* 2/ */ */MOD M* * UM* / MOD /MOD M/MOD
+UM/MOD WITHIN MIN MAX < U< = 2DUP ROT ?DUP BASE - 0< OR AND XOR + UM+ I OVER SWAP DUP 2DROP DROP NIP >R R@
 R> C! C@ ! @ 2@ 2! EXIT EXECUTE EMIT ?KEY COLD 'BOOT ok
 ```
 
@@ -36,10 +38,10 @@ This results in the following vocabulary:
 
 ```Forth
 words
-  WIPE IRET SAVEC RESET RAM NVM WORDS .S DUMP IMMEDIATE ALLOT VARIABLE CONSTANT CREATE ] : ; OVERT ." AFT 
-REPEAT WHILE ELSE THEN IF AGAIN UNTIL BEGIN +LOOP LOOP DO NEXT FOR LITERAL C, , ' CR [ \ ( .( ? . U. TYPE 
-SPACE KEY DECIMAL HEX FILL CMOVE HERE +! PICK 0= ABS NEGATE NOT 1+ 1- 2+ 2- 2* 2/ */ */MOD M* * UM* / MOD 
-/MOD M/MOD UM/MOD WITHIN MIN MAX < U< = 2DUP ROT ?DUP BASE - 0< OR AND XOR + UM+ I OVER SWAP DUP 2DROP DROP 
+  WIPE IRET SAVEC RESET RAM NVM WORDS .S DUMP IMMEDIATE ALLOT VARIABLE CONSTANT CREATE ] : ; OVERT ." AFT
+REPEAT WHILE ELSE THEN IF AGAIN UNTIL BEGIN +LOOP LOOP DO NEXT FOR LITERAL C, , ' CR [ \ ( .( ? . U. TYPE
+SPACE KEY DECIMAL HEX FILL CMOVE HERE +! PICK 0= ABS NEGATE NOT 1+ 1- 2+ 2- 2* 2/ */ */MOD M* * UM* / MOD
+/MOD M/MOD UM/MOD WITHIN MIN MAX < U< = 2DUP ROT ?DUP BASE - 0< OR AND XOR + UM+ I OVER SWAP DUP 2DROP DROP
 NIP >R R@ R> C! C@ ! @ 2@ 2! EXIT EXECUTE LEAVE EMIT ?KEY COLD 'BOOT ok
 ```
 
