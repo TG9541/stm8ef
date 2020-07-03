@@ -249,12 +249,12 @@
 
 ```
 ;       'EMIT   ( -- a )     ( TOS STM8: -- A,Z,N )
-;
+;       Core variable holding the xt of EMIT for the console
 ```
 
 ```
 ;       '?KEY   ( -- a )     ( TOS STM8: -- A,Z,N )
-;
+;       Core variable holding the xt of ?KEY for the console
 ```
 
 ```
@@ -651,8 +651,7 @@
 
 ```
 ;       do$     ( -- a )
-;       Return  address of a compiled
-;       string.
+;       Return  address of a compiled string.
 ```
 
 ```
@@ -823,7 +822,7 @@
 ```
 
 ```
-;       abort"  ( f -- )
+;       aborq  ( f -- )
 ;       Run time routine of ABORT".
 ;       Abort with a message.
 ```
