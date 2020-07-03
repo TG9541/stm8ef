@@ -222,15 +222,15 @@
         ISPPSIZE  =     0       ; no interrupt tasks without NVM
         .endif
 
-        UPP   = UPPLOC          ; "UPP"  offset user area
+        UPP   = UPPLOC          ; "C_UPP"  offset user area
         PADBG = UPPLOC-1        ; PAD in background task growing down from here
         CTOP  = CTOPLOC         ; dictionary start, growing up
                                 ; note: PAD is inbetween CTOP and SPP
-        SPP   = ISPP-ISPPSIZE   ; "SPP"  data stack, growing down (with SPP-1 first)
-        ISPP  = SPPLOC-BSPPSIZE ; "ISPP" Interrupt data stack, growing down
-        BSPP  = SPPLOC          ; "BSPP" Background data stack, growing down
-        TIBB  = SPPLOC          ; "TIB"  Term. Input Buf. TIBLENGTH between SPPLOC and RPP
-        RPP   = RPPLOC          ; "RPP"  return stack, growing down
+        SPP   = ISPP-ISPPSIZE   ; "C_SPP"  data stack, growing down (with SPP-1 first)
+        ISPP  = SPPLOC-BSPPSIZE ; "C_ISPP" Interrupt data stack, growing down
+        BSPP  = SPPLOC          ; "C_BSPP" Background data stack, growing down
+        TIBB  = SPPLOC          ; "C_TIB"  Term. Input Buf. TIBLENGTH between SPPLOC and RPP
+        RPP   = RPPLOC          ; "C_RPP"  return stack, growing down
 
         ; Core variables (same order as 'BOOT initializer block)
 
@@ -530,7 +530,7 @@ COLD:
         .endif
         MOV     BG_TIM_PSCR,#3  ; prescaler 1/(2^3) = 1/8
         .endif
-        LDW     X,#BG_TIM_REL   ; "BGTIMREL" timer reload for BG task
+        LDW     X,#BG_TIM_REL   ; "'BGTIMREL" timer reload for BG task
         LDW     BG_TIM_ARRH,X   ; timer not yet started - use 16bit transfer
         MOV     BG_TIM_CR1,#0x01 ; enable background timer
         MOV     BG_TIM_IER,#0x01 ; enable background timer interrupt
@@ -539,7 +539,7 @@ COLD:
         .ifne   HAS_RXUART+HAS_TXUART
         ; Init RS232 communication port
         ; STM8S[01]003F3 init UART
-        LDW     X,#CUARTBRR      ; "UARTBRR" def. $6803 / 9600 baud
+        LDW     X,#CUARTBRR      ; "'UARTBRR" def. $6803 / 9600 baud
         LDW     UART_BRR1,X
         .ifne   HAS_RXUART*HAS_TXUART
         MOV     UART_CR2,#0x0C  ; Use UART1 full duplex
@@ -1247,7 +1247,8 @@ HLD:
         .endif
 
 ;       'EMIT   ( -- a )     ( TOS STM8: -- A,Z,N )
-;
+;       Core variable holding the xt of EMIT for the console
+
         .ifeq   BAREBONES
         HEADER  TEMIT "'EMIT"
 TEMIT:
@@ -1256,7 +1257,8 @@ TEMIT:
         .endif
 
 ;       '?KEY   ( -- a )     ( TOS STM8: -- A,Z,N )
-;
+;       Core variable holding the xt of ?KEY for the console
+
         .ifeq   BAREBONES
         HEADER  TQKEY "'?KEY"
 TQKEY:
@@ -2442,8 +2444,7 @@ CHAR2:  CALL    DONXT
         .endif
 
 ;       do$     ( -- a )
-;       Return  address of a compiled
-;       string.
+;       Return  address of a compiled string.
 
         HEADFLG DOSTR "do$" COMPO
 DOSTR:
@@ -2991,7 +2992,7 @@ ABORT:
         CALLR   PRESE
         JP      QUIT
 
-;       abort"  ( f -- )
+;       aborq  ( f -- )
 ;       Run time routine of ABORT".
 ;       Abort with a message.
 
@@ -3020,7 +3021,7 @@ ABOR2:  CALL    DOSTR
 PRESE:
         CLRW    X
         LDW     USRNTIB,X
-        LDW     X,#TIBB         ; "TIBB" addr. const. Terminal Input Buffer
+        LDW     X,#TIBB         ; "TIB" addr. const. Terminal Input Buffer
         LDW     USRBUFFER,X
         LDW     X,#SPP          ; "SPP" addr. const. top of data stack
         RET
@@ -3087,7 +3088,7 @@ DOTOK:
         .ifne   HAS_OLDOK
         JRA     CR
         .else
-        CALL    DOTQP            ; e4thcom handshake (which also works with " ok")
+        CALL    DOTQP            ; e4thcom handshake (which also works with ' ok')
         .db     4
         .ascii  " OK"
         .db     LF
