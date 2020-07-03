@@ -522,11 +522,11 @@
 543F equ RI_RCR \ RI Resistor control register  (0x00)
 
 \ Comparator
-5440 equ COMP_CSR1 Comparator control and status register 1 (0x00)
-5441 equ COMP_CSR2 Comparator control and status register 2 (0x00)
-5442 equ COMP_CSR3 Comparator control and status register 3 (0x00)
-5443 equ COMP_CSR4 Comparator control and status register 4 (0x00)
-5444 equ COMP_CSR5 Comparator control and status register 5 (0x00)
+5440 equ COMP_CSR1 \ Comparator control and status register 1 (0x00)
+5441 equ COMP_CSR2 \ Comparator control and status register 2 (0x00)
+5442 equ COMP_CSR3 \ Comparator control and status register 3 (0x00)
+5443 equ COMP_CSR4 \ Comparator control and status register 4 (0x00)
+5444 equ COMP_CSR5 \ Comparator control and status register 5 (0x00)
 
 \ 0x00 5444 to 0x00 544F Reserved area (16 bytes)
 
