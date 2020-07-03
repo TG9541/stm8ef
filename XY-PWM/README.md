@@ -1,8 +1,10 @@
 # XY-PWM board
 
-_Also know as HW-0515_
+The board support code in this folder was contributed by @plumbum. It uses the serial interface pin header for console communication .
 
-PWM outputs not supported by forth core. Write your own code.
+The hardware is also know as HW-0515.
+
+PWM outputs are notsupported by the STM8 eForth core but you can write your own code in Forth.
 
 ## STM8S003F3 pins
 
@@ -45,5 +47,3 @@ NRST                  --| 4       17 | -- [PC7] Seg D
 * 2 GND
 * 3 SWIM
 * 4 +5V
-
-

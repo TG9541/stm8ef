@@ -1,0 +1,64 @@
+\ STM8eForth : BF@ and LEBF@                                       TG9541-200425
+\ ------------------------------------------------------------------------------
+
+\ read bit #u (0..8191) in a cell array (16 bit words) at address a to bit b
+: BF@ ( a u -- b ) [
+  \ Note: creates/executes BTJT addr,#bit,0 + RET code on the Data Stack
+  $4B01 ,          \        PUSH    #0x01           ; 1: Big Endian (STM8)
+  HERE \ keep this for LEBF@
+  $9093 ,          \ _BFA:  LDW     Y,X             ; stack ( a u )
+  $FE C,           \        LDW     X,(X)           ; get bit number
+  $9F C,           \        LD      A,XL            ; keep LSB
+  $54 C,           \        SRLW    X               ; divide by 8 for offset
+  $54 C,           \        SRLW    X
+  $54 C,           \        SRLW    X
+  $51 C,           \        EXGW    X,Y             ; Y now offset to address
+  $5A C,           \        DECW    X
+  $A407 ,          \        AND     A,#0x07         ; LSB of bit number
+  $48 C,           \        SLA     A               ; n *= 2 -> A
+  $F7 C,           \        LD      (X),A           ; 2nd byte of BTJT
+  $5A C,           \        DECW    X
+  $A672 ,          \        LD      A,#0x72         ; Opc. BTJT (or BSET/BRES)
+  $F7 C,           \        LD      (X),A           ; stack ( a u BTJT )
+  $51 C,           \        EXGW    X,Y             ; X: offset to address
+  $9F C,           \        LD      A,XL            ; deal with endianness
+  $1801 ,          \        XOR     A,(1,SP)        ; 0: Litte Endian, 1: BE.
+  $97 C,           \        LD      XL,A
+  $89 C,           \        PUSHW   X               ; temp
+  $93 C,           \        LDW     X,Y
+  $EE04 ,          \        LDW     X,(4,X)         ; get address
+  $72FB , $01 C,   \        ADDW    X,(1,SP)        ; add offset to address
+  $51 C,           \        EXGW    X,Y
+  $EF02 ,          \        LDW     (2,X),Y         ; put addr for BTJT
+  $9085 ,          \        POPW    Y               ; pop temp
+  $84 C,           \        POP     A               ; pop endianness marker
+  $4F C,           \        CLR     A               ; dummy relative jump
+  $E704 ,          \        LD      (4,X),A
+  $A681 ,          \        LD      A,#EXIT_OPC     ; Opcode RET
+  $E705 ,          \        LD      (5,X),A
+  $905F ,          \        CLRW    Y
+  $FD C,           \        CALL    (X)             ; BTJT addr,#b,0 -> C
+  $2402 ,          \        JRNC    1$
+  $9053 ,          \        CPLW    Y
+  $1C C, $0004 ,   \        ADDW    X,#4            ; 2DROP
+  $FF C,           \        LDW     (X),Y
+] ;
+
+\ read bit #u (0..8191) in the Little Endian bit field at address a to bit b
+: LEBF@ ( a u -- b ) [
+  $4B00 ,          \     PUSH    #0x00           ; 0: Little Endian
+  HERE
+  $20 C, - 2- C,   \     JRA     _BFA
+  OVERT
+
+\\ Example
+
+NVM
+#require LBBF@
+  VARIABLE bitfield 14 ALLOT   \ get an array with 8 cells
+RAM
+
+bitfield 16 0 FILL           \ set all bytes to zero
+$FF bitfield C!
+bitfield 7 LEBF@ .   \ -> -1
+bitfield 8 LEBF@ .   \ -> 0

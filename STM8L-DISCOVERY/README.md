@@ -1,5 +1,7 @@
 # STM8L-DISCOVERY
 
+The code in this folder is the work of @plumbum.
+
 ## USART1
 
 Connect Serial-TTL (3.3V limited) to:
