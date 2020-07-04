@@ -530,7 +530,7 @@ COLD:
         .endif
         MOV     BG_TIM_PSCR,#3  ; prescaler 1/(2^3) = 1/8
         .endif
-        LDW     X,#BG_TIM_REL   ; "'BGTIMREL" timer reload for BG task
+        LDW     X,#BG_TIM_REL   ; "BGTIMREL" timer reload for BG task
         LDW     BG_TIM_ARRH,X   ; timer not yet started - use 16bit transfer
         MOV     BG_TIM_CR1,#0x01 ; enable background timer
         MOV     BG_TIM_IER,#0x01 ; enable background timer interrupt
@@ -539,7 +539,7 @@ COLD:
         .ifne   HAS_RXUART+HAS_TXUART
         ; Init RS232 communication port
         ; STM8S[01]003F3 init UART
-        LDW     X,#CUARTBRR      ; "'UARTBRR" def. $6803 / 9600 baud
+        LDW     X,#CUARTBRR      ; "UARTBRR" def. $6803 / 9600 baud
         LDW     UART_BRR1,X
         .ifne   HAS_RXUART*HAS_TXUART
         MOV     UART_CR2,#0x0C  ; Use UART1 full duplex
