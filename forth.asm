@@ -530,8 +530,8 @@ COLD:
         .endif
         MOV     BG_TIM_PSCR,#3  ; prescaler 1/(2^3) = 1/8
         .endif
-        LDW     X,#BG_TIM_REL   ; "BGTIMREL" timer reload for BG task
-        LDW     BG_TIM_ARRH,X   ; timer not yet started - use 16bit transfer
+        MOV     BG_TIM_ARRH,#(BG_TIM_REL/256)  ; reload H
+        MOV     BG_TIM_ARRL,#(BG_TIM_REL%256)  ;        L
         MOV     BG_TIM_CR1,#0x01 ; enable background timer
         MOV     BG_TIM_IER,#0x01 ; enable background timer interrupt
         .endif
