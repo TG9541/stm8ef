@@ -130,7 +130,6 @@
 
         ;******  STM8 memory addresses ******
         RAMBASE =       0x0000  ; STM8 RAM start
-        EEPROMBASE =    0x4000  ; STM8 EEPROM start
 
         ; STM8 device specific include (provided by file in board folder)
         ; sets "TARGET" and memory layout

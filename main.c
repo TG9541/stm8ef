@@ -13,7 +13,14 @@
 // Density or High Density devices, assign memory by matching
 // forthData[] start and size with the range in target.inc
 
-volatile __at(0x30) uint8_t forthData[0x03FF-0x30];
+#define FORTHRAM 0x30
+#define UPPEND   0x7f
+#define CTOPLOC  0x80
+#define RAMEND   0x03FF
+
+// Reserve RAM for Forth (not available for C)
+volatile __at(FORTHRAM) uint8_t forthUser[1+UPPEND-FORTHRAM];
+volatile __at(CTOPLOC)  uint8_t forthData[1+RAMEND-CTOPLOC];
 
 // declare trap handler
 void TRAP_Handler() __trap;
