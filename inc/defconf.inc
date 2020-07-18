@@ -3,7 +3,8 @@
 ;       Default settings for all kinds of options
 ;--------------------------------------------------------
         RELVER1          = 2    ; Revision digit 1
-        RELVER0          = 5    ; Revision digit 0
+        RELVER0          = 6    ; Revision digit 0
+        PRE_REL          = 1    ; Pre Release digit 0 (0: release)
 
         TERM_LINUX       = 1    ; LF terminates line
 
