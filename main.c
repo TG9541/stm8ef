@@ -1,3 +1,7 @@
+// The STM8 eForth core is in assembler but C code can be added here
+// default for stm8device.h is STM8S but an STM8L header in the board
+// folder has precedence
+
 #include <stdint.h>
 #include "stm8device.h"
 #include "forth.h"
@@ -5,16 +9,18 @@
 // The following declarations are just to provide a placeholder
 // so that mixing-in C code with own memory gets easier
 
-// When creating mixed C/Forth applications with Medium Density or
-// High Density devices don't forget to adjust this address range!
+// When creating mixed C/Forth applications, especially with Medium
+// Density or High Density devices, assign memory by matching
+// forthData[] start and size with the range in target.inc
+
 volatile __at(0x30) uint8_t forthData[0x03FF-0x30];
 
 // declare trap handler
 void TRAP_Handler() __trap;
 
-#ifdef STM8L
-// Interrupt vectors for the simulated serial interface
+// Any interrupt vector that can be used for the simulated serial interface
 
+#ifdef STM8L
 // declare interrupt handler for Px.0 external interrupts
 void EXTI0_IRQHandler() __interrupt (INTVEC_EXTI0);
 
@@ -40,6 +46,7 @@ void EXTI6_IRQHandler() __interrupt (INTVEC_EXTI6);
 void EXTI7_IRQHandler() __interrupt (INTVEC_EXTI7);
 
 #else
+
 // declare interrupt handler for Port A external interrupts
 void EXTI0_IRQHandler() __interrupt (INTVEC_EXTI0);
 
@@ -57,6 +64,7 @@ void EXTI4_IRQHandler() __interrupt (INTVEC_EXTI4);
 #endif
 
 
+// Any interrupt vector that can be used for the background task
 #ifdef INTVEC_TIM1_UPDATE
 // declare interrupt handler for TIM1 update overflow
 void TIM1_IRQHandler() __interrupt (INTVEC_TIM1_UPDATE);
@@ -68,12 +76,17 @@ void TIM2_IRQHandler() __interrupt (INTVEC_TIM2_UPDATE);
 // declare interrupt handler for TIM3 update overflow
 void TIM3_IRQHandler() __interrupt (INTVEC_TIM3_UPDATE);
 
+// Interrupt handler for the simulated serial interface
 // declare interrupt handler for TIM4 ticker
 void TIM4_IRQHandler() __interrupt (INTVEC_TIM4);
 
 // main - start Forth
 void main(void)
 {
-  forth();
-}
+  // initializations in C go here
 
+  forth();              // the Forth REPL never returns
+
+  // C code can be exported as Forth words and called from IDLE or Background tasks
+  // alternatively use independent interrupt routines
+}

@@ -3103,9 +3103,17 @@ DOTOK:
 HI:
         CALL    DOTQP           ; initialize I/O
         .db     18, 10
+        .ifne   PRE_REL
+        .ascii  "STM8EF2.2."
+        .db     (RELVER1+'0')
+        .db     (RELVER0+'0')   ; version
+        .ascii  ".pre"
+        .db     (PRE_REL+'0')
+        .else
         .ascii  "STM8eForth 2.2."
         .db     (RELVER1+'0')
         .db     (RELVER0+'0')   ; version
+        .endif
 
          ; fall through
         .else
