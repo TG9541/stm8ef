@@ -1,0 +1,14 @@
+\ STM8eForth : FC!                                                 TG9541-200726
+\ ------------------------------------------------------------------------------
+
+\ store char c to far address ah:al
+: FC! ( c al ah -- ) [
+  \ Note: creates/executes LDF A,ah:al + RET code on the Data Stack
+  $A6BD ,          \        LD      A,#0xBD         ; Opcode LDF ExtAddr,A
+  $F7  C,          \        LD      (X),A           ; MSB of ah (instead of "0")
+  $A681 ,          \        LD      A,#0x81         ; Opcode RET
+  $E704 ,          \        LD      (4,X),A         ; MSB of C (instead of "0")
+  $E605 ,          \        LD      A,(5,X)         ; load C
+  $FD  C,          \        CALL    (X)             ; execute LDF
+  $1C  C, $0006 ,  \        ADDW    X,#6            ; DROP all
+] ;
