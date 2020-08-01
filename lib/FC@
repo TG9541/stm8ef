@@ -1,0 +1,29 @@
+\ STM8eForth : FC@                                                 TG9541-200726
+\ ------------------------------------------------------------------------------
+
+\ read char c at far address ah:al
+: FC@ ( al ah -- c )
+  \ Note: creates/executes LDF ah:al,A + RET code on the Data Stack
+  $8100 ROT ROT [  \ get a RET ready
+  $A6BC ,          \        LD      A,#0xBC         ; Opcode LDF A,ExtAddr
+  $F7  C,          \        LD      (X),A           ; MSB of ah (instead of "0")
+  $FD  C,          \        CALL    (X)             ; execute LDF
+  $6F04 ,          \        CLR     (4,X)           ; bring c onto stack
+  $E705 ,          \        LD      (5,X),A
+  ] 2DROP          \ remove LDF ah:al
+;
+
+\\ Example
+
+#require FC!
+#require FC@
+
+\ double constants for extended address 0x010001
+$01   CONSTANT MSB
+$0001 CONSTANT LSB
+
+NVM
+$55 LSB MSB FC!
+RAM
+
+LSB MSB FC@ HEX . DECIMAL  \ this should print 55

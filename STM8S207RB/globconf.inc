@@ -1,11 +1,11 @@
 ; STM8EF Global Configuration File
-; Config for STM8S103F3P6 Minmal Development Board
+; Config for STM8S207 High Density Devices
 ; Clock: HSI (no crystal)
 
         HALF_DUPLEX      = 0    ; Use UART in half duplex mode
-        USE_UART2        = 0    ; Use the 2nd UART for the console (STM8S207: optional)
-        HAS_TXUART       = 1    ; No UART TXD, word TX!
-        HAS_RXUART       = 1    ; No UART RXD, word ?RX
+        USE_UART2        = 1    ; Use the 2nd UART for the console (STM8S207: optional)
+        HAS_TXUART       = 1    ; Use UART TXD, word TX!
+        HAS_RXUART       = 1    ; Use UART RXD, word ?RX
         HAS_TXSIM        = 0    ; Enable TxD via GPIO/TIM4, word TXGP!
         HAS_RXSIM        = 0    ; Enable RxD via GPIO/TIM4, word ?RXGP
         PNRX             = 0    ; Port GPIO# for HAS_RXDSIM
