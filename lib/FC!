@@ -12,3 +12,18 @@
   $FD  C,          \        CALL    (X)             ; execute LDF
   $1C  C, $0006 ,  \        ADDW    X,#6            ; DROP all
 ] ;
+
+\\ Example
+
+#require FC!
+#require FC@
+
+\ double constants for extended address 0x010000
+$01   CONSTANT MSB
+$0000 CONSTANT LSB
+
+NVM
+$AA LSB MSB FC!
+RAM
+
+LSB MSB FC@ HEX . DECIMAL  \ this should print AA

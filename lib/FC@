@@ -12,3 +12,18 @@
   $E705 ,          \        LD      (5,X),A
   ] 2DROP          \ remove LDF ah:al
 ;
+
+\\ Example
+
+#require FC!
+#require FC@
+
+\ double constants for extended address 0x010001
+$01   CONSTANT MSB
+$0001 CONSTANT LSB
+
+NVM
+$55 LSB MSB FC!
+RAM
+
+LSB MSB FC@ HEX . DECIMAL  \ this should print 55
