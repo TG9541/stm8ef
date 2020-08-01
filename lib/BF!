@@ -1,62 +1,43 @@
-\ STM8eForth : BF! and LEBF!                                       TG9541-200424
+\ STM8eForth : BF! and LEBF!                                       TG9541-200717
 \ ------------------------------------------------------------------------------
 
 \ Write bit to a bitfield stored in one or more cells (16 bit words)
 \ Set/reset bit #u (0..8191) in a cell array starting at address a to bool t
-: BF! ( b a n -- ) [
-  \ Note: creates/executes BSER/BRES + RET code on Data Stack
-  $4B01 ,          \        PUSH    #0x01           ; 1: Big Endian (STM8)
-  HERE \ keep this for LEBF!
-  $9093 ,          \ _BFS:  LDW     Y,X
-  $FE C,           \        LDW     X,(X)           ; get bit number
-  $9F C,           \        LD      A,XL
-  $88 C,           \        PUSH    A               ; keep LSB
-  $54 C,           \        SRLW    X               ; 8 \ -> byte offset
-  $54 C,           \        SRLW    X
-  $54 C,           \        SRLW    X
-  $9F C,           \        LD      A,XL            ; deal with endianness
-  $1802 ,          \        XOR     A,(2,SP)        ; 0: Little Endian, 1: BE
-  $97 C,           \        LD      XL,A
-  $89 C,           \        PUSHW   X               ; bit offset
-  $93 C,           \        LDW     X,Y
-  $EE02 ,          \        LDW     X,(2,X)
-  $72FB , $01 C,   \        ADDW    X,(1,SP)        ; add bit offs. to address
-  $90EF , $02 C,   \        LDW     (2,Y),X
-  $85 C,           \        POPW    X
-  $A672 ,          \        LD      A,#0x72         ; Opcode BSET/BRES
-  $90F7 ,          \        LD      (Y),A
-  $84 C,           \        POP     A               ; LSB of bit number
-  $A407 ,          \        AND     A,#0x07
-  $48 C,           \        SLA     A               ; n *= 2 -> A
-  $AA10 ,          \        OR      A,#0x10
-  $93 C,           \        LDW     X,Y
-  $EE04 ,          \        LDW     X,(4,X)         ; bool b (0..15) -> Z
-  $2601 ,          \        JRNE    1$              ; b!=0: BSET
-  $4C C,           \        INC     A               ; b==0: BRES
-  $93 C,           \ 1$:    LDW     X,Y
-  $E701 ,          \        LD      (1,X),A         ; 2nd byte of BSET/BRES
-  $A681 ,          \        LD      A,#EXIT_OPC     ; Opcode RET
-  $E704 ,          \        LD      (4,X),A
-  $84 C,           \        POP     A               ; pop endianness marker
-  $1C C, $0006 ,   \        ADDW    X,#6
-  $90FC ,          \        JP      (Y)
-  OVERT
+#require DOXCODE
+#require A>
+#require ALIAS
+#require :NVM
+
+\ headerless: TOS/8, modulo in A
+:NVM ( n -- n>>3 A:n%8 )
+  DOXCODE [
+  $9F C,          \        LD      A,XL
+  $A407 ,         \        AND     A,#0x07
+  $54 C,          \        SRLW    X
+  $54 C,          \        SRLW    X
+  $54 C,          \        SRLW    X
+  ]
+;RAM ALIAS SR3A
+
+NVM
 
 \ Write bit to a Little Endian bitfield (list of bytes)
 \ Set/reset bit #u (0..8191) in an array starting at address a to bool t
-: LEBF! ( b a n -- ) [
-  $4B00 ,          \     PUSH    #0x00           ; 0: Little Endian
-  HERE
-  $20 C, - 2- C,   \     JRA     _BFS
+: LEBF! ( b a n -- )
+  SR3A ( n/8 | A:n%8 )
+  [ $88 C,        \        PUSH    A
+  HERE ] +        \  _BFS:
+  [ $84 C, ]      \        POP     A
+  A> ( b a n ) B!
+;
+
+\ Write bit to a bitfield stored in one or more cells (16 bit words)
+\ Set/reset bit #u (0..8191) in a cell array starting at address a to bool t
+: BF! ( b a n -- )
+  SR3A ( n/8 | A:n%8 )
+  [ $88 C, ]      \        PUSH    A
+  1 XOR [         \  Big Endian byte order
+  HERE $20 C, - 2- C,  \   JRA     _BFS
   OVERT
 
-\\ Example
-
-NVM
-#require BF!
-  VARIABLE bitfield 14 ALLOT   \ get an array with 8 cells
 RAM
-
-bitfield 16 0 FILL           \ set all bytes to zero
-1 bitfield 48 BF!            \ set bit 48 (which is the LSB of the 4th cell)
-bitfield 10 DUMP             \ dump bitfield
