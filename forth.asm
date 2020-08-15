@@ -519,16 +519,18 @@ COLD:
         .ifne   HAS_BACKGROUND
         ; init BG timer interrupt
         .ifne   BG_USE_TIM1
-        BRES    ITC_SPR3,#7     ; 0x7F Interrupt prio. low for TIM1 (Int11)
+        BG_INT = ITC_IX_TIM1
         MOV     TIM1_PSCRL,#7   ; prescaler 1/(7+1) = 1/8
         .else
         .ifne   BG_USE_TIM3
-        BRES    ITC_SPR4,#7     ; 0x7F Interrupt prio. low for TIM3 (Int15)
+        BG_INT = ITC_IX_TIM3
         .else
-        BRES    ITC_SPR4,#3     ; 0xF7 Interrupt prio. low for TIM2 (Int13)
+        BG_INT = ITC_IX_TIM2
         .endif
         MOV     BG_TIM_PSCR,#3  ; prescaler 1/(2^3) = 1/8
         .endif
+        BRES    ITC_SPR1+(BG_INT/4),#((BG_INT%4)*2+1)  ; Interrupt prio. low
+
         MOV     BG_TIM_ARRH,#(BG_TIM_REL/256)  ; reload H
         MOV     BG_TIM_ARRL,#(BG_TIM_REL%256)  ;        L
         MOV     BG_TIM_CR1,#0x01 ; enable background timer
