@@ -17,8 +17,9 @@
 #require ULOCKF
 #require LOCKF
 #require ABORT"
+#require EESTART
 
-$4020 CONSTANT EELINK  \ reserve some of the EEPROM for application 
+EESTART 20 + CONSTANT EELINK  \ reserve some of the EEPROM for application
 
 : setroot ( a -- )
   \ set a as dictionary root in Flash memory

@@ -2,11 +2,11 @@
 
 [![Travis-CI](https://travis-ci.org/TG9541/stm8ef.svg)](https://travis-ci.org/TG9541/stm8ef)
 
-STM8 eForth is a Forth system for very low-cost STM8 µCs. The Forth interpreter-compiler (the REPL) has the look and feel of an operating system shell. Core features include compiling Forth code to Flash memory, autostart operation and interrupt handling. It also has multi-tasking features that allow interactive parameter tuning and even changing running code (which is rather unusual for a $0.20 "computer").
+STM8 eForth is an interactive Forth system for very low-cost STM8 µCs. The Forth console has the look and feel of an operating system shell: the interpreter-compiler and multi-tasking features allow interactive control of peripherals, parameter tuning or even changing running code - which is rather unusual for a $0.20 "computer".
 
-STM8 eForth is a much extended version of [Dr. C.H. Ting's eForth for the *STM8S Discovery*](http://www.forth.org/svfig/kk/07-2010.html). With the kind permission of the original author this version has a permissive [FOSS license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md).
+STM8 eForth is a much extended version of [Dr. C.H. Ting's eForth for the *STM8S Discovery*](http://www.forth.org/svfig/kk/07-2010.html). With the kind permission of the original author this version has a permissive [FOSS license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md). Core features include compiling Forth code to Flash memory, autostart operation and interrupt handling.
 
-The [release](https://github.com/TG9541/stm8ef/releases) provides binaries, a library, STM8 register definitions and [modular board support](https://github.com/TG9541/stm8ef-modular-build). Travis-CI takes care of [automated testing in the uCsim STM8S simulator](https://travis-ci.org/TG9541/stm8ef) (this is also possible in a "downstream project" for creating ready-to-run binaries).
+The [release](https://github.com/TG9541/stm8ef/releases) provides binaries, a library, STM8 register definitions and [modular board support](https://github.com/TG9541/stm8ef-modular-build). Travis-CI takes care of [automated testing in the uCsim STM8S simulator](https://travis-ci.org/TG9541/stm8ef) (this is also possible in "downstream projects" for creating ready-to-run binaries).
 
 [![STM8EF Wiki](https://user-images.githubusercontent.com/5466977/28994765-3267d78c-79d6-11e7-927f-91751cd402db.jpg)](https://github.com/TG9541/stm8ef/wiki)
 
@@ -18,9 +18,9 @@ The programming language Forth works by defining new words out of existing words
 
 Forth is very well suited for embedded programming. Find out more in the [STM8 eForth Walk-Through](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Programming).
 
-STM8 eForth is configurable: a full featured binary needs between 4.0K and 5.5K Flash memory, a minimal system fits in just 3.5K. Using headerless Forth words is possible with the unique `ALIAS` feature. Using the smallest STM8 device is possible (STM8S103F2 with 4K ROM) while a $0.50 32K Flash device (e.g. STM8S005C6T6) provides ample room for applications!
+STM8 eForth is configurable: a full core binary needs between short of 4K and 5.5K Flash memory, a minimal system fits in just 3.5K. Using headerless Forth words is possible with the unique `ALIAS` feature. Running it on the smallest STM8 device is possible (STM8S103F2 with 4K ROM) while a $0.50 32K Flash device (e.g. STM8S005C6T6) provides much room for applications.
 
-The Forth console uses either the STM8 U(S)ART or a simulated serial interface: 3-wire or 2-wire communication with up to two UARTs and a simulated serial interface are supported. [e4thcom](https://wiki.forth-ev.de/doku.php/en:projects:e4thcom) is recommended but any common serial terminal will work. The console can be configured at runtime to use other types of [character I/O](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Board-Character-IO), e.g. keyboard and display.
+The Forth console uses the STM8 U(S)ART or a simulated serial interface: 3-wire or 2-wire communication with a UART or a simulated serial interface are supported. [e4thcom](https://wiki.forth-ev.de/doku.php/en:projects:e4thcom) is recommended but any common serial terminal will work. The console can be configured at runtime to use other types of [character I/O](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Board-Character-IO), e.g. keyboard and display.
 
 The [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) covers various topics, e.g. using [Breakout Boards](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) or the conversion of low-cost Chinese thermostats, voltmeters, or DC/DC-converters into Forth powered embedded control boards.
 
@@ -41,7 +41,7 @@ Various STM8 Discovery boards and [breakout boards](https://github.com/TG9541/st
 
 ## Board support:
 
-TG9541/STM8EF provides board support for several common "Chinese gadgets" like the following:
+TG9541/STM8EF provides board support, e.g. LED display code, for several common "Chinese gadgets" like the following:
 
 * [MINDEV](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for the STM8S103F3P6 $0.80 "minimum development board"
 * [C0135](https://github.com/TG9541/stm8ef/wiki/Board-C0135) the "Relay-4 Board" can be used as a *Nano PLC* (Forth MODBUS support is available)

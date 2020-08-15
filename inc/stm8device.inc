@@ -1,7 +1,5 @@
 ; STM8S register addresses
 
-; ***** 6.2.1 I/O port hardware register map
-
         PORTA        = PA_ODR
         PORTB        = PB_ODR
         PORTC        = PC_ODR
@@ -490,6 +488,32 @@
         CFG_GCR      = 0x7F60   ; Global configuration register         (0x00)
 
 ; ***** ITC
+
+        ITC_IX_TLI   = 0        ; External top level interrupt
+        ITC_IX_AWU   = 1        ; Auto wake up from halt
+        ITC_IX_CLK   = 2        ; Clock controller
+        ITC_IX_EXTI0 = 3        ; Port A external interrupts
+        ITC_IX_EXTI1 = 4        ; Port B external interrupts
+        ITC_IX_EXTI2 = 5        ; Port C external interrupts
+        ITC_IX_EXTI3 = 6        ; Port D external interrupts
+        ITC_IX_EXTI4 = 7        ; Port E external interrupts
+        ITC_IX_CANRX = 8        ; beCAN RX
+        ITC_IX_CANTX = 9        ; beCAN TX
+        ITC_IX_SPI   = 10       ; End of transfer
+        ITC_IX_TIM1  = 11       ; TIM1 update/overflow/underflow/ trigger/break
+        ITC_IX_TIM1CC = 12      ; TIM1 capture/compare
+        ITC_IX_TIM2  = 13       ; TIM2 update /overflow
+        ITC_IX_TIM2CC = 14      ; TIM2 capture/compare
+        ITC_IX_TIM3  = 15       ; TIM3 update /overflow
+        ITC_IX_TIM3CC = 16      ; TIM3 capture/compare
+        ITC_IX_UART1TX = 17     ; LD/HD UART1 Tx complete
+        ITC_IX_UART1RX = 18     ; LD/HD UART1 Receive register DATA FULL
+        ITC_IX_I2C   = 19       ; I2C interrupt
+        ITC_IX_UART2TX = 20     ; MD/HD UART Tx complete
+        ITC_IX_UART2RX = 21     ; MD/HD UART Receive register DATA FULL
+        ITC_IX_ADC1  = 22       ; ADC1 end of conversion/analog watchdog interrupt
+        ITC_IX_TIM4  = 23       ; TIM4 update/overflow
+        ITC_IX_FLASH = 24       ; Flash EOP/WR_PG_DIS
 
 ;.ifne  HAS_CPNVM
         ITC_SPR1     = 0x7F70   ; Interrupt software priority register 1 (0xFF)

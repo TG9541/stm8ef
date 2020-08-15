@@ -449,6 +449,11 @@
 ; 0x00 7F0B to 0x00 7F5F Reserved area (85 bytes)
  CFG_GCR = 0x7F60 ; Global configuration register 0x00
 ; ITC-SPR
+
+        ITC_IX_TIM2  = 19       ; TIM2 update /overflow
+        ITC_IX_TIM3  = 21       ; TIM3 update /overflow
+        ITC_IX_TIM1  = 23       ; TIM1 update/overflow/underflow/ trigger/break
+
  ITC_SPR1 = 0x7F70 ; Interrupt Software priority register 1 0xFF
  ITC_SPR2 = 0x7F71 ; Interrupt Software priority register 2 0xFF
  ITC_SPR3 = 0x7F72 ; Interrupt Software priority register 3 0xFF

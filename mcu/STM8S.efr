@@ -33,6 +33,34 @@
 806A equ INT_FLASH   \ Flash EOP/WR_PG_DIS
 \ 806E .. 807F
 
+\ Interrupt Number
+0 equ ITC_IX_TLI     \ External top level interrupt
+1 equ ITC_IX_AWU     \ Auto wake up from halt
+2 equ ITC_IX_CLK     \ Clock controller
+3 equ ITC_IX_EXTI0   \ Port A external interrupts
+4 equ ITC_IX_EXTI1   \ Port B external interrupts
+5 equ ITC_IX_EXTI2   \ Port C external interrupts
+6 equ ITC_IX_EXTI3   \ Port D external interrupts
+7 equ ITC_IX_EXTI4   \ Port E external interrupts
+8 equ ITC_IX_CANRX   \ beCAN RX
+9 equ ITC_IX_CANTX   \ beCAN TX
+10 equ ITC_IX_SPI    \ End of transfer
+11 equ ITC_IX_TIM1   \ TIM1 update/overflow/underflow/ trigger/break
+12 equ ITC_IX_TIM1CC \ TIM1 capture/compare
+13 equ ITC_IX_TIM2   \ TIM2 update /overflow
+13 equ ITC_IX_TIM    \ TIM2 update /overflow
+14 equ ITC_IX_TIM2CC \ TIM2 capture/compare
+15 equ ITC_IX_TIM3   \ TIM3 update /overflow
+16 equ ITC_IX_TIM3CC \ TIM3 capture/compare
+17 equ ITC_IX_UART1TX \ LD/HD UART1 Tx complete
+18 equ ITC_IX_UART1RX \ LD/HD UART1 Receive register DATA FULL
+19 equ ITC_IX_I2C    \ I2C interrupt
+20 equ ITC_IX_UART2TX \ MD/HD UART Tx complete
+21 equ ITC_IX_UART2RX \ MD/HD UART Receive register DATA FULL
+22 equ ITC_IX_ADC1   \ ADC1 end of conversion/analog watchdog interrupt
+23 equ ITC_IX_TIM4   \ TIM4 update/overflow
+24 equ ITC_IX_FLASH  \ Flash EOP/WR_PG_DIS
+
 \ Option registers - use OPT! for OPT1 .. OPT7 and OPT_BL
 4800 equ OPT0    \ Options 0 Read-out protection
 4801 equ OPT1    \ Options 1 User boot code
