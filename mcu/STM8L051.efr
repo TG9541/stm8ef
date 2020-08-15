@@ -52,6 +52,37 @@
 807A equ INT_UARTRX      \ 28 USART1_RXD
 807E equ INT_I2C         \ 29
 
+\ Interrupt Number
+0 equ INT_TLI         \ 0 External top level interrupt
+1 equ INT_FLASH       \ 1 Flash EOP/WR_PG_DIS
+2 equ INT_DMA1_01     \ 2
+3 equ INT_DMA1_23     \ 3
+4 equ INT_RTC         \ 4
+5 equ INT_PVD         \ 5
+6 equ INT_EXTIB       \ 6
+7 equ INT_EXTID       \ 7
+8 equ INT_EXTI0       \ 8
+9 equ INT_EXTI1       \ 9
+10 equ INT_EXTI2       \ 10
+11 equ INT_EXTI3       \ 11
+12 equ INT_EXTI4       \ 12
+13 equ INT_EXTI5       \ 13
+14 equ INT_EXTI6       \ 14
+15 equ INT_EXTI7       \ 15
+\ 16 equ INT_LCD         \ 16 STM8L152
+17 equ INT_CLK         \ 17
+18 equ INT_ADC1        \ 18
+19 equ INT_TIM2        \ 19
+20 equ INT_TIM2CC      \ 20
+21 equ INT_TIM3        \ 21
+22 equ INT_TIM3CC      \ 22
+23 equ INT_RI          \ 23 STM8L051
+\ 24 equ INT_TIM1CC      \ 24
+25 equ INT_TIM4        \ 25
+26 equ INT_SPI1        \ 26
+27 equ INT_UARTTX      \ 27 USART1_TXD
+28 equ INT_UARTRX      \ 28 USART1_RXD
+29 equ INT_I2C         \ 29
 
 \ Port A
 5000 equ PA_ODR \ Port A data output latch register (0x00)
