@@ -3575,10 +3575,9 @@ SCOMP:
         CALL    NAMEQ
         CALL    QDQBRAN         ; ?defined
         .dw     SCOM2
-        CALL    YFLAGS
-        LDW     Y,(Y)
-
-        LD      A,YH
+        CALL    CAT
+        INCW    X
+        INCW    X
         AND     A,#IMEDD
         JREQ    SCOM1
 
