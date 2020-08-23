@@ -1,0 +1,25 @@
+\ STM8eForth : COMPONLY                                            TG9541-200717
+\ ------------------------------------------------------------------------------
+#
+#require LAST
+#require COMPO
+
+\ like IMMEDUARE but sets COMPO ("compile only") flag in dictionary
+: COMPONLY ( -- )
+  [
+    $92C6 , LAST C,    \    LD      A,[LAST]
+    $AA C, COMPO C,    \    OR      A,#COMPO
+    $92C7 , LAST C,    \    LD      [LAST],A
+  ]
+; IMMEDIATE
+
+\\ Example
+
+#require COMPONLY
+
+: cotest 1 . ; COMPONLY
+
+: test cotest ;
+
+test    \ prints " 1 ok"
+cotest  \ executing should abort with " compile only?"

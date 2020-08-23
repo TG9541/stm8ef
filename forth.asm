@@ -82,12 +82,12 @@
         ;************************************
 
         TRUEE   =     0xFFFF    ; true flag
-        COMPO   =     0x40      ; lexicon compile only bit
-        IMEDD   =     0x80      ; lexicon immediate bit
-        MASKK   =     0x1F7F    ; lexicon bit mask
+        COMPO   =     0x40      ; "COMPO" lexicon compile only bit
+        IMEDD   =     0x80      ; "IMEDD" lexicon immediate bit
+        MASKK   =     0x1F7F    ; "MASKK" lexicon bit mask
 
         TIBLENGTH =   80        ; size of TIB (starting at TIBOFFS)
-        PADOFFS =     80        ; offset text buffer above dictionary
+        PADOFFS =     80        ; "PADOFFS" offset text buffer above dictionary
         CELLL   =      2        ; size of a cell
         BASEE   =     10        ; default radix
         BKSPP   =      8        ; backspace
@@ -175,6 +175,7 @@
         .endif
 
         OSCFREQ   = DEFOSCFREQ  ; "OSCFREQ" oscillator frequency in kHz
+        CRAMLEN   = FORTHRAM    ; "CRAMLEN" RAM starting from 0 not used by Forth
 
         ;**************************************
         ;******  5) Board Driver Memory  ******
@@ -3038,9 +3039,9 @@ INTER:
         CALL    NAMEQ
         CALL    QDQBRAN         ; ?defined
         .dw     INTE1
-        CALL    AT
-        DoLitW  0x04000         ; COMPO*256
-        CALL    ANDD            ; ?compile only lexicon bits
+        CALL    CAT             ; get byte at name address na
+        AND     A,#COMPO        ; compile only lexicon bits
+        LD      (1,X),A
         CALLR   ABORQ
         .db     13
         .ascii  " compile only"
