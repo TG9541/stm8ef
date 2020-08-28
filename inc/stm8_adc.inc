@@ -6,8 +6,13 @@
 ;       ADC!  ( c -- )
 ;       Init ADC, select channel for conversion
 
-        .ifeq   (TARGET - STM8L051F3)
-;        ADC for L051F3
+        .ifeq   (FAMILY - STM8L)
+
+;       ADC for the STM8L family
+
+;       RI settings for analog signal routing should be done
+;       on the board configuration level
+
         HEADER  ADCSTOR "ADC!"
 ADCSTOR:
         BSET    CLK_PCKENR2,#0  ; enable clock for ADC
@@ -53,6 +58,8 @@ ADCAT:
         BRES    ADC1_CR1,#0     ; disable ADC
 
         .else
+
+;       ADC for the STM8S family
 
 ;       ADC!  ( c -- )
 ;       Init ADC, select channel for conversion
