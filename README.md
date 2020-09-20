@@ -35,9 +35,10 @@ Generic target binaries are provided as for use or for evaluation:
 * [STM8S105K4](https://github.com/TG9541/stm8ef/tree/master/STM8S105K4) for STM8S Medium Density devices (Value or Access Line) with 2K RAM and up to 32K Flash
 * [STM8S207RB](https://github.com/TG9541/stm8ef/tree/master/STM8S207RB) for STM8S High Density devices (Value or Performance Line) with 6K RAM and up to 32K + 96K Flash
 * [STM8L051F3](https://github.com/TG9541/stm8ef/tree/master/STM8L051F3) for STM8L Low Density devices (see [issue](https://github.com/TG9541/stm8ef/issues/137#issuecomment-354542670))
+* [STM8L101F3](https://github.com/TG9541/stm8ef/tree/master/STM8L101F3) for STM8L101 Low Density devices (experimental, see [issue](https://github.com/TG9541/stm8ef/issues/349))
 * [STM8L-DISCOVERY](https://github.com/TG9541/stm8ef/tree/master/STM8L-DISCOVERY) for STM8L Medium Density devices like STM8L152C6
 
-Various STM8 Discovery boards and [breakout boards](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for Low-, Medium-, and High-Density devices can be used. STM8L devices are supported but there is currently no support for STM8L101F3 or STM8L001J3.
+Various STM8 Discovery boards and [breakout boards](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for Low-, Medium-, and High-Density devices can be used. Support for STM8L devices is work-in-progress (especially the latest additions STM8L101F3 and STM8L001J3 are  experimental).
 
 ## Board support:
 

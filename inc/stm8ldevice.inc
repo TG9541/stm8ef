@@ -284,6 +284,27 @@
  TIM2_CR2 = 0x5251 ; TIM2 control register 2 0x00
  TIM2_SMCR = 0x5252 ; TIM2 Slave mode control register  0x00
  TIM2_ETR = 0x5253 ; TIM2 external trigger register 0x00
+        .ifeq   (TARGET - STM8L_101)
+        ; STM8L101 family devices have an offset shift here
+ TIM2_IER = 0x5254 ; TIM2 interrupt enable register  0x00
+ TIM2_SR1 = 0x5255 ; TIM2 status register 1 0x00
+ TIM2_SR2 = 0x5256 ; TIM2 status register 2 0x00
+ TIM2_EGR = 0x5257 ; TIM2 event generation register  0x00
+ TIM2_CCMR1 = 0x5258 ; TIM2 capture/compare mode register 1 0x00
+ TIM2_CCMR2 = 0x5259 ; TIM2 capture/compare mode register 2 0x00
+ TIM2_CCER1 = 0x525A ; TIM2 capture/compare enable register 1 0x00
+ TIM2_CNTRH = 0x525B ; TIM2 counter high 0x00
+ TIM2_CNTRL = 0x525C ; TIM2 counter low 0x00
+ TIM2_PSCR = 0x525D ; TIM2 prescaler register 0x00
+ TIM2_ARRH = 0x525E ; TIM2 auto-reload register high 0xFF
+ TIM2_ARRL = 0x525F ; TIM2 auto-reload register low 0xFF
+ TIM2_CCR1H = 0x5260 ; TIM2 capture/compare register 1 high 0x00
+ TIM2_CCR1L = 0x5261 ; TIM2 capture/compare register 1 low 0x00
+ TIM2_CCR2H = 0x5262 ; TIM2 capture/compare register 2 high 0x00
+ TIM2_CCR2L = 0x5263 ; TIM2 capture/compare register 2 low 0x00
+ TIM2_BKR = 0x5264 ; TIM2 break register 0x00
+ TIM2_OISR = 0x5265 ; TIM2 output idle state register 0x00
+        .else
  TIM2_DER = 0x5254 ; TIM2 DMA1 request enable register 0x00
  TIM2_IER = 0x5255 ; TIM2 interrupt enable register  0x00
  TIM2_SR1 = 0x5256 ; TIM2 status register 1 0x00
@@ -296,7 +317,6 @@
  TIM2_CNTRL = 0x525D ; TIM2 counter low 0x00
  TIM2_PSCR = 0x525E ; TIM2 prescaler register 0x00
  TIM2_ARRH = 0x525F ; TIM2 auto-reload register high 0xFF
-; TIM2
  TIM2_ARRL = 0x5260 ; TIM2 auto-reload register low 0xFF
  TIM2_CCR1H = 0x5261 ; TIM2 capture/compare register 1 high 0x00
  TIM2_CCR1L = 0x5262 ; TIM2 capture/compare register 1 low 0x00
@@ -304,6 +324,7 @@
  TIM2_CCR2L = 0x5264 ; TIM2 capture/compare register 2 low 0x00
  TIM2_BKR = 0x5265 ; TIM2 break register 0x00
  TIM2_OISR = 0x5266 ; TIM2 output idle state register 0x00
+        .endif
 
 ; 0x00 5267 to 0x00 527F Reserved area (25 bytes)
 
@@ -312,6 +333,27 @@
  TIM3_CR2 = 0x5281 ; TIM3 control register 2 0x00
  TIM3_SMCR = 0x5282 ; TIM3 Slave mode control register  0x00
  TIM3_ETR = 0x5283 ; TIM3 external trigger register 0x00
+        .ifeq   (TARGET - STM8L_101)
+        ; STM8L101 family devices have an offset shift here
+ TIM3_IER = 0x5284 ; TIM3 interrupt enable register  0x00
+ TIM3_SR1 = 0x5285 ; TIM3 status register 1 0x00
+ TIM3_SR2 = 0x5286 ; TIM3 status register 2 0x00
+ TIM3_EGR = 0x5287 ; TIM3 event generation register  0x00
+ TIM3_CCMR1 = 0x5288 ; TIM3 Capture/Compare mode register 1 0x00
+ TIM3_CCMR2 = 0x5289 ; TIM3 Capture/Compare mode register 2 0x00
+ TIM3_CCER1 = 0x528A ; TIM3 Capture/Compare enable register 1 0x00
+ TIM3_CNTRH = 0x528B ; TIM3 counter high 0x00
+ TIM3_CNTRL = 0x528C ; TIM3 counter low 0x00
+ TIM3_PSCR = 0x528D ; TIM3 prescaler register 0x00
+ TIM3_ARRH = 0x528E ; TIM3 Auto-reload register high 0xFF
+ TIM3_ARRL = 0x528F ; TIM3 Auto-reload register low 0xFF
+ TIM3_CCR1H = 0x5290 ; TIM3 Capture/Compare register 1 high 0x00
+ TIM3_CCR1L = 0x5291 ; TIM3 Capture/Compare register 1 low 0x00
+ TIM3_CCR2H = 0x5292 ; TIM3 Capture/Compare register 2 high 0x00
+ TIM3_CCR2L = 0x5293 ; TIM3 Capture/Compare register 2 low 0x00
+ TIM3_BKR = 0x5294 ; TIM3 break register 0x00
+ TIM3_OISR = 0x5295 ; TIM3 output idle state register 0x00
+        .else
  TIM3_DER = 0x5284 ; TIM3 DMA1 request enable register 0x00
  TIM3_IER = 0x5285 ; TIM3 interrupt enable register  0x00
  TIM3_SR1 = 0x5286 ; TIM3 status register 1 0x00
@@ -331,19 +373,7 @@
  TIM3_CCR2L = 0x5294 ; TIM3 Capture/Compare register 2 low 0x00
  TIM3_BKR = 0x5295 ; TIM3 break register 0x00
  TIM3_OISR = 0x5296 ; TIM3 output idle state register 0x00
-; 0x00 5297 to 0x00 52DF Reserved area (72 bytes)
-; TIM4
- TIM4_CR1 = 0x52E0 ; TIM4 control register 1 0x00
- TIM4_CR2 = 0x52E1 ; TIM4 control register 2 0x00
- TIM4_SMCR = 0x52E2 ; TIM4 Slave mode control register  0x00
- TIM4_DER = 0x52E3 ; TIM4 DMA1 request enable register 0x00
- TIM4_IER = 0x52E4 ; TIM4 Interrupt enable register  0x00
- TIM4_SR  = 0x52E5 ; TIM4 status register 1 0x00
- TIM4_SR1 = TIM4_SR ; STM8L051F3 data sheet error
- TIM4_EGR = 0x52E6 ; TIM4 Event generation register  0x00
- TIM4_CNTR = 0x52E7 ; TIM4 counter 0x00
- TIM4_PSCR = 0x52E8 ; TIM4 prescaler register  0x00
- TIM4_ARR = 0x52E9 ; TIM4 Auto-reload register 0x00
+        .endif
 
         .ifne   BG_USE_TIM1
         error: BG_USE_TIM1 currently unsupported (please check datasheet)
@@ -364,6 +394,33 @@
         BG_TIM_PSCR  = TIM2_PSCR
         .endif
         .endif
+
+; 0x00 5297 to 0x00 52DF Reserved area (72 bytes)
+
+; TIM4
+ TIM4_CR1 = 0x52E0 ; TIM4 control register 1 0x00
+ TIM4_CR2 = 0x52E1 ; TIM4 control register 2 0x00
+ TIM4_SMCR = 0x52E2 ; TIM4 Slave mode control register  0x00
+        .ifeq   (TARGET - STM8L_101)
+        ; STM8L101 family devices have an offset shift here
+ TIM4_IER = 0x52E3 ; TIM4 Interrupt enable register  0x00
+ TIM4_SR  = 0x52E4 ; TIM4 status register 1 0x00
+ TIM4_SR1 = TIM4_SR ; alias
+ TIM4_EGR = 0x52E5 ; TIM4 Event generation register  0x00
+ TIM4_CNTR = 0x52E6 ; TIM4 counter 0x00
+ TIM4_PSCR = 0x52E7 ; TIM4 prescaler register  0x00
+ TIM4_ARR = 0x52E8 ; TIM4 Auto-reload register 0x00
+        .else
+  TIM4_DER = 0x52E3 ; TIM4 DMA1 request enable register 0x00
+ TIM4_IER = 0x52E4 ; TIM4 Interrupt enable register  0x00
+ TIM4_SR  = 0x52E5 ; TIM4 status register 1 0x00
+ TIM4_SR1 = TIM4_SR ; STM8L051F3 data sheet error
+ TIM4_EGR = 0x52E6 ; TIM4 Event generation register  0x00
+ TIM4_CNTR = 0x52E7 ; TIM4 counter 0x00
+ TIM4_PSCR = 0x52E8 ; TIM4 prescaler register  0x00
+ TIM4_ARR = 0x52E9 ; TIM4 Auto-reload register 0x00
+        .endif
+
 
 ; 0x00 52EA to 0x00 52FE Reserved area (21 bytes)
 ; IRTIM

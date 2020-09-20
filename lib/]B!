@@ -10,9 +10,7 @@
 \ ------------------------------------------------------------------------------
 \\ Example:
 
-#require CONSTANT
-
-\res MCU: STM8S103
+\res MCU: STM8S
 
 \res export PB_ODR
 
