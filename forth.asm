@@ -107,7 +107,8 @@
         STM8S_LOD        = 103  ; STM8S Low Density
         STM8S_MED        = 105  ; STM8S Medium Density
         STM8S_HID        = 207  ; STM8S High Density
-        STM8L_LOD        = 051  ; STM8L Low Density
+        STM8L_LOD        = 051  ; STM8L Low Density, RM0031 family
+        STM8L_101        = 101  ; STM8L Low Density, RM0013 family
         STM8L_MHD        = 152  ; STM8L Medium and High Density
 
         ; STM8 family flags
@@ -115,6 +116,7 @@
         STM8L            = 1    ; FAMILY: STM8L device
 
         ; legacy chip type (deprecated - preferably use the chip type constants)
+        STM8L101F3 = STM8L_101  ; L core, 8K flash incl EEPROM, 1.5K RAM, UART1
         STM8L051F3 = STM8L_LOD  ; L core, 8K flash, 1K RAM, 256 EEPROM, UART1
         STM8L152C6 = STM8L_MHD  ; L core, 32K flash, 2K RAM, 1K EEPROM, UART1
         STM8S003F3 = STM8S_LOD  ; 8K flash, 1K RAM, 128 EEPROM, UART1
@@ -140,7 +142,7 @@
           FAMILY = STM8S
           .include  "stm8device.inc"
         .endif
-        .ifeq   (TARGET - STM8L_LOD) * (TARGET - STM8L_MHD)
+        .ifeq   (TARGET - STM8L_101) * (TARGET - STM8L_LOD) * (TARGET - STM8L_MHD)
           FAMILY = STM8L
           .include  "stm8ldevice.inc"
         .endif

@@ -1,4 +1,4 @@
-; STM8L051F3P6 "Core" STM8L device dependent routine default code
+; STM8L101F3P6 "Core" STM8L device dependent routine default code
 
 ; Note: for supporting a new board create a new board configuration
 ;       folder with a "globconfig.inc" and a copy of this file.
@@ -55,9 +55,9 @@ BKEYCHAR:
 ;       Init board GPIO
 
 BOARDINIT:
-        ; Board I/O initialization: enable USART TX->PA2, RX->PA3
+        ; Clock init: enable TIM2 and USART clock
         MOV     CLK_PCKENR1,#0x21
-        BSET    PA_DDR,#2
-        BSET    PA_CR1,#2
-        MOV     SYSCFG_RMPCR1,#0x1C
+        ; Board I/O for UART: enable USART push/pull (careful with STM8L001J3!)
+;        BSET    PC_DDR,#3        ; TX->PC3, RX->PC2
+;        BSET    PC_CR1,#3
         RET
