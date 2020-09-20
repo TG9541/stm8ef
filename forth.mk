@@ -3,11 +3,22 @@ MDEPS   = forth.rel forth.h
 MKDIR_P = mkdir -p out
 BTARGET = $(BOARD)/target.inc
 OUT     = out/$(BOARD)
+SDCCOPT = --out-fmt-elf --all-callee-saves --debug --verbose --stack-auto --fverbose-asm --float-reent --no-peep
 
 TARGET := $(shell echo `[ -f $(BTARGET) ] && awk '/TARGET/ {print tolower($$3)}' $(BTARGET) || echo "stm8s103f3"`)
 OPTFILE := $(shell echo $(TARGET) | awk '{print "tools/" substr($$0,1,8) "FactoryDefaults.bin"}')
 
 all: directories main.ihx
+
+debug: main.c $(MDEPS)
+	sdcc -mstm8 -I./$(BOARD) -I./inc -o$(OUT)/$(BOARD).elf main.c $(OUT)/forth.rel $(SDCCOPT)
+	mkdir -p $(OUT)/target
+	rm -f $(OUT)/target/*
+	rm -f target
+	ln -s $(OUT)/target/ target
+	awk '/^ +([0-9A-F]){6}.* HI:/ {print "break 0x" $$1}' $(OUT)/forth.rst > $(OUT)/simbreak.txt
+	awk -f tools/genalias.awk -v target="$(OUT)/target/" $(OUT)/forth.rst
+	awk -f tools/genconst.awk -v target="$(OUT)/target/" $(OUT)/forth.rst
 
 main.ihx: main.c $(MDEPS)
 	sdcc -mstm8 -I./$(BOARD) -I./inc -o$(OUT)/$(BOARD).ihx main.c $(OUT)/forth.rel
