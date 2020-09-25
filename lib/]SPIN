@@ -1,0 +1,21 @@
+\ STM8EF : ]SPIN                                               TG9541, MM-170927
+\ ------------------------------------------------------------------------------
+  RAM
+
+  \ compile a spin loop with BTJT or BTJF - exits when bit value is as defined
+  : ]SPIN ( 1|0 addr bit -- )
+     2* ROT 0= NOT 1 AND + $72 C, C, , $FB C, ]
+  ; IMMEDIATE
+
+\ ------------------------------------------------------------------------------
+
+\ Example:
+
+\res MCU: STM8S
+\res export PC_IDR
+
+\ note that [ ... ]SPIN is intended for dealing with peripherals
+\ use with care since it can easily "hang" a program!
+
+\ wait until GPIO PC5 input value is "0"
+: waitForIt [ 0 PC_IDR 5 ]SPIN ;
