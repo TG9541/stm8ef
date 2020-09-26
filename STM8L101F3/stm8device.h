@@ -1,3 +1,5 @@
+// STM8 eForth: interrupt vectors for STM8L101 (RM0013 STM8L Low Density devices)
+
 #define STM8L
 
 // #define INTVEC_TLI            0

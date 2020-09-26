@@ -17,8 +17,8 @@
 #define INTVEC_EXTI5         13
 #define INTVEC_EXTI6         14
 #define INTVEC_EXTI7         15
-#define INTVEC_CLK           17
 #define INTVEC_LCD           16  // STM8L152
+#define INTVEC_CLK           17
 #define INTVEC_ADC1          18
 #define INTVEC_TIM2_UPDATE   19
 #define INTVEC_TIM2_CAPCOM   20

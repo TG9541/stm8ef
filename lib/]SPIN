@@ -1,0 +1,27 @@
+\ STM8EF : ]SPIN                                               TG9541, MM-170927
+\ ------------------------------------------------------------------------------
+
+\ spin loop, exit when the defined bit value is reached
+: ]SPIN ( 1|0 addr bit -- )
+  \ compile a spin loop with BTJT or BTJF
+  2* ROT 0= NOT 1 AND + $72 C, C, , $FB C, ]
+; IMMEDIATE
+
+\ ------------------------------------------------------------------------------
+
+\\ Example:
+
+\ Use [ ]SPIN with care since it can easily "hang" a program!
+
+\ The indended application is peripheral drivers that require waiting for state
+\ changes in the order of µs (e.g. STM8L ADC ready, Flash page programming)
+
+RAM
+
+\res MCU: STM8S
+\res export PC_IDR
+
+NVM
+  \ wait until the input value of GPIO PC5 is "0"
+  : waitForIt [ 0 PC_IDR 5 ]SPIN ;
+RAM

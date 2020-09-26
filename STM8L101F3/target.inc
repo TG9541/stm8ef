@@ -1,10 +1,10 @@
 ;       STM8L101F3 device and memory layout configuration
 
-        TARGET = STM8L101F3     ; Not quite the same as STM8L051F3
+        TARGET = STM8L101F3     ; Target name for forth.asm and for the Makefile
 
         RAMEND =        0x05FF  ; "RAMEND" system (return) stack, growing down
-        EEPROMBASE =    0x1000  ; "EESTART" EEPROM start address (not really)
-        EEPROMEND =     0x10FF  ; "EEEND" 256 bytes EEPROM (see datasheet...)
+        EEPROMBASE =    0x1000  ; "EESTART" dummy EEPROM start address
+        EEPROMEND =     0x1001  ; "EEEND"   dummy - see datasheet...
         FLASHEND =      0x9FFF  ; "FLASHEND" 8K devices
 
         FORTHRAM =      0x0030  ; Start of RAM controlled by Forth
