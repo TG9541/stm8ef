@@ -137,6 +137,13 @@
         ; sets "TARGET" and memory layout
         .include        "target.inc"
 
+        ; STM8 Flash Block Size (depends on "TARGET")
+        .ifeq   (TARGET - STM8S_LOD) * (TARGET - STM8L_101) * (TARGET - STM8L_LOD)
+          PAGESIZE   =     0x40      ; "PAGESIZE" STM8 Low Density: 64 byte page size
+        .else
+          PAGESIZE   =     0x80      ; "PAGESIZE" STM8 M/H Density: 128 byte page size
+        .endif
+
         ; STM8 family register addresses (depends on "TARGET")
         .ifeq   (TARGET - STM8S_LOD) * (TARGET - STM8S_MED) * (TARGET - STM8S_HID)
           FAMILY = STM8S
