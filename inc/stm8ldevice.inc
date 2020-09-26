@@ -273,11 +273,6 @@
  USART1_GTR = 0x5239 ; USART1 guard time register  0x00
  USART1_PSCR = 0x523A ; USART1 prescaler register  0x00
 
-        UART_SR   = USART1_SR
-        UART_DR   = USART1_DR
-        UART_BRR1 = USART1_BRR1
-        UART_CR2  = USART1_CR2
-
         ; 0x00 523B to 0x00 524F Reserved area (21 bytes)
 ; TIM2
  TIM2_CR1 = 0x5250 ; TIM2 control register 1 0x00
@@ -446,7 +441,38 @@
  ADC1_TRIGR3 = 0x5350 ; ADC1 trigger disable 3 0x00
  ADC1_TRIGR4 = 0x5351 ; ADC1 trigger disable 4 0x00
 ; 0x00 53C8 to 0x00 53FF Reserved area
-; LCD
+
+; USART2
+  USART2_SR   = 0x53E0      ; USART2 status register0xC0
+  USART2_DR   = 0x53E1      ; USART2 data register0xXX
+  USART2_BRR1 = 0x53E2      ; USART2 baud rate register 1
+  USART2_CR2  = 0x53E5      ; USART2 control register 2
+
+; USART3
+  USART3_SR   = 0x53F0      ; USART3 status register0xC0
+  USART3_DR   = 0x53F1      ; USART3 data register0xXX
+  USART3_BRR1 = 0x53F2      ; USART3 baud rate register 1
+  USART3_CR2  = 0x53F5      ; USART3 control register 2
+
+      .ifeq   (TARGET - STM8L_MHD) * (USE_UART3 - 1)
+        UART_DR   = USART3_DR
+        UART_SR   = USART3_SR
+        UART_BRR1 = USART3_BRR1
+        UART_CR2  = USART3_CR2
+      .else
+        .ifeq   (TARGET - STM8L_MHD) * (USE_UART2 - 1)
+        UART_DR   = USART2_DR
+        UART_SR   = USART2_SR
+        UART_BRR1 = USART2_BRR1
+        UART_CR2  = USART2_CR2
+        .else
+        UART_SR   = USART1_SR
+        UART_DR   = USART1_DR
+        UART_BRR1 = USART1_BRR1
+        UART_CR2  = USART1_CR2
+        .endif
+      .endif
+;; LCD
  LCD_CR1 = 0x5400 ; LCD control register 1 0x00
  LCD_CR2 = 0x5401 ; LCD control register 2 0x00
  LCD_CR3 = 0x5402 ; LCD control register 3 0x00

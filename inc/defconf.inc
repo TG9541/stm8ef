@@ -9,7 +9,8 @@
         TERM_LINUX       = 1    ; LF terminates line
 
         HALF_DUPLEX      = 0    ; Use the STM8S Low Density UART in half duplex mode (1: PD5, 2: PA3)
-        USE_UART2        = 0    ; Use the 2nd UART for the console (STM8S207: optional, STM8S105: default)
+        USE_UART2        = 0    ; Use the 2nd UART for the console (STM8S207: optional, STM8S105: default, STM8L152: optional)
+        USE_UART3        = 0    ; Use the 3rd UART for the console (STM8L152: optional)
         CUARTBRR    = 0x6803    ; default value for UARTBRR 9600 baud (refer to mcu/UART_DIV)
         HAS_RXUART       = 1    ; Enable UART RXD, word ?RX
         HAS_TXUART       = 1    ; Enable UART TXD, word TX!
