@@ -447,29 +447,34 @@
   USART2_DR   = 0x53E1      ; USART2 data register0xXX
   USART2_BRR1 = 0x53E2      ; USART2 baud rate register 1
   USART2_CR2  = 0x53E5      ; USART2 control register 2
+  USART2_CR5  = 0x53E8      ; USART2 control register 5
 
 ; USART3
   USART3_SR   = 0x53F0      ; USART3 status register0xC0
   USART3_DR   = 0x53F1      ; USART3 data register0xXX
   USART3_BRR1 = 0x53F2      ; USART3 baud rate register 1
   USART3_CR2  = 0x53F5      ; USART3 control register 2
+  USART3_CR5  = 0x53F8      ; USART3 control register 5
 
-      .ifeq   (TARGET - STM8L_MHD) * (USE_UART3 - 1)
-        UART_DR   = USART3_DR
+      .ifeq   (TARGET - STM8L_MHD) + (USE_UART3 - 1)
         UART_SR   = USART3_SR
+        UART_DR   = USART3_DR
         UART_BRR1 = USART3_BRR1
         UART_CR2  = USART3_CR2
+        UART_CR5  = USART3_CR5
       .else
-        .ifeq   (TARGET - STM8L_MHD) * (USE_UART2 - 1)
-        UART_DR   = USART2_DR
+        .ifeq   (TARGET - STM8L_MHD) + (USE_UART2 - 1)
         UART_SR   = USART2_SR
+        UART_DR   = USART2_DR
         UART_BRR1 = USART2_BRR1
         UART_CR2  = USART2_CR2
+        UART_CR5  = USART2_CR5
         .else
         UART_SR   = USART1_SR
         UART_DR   = USART1_DR
         UART_BRR1 = USART1_BRR1
         UART_CR2  = USART1_CR2
+        UART_CR5  = USART1_CR5
         .endif
       .endif
 ;; LCD
