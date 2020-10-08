@@ -131,6 +131,7 @@
 50A2 equ EXTI_CR3           \  External interrupt control register 3 (0x00)
 50A3 equ EXTI_SR1           \  External interrupt status register 1 (0x00)
 50A4 equ EXTI_SR2           \  External interrupt status register 2 (0x00)
+50A5 equ EXTI_CONF          \  External interrupt port select register 1 (0x00)
 50A5 equ EXTI_CONF1         \  External interrupt port select register 1 (0x00)
 
 \ WFE
@@ -149,7 +150,7 @@
 50C0 equ CLK_CKDIVR         \  CLK Clock master divider register (0x03)
 \ 50C1 equ CLK_CRTCR          \  CLK Clock RTC register (0x00 (1))
 \ 50C2 equ CLK_ICKCR          \  CLK Internal clock control register  (0x11)
-50C3 equ CLK_PCKENR        \  CLK Peripheral clock gating register 1 (0x00)
+50C3 equ CLK_PCKENR         \  CLK Peripheral clock gating register 1 (0x00)
 50C3 equ CLK_PCKENR1        \  CLK Peripheral clock gating register 1 (0x00)
 \ 50C4 equ CLK_PCKENR2        \  CLK Peripheral clock gating register 2 (0x00)
 50C5 equ CLK_CCOR           \  CLK Configurable clock control register (0x00)
@@ -175,9 +176,9 @@
 \ 0x00 50E3 to 0x00 50EF Reserved area
 
 \ AWU
-50F0 equ AWU_CSR          \  AWU control/status register (0x00)
-50F1 equ AWU_APR          \  AWU asynchronous prescaler buffer register (0x3F)
-50F2 equ AWU_TBR          \  AWU timebase selection register (0x00)
+50F0 equ AWU_CSR            \  AWU control/status register (0x00)
+50F1 equ AWU_APR            \  AWU asynchronous prescaler buffer register (0x3F)
+50F2 equ AWU_TBR            \  AWU timebase selection register (0x00)
 
 \ BEEP
 50F3 equ BEEP_CSR           \  BEEP control/status register (0x1F)
@@ -187,45 +188,45 @@
 
 \ SPI1
 5200 equ SPI1_CR1           \  SPI1 control register 1 (0x00)
-5200 equ SPI_CR1           \  SPI1 control register 1 (0x00)
+5200 equ SPI_CR1            \  SPI1 control register 1 (0x00)
 5201 equ SPI1_CR2           \  SPI1 control register 2 (0x00)
-5201 equ SPI_CR2           \  SPI1 control register 2 (0x00)
+5201 equ SPI_CR2            \  SPI1 control register 2 (0x00)
 5202 equ SPI1_ICR           \  SPI1 interrupt control register (0x00)
-5202 equ SPI_ICR           \  SPI1 interrupt control register (0x00)
+5202 equ SPI_ICR            \  SPI1 interrupt control register (0x00)
 5203 equ SPI1_SR            \  SPI1 status register (0x02)
-5203 equ SPI_SR            \  SPI1 status register (0x02)
+5203 equ SPI_SR             \  SPI1 status register (0x02)
 5204 equ SPI1_DR            \  SPI1 data register (0x00)
-5204 equ SPI_DR            \  SPI1 data register (0x00)
+5204 equ SPI_DR             \  SPI1 data register (0x00)
 
 \ 0x00 5205 to 0x00 520F Reserved area
 
 \ I2C1
-5210 equ I2C_CR1           \  I2C1 control register 1 (0x00)
+5210 equ I2C_CR1            \  I2C1 control register 1 (0x00)
 5210 equ I2C1_CR1           \  I2C1 control register 1 (0x00)
-5211 equ I2C_CR2           \  I2C1 control register 2 (0x00)
+5211 equ I2C_CR2            \  I2C1 control register 2 (0x00)
 5211 equ I2C1_CR2           \  I2C1 control register 2 (0x00)
-5212 equ I2C_FREQR         \  I2C1 frequency register  (0x00)
+5212 equ I2C_FREQR          \  I2C1 frequency register  (0x00)
 5212 equ I2C1_FREQR         \  I2C1 frequency register  (0x00)
-5213 equ I2C_OARL          \  I2C1 own address register low (0x00)
+5213 equ I2C_OARL           \  I2C1 own address register low (0x00)
 5213 equ I2C1_OARL          \  I2C1 own address register low (0x00)
-5214 equ I2C_OARH          \  I2C1 own address register high (0x00)
+5214 equ I2C_OARH           \  I2C1 own address register high (0x00)
 5214 equ I2C1_OARH          \  I2C1 own address register high (0x00)
 \ 5215 equ I2C1_OAR2          \  I2C1 own address register for dual mode (0x00)
-5216 equ I2C_DR            \  I2C1 data register (0x00)
+5216 equ I2C_DR             \  I2C1 data register (0x00)
 5216 equ I2C1_DR            \  I2C1 data register (0x00)
-5217 equ I2C_SR1           \  I2C1 status register 1 (0x00)
+5217 equ I2C_SR1            \  I2C1 status register 1 (0x00)
 5217 equ I2C1_SR1           \  I2C1 status register 1 (0x00)
-5218 equ I2C_SR2           \  I2C1 status register 2 (0x00)
+5218 equ I2C_SR2            \  I2C1 status register 2 (0x00)
 5218 equ I2C1_SR2           \  I2C1 status register 2 (0x00)
-5219 equ I2C_SR3           \  I2C1 status register 3 (0x0X)
+5219 equ I2C_SR3            \  I2C1 status register 3 (0x0X)
 5219 equ I2C1_SR3           \  I2C1 status register 3 (0x0X)
-521A equ I2C_ITR           \  I2C1 interrupt control register (0x00)
+521A equ I2C_ITR            \  I2C1 interrupt control register (0x00)
 521A equ I2C1_ITR           \  I2C1 interrupt control register (0x00)
-521B equ I2C_CCRL          \  I2C1 clock control register low (0x00)
+521B equ I2C_CCRL           \  I2C1 clock control register low (0x00)
 521B equ I2C1_CCRL          \  I2C1 clock control register low (0x00)
-521C equ I2C_CCRH          \  I2C1 clock control register high (0x00)
+521C equ I2C_CCRH           \  I2C1 clock control register high (0x00)
 521C equ I2C1_CCRH          \  I2C1 clock control register high (0x00)
-521D equ I2C_TRISER        \  I2C1 TRISE register (0x02)
+521D equ I2C_TRISER         \  I2C1 TRISE register (0x02)
 521D equ I2C1_TRISER        \  I2C1 TRISE register (0x02)
 \ 521E equ I2C1_PECR          \  I2C1 packet error checking register (0x00)
 
@@ -233,13 +234,21 @@
 
 \ USART1
 5230 equ USART1_SR          \  USART1 status register (0xC0)
+5230 equ UART1_SR           \  USART1 status register (0xC0)
 5231 equ USART1_DR          \  USART1 data register (0xXX)
+5231 equ UART1_DR           \  USART1 data register (0xXX)
 5232 equ USART1_BRR1        \  USART1 baud rate register 1 (0x00)
+5232 equ UART1_BRR1         \  USART1 baud rate register 1 (0x00)
 5233 equ USART1_BRR2        \  USART1 baud rate register 2 (0x00)
+5233 equ UART1_BRR2         \  USART1 baud rate register 2 (0x00)
 5234 equ USART1_CR1         \  USART1 control register 1 (0x00)
+5234 equ UART1_CR1          \  USART1 control register 1 (0x00)
 5235 equ USART1_CR2         \  USART1 control register 2 (0x00)
+5235 equ UART1_CR2          \  USART1 control register 2 (0x00)
 5236 equ USART1_CR3         \  USART1 control register 3 (0x00)
+5236 equ UART1_CR3          \  USART1 control register 3 (0x00)
 5237 equ USART1_CR4         \  USART1 control register 4 (0x00)
+5237 equ UART1_CR4          \  USART1 control register 4 (0x00)
 \ 5238 equ USART1_CR5         \  USART1 control register 5 (0x00)
 \ 5239 equ USART1_GTR         \  USART1 guard time register  (0x00)
 \ 523A equ USART1_PSCR        \  USART1 prescaler register  (0x00)
@@ -319,9 +328,9 @@
 52FF equ IR_CR              \  Infrared control register (0x00)
 
 \ COMP
-52FF equ COMP_CR \ Comparator control register
-5300 equ COMP_CSR \ Comparator status register
-5301 equ COMP_CCS \ Comparator channel selection register
+5300 equ COMP_CR \ Comparator control register
+5301 equ COMP_CSR \ Comparator status register
+5302 equ COMP_CCS \ Comparator channel selection register
 
 \ 1.   These registers are not impacted by a system reset. They are reset at power-on.
 \ CPU(1)
