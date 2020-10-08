@@ -57,7 +57,9 @@ BKEYCHAR:
 BOARDINIT:
         ; Board I/O initialization: enable USART TX->PA2, RX->PA3
         MOV     CLK_PCKENR1,#0x21
-        BSET    PA_DDR,#2
+        .ifne HALF_DUPLEX
+        BSET    PA_DDR,#2       ; HDSEL: USART controls the data direction
+        .endif
         BSET    PA_CR1,#2
         MOV     SYSCFG_RMPCR1,#0x1C
         RET

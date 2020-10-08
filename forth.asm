@@ -556,8 +556,9 @@ COLD:
         .ifne   HAS_RXUART*HAS_TXUART
         MOV     UART_CR2,#0x0C  ; Use UART1 full duplex
         .ifne   HALF_DUPLEX
+        .ifeq   (FAMILY - STM8S)
         .ifeq   (HALF_DUPLEX - 1)
-        ; pull-up for PD5 single-wire UART
+        ; STM8S UART1, UART4: pull-up for PD5 single-wire UART
         BRES    PD_DDR,#5       ; PD5 GPIO input high
         BSET    PD_CR1,#5       ; PD5 GPIO pull-up
         .endif
@@ -577,7 +578,8 @@ $1:
         BSET    PA_CR1,#3       ; PA3 GPIO pull-up
 $2:
         .endif
-        MOV     UART1_CR5,#0x08 ; UART1 Half-Duplex
+        .endif
+        MOV     UART_CR5,#0x08 ; UART1 Half-Duplex
         .endif
         .else
         .ifne   HAS_TXUART

@@ -252,11 +252,13 @@
         UART_SR   = UART2_SR
         UART_BRR1 = UART2_BRR1
         UART_CR2  = UART2_CR2
+        UART_CR5  = UART2_CR5
         .else
         UART_DR   = UART1_DR    ; STM8S103 or STM8S207
         UART_SR   = UART1_SR
         UART_BRR1 = UART1_BRR1
         UART_CR2  = UART1_CR2
+        UART_CR5  = UART1_CR5
         .endif
 ;.endif
 
