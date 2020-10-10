@@ -1,26 +1,55 @@
-; STM8L152C6 "Core" STM8L device dependent routine default code
+; STM8L152R8 "Core" STM8L High Density devices
 
 ; Note: for supporting a new board create a new board configuration
-;       folder with a "globconfig.inc" and a copy of this file.
+;       folder including this file.
 
 ;===============================================================
 
 ;       BOARDINIT  ( -- )
 ;       Init board GPIO (except COM ports)
 
-; PE7 LED green
-; PC7 LED blue
-
 BOARDINIT:
         ; Board I/O initialization
-        MOV     CLK_PCKENR1,#0x21   ; Enable USART1[5] and TIM2[0]
-        MOV     SYSCFG_RMPCR1,#0x10 ; Map USART1 to PA2[TX] and PA3[RX]
+        .ifne   HAS_BACKGROUND
+        BSET    CLK_PCKENR1,#0   ; TIM2[0]
+        .endif
+
+        .ifne   USE_UART2
+        BSET    CLK_PCKENR3,#3  ; USART2
+        BSET    PE_DDR,#4       ; Setup PE4[USART2_TX] as output
+        BSET    PE_CR1,#4       ; Setup PE4[USART2_TX] as push-pull output
+        .else
+        .ifne   USE_UART3
+        BSET    CLK_PCKENR3,#4  ; USART3
+        .ifne   ALT_USART_STM8L
+        BSET    SYSCFG_RMPCR3,#1 ; Map USART3 to PF0[TX] and PF1[RX]
+        BSET    PF_DDR,#0 ; Setup PF0[USART3_TX] as output
+        BSET    PF_CR1,#0 ; Setup PF0[USART3_TX] as push-pull output
+        .else
+        BSET    PG_DDR,#1       ; Setup PG1[USART3_TX] as output
+        BSET    PG_CR1,#1       ; Setup PG1[USART3_TX] as push-pull output
+        .endif
+        .else
+        BSET    CLK_PCKENR1,#5  ; Enable USART1[5]
+        .ifeq   (ALT_USART_STM8L-1)
+        BSET    SYSCFG_RMPCR1,#4 ; Map USART1 to PA2[TX] and PA3[RX]
         BSET    PA_DDR,#2 ; Setup PA2[USART1_TX] as output
         BSET    PA_CR1,#2 ; Setup PA2[USART1_TX] as push-pull output
-
+        .else
+        .ifeq   (ALT_USART_STM8L-2)
+        BSET    SYSCFG_RMPCR1,#5 ; Map USART1 to PC5[TX] and PC6[RX]
+        BSET    PC_DDR,#5 ; Setup PC5[USART1_TX] as output
+        BSET    PC_CR1,#5 ; Setup PC5[USART1_TX] as push-pull output
+        .else
+        BSET    PC_DDR,#3 ; Setup PC3[USART1_TX] as output
+        BSET    PC_CR1,#3 ; Setup PC3[USART1_TX] as push-pull output
+        .endif
+        .endif
+        .endif
+        .endif
 
         .ifne   HAS_OUTPUTS
-        ; Leds init
+        ; STM8L-Discovery Leds init
         BSET    PE_DDR,#7 ; PE7 LED green
         BSET    PE_CR1,#7
         BSET    PC_DDR,#7 ; PC7 LED blue
