@@ -1,19 +1,18 @@
-; STM8L152C6 "Core" STM8L device dependent routine default code
+; STM8L152R8 "Core" STM8L High Density devices
 
 ; Note: for supporting a new board create a new board configuration
-;       folder with a "globconfig.inc" and a copy of this file.
+;       folder including this file.
 
 ;===============================================================
 
 ;       BOARDINIT  ( -- )
 ;       Init board GPIO (except COM ports)
 
-; PE7 LED green
-; PC7 LED blue
-
 BOARDINIT:
         ; Board I/O initialization
+        .ifne   HAS_BACKGROUND
         BSET    CLK_PCKENR1,#0   ; TIM2[0]
+        .endif
 
         .ifne   USE_UART2
         BSET    CLK_PCKENR3,#3  ; USART2
@@ -50,7 +49,7 @@ BOARDINIT:
         .endif
 
         .ifne   HAS_OUTPUTS
-        ; Leds init
+        ; STM8L-Discovery Leds init
         BSET    PE_DDR,#7 ; PE7 LED green
         BSET    PE_CR1,#7
         BSET    PC_DDR,#7 ; PC7 LED blue
