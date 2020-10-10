@@ -2,11 +2,12 @@
 ; Config for STM8L152R8
 ; Clock: HSI (no crystal)
 
+        ALT_USART_STM8L  = 1    ; Alternative STM8L USART GPIO mapping (e.g. PA3/PA2 instead of PC2/PC3)
         HALF_DUPLEX      = 0    ; Use UART in half duplex mode
         HAS_TXUART       = 1    ; No UART TXD, word TX!
         HAS_RXUART       = 1    ; No UART RXD, word ?RX
         USE_UART2        = 0    ; Use USART2 instead of USART1 for the console
-        USE_UART3        = 0    ; Use USART3 instead of USART1 for the console
+        USE_UART3        = 1    ; Use USART3 instead of USART1 for the console
         HAS_TXSIM        = 0    ; Enable TxD via GPIO/TIM4, word TXGP!
         HAS_RXSIM        = 0    ; Enable RxD via GPIO/TIM4, word ?RXGP
         PNRX             = 0    ; Port GPIO# for HAS_RXDSIM
