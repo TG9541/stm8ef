@@ -12,11 +12,31 @@
 ; PC7 LED blue
 
 BOARDINIT:
+        .ifne   HAS_BACKGROUND
+        BSET    CLK_PCKENR1,#0   ; Enable TIM2 clock
+        .endif
+
         ; Board I/O initialization
-        MOV     CLK_PCKENR1,#0x21   ; Enable USART1[5] and TIM2[0]
-        MOV     SYSCFG_RMPCR1,#0x10 ; Map USART1 to PA2[TX] and PA3[RX]
-        BSET    PA_DDR,#2 ; Setup PA2[USART1_TX] as output
-        BSET    PA_CR1,#2 ; Setup PA2[USART1_TX] as push-pull output
+        .ifne   HAS_TXUART
+        BSET    CLK_PCKENR1,#5  ; Enable USART1 clock
+
+        .ifeq   ALT_USART_STM8L
+        ; Map USART1 to PC3[TX] and PC2[RX]
+        PSET_TX PORTC, 3
+        .endif
+
+        .ifeq   (ALT_USART_STM8L-1)
+        ; Map USART1 to PA2[TX] and PA3[RX]
+        BSET    SYSCFG_RMPCR1,#4
+        PSET_TX PORTA, 2
+        .endif
+
+        .ifeq   (ALT_USART_STM8L-2)
+        ; Map USART1 to PC5[TX] and PC6[RX]
+        BSET    SYSCFG_RMPCR1,#5
+        PSET_TX PORTC, 5
+        .endif
+        .endif
 
         ; Leds init
         BSET    PE_DDR,#7 ; PE7 LED green

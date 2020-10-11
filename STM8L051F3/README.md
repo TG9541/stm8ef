@@ -1,4 +1,4 @@
-#STM8L051F3P6 Base Image
+# STM8L051F3P6 Base Image
 
 This folder contains the configuration fo STML Low Density devices as described in [RM0031](https://www.st.com/resource/en/reference_manual/cd00218714-stm8l050j3-stm8l051f3-stm8l052c6-stm8l052r8-mcus-and-stm8l151l152-stm8l162-stm8al31-stm8al3l-lines-stmicroelectronics.pdf) (e.g. [STM8L051F3P6](https://www.st.com/resource/en/datasheet/stm8l051F3.pdf) or [STM8L050J3M3](https://www.st.com/resource/en/datasheet/stm8l050j3.pdf)). STM8L Low Density devices from the families RM0013 (STM8L101) or RM0312 (STM8TL5xxx) use different peripheral register addresses and have a different memory layout. These require a different binary.
 
