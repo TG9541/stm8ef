@@ -54,12 +54,39 @@ BKEYCHAR:
 ;       BOARDINIT  ( -- )
 ;       Init board GPIO
 
-BOARDINIT:
-        ; Board I/O initialization: enable USART TX->PA2, RX->PA3
-        MOV     CLK_PCKENR1,#0x21
-        .ifne HALF_DUPLEX
-        BSET    PA_DDR,#2       ; HDSEL: USART controls the data direction
+        .macro  PSET_TX PUART, TXPIN
+        .ifeq   HALF_DUPLEX
+        BSET    PUART+DDR,#TXPIN ; HDSEL: USART controls the data direction
         .endif
-        BSET    PA_CR1,#2
-        MOV     SYSCFG_RMPCR1,#0x1C
+        BSET    PUART+CR1,#TXPIN
+        .endm
+
+BOARDINIT:
+        ; Board I/O initialization
+
+        .ifne   HAS_BACKGROUND
+        BSET    CLK_PCKENR1,#0   ; Enable TIM2 clock
+        .endif
+
+        .ifne   HAS_TXUART
+        BSET    CLK_PCKENR1,#5  ; Enable USART1 clock
+
+        .ifeq   ALT_USART_STM8L
+        ; Map USART1 to PC5[TX] and PC6[RX]
+        PSET_TX PORTC, 5
+        .endif
+
+        .ifeq   (ALT_USART_STM8L-1)
+        ; Map USART1 to PA2[TX] and PA3[RX]
+        BSET    SYSCFG_RMPCR1,#4
+        PSET_TX PORTA, 2
+
+        .ifeq   (ALT_USART_STM8L-2)
+        ; Map USART1 to PC3[TX] and PC2[RX]
+        PSET_TX PORTC, 3
+        .endif
+
+        .endif
+        .endif
+
         RET
