@@ -8,8 +8,12 @@
 ;       BOARDINIT  ( -- )
 ;       Init board GPIO (except COM ports)
 
-; PE7 LED green
-; PC7 LED blue
+        .macro  PSET_TX PUART, TXPIN
+        .ifeq   HALF_DUPLEX
+        BSET    PUART+DDR,#TXPIN ; HDSEL: USART controls the data direction
+        .endif
+        BSET    PUART+CR1,#TXPIN
+        .endm
 
 BOARDINIT:
         .ifne   HAS_BACKGROUND
