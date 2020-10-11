@@ -8,45 +8,58 @@
 ;       BOARDINIT  ( -- )
 ;       Init board GPIO (except COM ports)
 
+        .macro  PSET_TX PUART, TXPIN
+        .ifeq   HALF_DUPLEX
+        BSET    PUART+DDR,#TXPIN ; HDSEL: USART controls the data direction
+        .endif
+        BSET    PUART+CR1,#TXPIN
+        .endm
+
 BOARDINIT:
         ; Board I/O initialization
         .ifne   HAS_BACKGROUND
         BSET    CLK_PCKENR1,#0   ; TIM2[0]
         .endif
 
+        ; USART selection and pin function assignment
+        .ifne   HAS_TXUART      ; any USART
+
         .ifne   USE_UART2
-        BSET    CLK_PCKENR3,#3  ; USART2
-        BSET    PE_DDR,#4       ; Setup PE4[USART2_TX] as output
-        BSET    PE_CR1,#4       ; Setup PE4[USART2_TX] as push-pull output
+        BSET    CLK_PCKENR3,#3  ; enable USART2 clock
+        PSET_TX PORTE, 4        ; USART2 to PE4[TX] and PE3[RX]
         .else
+
         .ifne   USE_UART3
-        BSET    CLK_PCKENR3,#4  ; USART3
-        .ifne   ALT_USART_STM8L
-        BSET    SYSCFG_RMPCR3,#1 ; Map USART3 to PF0[TX] and PF1[RX]
-        BSET    PF_DDR,#0 ; Setup PF0[USART3_TX] as output
-        BSET    PF_CR1,#0 ; Setup PF0[USART3_TX] as push-pull output
-        .else
-        BSET    PG_DDR,#1       ; Setup PG1[USART3_TX] as output
-        BSET    PG_CR1,#1       ; Setup PG1[USART3_TX] as push-pull output
+        BSET    CLK_PCKENR3,#4  ; enable USART3 clock
+        .ifeq   ALT_USART_STM8L
+        ; Map USART3 to PG1[TX] and PG0[RX]
+        PSET_TX PORTG, 1
         .endif
-        .else
-        BSET    CLK_PCKENR1,#5  ; Enable USART1[5]
         .ifeq   (ALT_USART_STM8L-1)
-        BSET    SYSCFG_RMPCR1,#4 ; Map USART1 to PA2[TX] and PA3[RX]
-        BSET    PA_DDR,#2 ; Setup PA2[USART1_TX] as output
-        BSET    PA_CR1,#2 ; Setup PA2[USART1_TX] as push-pull output
+        ; Map USART3 to PF0[TX] and PF1[RX]
+        BSET    SYSCFG_RMPCR3,#1
+        PSET_TX PORTF, 0
+        .endif
+
         .else
+        BSET    CLK_PCKENR1,#5  ; enable USART1 clock
+        .ifeq   ALT_USART_STM8L
+        ; Map USART1 to PC3[TX] and PC2[RX]
+        PSET_TX PORTC, 3
+        .endif
+        .ifeq   (ALT_USART_STM8L-1)
+        ; Map USART1 to PA2[TX] and PA3[RX]
+        BSET    SYSCFG_RMPCR1,#4
+        PSET_TX PORTA, 2
+        .endif
         .ifeq   (ALT_USART_STM8L-2)
-        BSET    SYSCFG_RMPCR1,#5 ; Map USART1 to PC5[TX] and PC6[RX]
-        BSET    PC_DDR,#5 ; Setup PC5[USART1_TX] as output
-        BSET    PC_CR1,#5 ; Setup PC5[USART1_TX] as push-pull output
-        .else
-        BSET    PC_DDR,#3 ; Setup PC3[USART1_TX] as output
-        BSET    PC_CR1,#3 ; Setup PC3[USART1_TX] as push-pull output
+        ; Map USART1 to PC5[TX] and PC6[RX]
+        BSET    SYSCFG_RMPCR1,#5
+        PSET_TX PORTC, 5
         .endif
-        .endif
-        .endif
-        .endif
+        .endif  ; not USART3
+        .endif  ; not USART2
+        .endif  ; any USART
 
         .ifne   HAS_OUTPUTS
         ; STM8L-Discovery Leds init

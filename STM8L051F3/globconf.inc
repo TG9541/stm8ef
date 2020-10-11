@@ -2,9 +2,11 @@
 ; Config for STM8L051F3P6
 ; Clock: HSI (no crystal)
 
+        ALT_USART_STM8L  = 1    ; Alternative STM8L USART GPIO mapping (PA3/PA2 instead of PC5/PC3)
         HALF_DUPLEX      = 0    ; Use UART in half duplex mode
         HAS_TXUART       = 1    ; No UART TXD, word TX!
         HAS_RXUART       = 1    ; No UART RXD, word ?RX
+
         HAS_TXSIM        = 0    ; Enable TxD via GPIO/TIM4, word TXGP!
         HAS_RXSIM        = 0    ; Enable RxD via GPIO/TIM4, word ?RXGP
         PNRX             = 0    ; Port GPIO# for HAS_RXDSIM
