@@ -18,7 +18,15 @@
 BOARDINIT:
         ; Board I/O initialization
         .ifne   HAS_BACKGROUND
+        .ifne   BG_USE_TIM1
+        BSET    CLK_PCKENR2,#1   ; TIM1[1]
+        .else
+        .ifne   BG_USE_TIM3
+        BSET    CLK_PCKENR1,#1   ; TIM3[1]
+        .else
         BSET    CLK_PCKENR1,#0   ; TIM2[0]
+        .endif
+        .endif
         .endif
 
         ; USART selection and pin function assignment

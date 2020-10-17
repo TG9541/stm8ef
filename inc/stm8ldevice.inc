@@ -370,8 +370,24 @@
  TIM3_OISR = 0x5296 ; TIM3 output idle state register 0x00
         .endif
 
+        TIM1_CR1 = 0x52B0
+        TIM1_IER = 0x52B5
+        TIM1_SR1 = 0x52B6
+        TIM1_PSCRL = 0x52C2
+        TIM1_ARRH = 0x52C3
+        TIM1_ARRL = 0x52C4
+
         .ifne   BG_USE_TIM1
-        error: BG_USE_TIM1 currently unsupported (please check datasheet)
+        .ifne   (BG_USE_TIM3 + STM8L_LOD + STM8L_101)
+        Error: either BG_USE_TIM1 or BG_USE_TIM3 can be selected but not both
+        Error: STM8L Low density device doesn't have TIM1
+        .else
+        BG_TIM_CR1   = TIM1_CR1
+        BG_TIM_IER   = TIM1_IER
+        BG_TIM_SR1   = TIM1_SR1
+        BG_TIM_ARRH  = TIM1_ARRH
+        BG_TIM_ARRL  = TIM1_ARRL
+        .endif
         .else
         .ifne   BG_USE_TIM3
         BG_TIM_CR1   = TIM3_CR1
