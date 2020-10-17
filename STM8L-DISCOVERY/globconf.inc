@@ -2,7 +2,7 @@
 ; Config for STM8L152C6
 ; Clock: HSI (no crystal)
 
-        ALT_USART_STM8L  = 0    ; Alternative STM8L USART GPIO mapping (e.g. PA3/PA2 instead of PC5/PC6)
+        ALT_USART_STM8L  = 1    ; Alternative STM8L USART GPIO mapping (e.g. PA3/PA2 instead of PC5/PC6)
         USE_UART2        = 0    ; Use USART2 instead of USART1 for the console
         USE_UART3        = 0    ; Use USART3 instead of USART1 for the console
         HALF_DUPLEX      = 0    ; Use UART in half duplex mode

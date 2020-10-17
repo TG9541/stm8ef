@@ -9,7 +9,7 @@ Peripheral register addresses are the same throughout the STM8L Medium Density a
 The following options in `globconf.inc` controlls port assignments options of the USART (TTL, limited to 3.3V):
 
 * `ALT_USART_STM8L = 0`: USART_TX on PC3 and USART_RX on PC2
-* `ALT_USART_STM8L = 1`: USART_TX on PA2 and USART_RX on PA3
+* `ALT_USART_STM8L = 1`: USART_TX on PA2 and USART_RX on PA3 (default)
 * `ALT_USART_STM8L = 2`: USART_TX on PC6 and USART_RX on PC5
 
 The USART can be configured as `HAS_HALFDUPLEX`: this means that the selected USART_TX works alternatively as TX or RX. This feature can free up one more GPIO for other uses.

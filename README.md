@@ -40,13 +40,15 @@ Support for STM8S devices [RM0016](https://www.st.com/resource/en/reference_manu
 * [STM8S105K4](https://github.com/TG9541/stm8ef/tree/master/STM8S105K4) for STM8S Medium Density devices (Value or Access Line) with 2K RAM and up to 32K Flash
 * [STM8S207RB](https://github.com/TG9541/stm8ef/tree/master/STM8S207RB) for STM8S High Density devices (Value or Performance Line) with 6K RAM and up to 32K + 96K Flash
 
-Support for STM8L devices is work-in-progress: especially the latest additions STM8L101F3 and STM8L001J3 are experimental, and there have been no documented tests with STM8L Medium+ or High Density devices like STM8L152R8 (although the code can be expected to work, see note in [STM8L151K4](https://github.com/TG9541/stm8ef/tree/master/STM8L151K4)).
+Support for STM8L devices is work-in-progress: especially the latest additions STM8L101F3 and STM8L001J3 are experimental, and there have been few tests with STM8L Medium+ or High Density devices like STM8L152R8 (although the code can be expected to work). Please refer to the `README.md` in the board folders below.
 
 * STM8L Low Density devices ([RM0013](https://www.st.com/resource/en/reference_manual/CD00184503-.pdf), RM0031, [RM0312](https://www.st.com/resource/en/reference_manual/dm00040094-stm8tl5xxx-microcontroller-family-stmicroelectronics.pdf))
   * [STM8L101F3](https://github.com/TG9541/stm8ef/tree/master/STM8L101F3) for STM8L101 Low Density devices (experimental, see [issue](https://github.com/TG9541/stm8ef/issues/349))
   * [STM8L051F3](https://github.com/TG9541/stm8ef/tree/master/STM8L051F3) for STM8L Low Density devices (see [issue](https://github.com/TG9541/stm8ef/issues/137#issuecomment-354542670))
 * STM8L Medium Density devices ([RM0031](https://www.st.com/resource/en/reference_manual/cd00218714-stm8l050j3-stm8l051f3-stm8l052c6-stm8l052r8-mcus-and-stm8l151l152-stm8l162-stm8al31-stm8al3l-lines-stmicroelectronics.pdf))
   * [STM8L151K4](https://github.com/TG9541/stm8ef/tree/master/STM8L151K4) for STM8L Medium Density devices
+* STM8L High and Medium+ Density devices ([RM0031](https://www.st.com/resource/en/reference_manual/cd00218714-stm8l050j3-stm8l051f3-stm8l052c6-stm8l052r8-mcus-and-stm8l151l152-stm8l162-stm8al31-stm8al3l-lines-stmicroelectronics.pdf))
+  * [STM8L152R8](https://github.com/TG9541/stm8ef/tree/master/STM8L152R8) for STM8L High (and Medium+) Density devices
 
 ## Board support:
 
@@ -54,6 +56,7 @@ STM8 eForth provides board support like LED display code for several common boar
 
 * [MINDEV](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for the STM8S103F3P6 $0.80 "minimum development board"
 * [STM8L-DISCOVERY](https://github.com/TG9541/stm8ef/tree/master/STM8L-DISCOVERY) for the STM8L-Discovery Board (STM8L152C6 Medium Density with LCD)
+
 * [C0135](https://github.com/TG9541/stm8ef/wiki/Board-C0135) the "Relay-4 Board" can be used as a *Nano PLC* (Forth MODBUS support is available)
 * [W1209](https://github.com/TG9541/stm8ef/wiki/Board-W1209) $1.50 thermostat board w/ 3 digit 7S-LED display, full- or half-duplex RS232 (some board variants, e.g. with CA LED displays, are supported)
 * [W1219](https://github.com/TG9541/stm8ef/wiki/Board-W1219) low cost thermostat with 2x3 digit 7S-LED display with half-duplex RS232 through PD1/SWIM
