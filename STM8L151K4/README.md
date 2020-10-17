@@ -7,7 +7,7 @@ The following datasheets apply:
 * [STM8L151C4/K4/G4, STM8L151C6/K6/G6, STM8L152C4/K4/G4, STM8L152C6/K6/G6](https://www.st.com/resource/en/datasheet/stm8l151K4.pdf)
 * [STM8L052C6](https://www.st.com/resource/en/datasheet/stm8l052c6.pdf)
 
-The pin and GPIO function overview for the LQFP-32 "K" package is courtesy of @Eelkhorn (author of [STM8-Peripherals Forth](https://github.com/Eelkhoorn/stm8-peripherals-forth):
+The pin and GPIO function overview for the LQFP-32 "K" package is courtesy of @Eelkhorn (author of [STM8-Peripherals Forth](https://github.com/Eelkhoorn/stm8-peripherals-forth)):
 
 ![image](https://user-images.githubusercontent.com/5466977/96334854-1c2e9e00-1074-11eb-9c9b-a490784b869f.png)
 
@@ -17,7 +17,7 @@ STM8L "High density" devices (e.g. STM8L152R8) provide more memory and a richer 
 
 For STM8L "Low density" devices described in RM0031 (e.g. STM8L051) a different binary is required (different memory layout/peripheral register addresses).
 
-The code in this folder also contains [STM8L-Discovery_LCD and board support code](https://github.com/TG9541/stm8ef/tree/master/STM8L-DISCOVERY) by @plumbum but it has to be enabled manually in `globconf.inc`.
+The `boardcore.inc` here also contains [STM8L-Discovery_LCD and board support code](https://github.com/TG9541/stm8ef/tree/master/STM8L-DISCOVERY) by @plumbum but it needs to be enabled in `globconf.inc`.
 
 ## STM8 eForth Programming
 
