@@ -9,8 +9,8 @@ The following datasheets apply:
 
 The pin and GPIO function overview for the LQFP-32 "K" package is courtesy of @Eelkhorn (author of [STM8-Peripherals Forth](https://github.com/Eelkhoorn/stm8-peripherals-forth):
 
-![image](https://user-images.githubusercontent.com/5466977/95673419-98bf0980-0ba8-11eb-9b5c-be89e0702ab8.png)
-:
+![image](https://user-images.githubusercontent.com/5466977/96334854-1c2e9e00-1074-11eb-9c9b-a490784b869f.png)
+
 All STM8L "Medium density" devices (also automotive grade STM8AL devices) should work with the STM8L151K4 binary in the Releases section.
 
 STM8L "High density" devices (e.g. STM8L152R8) provide more memory and a richer set of peripherals. Using the [STM8L152R8](https://github.com/TG9541/stm8ef/tree/master/STM8L152R8) binary is recommended although the `target.inc` provided here will work. Note that "Medium+ density" (e.g. STM8L151R6 and some STM8AL devices) appears to be a "marketing name" for lower-specs "High density" devices (at least that's what Chinese vendors [say](https://www.aliexpress.com/item/32881789448.html)).

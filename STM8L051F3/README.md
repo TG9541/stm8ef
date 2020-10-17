@@ -10,7 +10,7 @@ The following datasheets apply:
 
 ![stm8l051f3p6](https://user-images.githubusercontent.com/5466977/40583511-8462f470-6190-11e8-8674-84338a991f58.png)
 
-STM8L "Low density" devices from the families RM0013 (STM8L101) or RM0312 (STM8TL5xxx) are substantially different and they require a [different binary](https://github.com/TG9541/stm8ef/tree/master/STM8L101F3).
+STM8L "Low density" devices in the sub-families RM0013 (STM8L101) or RM0312 (STM8TL5xxx) are [substantially different](https://github.com/TG9541/stm8ef/tree/master/STM8L101F3).
 
 ## STM8 eForth Programming
 
@@ -25,7 +25,7 @@ Using e4thcom as a terminal program is recommended. With the help of e4thcom (or
 
 ## USART Console Settings
 
-By default, globconf.inc` configures the USART interface for the STM8L051F3 to `PA2/USART_TX` and `PA3/2/USART_RX` in order to support the LSE clock feature (which needs `PC5` and `PC6` for the 32.768kHz crystal).
+By default `globconf.inc` configures the USART interface for the STM8L051F3 to `PA2/USART_TX` and `PA3/2/USART_RX` in order to support the LSE clock feature (which needs `PC5` and `PC6` for the 32.768kHz crystal).
 
 Pin|GPIO|Function
 -|-|-
