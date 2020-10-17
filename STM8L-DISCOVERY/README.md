@@ -19,8 +19,8 @@ Using e4thcom as a terminal program is recommended. With the help of e4thcom (or
 
 The following options in `globconf.inc` controlls port assignments options of the USART:
 
-* `ALT_USART_STM8L = 0`: USART_TX on PC3 and USART_RX on PC2 (default)
-* `ALT_USART_STM8L = 1`: USART_TX on PA2 and USART_RX on PA3
+* `ALT_USART_STM8L = 0`: USART_TX on PC3 and USART_RX on PC2
+* `ALT_USART_STM8L = 1`: USART_TX on PA2 and USART_RX on PA3 (default)
 * `ALT_USART_STM8L = 2`: USART_TX on PC6 and USART_RX on PC5
 
 The USART can be configured as `HAS_HALFDUPLEX`: by setting `HAS_HALFDUPLEX = 1` in `globconf.inc` the selected USART_TX switches betweens TX and RX:

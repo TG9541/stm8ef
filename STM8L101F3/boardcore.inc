@@ -55,9 +55,19 @@ BKEYCHAR:
 ;       Init board GPIO
 
 BOARDINIT:
-        ; Clock init: enable TIM2 and USART clock
-        MOV     CLK_PCKENR1,#0x21
+        .ifne   HAS_BACKGROUND
+        .ifne   BG_USE_TIM3
+        BSET    CLK_PCKENR1,#1   ; TIM3[1]
+        .else
+        BSET    CLK_PCKENR1,#0   ; TIM2[0]
+        .endif
+        .endif
+
+        .ifne   HAS_TXUART
+        ; Clock init: enable USART clock
+        BSET    CLK_PCKENR1,#5  ; Enable USART1 clock
         ; Board I/O for UART: enable USART push/pull (careful with STM8L001J3!)
 ;        BSET    PC_DDR,#3        ; TX->PC3, RX->PC2
 ;        BSET    PC_CR1,#3
+        .endif
         RET
