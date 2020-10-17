@@ -1,39 +1,26 @@
 # STM8L101F3P6 Base Image
 
-This "board folder" provides support for the [STM8L101F3P6](https://www.st.com/resource/en/datasheet/stm8l101f1.pdf) and [STM8L001J3M3](https://www.st.com/resource/en/datasheet/stm8l001j3.pdf) Low Density devices of the [RM0013](https://www.st.com/content/ccc/resource/technical/document/reference_manual/73/41/6f/b1/fd/45/4e/18/CD00184503.pdf/files/CD00184503.pdf/jcr:content/translations/en.CD00184503.pdf) STM8L sub-family.
+This folder contains the configuration for the sub-family of STM8L "Low density" devices described in [RM0013](https://www.st.com/content/ccc/resource/technical/document/reference_manual/73/41/6f/b1/fd/45/4e/18/CD00184503.pdf/files/CD00184503.pdf/jcr:content/translations/en.CD00184503.pdf) with 8K Flash ROM and 1.5K RAM (plus 64 option bytes). Compared to other STM8L devices they have more RAM but a much reduced feature set (no ADC, no RTC, no DMA, no EEPROM ... see below).
 
-Differences between the STM8L101 and other STM8L devices (e.g. option bytes), resulting in problems with programming tools, delayed support by STM8 eForth for a long time. [Using OpenOCD](https://hackaday.io/project/16097-eforth-for-cheap-stm8s-gadgets/log/184032-openocd-config-files-for-stm8l-low-density-devices) changed that. Core features now including NVM, the TIM2 based BG task and the simulated serial interface.
+The following datasheets apply:
 
-## The STM8L101 family
+* [STM8L101F1, STM8L101F2/G2 and STM8L101F3/G3/K3](https://www.st.com/resource/en/datasheet/stm8l101f1.pdf)
+* [STM8L001J3M3](https://www.st.com/resource/en/datasheet/stm8l001j3.pdf)
 
-STM8L101 devices provide 1.5K RAM, which means that there is more headroom than in the other STM8 Low Density devices.
+The STM8L101 family basically consists of one chip with 20pin, 28pin and 32pin package options. The STM8L101F3P6 (TSSOP20 package) is widely available.
 
-On the other side the feature set is much reduced
+Several differences between the STM8L101 and other STM8L devices (e.g. option bytes) delayed support by STM8 eForth for a long time. [Using OpenOCD](https://hackaday.io/project/16097-eforth-for-cheap-stm8s-gadgets/log/184032-openocd-config-files-for-stm8l-low-density-devices) changed that and STM8 eForth now supports NVM, the TIM2 based BG task and the simulated serial interface. The ordinary workflows can be used.
 
-* Data Flash instead of dedicated EEPROM cells
-* Option bytes and the STM8L OPT EEPROM block MASS can only be unlock through ICP (SWIM), not through the CPU
+## The STM8L101 STM8L sub-family
+
+STM8L101 devices provide 1.5K RAM which means that there is more headroom than in the other STM8 Low Density devices. On the other side the feature set is much reduced compared to RM0031 devices (e.g. STM8L051F3):
+
 * no ADC (two comparators are the only analog peripherals)
-* only few clock options (e.g. no HSE, no LSE, no LSI (38kHz) as CPU clock and no clock fail-over)
 * advanced features from other STM8L devices (e.g. DMA, RTC, RI) are absent
+* Data Flash area instead of a dedicated EEPROM blocks
+* Option bytes and the STM8L Option bytes block MASS can only be unlock through ICP (SWIM), not through the CPU
+* only few clock options (e.g. no HSE, no LSE, no LSI (38kHz) as CPU clock and no clock fail-over)
 
-STM8L051F3 or STM8L050J3 chips from the RM0031 sub-family certainly offer more features.
-
-The STM8L101 family basically consists of one chip with 20pin, 28pin and 32pin package options. The STM8L101F3P6 (TSSOP20 package) is widely available:
-
-![stm8l101f3p6_](https://user-images.githubusercontent.com/5466977/93720666-d7a20680-fb8a-11ea-88c0-6cb7e09e1f20.png)
-
-
-The STM8L001J3M3 is the same chip in an SOP-8 package where up to 3 GPIOs share one pin:
-
-![stm8l001j3m3_](https://user-images.githubusercontent.com/5466977/95388369-79975200-08f2-11eb-9638-21cc8b1a247d.png)
-
-
-There's been some testing but using this image may brick your chip since PA0/SWIM shares pin1 with PC3/UART_TX and with PC4. The PC3/USART_TX doesn't have a half-duplex feature like the STM8S UART1 and there is no PA1/NRST pin to back you up!
-!
-
-It's maybe a good idea to test your software with an STM8L101F3P6 first (connect PA0, PC3 and PC4 and it will behave like an STM8L001J3M3)!
-
-**Warning**: support for the STM8L001J3M3 is experimental!
 
 ## STM8 eForth Programming
 
@@ -43,6 +30,21 @@ Using e4thcom as a terminal program is recommended. With the help of e4thcom (or
 \res MCU: STM8L101
 \res AWU_CSR AWU_APR AWU_TBR
 ```
+
+### Using the STM8L001J3M3
+
+**Warning**: support for the STM8L001J3M3 is experimental!
+
+The STM8L001J3M3 is the same chip in an SOP-8 package where up to 3 GPIOs share one pin:
+
+![stm8l001j3m3_](https://user-images.githubusercontent.com/5466977/95388369-79975200-08f2-11eb-9638-21cc8b1a247d.png)
+
+There's been some testing but using this image may brick your chip since PA0/SWIM shares pin1 with PC3/UART_TX and with PC4. The PC3/USART_TX doesn't have a half-duplex feature like the STM8S UART1 and there is no PA1/NRST pin to back you up!
+!
+
+It's maybe a good idea to test your software with an STM8L101F3P6 first (connect PA0, PC3 and PC4 and it will behave like an STM8L001J3M3)!
+
+### Using the STM8L101F3M6
 
 The TX pin uses default GPIO settings (i.e. it requires a pull-up) in order to make the binary work with the STM8L001J3M3.
 

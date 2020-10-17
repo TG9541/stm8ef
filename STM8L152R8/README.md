@@ -1,16 +1,30 @@
 # STM8L152R8 Base Image
 
-This folder contains (experimental) support for STM8L High Density devices like [STM8L151x8/152x8](https://www.st.com/resource/en/datasheet/stm8l152r8.pdf) or the identical (but lower specs "Value Line") [STM8L052R8](https://www.st.com/resource/en/datasheet/stm8l052r8.pdf). Medium+ Density devices (e.g. STM8L15xR6) look suspiciously similar to High Density devices since the set of peripherals is the same (but the specified amount of RAM and EEPROM might indeed be like that of Medium density devices - best you try it and make adjustments in `target.inc` as needed - [feedback]() is always welcome!).
+This folder contains the configuration for STM8L "High density" devices as described in [RM0031](https://www.st.com/resource/en/reference_manual/cd00218714-stm8l050j3-stm8l051f3-stm8l052c6-stm8l052r8-mcus-and-stm8l151l152-stm8l162-stm8al31-stm8al3l-lines-stmicroelectronics.pdf) with 64K Flash ROM, 4K RAM and 2K bytes EEPROM (plus 128 option bytes). Compared to STM8S "High density" devices they provide a richer set of peripherals (e.g. 12bit ADC, 2x 12bit DAC, 2nd SPI, DMA and RTC) but no CAN bus. STM8L152 "High density" devices can drive passive LCDs with up to 8*40 segments (the LCD peripheral is likely inaccessible in STM8L151 devices).
 
-STM8L152R8 stands for "High Density" devices with 4K RAM, 2K EEPROM and up to 64K Flash ROM as described in [RM0031](https://www.st.com/resource/en/reference_manual/cd00218714-stm8l050j3-stm8l051f3-stm8l052c6-stm8l052r8-mcus-and-stm8l151l152-stm8l162-stm8al31-stm8al3l-lines-stmicroelectronics.pdf). All variants should work with the STM8L152R8 binary in the Releases section (likely it's also usable for Automotive Grade STM8L High Density devices).
+The following datasheets apply:
 
-LCD support is from @plumbum 's work for the [STM8L-DISCOVERY](https://github.com/TG9541/stm8ef/tree/master/STM8L-DISCOVERY) - it's provided as-is and it's currently disabled in `globconf.inc` and untested.
+* [STM8L151C8/M8/R8 and STM8L152C8/K8/M8/R8](https://www.st.com/resource/en/datasheet/stm8l152r8.pdf)
+* [STM8L052R8](https://www.st.com/resource/en/datasheet/stm8l052r8.pdf)
 
-Peripheral register addresses are the same throughout the STM8L Medium Density and High Density devies and constants imported from `\res MCU: STM8L` should work.  If you spot a problem please file an issue.
+All variants should work with the STM8L152R8 binary in the Releases section (likely it's also usable for automotive grade STM8L "High density" devices).
+
+Note that the "Medium+ density" device STM8L151R6 appears to be a "marketing name" for a lower-specs "High density" device (at least that's what Chinese vendors [say](https://www.aliexpress.com/item/32881789448.html)). Best you try it. If it doesn't work, please fall back to the STM8L151K4 image and provide [feedback](https://github.com/TG9541/stm8ef/issues).
+
+LCD support for the [STM8L-DISCOVERY](https://github.com/TG9541/stm8ef/tree/master/STM8L-DISCOVERY) by @plumbum is provided as-is (it's untested and disabled in `globconf.inc`).
+
+## STM8 eForth Programming
+
+Peripheral register addresses are expected to be the same throughout the STM8L "Medium density" and "High density" devies and constants imported from `\res MCU: STM8L` should work.  If you spot a problem please file an issue.
+
+Using e4thcom as a terminal program is recommended. With the help of e4thcom (or codeload.py) `mcu/STM8L101.efr` can be used for loading STM8L051 peripheral register address constants:
+
+```Forth
+\res MCU: STM8L
+\res SYSCFG_RMPCR1 CLK_PCKENR1
+```
 
 ## USART Console Settings
-
-The default USART for the Forth console is USART1. That can be changed by setting `USE_UART2 = 1` or `USE_UART3 = 1` in `globconf.inc`.
 
 The STM8L152R8T6 (LQFP64 package) offers 6 possibilities for mapping a USART to pins.
 
@@ -33,6 +47,8 @@ Pin|GPIO|Function
 60|PC5|[USART1_TX]
 61|PC6|[USART1_RX]
 
+The default USART for the Forth console is USART1. That can be changed by setting `USE_UART2 = 1` or `USE_UART3 = 1` in `globconf.inc`.
+
 The following options in `globconf.inc` controll alternative port assignments of the selected USART:
 
 If the default USART is used:
@@ -47,5 +63,25 @@ If USART3 is used (`USE_UART3 = 1`):
 
 * `ALT_USART_STM8L = 0`: USART3_TX on PG1 and USART3_RX on PG0
 * `ALT_USART_STM8L = 1`: USART3_TX on PF0 and USART3_RX on PF1
+
+The USART can be configured as `HAS_HALFDUPLEX`: by setting `HAS_HALFDUPLEX = 1` in `globconf.inc` the selected USART_TX switches betweens TX and RX:
+
+```
+               .
+STM8L device   .      .----o serial TxD "TTL"
+               .      |      (e.g. "CH340" USB serial converter)
+               .     ---
+               .     / \  1N4148
+               .     ---
+               .      |
+USART_TX ------>>-----*----o serial RxD "TTL
+               .
+GND ----------->>----------o serial GND
+               .
+               .
+```
+
+This feature can free up one more GPIO for other uses, or it can be used for creating a simple bus.
+
 
 Of course, it's also possible to use a simulated serial interface (also in addition to a USART) which results in even more options for a Forth console.
