@@ -3161,7 +3161,14 @@ QSTAC:
 QUIT:
         LDW     Y,#RPP          ; initialize return stack
         LDW     SP,Y
-QUIT1:  CALLR   LBRAC           ; start interpretation
+        ; fall through
+
+;       OUTER  ( -- n )     ( TOS STM8: - Y,Z,N )
+;       Outer interpreter (use EXIT with 2x R-address drop)
+
+;       GENALIAS  OUTER "OUTER"
+OUTER:
+        CALLR   LBRAC           ; start interpretation
 QUIT2:  CALL    QUERY           ; get input
         CALLR   EVAL
         JRA     QUIT2           ; continue till error
