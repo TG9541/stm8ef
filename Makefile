@@ -17,29 +17,30 @@ tgz: build
 	( find out/ -name "forth.rst" -type f -print0 ) | tar -czvf out/stm8ef-rst.tgz --null -T -
 
 build: words
-	make BOARD=CORE
-	make BOARD=XH-M188
-	make BOARD=XH-M194
-	make BOARD=W1209
-	make BOARD=W1209-FD
-	make BOARD=W1209-CA
-	make BOARD=W1209-CA-V2
-	make BOARD=W1219
-	make BOARD=W1401
-	make BOARD=C0135
-	make BOARD=DCDC
-	make BOARD=XY-PWM
-	make BOARD=XY-LPWM
-	make BOARD=MINDEV
-	make BOARD=SWIMCOM
 	make BOARD=STM8L101F3
 	make BOARD=STM8L051F3
 	make BOARD=STM8L151K4
 	make BOARD=STM8L152R8
 	make BOARD=STM8L-DISCOVERY
 	make BOARD=STM8S001J3
+	make BOARD=STM8S103F3
 	make BOARD=STM8S105K4
 	make BOARD=STM8S207RB
+	make BOARD=MINDEV
+	make BOARD=SWIMCOM
+	make BOARD=CORE
+	make BOARD=XY-PWM
+	make BOARD=XH-M194
+	make BOARD=XH-M188
+	# make BOARD=DCDC
+	# make BOARD=XY-LPWM
+	# make BOARD=W1209-CA
+	# make BOARD=W1209-CA-V2
+	make BOARD=W1209
+	make BOARD=W1209-FD
+	make BOARD=W1219
+	make BOARD=W1401
+	make BOARD=C0135
 
 clean:
 	rm -rf out/*
