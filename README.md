@@ -33,9 +33,10 @@ The Releases section provides several generic binaries:
 Support for STM8S devices [RM0016](https://www.st.com/resource/en/reference_manual/cd00190271-stm8s-series-and-stm8af-series-8-bit-microcontrollers-stmicroelectronics.pdf) is stable. Various STM8 Discovery boards and [breakout boards](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for "Low", "Medium", and "High density" devices can be used.
 
 * STM8S "Low density" devices (e.g. STM8S003x3, STM8S103x3, STM8S903x3 or STM8S001J3)
+  * [STM8S103F3](https://github.com/TG9541/stm8ef/tree/master/STM8S103F3) this binary is compatible with all STM8S "Low density" devices with 1K RAM, 8K Flash and up to 640 bytes EEPROM like STM8S003F3/K3, STM8S103F3/K3 and STM8S903F3/K3
+  * [STM8S001J3](https://github.com/TG9541/stm8ef/tree/master/STM8S001J3) like SWIMCOM but with the 2-wire console through UART_TX (PA3 or PD5) - the binary supports STM8S001J3 / STM8S903K3 UART remapping and is compatible with all STM8S "Low density" devices
   *  [CORE](https://github.com/TG9541/stm8ef/tree/master/CORE), a basic configuration for STM8S "Low density" devices, some features are disabled (no background task, `DO .. LOOP` or `CREATE .. DOES>`). Also, the dictionary search is case-sensitive.
   * [SWIMCOM](https://github.com/TG9541/stm8ef/tree/master/SWIMCOM) procides 2-wire communication through PD1/SWIM (i.e. the ICP pin) and a full feature set (the similar [DOUBLECOM](https://github.com/TG9541/stm8ef/tree/master/DOUBLECOM) also provides UART I/O words for applications)
-  * [STM8S001J3](https://github.com/TG9541/stm8ef/tree/master/STM8S001J3) like SWIMCOM but with the 2-wire console through UART_TX (PA3 or PD5) - the binary supports STM8S001J3 / STM8S903K3 UART remapping and is compatible with all STM8S "Low density" devices
 * STM8S "Medium" and "High density" devices
   * [STM8S105K4](https://github.com/TG9541/stm8ef/tree/master/STM8S105K4) for STM8S "Medium density" devices ("Value" or "Access Line") with 2K RAM and up to 32K Flash
   * [STM8S207RB](https://github.com/TG9541/stm8ef/tree/master/STM8S207RB) for STM8S "High density" devices ("Value" or "Performance Line") with 6K RAM and up to 32K + 96K Flash
