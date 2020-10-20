@@ -30,37 +30,39 @@ The [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) covers various topic
 
 The Releases section provides several generic binaries:
 
-Support for STM8S devices [RM0016](https://www.st.com/resource/en/reference_manual/cd00190271-stm8s-series-and-stm8af-series-8-bit-microcontrollers-stmicroelectronics.pdf) is stable. Various STM8 Discovery boards and [breakout boards](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for "Low", "Medium", and "High density" devices can be used.
-
-* STM8S "Low density" devices (e.g. STM8S003x3, STM8S103x3, STM8S903x3 or STM8S001J3)
-  * [STM8S103F3](https://github.com/TG9541/stm8ef/tree/master/STM8S103F3) this binary is compatible with all STM8S "Low density" devices with 1K RAM, 8K Flash and up to 640 bytes EEPROM like STM8S003F3/K3, STM8S103F3/K3 and STM8S903F3/K3
-  * [STM8S001J3](https://github.com/TG9541/stm8ef/tree/master/STM8S001J3) like SWIMCOM but with the 2-wire console through UART_TX (PA3 or PD5) - the binary supports STM8S001J3 / STM8S903K3 UART remapping and is compatible with all STM8S "Low density" devices
-  *  [CORE](https://github.com/TG9541/stm8ef/tree/master/CORE), a basic configuration for STM8S "Low density" devices, some features are disabled (no background task, `DO .. LOOP` or `CREATE .. DOES>`). Also, the dictionary search is case-sensitive.
-  * [SWIMCOM](https://github.com/TG9541/stm8ef/tree/master/SWIMCOM) procides 2-wire communication through PD1/SWIM (i.e. the ICP pin) and a full feature set (the similar [DOUBLECOM](https://github.com/TG9541/stm8ef/tree/master/DOUBLECOM) also provides UART I/O words for applications)
-* STM8S "Medium" and "High density" devices
-  * [STM8S105K4](https://github.com/TG9541/stm8ef/tree/master/STM8S105K4) for STM8S "Medium density" devices ("Value" or "Access Line") with 2K RAM and up to 32K Flash
-  * [STM8S207RB](https://github.com/TG9541/stm8ef/tree/master/STM8S207RB) for STM8S "High density" devices ("Value" or "Performance Line") with 6K RAM and up to 32K + 96K Flash
-
-Support for STM8L devices is work-in-progress: especially the latest additions STM8L101F3 and STM8L001J3 are experimental, and there have been few tests with STM8L "Medium+" or "High density" devices like STM8L152R8 (although the code can be expected to work).
+Support for STM8S devices [RM0016](https://www.st.com/resource/en/reference_manual/cd00190271-stm8s-series-and-stm8af-series-8-bit-microcontrollers-stmicroelectronics.pdf) is stable. Automotive grade STM8AF devices are likely to work with one of the configurations. Various STM8 Discovery boards and [breakout boards](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for "Low", "Medium", and "High density" devices can be used.
 
 Please refer to the `README.md` in the board folders below:
 
-* STM8L [RM0013](https://www.st.com/resource/en/reference_manual/CD00184503-.pdf) "Low density" devices
+* STM8S "Low density" devices (up to 1K RAM, 8K Flash and 640 bytes EEPROM)
+  * [STM8S103F3](https://github.com/TG9541/stm8ef/tree/master/STM8S103F3) for STM8S003F3/K3, STM8S103F2/F3/K3 and STM8S903F3/K3 (not recommended for STM8S001J3)
+  * [STM8S001J3](https://github.com/TG9541/stm8ef/tree/master/STM8S001J3) for STM8S001J3 (and STM8Sx03x3) with half-duplex `UART_TX-RX`
+* STM8S "Medium density" devices (up to 2K RAM, 32K Flash and 1K EEPROM)
+  * [STM8S105K4](https://github.com/TG9541/stm8ef/tree/master/STM8S105K4) for STM8S005C6/K6, STM8S105C4/K4/S4 and STM8S105C6/K6/S6
+* STM8S "High density" devices (up to 6K RAM, 32K + 96K Flash and 2K EEPROM)
+  * [STM8S207RB](https://github.com/TG9541/stm8ef/tree/master/STM8S207RB) for STM8S007C8, STM8S207C6/K6/R6/S6, STM8S207C8/K8/M8/R8/S8, STM8S207CB/MB/RB/SB, STM8S208C6/R6/S6, STM8S208C8/R8/S8 and STM8S208CB/MB/RB/SB
+
+Compared to the STM8S family, STM8L [RM0031](https://www.st.com/resource/en/reference_manual/cd00218714-stm8l050j3-stm8l051f3-stm8l052c6-stm8l052r8-mcus-and-stm8l151l152-stm8l162-stm8al31-stm8al3l-lines-stmicroelectronics.pdf) devices provide a much richer feature set. Therefore support for STM8L peripherals is still in an early phase but the STM8 eForth core is well tested. The latest addition, the [RM0013](https://www.st.com/resource/en/reference_manual/CD00184503-.pdf) family STM8L101F3 and STM8L001J3 can also be expected to work.
+
+For more details please refer to the `README.md` in the board folders below:
+
   * [STM8L101F3](https://github.com/TG9541/stm8ef/tree/master/STM8L101F3) for STM8L101F1, STM8L101F2/G2, STM8L101F3/G3/K3 and STM8L001J3M3
-* STM8L [RM0031](https://www.st.com/resource/en/reference_manual/cd00218714-stm8l050j3-stm8l051f3-stm8l052c6-stm8l052r8-mcus-and-stm8l151l152-stm8l162-stm8al31-stm8al3l-lines-stmicroelectronics.pdf) "Low density" devices
+* STM8L [RM0031](https://www.st.com/resource/en/reference_manual/cd00218714-stm8l050j3-stm8l051f3-stm8l052c6-stm8l052r8-mcus-and-stm8l151l152-stm8l162-stm8al31-stm8al3l-lines-stmicroelectronics.pdf) "Low density" devices (1K RAM, 8K Flash, 256 bytes EEPROM)
   * [STM8L051F3](https://github.com/TG9541/stm8ef/tree/master/STM8L051F3) for STM8L151C3/K3/G3/F3, STM8L151C2/K2/G2/F2, STM8L051F3 and STM8L050J3M3
-* STM8L "Medium density" devices
+* STM8L "Medium density" devices (2K RAM, 32K Flash, 1K EEPROM)
   * [STM8L151K4](https://github.com/TG9541/stm8ef/tree/master/STM8L151K4) for STM8L151C4/K4/G4, STM8L151C6/K6/G6, STM8L152C4/K4/G4, STM8L152C6/K6/G6 and STM8L052C6
-* STM8L "High" and "Medium+ density" devices
+* STM8L "High" and "Medium+ density" devices (4K RAM, 32K + 32K Flash, 2K EEPROM)
   * [STM8L152R8](https://github.com/TG9541/stm8ef/tree/master/STM8L152R8) for STM8L151C8/M8/R8, STM8L152C8/K8/M8/R8 and STM8L052R8
+* STM8L [RM0013](https://www.st.com/resource/en/reference_manual/CD00184503-.pdf) "Low density" devices (1.5K RAM, 8K Flash, basic peripherals)
 
 ## Board support:
 
 STM8 eForth provides board support like LED display code for several common boards and "Chinese gadgets":
 
-* [MINDEV](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for the STM8S103F3P6 $0.80 "minimum development board"
+*  [CORE](https://github.com/TG9541/stm8ef/tree/master/CORE) "svelte" 4K configuration for STM8S "Low density" devices, some features are disabled (no background task, `DO .. LOOP` or `CREATE .. DOES>`). Also, the dictionary search is case-sensitive.
+* [SWIMCOM](https://github.com/TG9541/stm8ef/tree/master/SWIMCOM) 2-wire communication through PD1/SWIM (i.e. the ICP pin) and a full feature set (the similar [DOUBLECOM](https://github.com/TG9541/stm8ef/tree/master/DOUBLECOM) also provides UART I/O words for applications)
+* [MINDEV](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for the STM8S103F3P6 $0.80 "minimum development board" (just like the STM8S103F3 configuration but with a word `OUT!` for controlling the LED)
 * [STM8L-DISCOVERY](https://github.com/TG9541/stm8ef/tree/master/STM8L-DISCOVERY) for the STM8L-Discovery Board (STM8L152C6 "Medium density" with LCD)
-
 * [C0135](https://github.com/TG9541/stm8ef/wiki/Board-C0135) the "Relay-4 Board" can be used as a *Nano PLC* (Forth MODBUS support is available)
 * [W1209](https://github.com/TG9541/stm8ef/wiki/Board-W1209) $1.50 thermostat board w/ 3 digit 7S-LED display, full- or half-duplex RS232 (some board variants, e.g. with CA LED displays, are supported)
 * [W1219](https://github.com/TG9541/stm8ef/wiki/Board-W1219) low cost thermostat with 2x3 digit 7S-LED display with half-duplex RS232 through PD1/SWIM

@@ -1,25 +1,29 @@
 # STM8L101F3P6 Base Image
 
-This folder contains the configuration for the sub-family of STM8L "Low density" devices described in [RM0013](https://www.st.com/content/ccc/resource/technical/document/reference_manual/73/41/6f/b1/fd/45/4e/18/CD00184503.pdf/files/CD00184503.pdf/jcr:content/translations/en.CD00184503.pdf) with 8K Flash ROM and 1.5K RAM (plus 64 option bytes). Compared to other STM8L devices they have more RAM but a much reduced feature set (no ADC, no RTC, no DMA, no EEPROM ... see below).
+This folder contains a configuration for [RM0013](https://www.st.com/content/ccc/resource/technical/document/reference_manual/73/41/6f/b1/fd/45/4e/18/CD00184503.pdf/files/CD00184503.pdf/jcr:content/translations/en.CD00184503.pdf) STM8L "Low density" devices a sub-family with 8K Flash ROM and 1.5K RAM (plus 64 option bytes). Compared to other STM8L devices these provide more RAM but otherwise a much reduced feature set (no ADC, no RTC, no DMA, no EEPROM ...). For most designs the STM8L051F3 is a better choice unless you need more RAM or a comparator.
 
 The following datasheets apply:
 
 * [STM8L101F1, STM8L101F2/G2 and STM8L101F3/G3/K3](https://www.st.com/resource/en/datasheet/stm8l101f1.pdf)
 * [STM8L001J3M3](https://www.st.com/resource/en/datasheet/stm8l001j3.pdf)
 
-The STM8L101 family basically consists of one chip with 20pin, 28pin and 32pin package options. The STM8L101F3P6 (TSSOP20 package) is widely available.
-
-Several differences between the STM8L101 and other STM8L devices (e.g. option bytes) delayed support by STM8 eForth for a long time. [Using OpenOCD](https://hackaday.io/project/16097-eforth-for-cheap-stm8s-gadgets/log/184032-openocd-config-files-for-stm8l-low-density-devices) changed that and STM8 eForth now supports NVM, the TIM2 based BG task and the simulated serial interface. The ordinary workflows can be used.
+Several differences between the STM8L101 and other STM8L devices (e.g. option bytes) delayed STM8 eForth support for a long time. [Using OpenOCD](https://hackaday.io/project/16097-eforth-for-cheap-stm8s-gadgets/log/184032-openocd-config-files-for-stm8l-low-density-devices) changed that and STM8 eForth now supports NVM, the TIM2 based BG task and the simulated serial interface. The ordinary STM8 eForth workflows can be used.
 
 ## The STM8L101 STM8L sub-family
 
-STM8L101 devices provide 1.5K RAM which means that there is more headroom than in the other STM8 Low Density devices. On the other side the feature set is much reduced compared to RM0031 devices (e.g. STM8L051F3):
+The STM8L101 family consists of one chip with 8pin, 20pin, 28pin and 32pin package options. The STM8L101F3P6 (TSSOP20 package) is widely available and relatively cheap.
+
+STM8L101 devices provide 1.5K RAM which means there is more headroom than in the other STM8 Low Density devices. On the other side the feature set is much smaller compared to RM0031 STM8L "Low densit" devices (e.g. STM8L051F3):
 
 * no ADC (two comparators are the only analog peripherals)
 * advanced features from other STM8L devices (e.g. DMA, RTC, RI) are absent
-* Data Flash area instead of a dedicated EEPROM blocks
-* Option bytes and the STM8L Option bytes block MASS can only be unlock through ICP (SWIM), not through the CPU
-* only few clock options (e.g. no HSE, no LSE, no LSI (38kHz) as CPU clock and no clock fail-over)
+* no USART half-duplex mode
+* Data Flash area instead of dedicated EEPROM blocks
+* Option bytes and the STM8L Option bytes block be unlocked through ICP (SWIM), not in IAP (through the CPU)
+* only few clock options (e.g. no HSE, no LSE, no LSI CPU clock)
+* no clock safety features and only one watchdog
+
+On the plus side, configuration is easier (because there is less to be configured) and there is an AWU (Auto Wakeup Unit) like in the STM8S family.
 
 
 ## STM8 eForth Programming
