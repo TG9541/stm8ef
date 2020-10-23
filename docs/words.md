@@ -878,6 +878,11 @@
 ```
 
 ```
+;       OUTER  ( -- n )     ( TOS STM8: - Y,Z,N )
+;       Outer interpreter (use EXIT with 2x R-address drop)
+```
+
+```
 ;       EVAL    ( -- )
 ;       Interpret input stream.
 ```
