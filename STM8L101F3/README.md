@@ -1,6 +1,6 @@
 # STM8L101F3P6 Base Image
 
-This folder contains a configuration for [RM0013](https://www.st.com/content/ccc/resource/technical/document/reference_manual/73/41/6f/b1/fd/45/4e/18/CD00184503.pdf/files/CD00184503.pdf/jcr:content/translations/en.CD00184503.pdf) STM8L "Low density" devices a sub-family with 8K Flash ROM and 1.5K RAM (plus 64 option bytes). Compared to other STM8L devices these provide more RAM but otherwise a much reduced feature set (no ADC, no RTC, no DMA, no EEPROM ...). For most designs the STM8L051F3 is a better choice unless you need more RAM or a comparator.
+This folder contains a configuration for [RM0013](https://www.st.com/content/ccc/resource/technical/document/reference_manual/73/41/6f/b1/fd/45/4e/18/CD00184503.pdf/files/CD00184503.pdf/jcr:content/translations/en.CD00184503.pdf) STM8L "Low density" devices "sub-family" with 8K Flash ROM and 1.5K RAM and 64 option bytes. Compared to RM0031 STM8L devices (e.g. STM8L051F3) more RAM is available but otherwise the feature set is reduced (no ADC, no RTC, no DMA, no EEPROM ...). Typically the STM8L051F3 is a better choice (unless you need more RAM or a comparator).
 
 The following datasheets apply:
 

@@ -56,4 +56,4 @@ GND ----------->>----------o serial GND
 
 This feature can free up one more GPIO for other uses, or it can be used for creating a simple bus.
 
-It's also possible to use a simulated serial interface (also in addition to the UART) which results in even more options for a Forth console.
+It's also possible to use a simulated serial interface (also in addition to the UART) - please refer to the [SWIMCOM](https://github.com/TG9541/stm8ef/tree/master/SWIMCOM) or the [DOUBLECOM](https://github.com/TG9541/stm8ef/tree/master/DOUBLECOM) configurations.
