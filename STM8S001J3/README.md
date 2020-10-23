@@ -38,7 +38,7 @@ Half-duplex operation not only makes sharing pin8 between `PD1/SWIM` and `PD5/UA
 \ a reset will be required!
 ```
 
-STM8 eForth will automatically configure the GPIO pull-up for the selected pin.
+STM8 eForth will automatically configure the GPIO pull-up for the selected pin if `HALF_DUPLEX = 2` is set in `globconf.inc`.
 
 Of course, it's also possible to use a simulated serial interface instead of the UART. This way the UART can be freed up, e.g. for [MODBUS RTU](https://github.com/TG9540/stm8ef-modbus).
 

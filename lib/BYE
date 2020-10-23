@@ -1,0 +1,20 @@
+\ BYE - leave a debug console "OUTER" interpreter
+#require OUTER
+: BYE ( -- ) [
+  $9085 ,   \ POPW Y
+  $9085 ,   \ POPW Y
+  ]
+;
+
+\\ Example
+#require BYE
+
+: test ( n -- )
+  FOR
+    I DUP . 2 MOD 0= IF
+      CR ."  Debug console - leave with BYE. Be careful with the stack!" CR
+      OUTER THEN
+  NEXT ."  done"
+;
+
+\ 5 test

@@ -28,11 +28,11 @@ The [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) covers various topic
 
 ## Generic targets
 
-The Releases section provides several generic binaries:
+STM8 eForth provides configurations and binaries for typical STM8S and STM8L devices. The binaries for selected "Low", "Medium" or "High density" can be expected to work for all of the listed packaging and memory specs variants. For details please refer to the `README.md` in the linked configuration folder.
 
-Support for STM8S devices [RM0016](https://www.st.com/resource/en/reference_manual/cd00190271-stm8s-series-and-stm8af-series-8-bit-microcontrollers-stmicroelectronics.pdf) is stable. Automotive grade STM8AF devices are likely to work with one of the configurations. Various STM8 Discovery boards and [breakout boards](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for "Low", "Medium", and "High density" devices can be used.
+### Generic STMS targets
 
-Please refer to the `README.md` in the board folders below:
+Support for STM8S devices in the [RM0016](https://www.st.com/resource/en/reference_manual/cd00190271-stm8s-series-and-stm8af-series-8-bit-microcontrollers-stmicroelectronics.pdf) family is stable. Peripherals aren't as fancy as those of e.g. STM8L devices but that makes them easy to master. Automotive grade STM8AF devices belong to the same family and they can be expected to work. Various STM8 Discovery boards and breakout boards for "Low", "Medium", and "High density" devices can be used.
 
 * STM8S "Low density" devices (up to 1K RAM, 8K Flash and 640 bytes EEPROM)
   * [STM8S103F3](https://github.com/TG9541/stm8ef/tree/master/STM8S103F3) for STM8S003F3/K3, STM8S103F2/F3/K3 and STM8S903F3/K3 (not recommended for STM8S001J3)
@@ -42,22 +42,24 @@ Please refer to the `README.md` in the board folders below:
 * STM8S "High density" devices (up to 6K RAM, 32K + 96K Flash and 2K EEPROM)
   * [STM8S207RB](https://github.com/TG9541/stm8ef/tree/master/STM8S207RB) for STM8S007C8, STM8S207C6/K6/R6/S6, STM8S207C8/K8/M8/R8/S8, STM8S207CB/MB/RB/SB, STM8S208C6/R6/S6, STM8S208C8/R8/S8 and STM8S208CB/MB/RB/SB
 
-STM8L [RM0031](https://www.st.com/resource/en/reference_manual/cd00218714-stm8l050j3-stm8l051f3-stm8l052c6-stm8l052r8-mcus-and-stm8l151l152-stm8l162-stm8al31-stm8al3l-lines-stmicroelectronics.pdf) devices, compared to STM8S, provide rich feature set. Although support for STM8L peripherals is still in an early phase, the STM8 eForth core is well tested. The latest addition, support forSTM8L101F3 and STM8L001J3 (the [RM0013](https://www.st.com/resource/en/reference_manual/CD00184503-.pdf) family) is experimental but it can be expected to work.
+### Generic STML targets
 
-For more details please refer to the `README.md` in the board folders below:
+Compared to STM8S most STM8L devices provide such a rich feature set that studying the reference manual may take some time. Although support for STM8L peripherals is still in an early phase the STM8 eForth core is mostly the same as for STM8S devices and well tested. The latest addition is support for STM8L101F3 and STM8L001J3, the only members of the [RM0013](https://www.st.com/resource/en/reference_manual/CD00184503-.pdf) family.
 
+For more details please refer to the `README.md` in the board folders below.
+
+* STM8L [RM0013](https://www.st.com/resource/en/reference_manual/CD00184503-.pdf) family "Low density" devices (1.5K RAM, 8K Flash, basic peripherals)
   * [STM8L101F3](https://github.com/TG9541/stm8ef/tree/master/STM8L101F3) for STM8L101F1, STM8L101F2/G2, STM8L101F3/G3/K3 and STM8L001J3M3
-* STM8L [RM0031](https://www.st.com/resource/en/reference_manual/cd00218714-stm8l050j3-stm8l051f3-stm8l052c6-stm8l052r8-mcus-and-stm8l151l152-stm8l162-stm8al31-stm8al3l-lines-stmicroelectronics.pdf) "Low density" devices (1K RAM, 8K Flash, 256 bytes EEPROM)
+* [RM0031](https://www.st.com/resource/en/reference_manual/cd00218714-stm8l050j3-stm8l051f3-stm8l052c6-stm8l052r8-mcus-and-stm8l151l152-stm8l162-stm8al31-stm8al3l-lines-stmicroelectronics.pdf) family STM8L "Low density" devices (1K RAM, 8K Flash, 256 bytes EEPROM, advanced peripherals)
   * [STM8L051F3](https://github.com/TG9541/stm8ef/tree/master/STM8L051F3) for STM8L151C3/K3/G3/F3, STM8L151C2/K2/G2/F2, STM8L051F3 and STM8L050J3M3
 * STM8L "Medium density" devices (2K RAM, 32K Flash, 1K EEPROM)
   * [STM8L151K4](https://github.com/TG9541/stm8ef/tree/master/STM8L151K4) for STM8L151C4/K4/G4, STM8L151C6/K6/G6, STM8L152C4/K4/G4, STM8L152C6/K6/G6 and STM8L052C6
 * STM8L "High" and "Medium+ density" devices (4K RAM, 32K + 32K Flash, 2K EEPROM)
   * [STM8L152R8](https://github.com/TG9541/stm8ef/tree/master/STM8L152R8) for STM8L151C8/M8/R8, STM8L152C8/K8/M8/R8 and STM8L052R8
-* STM8L [RM0013](https://www.st.com/resource/en/reference_manual/CD00184503-.pdf) "Low density" devices (1.5K RAM, 8K Flash, basic peripherals)
 
 ## Board support:
 
-STM8 eForth provides board support like LED display code for several common boards and "Chinese gadgets":
+STM8 eForth provides board support, e.g. relay outputs or I/O with keys and LED displays, for several common boards and "Chinese gadgets" like thermostats, voltmeters or relay boards. There is more information in the Wiki.
 
 *  [CORE](https://github.com/TG9541/stm8ef/tree/master/CORE) "svelte" 4K configuration for STM8S "Low density" devices, some features are disabled (no background task, `DO .. LOOP` or `CREATE .. DOES>`). Also, the dictionary search is case-sensitive.
 * [SWIMCOM](https://github.com/TG9541/stm8ef/tree/master/SWIMCOM) 2-wire communication through PD1/SWIM (i.e. the ICP pin) and a full feature set (the similar [DOUBLECOM](https://github.com/TG9541/stm8ef/tree/master/DOUBLECOM) also provides UART I/O words for applications)
@@ -133,6 +135,7 @@ Compared to the original "stm8ef" STM8 eForth offers many features:
   * `NVR`, `RAM`, `WIPE`, `RESET` and `PERSIST` for compiling to Flash memory
   * `'BOOT` for autostart applications
   * `EVALUATE` interprets Forth code in text strings (even compilation is possible!)
+  * `OUTER` and `BYE` a simple debug console for foreground code
   * many words from Forth systems that were popular in the 1980s are provided in the [library](https://github.com/TG9541/stm8ef/tree/master/lib)
 
 ## Other changes to the original STM8EF code:

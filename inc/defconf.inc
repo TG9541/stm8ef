@@ -1,10 +1,10 @@
 ;--------------------------------------------------------
-;       STM8EF for STM8S (Value line and Access Line devices)
-;       Default settings for all kinds of options
+;       STM8 eForth for STM8S and STM8L devices
+;       Default settings for all options
 ;--------------------------------------------------------
         RELVER1          = 2    ; Revision digit 1
         RELVER0          = 6    ; Revision digit 0
-        PRE_REL          = 3    ; Pre Release digit 0 (0: release)
+        PRE_REL          = 0    ; Pre Release digit 0 (0: release)
 
         TERM_LINUX       = 1    ; LF terminates line
 
