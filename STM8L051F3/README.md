@@ -1,4 +1,4 @@
-# STM8L051F3P6 Base Image
+# STM8L051F3 Base Image
 
 This folder contains the configuration for STM8L "Low density" devices as described in [RM0031](https://www.st.com/resource/en/reference_manual/cd00218714-stm8l050j3-stm8l051f3-stm8l052c6-stm8l052r8-mcus-and-stm8l151l152-stm8l162-stm8al31-stm8al3l-lines-stmicroelectronics.pdf) with 8K Flash ROM, 1K RAM and 256 bytes EEPROM (plus 64 option bytes). Compared to other STM8 "Low density" devices they provide a richer set of peripherals (e.g. 12bit ADC, DMA and RTC).
 
