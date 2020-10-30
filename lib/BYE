@@ -1,8 +1,15 @@
 \ BYE - leave a debug console "OUTER" interpreter
 #require OUTER
 : BYE ( -- ) [
-  $9085 ,   \ POPW Y
-  $9085 ,   \ POPW Y
+  \ exit the interpreter on the condition that OUTER was called
+  $1605 ,           \ LDW Y,(5,SP)
+  $905A ,           \ DECW Y
+  $905A ,           \ DECW Y
+  $90FE ,           \ LDW  Y,(Y)
+  $90A3 , ' OUTER , \ CPW Y,#OUTER
+  $2604 ,           \ JRNE +4
+  $9085 ,           \ POPW Y
+  $9085 ,           \ POPW Y
   ]
 ;
 
