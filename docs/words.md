@@ -293,16 +293,6 @@
 ```
 
 ```
-;       TIM     ( -- T)     ( TOS STM8: -- Y,Z,N )
-;       Return TICKCNT as timer
-```
-
-```
-;       BG      ( -- a)     ( TOS STM8: -- Y,Z,N )
-;       Return address of BGADDR vector
-```
-
-```
 ;       'PROMPT ( -- a)     ( TOS STM8: -- Y,Z,N )
 ;       Return address of PROMPT vector
 ```
