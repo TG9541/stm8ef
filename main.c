@@ -1,13 +1,16 @@
 // The STM8 eForth core is in assembler but C code can be added here
-// default for stm8device.h is STM8S but an STM8L header in the board
-// folder has precedence
 
 #include <stdint.h>
+
+// inc/stm8device.h is for STM8S but an STM8L header in the board
+// folder has precedence.
 #include "stm8device.h"
+
+// inc/forth.h defines constants and ISRs. The board folder has precedence.
 #include "forth.h"
 
 // The following declarations are just to provide a placeholder
-// so that mixing-in C code with own memory gets easier
+// so that using C code with its own memory gets easier
 
 // Reserve RAM for Forth (not available for C)
 volatile __at(FORTHRAM) uint8_t forthUser[1+UPPEND-FORTHRAM];
