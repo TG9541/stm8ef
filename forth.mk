@@ -1,5 +1,5 @@
 
-MDEPS   = forth.rel forth.h
+MDEPS   = forth.rel
 MKDIR_P = mkdir -p out
 BTARGET = $(BOARD)/target.inc
 OUT     = out/$(BOARD)
