@@ -554,18 +554,47 @@
  CFG_GCR = 0x7F60 ; Global configuration register 0x00
 ; ITC-SPR
 
-        ITC_IX_TIM2  = 19       ; TIM2 update /overflow
-        ITC_IX_TIM3  = 21       ; TIM3 update /overflow
-        ITC_IX_TIM1  = 23       ; TIM1 update/overflow/underflow/ trigger/break
+       ITC_IX_TLI     = 0
+       ITC_IX_FLASH   = 1
+       ITC_IX_DMA1_01 = 2
+       ITC_IX_DMA1_23 = 3
+       ITC_IX_RTC     = 3
+       ITC_IX_PVD     = 5
+       ITC_IX_EXTIB   = 6
+       ITC_IX_EXTID   = 7
+       ITC_IX_EXTI0   = 8
+       ITC_IX_EXTI1   = 9
+       ITC_IX_EXTI2  = 10
+       ITC_IX_EXTI3  = 11
+       ITC_IX_EXTI4  = 12
+       ITC_IX_EXTI5  = 13
+       ITC_IX_EXTI6  = 14
+       ITC_IX_EXTI7  = 15
+       ITC_IX_CLK    = 16
+       ITC_IX_LCD    = 17
+       ITC_IX_ADC1   = 18
+       ITC_IX_TIM2   = 19       ; TIM2 update /overflow
+       ITC_IX_TIM2CC = 20
+       ITC_IX_TIM3   = 21       ; TIM3 update /overflow
+       ITC_IX_TIM3CC = 22
+       ITC_IX_RI     = 23       ; STM8L051F3
+       ITC_IX_TIM1   = 23       ; TIM1 update/overflow/underflow/ trigger/break
+       ITC_IX_TIM1CC = 24
+       ITC_IX_TIM4   = 25
+       ITC_IX_SPI1   = 26
+       ITC_IX_USART1_TXD  = 27
+       ITC_IX_USART1_RXD  = 28
+       ITC_IX_I2C1   = 29
 
- ITC_SPR1 = 0x7F70 ; Interrupt Software priority register 1 0xFF
- ITC_SPR2 = 0x7F71 ; Interrupt Software priority register 2 0xFF
- ITC_SPR3 = 0x7F72 ; Interrupt Software priority register 3 0xFF
- ITC_SPR4 = 0x7F73 ; Interrupt Software priority register 4 0xFF
- ITC_SPR5 = 0x7F74 ; Interrupt Software priority register 5 0xFF
- ITC_SPR6 = 0x7F75 ; Interrupt Software priority register 6 0xFF
- ITC_SPR7 = 0x7F76 ; Interrupt Software priority register 7 0xFF
- ITC_SPR8 = 0x7F77 ; Interrupt Software priority register 8 0xFF
+       ITC_SPR1 = 0x7F70 ; Interrupt Software priority register 1 0xFF
+       ITC_SPR2 = 0x7F71 ; Interrupt Software priority register 2 0xFF
+       ITC_SPR3 = 0x7F72 ; Interrupt Software priority register 3 0xFF
+       ITC_SPR4 = 0x7F73 ; Interrupt Software priority register 4 0xFF
+       ITC_SPR5 = 0x7F74 ; Interrupt Software priority register 5 0xFF
+       ITC_SPR6 = 0x7F75 ; Interrupt Software priority register 6 0xFF
+       ITC_SPR7 = 0x7F76 ; Interrupt Software priority register 7 0xFF
+       ITC_SPR8 = 0x7F77 ; Interrupt Software priority register 8 0xFF
+
 ; 0x00 7F78 to 0x00 7F79 Reserved area (2 bytes)
 ; SWIM
  SWIM_CSR = 0x7F80 ; SWIM control status register 0x00

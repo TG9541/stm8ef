@@ -29,4 +29,3 @@
 #define INTVEC_ADC1        22  // ADC1 end of conversion/analog watchdog interrupt
 #define INTVEC_TIM4        23  // TIM4 update/overflow
 #define INTVEC_FLASH       24  // EOP/WR_PG_DIS
-
