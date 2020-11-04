@@ -2,11 +2,9 @@
 ; Public variables in this module
 ;--------------------------------------------------------
 
-        .globl _TRAP_Handler
         .globl _TIM1_IRQHandler
         .globl _TIM2_IRQHandler
         .globl _TIM3_IRQHandler
-        .globl _forth
 
         ;******  Board variables  ******
 
