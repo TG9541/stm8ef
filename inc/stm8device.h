@@ -1,4 +1,8 @@
-// STM8S Low Density Device interrupt table
+// STM8S Low Density Device interrupt table - default configuration for STM8S
+
+// A file with a matching name in the target configuration folder takes precedence.
+// This means that this header file can be copied into a target configuration folders
+// and changed to meet STM8S project requirements or replaced with a file for STM8L
 
 #define INTVEC_TLI          0  // External top level interrupt
 #define INTVEC_AWU          1  // Auto wake up from halt
