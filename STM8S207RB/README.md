@@ -1,6 +1,6 @@
 # STM8S207RB Base Image
 
-This folder contains the configuration for STM8S "High density" devices as described in [RM0016](https://www.st.com/resource/en/reference_manual/cd00190271-stm8s-series-and-stm8af-series-8-bit-microcontrollers-stmicroelectronics.pdf) with up to 32K normal Flash ROM + [96K far Flash ROM](https://hackaday.io/project/16097-eforth-for-cheap-stm8s-gadgets/log/181451-accessing-stm8-far-memory), 6K RAM and 2K EEPROM. These robust devices can run at 24MHz and offer a good feature set (e.g. 10bit ADC, 4 timers, 2 UARTs, I2C, SPI, TLI, AWU) and configuration is trivially easy compared to STM8L devices (e.g. simple ADC, clock tree "normally on"). STM8S208 devices provide a CAN controller.
+This folder contains the configuration for STM8S "High density" devices as described in [RM0016](https://www.st.com/resource/en/reference_manual/cd00190271-stm8s-series-and-stm8af-series-8-bit-microcontrollers-stmicroelectronics.pdf) with up to 32K normal Flash ROM + [96K far Flash ROM](https://hackaday.io/project/16097-eforth-for-cheap-stm8s-gadgets/log/181451-accessing-stm8-far-memory), 6K RAM and 2K EEPROM. These robust devices can run at 24MHz and offer a good feature set (e.g. 10bit ADC, 4 timers, 2 UARTs, I2C, SPI, TLI, AWU). The configuration is easy compared to STM8L devices (e.g. simple ADC, no RI, clock tree "normally on"). STM8S208 devices provide a CAN controller.
 
 The following datasheets apply:
 * [STM8S207C6/K6/R6/S6, STM8S207C8/K8/M8/R8/S8, STM8S207CB/MB/RB/SB, STM8S208C6/R6/S6, STM8S208C8/R8/S8 and STM8S208CB/MB/RB/SB](https://www.st.com/resource/en/datasheet/stm8s208r8.pdf) for 32 to 80 pin packages 
@@ -35,7 +35,7 @@ STM8S207Cx|LQFP-48|10|11|**47**|**46**
 STM8S207Rx|LQFP-64|10|11|**63**|**62**
 STM8S207Mx|LQFP-80|10|11|**79**|**78**
 
-**‡**: Note: to configure the Forth console to use the first UART (UART1) apply the following settings in `globconf.inc`:
+**‡**: Note: to configure the Forth console to use the first UART (UART1) set `USE_UART2 = 0` in `globconf.inc`.
 
 Buffered high speed console communication can be added by following the instructions in [`INTRX`](https://github.com/TG9541/stm8ef/blob/master/lib/INTRX) (refer to the `\\ Example` part of the library word).
 

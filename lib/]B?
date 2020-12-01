@@ -4,6 +4,7 @@
   \ Enable the compile mode and compile the code to check the bit at byte addr
   \ c-addr. At runtime return true if the bit is set, false otherwise.
   : ]B? ( c-addr bit -- f )
+    \  CLRW Y  BTJF a,#b,PC+2 DECW Y DECW X DECW X LDW X,Y
         $905F , 2* $7201 + , , $0290 , $5A5A , $5AFF , ]
   ; IMMEDIATE
 

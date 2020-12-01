@@ -4,27 +4,29 @@
 
 STM8 eForth is an interactive Forth system for the full range of [STM8 8-bit MCUs](https://www.st.com/en/microcontrollers-microprocessors/stm8-8-bit-mcus.html), including low power and low cost variants. The Forth console, an interpreter-compiler that runs on the MCU, and multi-tasking features allow interactive control of peripherals, parameter tuning or even changing running code (which is rather unusual for a $0.20 "computer").
 
-STM8 eForth originated in [Dr. C.H. Ting's eForth](http://www.forth.org/svfig/kk/07-2010.html) for the STM8S Discovery. With the kind permission of the original author the exted code here is under [MIT-like license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md). Much of the code was re-written and many features were added, e.g. compilation to Flash memory, autostart code, interrupt handling and more.
+STM8 eForth originated in [Dr. C.H. Ting's eForth](http://www.forth.org/svfig/kk/07-2010.html) for the STM8S Discovery. With the kind permission of the original author the code presented here is under [MIT-like license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md). Much of the original code was re-written and many features were added, e.g. compilation to Flash memory, autostart code, interrupt handling (see [overview](https://github.com/TG9541/stm8ef#stm8-eforth-feature-overview)).
 
-For a range of targets, the [binary release](https://github.com/TG9541/stm8ef/releases) provides ready-made Forth environments, including a library and STM8 register definitions. Through [modular board support](https://github.com/TG9541/stm8ef-modular-build) new targets can be added, and build automation, including running target code in the [uCsim STM8 simulator](https://travis-ci.org/TG9541/stm8ef) in Travis-CI, makes building ready-to-run binaries in "downstream projects" possible.
+For a range of targets, the [binary release](https://github.com/TG9541/stm8ef/releases) provides ready-to-run Forth binaries including a library and STM8 register definitions. A build automation and test solution with Travis-CI allows running Forth code in the [uCsim STM8 simulator](https://travis-ci.org/TG9541/stm8ef). Using the [modular board support](https://github.com/TG9541/stm8ef-modular-build) new targets can be added in downstream projects.
 
 [![STM8EF Wiki](https://user-images.githubusercontent.com/5466977/28994765-3267d78c-79d6-11e7-927f-91751cd402db.jpg)](https://github.com/TG9541/stm8ef/wiki)
 
-The programming language Forth works by defining new words with phrases of existing words. "Hello World" in Forth is this:
+The programming language Forth works by defining new words with phrases of existing words using a stack for most of the data flow.
+
+"Hello World" in Forth is this:
 
 ```Forth
 : hello ."  Hello World!" ;
 ```
 
-Forth is very well suited for embedded control since data flows through the stack. In many cases there is no need for variables and memory allocation which greatly reduces complexity.
+Due to its high level of abstraction and its code density Forth is very well suited for embedded control. Since data flows through the stack there is no need for temporary variables which greatly reduces complexity.
 
 Find out more in the [STM8 eForth Walk-Through](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Programming).
 
-STM8 eForth is configurable: a minimal interactive system fits in 3.5K and a full featured binary requires 4 to 5.5K Flash memory. Due to the extraordinary code density a small 8K device, e.g. [STM8S003F3P6](https://www.st.com/resource/en/datasheet/stm8s003f3.pdf) or [STM8L051F3P6](https://www.st.com/resource/en/datasheet/stm8l051F3.pdf), has sufficent space for applications. For larger applications low-cost 32K devices with many GPIOs and lots of features can be used, e.g. [STM8S005C6](https://www.st.com/resource/en/datasheet/stm8s005c6.pdf) or [STM8L052C6](https://www.st.com/resource/en/datasheet/stm8l052c6.pdf).
+STM8 eForth is highly configurable: a minimal interactive system fits in 3.5K and a full featured binary requires 4 to 5.5K Flash memory. Due to the extraordinary code density a low-cost 8K device, e.g. [STM8S003F3P6](https://www.st.com/resource/en/datasheet/stm8s003f3.pdf) or [STM8L051F3P6](https://www.st.com/resource/en/datasheet/stm8l051F3.pdf) has sufficent space for applications. If that's not sufficient, low-cost 32K devices with many GPIOs or a richer set of peripherals can be used, e.g. [STM8S005C6](https://www.st.com/resource/en/datasheet/stm8s005c6.pdf) or [STM8L052C6](https://www.st.com/resource/en/datasheet/stm8l052c6.pdf).
 
-The Forth console uses the STM8 U(S)ART, or a simulated serial interface, either 3-wire (full-duplex) or 2-wire (half-duplex). For programming [e4thcom](https://wiki.forth-ev.de/doku.php/en:projects:e4thcom) is recommended but any serial terminal will work. The console can be configured, even at runtime, to use other types of [character I/O](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Board-Character-IO), e.g. keyboard and display.
+The Forth console uses the STM8 U(S)ART or a simulated serial interface for communicating with the console (3-wire full-duplex or 2-wire half-duplex are supported). For console access and programming [e4thcom](https://wiki.forth-ev.de/doku.php/en:projects:e4thcom) is recommended but any serial terminal will work. The console can be configured, even at runtime, to use other types of [character I/O](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Board-Character-IO), e.g. keyboard and display.
 
-The [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) covers various topics, e.g. converting low-cost Chinese thermostats, voltmeters, or DC/DC-converters into Forth powered embedded control boards.
+The [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) covers various topics, e.g. converting low-cost Chinese thermostats, voltmeters or DC/DC-converters into Forth powered embedded control boards.
 
 ## Generic targets
 
@@ -32,7 +34,7 @@ STM8 eForth provides configurations and binaries for typical STM8S and STM8L dev
 
 ### Generic STMS targets
 
-Support for STM8S devices in the [RM0016](https://www.st.com/resource/en/reference_manual/cd00190271-stm8s-series-and-stm8af-series-8-bit-microcontrollers-stmicroelectronics.pdf) family is stable. Peripherals aren't as fancy as those of e.g. STM8L devices but that makes them easy to master. Automotive grade STM8AF devices belong to the same family and they can be expected to work. Various STM8 Discovery boards and breakout boards for "Low", "Medium", and "High density" devices can be used.
+Support for STM8S devices in the [RM0016](https://www.st.com/resource/en/reference_manual/cd00190271-stm8s-series-and-stm8af-series-8-bit-microcontrollers-stmicroelectronics.pdf) family is stable. Peripherals aren't as advanced as those of e.g. STM8L devices but that makes them easy to master. Automotive grade STM8AF devices in the same family can be expected to work. Various STM8 Discovery boards and breakout boards for "Low", "Medium", and "High density" devices can be used.
 
 * STM8S "Low density" devices (up to 1K RAM, 8K Flash and 640 bytes EEPROM)
   * [STM8S103F3](https://github.com/TG9541/stm8ef/tree/master/STM8S103F3) for STM8S003F3/K3, STM8S103F2/F3/K3 and STM8S903F3/K3 (not recommended for STM8S001J3)
@@ -44,7 +46,7 @@ Support for STM8S devices in the [RM0016](https://www.st.com/resource/en/referen
 
 ### Generic STML targets
 
-Compared to STM8S most STM8L devices provide such a rich feature set that studying the reference manual may take some time. Although support for STM8L peripherals is still in an early phase the STM8 eForth core is mostly the same as for STM8S devices and well tested. The latest addition is support for STM8L101F3 and STM8L001J3, the only members of the [RM0013](https://www.st.com/resource/en/reference_manual/CD00184503-.pdf) family.
+Compared to STM8S most STM8L devices provide a richer feature set and studying the reference manual may take more time. Although support for STM8L peripherals is still in an early phase the STM8 eForth core is mostly the same as for STM8S devices and thus well tested. The latest addition is support for STM8L101F3 and STM8L001J3, the only members of the [RM0013](https://www.st.com/resource/en/reference_manual/CD00184503-.pdf) family.
 
 For more details please refer to the `README.md` in the board folders below.
 
@@ -59,14 +61,14 @@ For more details please refer to the `README.md` in the board folders below.
 
 ## Board support:
 
-STM8 eForth provides board support, e.g. relay outputs or I/O with keys and LED displays, for several common boards and "Chinese gadgets" like thermostats, voltmeters or relay boards. There is more information in the Wiki.
+STM8 eForth provides board support, e.g. words for relay outputs or I/O with keys and LED displays, for several common development boards and "Chinese gadgets" like thermostats, voltmeters or relay boards. There is more [information in the Wiki](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets).
 
 *  [CORE](https://github.com/TG9541/stm8ef/tree/master/CORE) "svelte" 4K configuration for STM8S "Low density" devices, some features are disabled (no background task, `DO .. LOOP` or `CREATE .. DOES>`). Also, the dictionary search is case-sensitive.
 * [SWIMCOM](https://github.com/TG9541/stm8ef/tree/master/SWIMCOM) 2-wire communication through PD1/SWIM (i.e. the ICP pin) and a full feature set (the similar [DOUBLECOM](https://github.com/TG9541/stm8ef/tree/master/DOUBLECOM) also provides UART I/O words for applications)
 * [MINDEV](https://github.com/TG9541/stm8ef/wiki/Breakout-Boards) for the STM8S103F3P6 $0.80 "minimum development board" (just like the STM8S103F3 configuration but with a word `OUT!` for controlling the LED)
 * [STM8L-DISCOVERY](https://github.com/TG9541/stm8ef/tree/master/STM8L-DISCOVERY) for the STM8L-Discovery Board (STM8L152C6 "Medium density" with LCD)
-* [C0135](https://github.com/TG9541/stm8ef/wiki/Board-C0135) the "Relay-4 Board" can be used as a *Nano PLC* (Forth MODBUS support is available)
-* [W1209](https://github.com/TG9541/stm8ef/wiki/Board-W1209) $1.50 thermostat board w/ 3 digit 7S-LED display, full- or half-duplex RS232 (some board variants, e.g. with CA LED displays, are supported)
+* [C0135](https://github.com/TG9541/stm8ef/wiki/Board-C0135) the "Relay-4 Board" can be used as a *Nano PLC* (Forth [MODBUS support](https://github.com/TG9541/stm8ef-modbus) is available)
+* [W1209](https://github.com/TG9541/stm8ef/wiki/Board-W1209) $1.50 thermostat board w/ 3 digit 7S-LED display, full- or half-duplex RS232 (some board variants, e.g. with CA LED displays, are supported). A [W1209 demo application](https://github.com/TG9541/W1209) is available.
 * [W1219](https://github.com/TG9541/stm8ef/wiki/Board-W1219) low cost thermostat with 2x3 digit 7S-LED display with half-duplex RS232 through PD1/SWIM
 * [W1401](https://github.com/TG9541/stm8ef/wiki/Board-W1401) (also XH-W1401) thermostat with 3x2 digit 7S-LED display with half-duplex RS232 through shared PD1/SWIM
 * [DCDC](https://github.com/TG9541/stm8ef/wiki/Board-CN2596) hacked DCDC converter with voltmeter
@@ -103,10 +105,11 @@ Compared to the original "stm8ef" STM8 eForth offers many features:
   * `INPUT-PROCESS-OUTPUT` task indepent of the Forth console
   * fixed cycle time (configurable, default: 5ms)
   * [on supported boards](https://github.com/TG9541/stm8ef/wiki/eForth-Background-Task) `?KEY` reads board keys, `EMIT` uses board display
-  * robust context switch with "clean stack" approach
+  * robust context switching with "clean stack" approach
 * cooperative multitasking with `'IDLE`
   * [idle task](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Idle-Task) execution while there is no console input with < 10µs cycle time
   * `'IDLE` task code can run the interpreter with `EVALUATE`
+  * STM8 Active-Halt can be [implemented](https://gist.github.com/TG9541/61db6e1bdef35d10a7aa02e321d99aa6) as an `'IDLE` task
 * Low-level interrupts in Forth
   * lightweight context switch with `SAVEC` and `IRET`
   * example code for HALT is in the [Wiki](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Interrupts)
@@ -114,7 +117,7 @@ Compared to the original "stm8ef" STM8 eForth offers many features:
   * UART: `?RX` and `TX!` full-duplex w/ half-duplex option for STM8 "Low density" and STM8L RM0031 devices
   * GPIO w/ Port edge & Timer4 interrupts: `?RXP .. TXP!`
   * half-duplex "bus style" communication using simulated COM port or UART
-  * any GPIO or pair of GPIOs from ports PA through PD can be used as a simulated COM port
+  * any GPIO or pair of GPIOs from ports PA to PE can be used to simulate a COM port
   * option for `TX! .. ?RX` on simulated COM port, and `?RXP .. TXP!` on UART
 * configurable vocabulary subsets for binary size optimization
   * board dependent configuration possible down to the level of single words
@@ -127,11 +130,12 @@ Compared to the original "stm8ef" STM8 eForth offers many features:
   * `ADC!` and `ADC@` for STM8 ADC control
   * `BKEY`, `KEYB?`, `EMIT7S`, `OUT`, `OUT!` for board keys, outputs or LEDs
   * `LOCK`, `ULOCK`, `LOCKF`, `ULOCKF` to lock and unlock EEPROM and Flash ROM
-  * `B!` (b a u -- ), `[ .. ]B!` (and more) bit access and native bit set/reset words
-  * `BF!`, `BF@`, `LEBF!`, `LEBF@` bitfields for little- and big-endian
+  * `B!` bit access and `BF!`, `BF@`, `LEBF!`, `LEBF@` bitfields for little- and big-endian
+  *  `[..]B!`, `[..]B?`, `[..]SPIN` (and more) bit access words using STM8 code
+  * `[..]C!` memory byte set using STM8 code
   * `2C@`, `2C!` for STM8 timer 16bit register access
   * `FC!`, `FC@` for far memory access
-  * `[ .. ]C!` fast memory byte set with a `MOV` instruction
+  * `>A`, `A@`,  `A>`, `>Y`, `Y@`, `Y>`, `[..]BC`, `[..]CB` for assembler interfacing
   * `NVR`, `RAM`, `WIPE`, `RESET` and `PERSIST` for compiling to Flash memory
   * `'BOOT` for autostart applications
   * `EVALUATE` interprets Forth code in text strings (even compilation is possible!)
