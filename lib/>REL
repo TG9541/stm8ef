@@ -1,0 +1,38 @@
+\ STM8eForth : control structures with relative addressing         TG9541-201124
+\ ------------------------------------------------------------------------------
+
+#require >Y
+
+: THEN ( -- ) [COMPILE] [ HERE OVER - 1- SWAP C! [COMPILE] ] ; IMMEDIATE
+
+: >REL ( -- ) HERE 0 C, ;  \ like >MARK for rel. branch
+
+: ELSE ( -- )  [COMPILE] [ $20 C, [COMPILE] ] >REL   \ JRA rel
+    SWAP [COMPILE] THEN ; IMMEDIATE
+
+: JREQ ( F:Z -- ) [COMPILE] [ $27 C, [COMPILE] ] >REL ; IMMEDIATE
+
+: IF ( n -- ) COMPILE >Y [COMPILE] JREQ ; IMMEDIATE
+
+\\ Example
+
+#require >REL
+
+: ]B@IF ( -- ) 2* $7201 + , , ] >REL ;  \ BTJF  a,#bit,rel
+
+: ]@IF  ( -- ) $90CE , , ( LDW Y,a ) ] [COMPILE] JREQ ;
+
+: ]C@IF ( -- ) $C6 C, ,  ( LD  A,a ) ] [COMPILE] JREQ ;
+
+NVM
+VARIABLE vt
+: testb  [ vt 1 ]B@IF ."  set" ELSE ."  not set" THEN ;
+: testNZ [ vt ]@IF ."  not " THEN ."  zero" ;
+RAM
+
+\\ Alternative coding
+
+\ : >RES ( -- ) HERE OVER - 1- SWAP C! ; \ like >RESOLVE
+\ : THEN ( -- ) >RES ; IMMEDIATE
+\ : AHEAD ( -- ) [COMPILE] [ $20 C, ( JRA xx ) [COMPILE] ] >REL ; IMMEDIATE
+\ : ELSE ( -- )  [COMPILE] AHEAD SWAP [COMPILE] THEN ; IMMEDIATE
