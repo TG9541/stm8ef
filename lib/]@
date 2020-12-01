@@ -1,0 +1,21 @@
+\ STM8EF : ]@ - [ a ] LITERAL @ for time critical code, e.g. ISR TG9541 - 201129
+\ ------------------------------------------------------------------------------
+
+: ]@  \ like "[ a ] LITERAL @"
+  [COMPILE] [
+  $90CE , ,   \  LDW  Y,a
+  $5A5A ,     \  DECW X  DECW X
+  $FF C,      \  LDW  (X),Y
+  [COMPILE] ]
+; IMMEDIATE
+
+\\ Example:
+
+#require ]@
+
+VARIABLE vt
+: t [ vt ]@ . ;
+
+1111 vt !
+t \ 1111 ok
+
