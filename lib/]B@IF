@@ -1,0 +1,17 @@
+\ STM8EF : ]B@IF  like "]B? IF" with relative addressing         TG9541 - 201129
+\ ------------------------------------------------------------------------------
+
+#require >REL
+: ]B@IF ( -- ) 2* $7201 + , ,  ] >REL ;    \ BTJF  a,#bit
+
+\\ Example:
+
+#require ]B@IF
+
+VARIABLE vt
+
+: test ( -- )
+  [ vt 0 ]B@IF
+    ."  vt bit #0 set"
+  THEN
+;

@@ -1,0 +1,18 @@
+\ STM8EF : ]A<IF  like "c A@ < IF" with relative addressing      TG9541 - 201129
+\ ------------------------------------------------------------------------------
+
+#require >REL
+\ like "c A@ < IF" with relative addressing
+: ]A<IF $A1 C, ( c ) C, $2A C, ] >REL ; \ CP A,#c  JRPL rel
+
+\\ Example:
+
+#require ]A<IF
+
+VARIABLE vt
+
+: test ( -- )
+  [ 3 ]A<IF
+    ."  vt < 3"
+  THEN
+;
