@@ -1,4 +1,4 @@
-\ STM8EF : ]A<IF  like "c A@ < IF" with relative addressing      TG9541 - 201129
+\ STM8EF : ]A<IF  like "( c ) A@ < IF" with relative addressing  TG9541 - 201129
 \ ------------------------------------------------------------------------------
 
 #require >REL
@@ -12,7 +12,7 @@
 VARIABLE vt
 
 : test ( -- )
-  [ 3 ]A<IF
-    ."  vt < 3"
-  THEN
+  vt C@ ( A now equals TOS )
+  [ 3 ]A<IF ." 3 >=" THEN  \ compare Y with constant
+  ( still TOS ) .
 ;
