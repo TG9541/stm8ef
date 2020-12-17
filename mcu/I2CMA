@@ -1,0 +1,364 @@
+\ STM8 eForth: I2C Master ISR for the STM8 I2C peripheral        TG9541 - 201205
+\ ------------------------------------------------------------------------------
+
+\ The I2CMA I2C ISR code acts as a driver for I2C write/read transfers
+
+\ Register definitions in this file are the same for STM8S and STM8L:
+\ load the I2CMA code after e.g. "\res MCU: STM8L051" in the application code
+\ see "\\ Example" at the end of this file
+
+\ API:
+\   * I2CMA array, acts as an ISR "register file"
+\     - byte 0: ER < 0 indicates error (bits 6:0 copied from I2C_SR2)
+\     - byte 1: SA slave address (0..127)
+\     - byte 2: TCOUNT number of bytes in write phase
+\     - byte 3: RCOUNT number of bytes in read phase
+\     - addr 4,5: TPOINT transmit buffer pointer
+\     - addr 6,7: Receive buffer pointer
+\   * I2S ( c -- ) start I2C sequence defined by I2CMA registers
+\   * ?I2D ( -- f ) check if I2C transfer is done
+\   * ?I2E ( -- f ) check for I2C error flag
+\   * I2W ( -- ) wait until I2C sequence has ended (or aborted by error)
+
+\ Usage notes:
+\   * use I2S to set 7bit slave address and reset error
+\   * use ?I2D to check for error (indicated by I2CMA MSB)
+\   * use ?I2E to check for error (indicated by I2CMA MSB)
+\   * TPOINT points to a source buffer or variable that contains the
+\     I2C slave "command" (e.g. DS1621 temperture sensor) or "memory
+\     address" (e.g. 24C64 EEPROM) followed by the data to be written
+\   * RPOINT contains the read target buffer or variable address
+\     while TPOINT points to I2C slave "command" or "address" data
+
+\res export I2C_CR1 I2C_CR2 I2C_DR
+\res export I2C_SR1 I2C_SR2 I2C_SR3
+\res export INT_I2C I2C_ITR
+
+\ temporary words
+#require WIPE
+#require :NVM
+#require ]B!
+#require ]C!
+#require ]B?
+#require ]@
+
+\ Load Forth IF .. ELSE .. THEN with relative addressing
+#require ]B@IF
+#require ]C@IF
+#require ]A<IF
+
+\ CR2 bits
+0 CONSTANT START
+1 CONSTANT STOP
+2 CONSTANT ACK
+
+\ SR3 bits
+2 CONSTANT TRA
+
+\ ITR bits
+2 CONSTANT ITBUFEN
+
+NVM
+
+VARIABLE I2CMA 6 ALLOT   \ the register file
+
+\ start the sequence by enabling interrupts and setting I2C_CR2 bit0 (START)
+: I2S ( c -- ) \ start i2C write/read - user code sets T/RCOUNT, T/RPOINT
+  ( c ) I2CMA !  \ reset flag (MSB), set device address (LSB)
+  [ 3 I2C_ITR ]C!  \ set ITERREN and ITEVTEN
+  [ 1 I2C_CR2 START ]B!
+;
+
+\ Check if I2C transfer is done (T/RCOUNT and BUSY all 0)
+: ?I2D ( -- f ) [ I2CMA 2+ ]@ [ I2C_SR3 1 ( BUSY ) ]B? OR 0= ;
+
+\ Check I2C error flag
+: ?I2E ( -- f ) [ I2CMA 7 ]B? ;
+
+\ wait until I2C sequence has ended (or aborted by error)
+: I2W ( -- ) BEGIN ?I2D ?I2E OR UNTIL ;
+
+\ I2C Master ISR headerless code
+:NVM
+  SAVEC
+  \ EV5 START has just been issued - trigger sending ADDR and R/W
+  [ I2C_SR1 0 ( SB ) ]B@IF [
+    $C6 C, I2C_DR ,          \ LD   A,I2C_DR  ; reset SB
+    $C6 C, I2CMA 1+ ,        \ LD   A,SA      ; slave address
+    $48 C,                   \ SLL  A         ; shift left for R/W flag
+    $725D , I2CMA 2+ ,       \ TNZ  TCOUNT
+    $26 C, >REL              \ TCOUNT C@ 0= IF
+      $725D , I2CMA 3 + , ]  \ TNZ  RCOUNT
+      JREQ [                 \ RCOUNT C@ IF
+        $4C C,               \ INC  A         ; set R flag
+      THEN
+    THEN
+    [ $C7 C, I2C_DR , ]      \ LD   I2C_DR,A  ; send device address
+  THEN
+
+  \ EV6 ADDR has just been sent - trigger next steps or STOP
+  [ I2C_SR1 1 ( ADDR ) ]B@IF [  \ EV6
+    $C6 C, I2C_SR1 ,         \ CLR ADDR by reading SR1
+    $C6 C, I2C_SR3 , ]       \ followed by SR3
+    [ I2C_SR3 TRA ]B@IF [
+      $C6 C, I2CMA 2 + ,     \ LD   A,TCOUNT
+      $26 C, >REL ] ( IF )   \ JRNE rel
+        [ 1 I2C_CR2 STOP ]B! \ dummy access (e.g. scan)
+      THEN
+    ELSE [
+      $C6 C, I2CMA 3 + ,     \ LD   A,RCOUNT
+      $4A C,                 \ DEC  A
+      \ EV6_1 1-byte reception
+      $26 C, >REL ] ( IF )   \ JRNE rel
+        [ 0 I2C_CR2 ACK ]B!  \ ACK disable
+        [ 1 I2C_CR2 STOP ]B! \ end read sequence
+      THEN
+    THEN
+    [ 1 I2C_ITR ITBUFEN ]B!  \ enable buffer interrupt
+  THEN
+
+  \ EV7 reveive bytes
+  [ I2C_SR1 6 ( RXNE ) ]B@IF [
+    $C6 C, I2C_DR ,          \ LD   A,I2C_DR
+    $88 C,                   \ PUSH A
+    \ EV7_1 reveive 2nd to last byte, prepare stop
+    I2CMA 3 + ]C@IF          \ like "?DUP IF" with TOS in A
+      [ 3 ]A<IF              \ 2nd to last byte in DR, last in ShReg: set STOP
+        [ 0 I2C_CR2 ACK  ]B! \ ACK disable
+        [ 1 I2C_CR2 STOP ]B! \ end read sequence
+      THEN [
+      $725A , I2CMA 3 + ,    \ DEC  RCOUNT
+      $51 C,                 \ EXGW X,Y
+      $CE C, I2CMA 6 + ,     \ LDW  X,RPOINT
+      $84 C,                 \ POP  A
+      $F7 C,                 \ LD   (X),A
+      $5C C,                 \ INCW X
+      $CF C, I2CMA 6 + ,     \ LDW  RPOINT,X
+      $51 C, ]               \ EXGW X,Y
+    ELSE [ \ discard bytes if receive counter is 0
+      $84 C, ]               \ POP  A
+    THEN
+  THEN
+
+  \ EV8_1 and EV8 transmit 1st and following bytes
+  [ I2C_SR1 7 ( TXE ) ]B@IF
+    [ I2CMA 2+ ]C@IF [    \ TCOUNT C@
+      $51 C,              \ EXGW X,Y
+      $CE C, I2CMA 4 + ,  \ LDW X,TPOINT
+      $F6 C,              \ LD A,(X)
+      $C7 C, I2C_DR ,     \ LD I2C_DR,A
+      $5C C,              \ INCW X
+      $CF C, I2CMA 4 + ,  \ LDW TPOINT,X
+      $51 C,              \ EXGW X,Y
+      $725A , I2CMA 2+ ,  \ DEC TCOUNT
+      ]
+    ELSE \ disable buffer interrupt after the last byte
+      [ 0 I2C_ITR ITBUFEN ]B!
+    THEN
+  THEN
+
+  \ EV8_2 end transmission or re-START reception through EV5
+  [ I2C_SR1 2 ( BTF ) ]B@IF
+    [ I2CMA 3 + ]C@IF        \ RCOUNT C@
+      [ 1 I2C_CR2 ACK ]B!    \ ACK enable
+      [ 1 I2C_CR2 START ]B!  \ re-START for read sequence
+    ELSE
+      [ 1 I2C_CR2 STOP ]B!   \ STOP clears TXE
+    THEN
+  THEN
+
+  \ check error events - flag error and abort transmission
+  [ I2C_SR2 ]C@IF [
+      $4F C,                 \ CLR  A
+      $C7 C, I2C_ITR ,       \ LD   I2C_ITR,A ; disable all interrupts
+      $31 C, I2C_SR2 ,       \ EXG  A,I2C_SR2
+      $AA80 ,                \ OR   A,#$80
+      $C7 C, I2CMA , ]       \ LD   I2CMA,A   ; flag error
+      [ 1 I2C_CR2 STOP ]B!   \ release the bus
+  THEN
+  IRET
+[ OVERT ( xt ) INT_I2C !     \ ";" with IRET - xt is the ISR vector
+
+WIPE
+
+\\ Example: Simple I2C EEPROM access and I2C scanner
+
+\res MCU: STM8S103
+
+#require I2CMA
+
+\ Temp. constants for I2CMA register access for user code
+I2CMA 2 + CONSTANT TCOUNT  \ char number of bytes TX
+I2CMA 3 + CONSTANT RCOUNT  \ char number of bytes RX
+I2CMA 4 + CONSTANT TPOINT  \ points to TX buffer, starting with CMD/ADDR
+I2CMA 6 + CONSTANT RPOINT  \ points to RX buffr
+
+#require ]B!
+#require ]C!
+
+\res export PB_DDR PB_CR1
+\res export I2C_ITR I2C_CR1 I2C_CR2
+\res export I2C_FREQR I2C_OARL I2C_OARH
+\res export I2C_CCRL I2C_CCRH I2C_TRISER
+
+80 CONSTANT EE24C \ slave address EEPROM 24C32 .. 24C512 w\ A2:0=low
+
+NVM
+
+VARIABLE EADDR
+VARIABLE BUFFER 6 ALLOT
+
+\ Standard speed 100 kHz
+: I2I ( -- ) \ initialize peripheral - init values by @eelkhoorn
+  \ STM8L only
+  \ [ 1 CLK_PCKENR1 3 ]B! \ enable SYSCLK to I2C, e.g. for stm8l051
+
+  [ 0 I2C_CR1 0 ]B!     \ I2C peripheral disable
+  [ 0 I2C_CR2 ]C!
+  [ 1 I2C_FREQR 4 ]B!   \ CPU freq 16 MHz
+  [ $A0 I2C_OARL ]C!    \ own address 0xA0
+  [ $40 I2C_OARH ]C!    \ 7 bit address mode
+  [ 0 I2C_CCRH 6 ]B!    \ duty cycle
+  [ $50 I2C_CCRL ]C!    \ i2c freq 100 kHz, CCR = f.master/(2 f.i2c)
+  [ $11 I2C_TRISER ]C!  \ TRISER = CPU freq in MHz + 1
+  [ 1 I2C_CR1 0 ]B!     \ Peripheral enable
+;
+
+\ simple I2C bus scanner
+: scan ( -- )
+  I2I
+  127 FOR
+    I 16 MOD 15 = IF CR THEN \ show 16 addresses in a row
+    I I2S                    \ sample slave address using empty transfer
+    I2W I2CMA @ 0< IF        \ wait for result, indicate success or failure
+      ."  --"
+    ELSE
+      I .
+    THEN
+  NEXT
+;
+
+\ write from buffer to EEPROM w/ 16 bit address
+: write ( a c -- )
+  \ BUFFER follows EADDR, c=0 at least writes the address
+  ( c ) 2+ TCOUNT C!   \ TCOUNT, # bytes incl. EADDR
+  ( a ) EADDR !        \ set EEPROM address
+  EADDR TPOINT !       \ initialize transfer pointer
+  EE24C I2S
+;
+
+\ read from EEPROM w/ 16 bit address to buffer
+: read ( a c -- )
+  BUFFER RPOINT !      \ set read pointer to buffer
+  ( c ) RCOUNT C!      \ RCOUNT
+  ( a ) 0 write        \ zero-write sets EADDR and starts the read sequence
+;
+
+\ read next c bytes from EEPROM internal pointer to BUFFER
+: rnext ( c -- )
+  ( c ) RCOUNT C! BUFFER RPOINT !
+  EE24C I2S
+;
+
+RAM
+
+\\ Example: Simple I2C EEPROM access and I2C scanner
+
+NVM
+#require PINDEBUG
+RAM
+\res MCU: STM8S103
+
+#require I2CMA
+
+\ Temp. constants for I2CMA register access for user code
+I2CMA 2 + CONSTANT TCOUNT  \ char number of bytes TX
+I2CMA 3 + CONSTANT RCOUNT  \ char number of bytes RX
+I2CMA 4 + CONSTANT TPOINT  \ points to TX buffer, starting with CMD/ADDR
+I2CMA 6 + CONSTANT RPOINT  \ points to RX buffr
+
+#require ]B!
+#require ]C!
+
+\res export PB_DDR PB_CR1
+\res export I2C_ITR I2C_CR1 I2C_CR2
+\res export I2C_FREQR I2C_OARL I2C_OARH
+\res export I2C_CCRL I2C_CCRH I2C_TRISER
+
+80 CONSTANT EE24C \ slave address EEPROM 24C32 .. 24C512 w\ A2:0=low
+
+NVM
+
+VARIABLE EADDR
+VARIABLE BUFFER 6 ALLOT
+
+\ I2C initialization in user code - standard speed 100 kHz (
+: I2I ( -- ) \ initialize peripheral - init values by @eelkhoorn
+  \ STM8L only
+  \ [ 1 CLK_PCKENR1 3 ]B! \ enable SYSCLK to I2C, e.g. for stm8l051
+
+  [ 0  I2C_CR1  0 ]B!   \ I2C peripheral disable
+  [ 1 I2C_CR2 7 ]B!     \ SWRST
+  [ 0 I2C_CR2 ]C!       \ POS "Method 1"
+  [ 1 I2C_FREQR 4 ]B!   \ CPU freq 16 MHz
+
+  \ Standard speed 100 kHz 
+  [ 0 I2C_CCRH 6 ]B!    \ I2C duty cycle 100kHz
+  [ $50 I2C_CCRL ]C!    \ I2C freq 100kHz, CCR = f.master/(2 f.i2c)
+
+  \ 381kHz fast mode
+  \ [ $80 I2C_CCRH ]C!    \ I2C fast mode 
+  \ [ $E  I2C_CCRL ]C!    \ I2C freq 381kHz (table 91)
+
+  [ 17  I2C_TRISER ]C!  \ TRISER = CPU freq in MHz + 1
+  [ 1   I2C_CR1 0  ]B!  \ Peripheral enable
+;
+
+\ write from BUFFER to EEPROM w/ 16 bit address
+: write ( a c -- )
+  \ BUFFER follows EADDR, c=0 at least writes the address
+  ( c ) 2+ TCOUNT C!   \ TCOUNT, # bytes incl. EADDR
+  ( a ) EADDR !        \ set EEPROM address
+  EADDR TPOINT !       \ initialize transfer pointer
+  EE24C I2S
+;
+
+\ read from EEPROM w/ 16 bit address to BUFFER
+: read ( a c -- )
+  BUFFER RPOINT !      \ set read pointer to buffer
+  ( c ) RCOUNT C!      \ RCOUNT
+  ( a ) 0 write        \ zero-write sets EADDR and starts the read sequence
+;
+
+\ read next c bytes from EEPROM to BUFFER
+: rnext ( c -- )
+  ( c ) RCOUNT C! BUFFER RPOINT !
+  EE24C I2S
+;
+
+\ simple I2C bus scanner
+: scan ( -- )
+  I2I
+  127 FOR
+    I 16 MOD 15 = IF CR THEN \ show 16 addresses in a row
+    I I2S                    \ sample slave address using empty transfer
+      I2W ?I2E IF            \ wait for result, check for success or failure
+      ."  --"
+    ELSE
+      I .
+    THEN
+  NEXT
+;
+
+RAM
+
+\\ Example
+
+I2I
+scan  \ this should show an I2C slave with address 80
+
+12345 BUFFER ! $0506 BUFFER 2+ ! \ prepare some data
+$0011 4 write                    \ write to EEPROM
+BUFFER 4 ERASE                   \ clear buffer, just to show that we can read
+$0011 2 read  BUFFER ?           \ read 2 bytes from EEPROM
+1 rnext BUFFER C@ .              \ read next byte (using EEPROM int. pointer)

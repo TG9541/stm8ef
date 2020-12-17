@@ -1,0 +1,18 @@
+\ STM8EF : ]Y<IF  like "( n ) Y@ < IF" with relative addressing  TG9541 - 201129
+\ ------------------------------------------------------------------------------
+
+#require >REL
+\ like "n Y@ < IF" with relative addressing
+: ]Y<IF $90A3 , ( n ) , $2A C, ] >REL ; \ CPW Y,#n  JRPL rel
+
+\\ Example:
+
+#require ]Y<IF
+
+VARIABLE vt
+
+: test ( -- )
+  vt @ ( Y now equals TOS )
+  [ 3 ]Y<IF ." 3 >=" THEN  \ compare Y with constant
+  ( still TOS ) .
+;
