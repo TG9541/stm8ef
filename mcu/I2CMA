@@ -201,115 +201,26 @@ I2CMA 6 + CONSTANT RPOINT  \ points to RX buffr
 \res export I2C_FREQR I2C_OARL I2C_OARH
 \res export I2C_CCRL I2C_CCRH I2C_TRISER
 
-80 CONSTANT EE24C \ slave address EEPROM 24C32 .. 24C512 w\ A2:0=low
+80 CONSTANT EE24C \ slave address 16bit EEPROM 24C32 .. 24C512 w\ A2:0=low
 
 NVM
 
 VARIABLE EADDR
 VARIABLE BUFFER 6 ALLOT
 
-\ Standard speed 100 kHz
-: I2I ( -- ) \ initialize peripheral - init values by @eelkhoorn
-  \ STM8L only
-  \ [ 1 CLK_PCKENR1 3 ]B! \ enable SYSCLK to I2C, e.g. for stm8l051
-
-  [ 0 I2C_CR1 0 ]B!     \ I2C peripheral disable
-  [ 0 I2C_CR2 ]C!
-  [ 1 I2C_FREQR 4 ]B!   \ CPU freq 16 MHz
-  [ $A0 I2C_OARL ]C!    \ own address 0xA0
-  [ $40 I2C_OARH ]C!    \ 7 bit address mode
-  [ 0 I2C_CCRH 6 ]B!    \ duty cycle
-  [ $50 I2C_CCRL ]C!    \ i2c freq 100 kHz, CCR = f.master/(2 f.i2c)
-  [ $11 I2C_TRISER ]C!  \ TRISER = CPU freq in MHz + 1
-  [ 1 I2C_CR1 0 ]B!     \ Peripheral enable
-;
-
-\ simple I2C bus scanner
-: scan ( -- )
-  I2I
-  127 FOR
-    I 16 MOD 15 = IF CR THEN \ show 16 addresses in a row
-    I I2S                    \ sample slave address using empty transfer
-    I2W I2CMA @ 0< IF        \ wait for result, indicate success or failure
-      ."  --"
-    ELSE
-      I .
-    THEN
-  NEXT
-;
-
-\ write from buffer to EEPROM w/ 16 bit address
-: write ( a c -- )
-  \ BUFFER follows EADDR, c=0 at least writes the address
-  ( c ) 2+ TCOUNT C!   \ TCOUNT, # bytes incl. EADDR
-  ( a ) EADDR !        \ set EEPROM address
-  EADDR TPOINT !       \ initialize transfer pointer
-  EE24C I2S
-;
-
-\ read from EEPROM w/ 16 bit address to buffer
-: read ( a c -- )
-  BUFFER RPOINT !      \ set read pointer to buffer
-  ( c ) RCOUNT C!      \ RCOUNT
-  ( a ) 0 write        \ zero-write sets EADDR and starts the read sequence
-;
-
-\ read next c bytes from EEPROM internal pointer to BUFFER
-: rnext ( c -- )
-  ( c ) RCOUNT C! BUFFER RPOINT !
-  EE24C I2S
-;
-
-RAM
-
-\\ Example: Simple I2C EEPROM access and I2C scanner
-
-NVM
-#require PINDEBUG
-RAM
-\res MCU: STM8S103
-
-#require I2CMA
-
-\ Temp. constants for I2CMA register access for user code
-I2CMA 2 + CONSTANT TCOUNT  \ char number of bytes TX
-I2CMA 3 + CONSTANT RCOUNT  \ char number of bytes RX
-I2CMA 4 + CONSTANT TPOINT  \ points to TX buffer, starting with CMD/ADDR
-I2CMA 6 + CONSTANT RPOINT  \ points to RX buffr
-
-#require ]B!
-#require ]C!
-
-\res export PB_DDR PB_CR1
-\res export I2C_ITR I2C_CR1 I2C_CR2
-\res export I2C_FREQR I2C_OARL I2C_OARH
-\res export I2C_CCRL I2C_CCRH I2C_TRISER
-
-80 CONSTANT EE24C \ slave address EEPROM 24C32 .. 24C512 w\ A2:0=low
-
-NVM
-
-VARIABLE EADDR
-VARIABLE BUFFER 6 ALLOT
-
-\ I2C initialization in user code - standard speed 100 kHz (
-: I2I ( -- ) \ initialize peripheral - init values by @eelkhoorn
+\ initialize peripheral - init values by @eelkhoorn
+: I2I ( -- )
   \ STM8L only
   \ [ 1 CLK_PCKENR1 3 ]B! \ enable SYSCLK to I2C, e.g. for stm8l051
 
   [ 0  I2C_CR1  0 ]B!   \ I2C peripheral disable
-  [ 1 I2C_CR2 7 ]B!     \ SWRST
+  [ 1 I2C_CR2 7 ]B!     \ SWRST (in case I2C peripheral is in slave mode)
   [ 0 I2C_CR2 ]C!       \ POS "Method 1"
   [ 1 I2C_FREQR 4 ]B!   \ CPU freq 16 MHz
-
-  \ Standard speed 100 kHz 
-  [ 0 I2C_CCRH 6 ]B!    \ I2C duty cycle 100kHz
-  [ $50 I2C_CCRL ]C!    \ I2C freq 100kHz, CCR = f.master/(2 f.i2c)
-
-  \ 381kHz fast mode
-  \ [ $80 I2C_CCRH ]C!    \ I2C fast mode 
-  \ [ $E  I2C_CCRL ]C!    \ I2C freq 381kHz (table 91)
-
+  \ [ 0 I2C_CCRH 6 ]B!    \ normal mode
+  \ [ $50 I2C_CCRL ]C!    \ i2c freq 100 kHz, CCR = f.master/(2 f.i2c)
+  [ $80 I2C_CCRH ]C!    \ fast mode
+  [ $E  I2C_CCRL ]C!    \ I2C freq 381kHz (table 91)
   [ 17  I2C_TRISER ]C!  \ TRISER = CPU freq in MHz + 1
   [ 1   I2C_CR1 0  ]B!  \ Peripheral enable
 ;
@@ -342,7 +253,7 @@ VARIABLE BUFFER 6 ALLOT
   127 FOR
     I 16 MOD 15 = IF CR THEN \ show 16 addresses in a row
     I I2S                    \ sample slave address using empty transfer
-      I2W ?I2E IF            \ wait for result, check for success or failure
+    I2W ?I2E IF              \ wait for result, check for success or failure
       ."  --"
     ELSE
       I .
@@ -354,11 +265,10 @@ RAM
 
 \\ Example
 
-I2I
-scan  \ this should show an I2C slave with address 80
+scan  \ init I2C and scan the bus (this should show a slave with address 80)
 
 12345 BUFFER ! $0506 BUFFER 2+ ! \ prepare some data
 $0011 4 write                    \ write to EEPROM
 BUFFER 4 ERASE                   \ clear buffer, just to show that we can read
 $0011 2 read  BUFFER ?           \ read 2 bytes from EEPROM
-1 rnext BUFFER C@ .              \ read next byte (using EEPROM int. pointer)
+1 rnext BUFFER C@ .              \ read next byte (EEPROM internal pointer)
