@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 # Converts uCsim dumps to ihx format https://en.wikipedia.org/wiki/Intel_HEX
 # 'dch 0xXX 0xXX 16' dumps ROM to multiple rows formated like {adress} {byte 1} ... {byte 16} {ASCI_representation}
 
@@ -36,5 +36,5 @@ def parse_row(row):
 #--- main
 args = parse_arguments()
 rows = read_dump(args.infile, NUMBER_OF_BYTES)
-result = map(parse_row, rows)
+result = list(map(parse_row, rows))
 output_ihx(args.outfile, result)

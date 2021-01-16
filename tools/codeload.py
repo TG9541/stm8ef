@@ -168,8 +168,8 @@ def removeComment(line):
         return line.partition(' \\ ')[0].strip()
 
 # test if a word already exists in the dictionary
-def required(word):
-    return CN.testtrans("' %s DROP" % word) != 'ok'
+def inDictionary(word):
+    return CN.testtrans("' %s DROP" % word) == 'ok'
 
 # reader for e4thcom style .efr files (symbol-address value pairs)
 def readEfr(path):
@@ -243,10 +243,10 @@ def upload(path):
                             symbol = resSplit[i]
                             if not symbol in resources:
                                 error('symbol not found: %s' % symbol, line, path, lineNr)
-                            if required(symbol):
-                                CN.transfer("$%s CONSTANT %s" % (resources[symbol], symbol))
-                            else:
+                            if inDictionary(symbol):
                                 vprint("\\res export %s: skipped" % symbol)
+                            else:
+                                CN.transfer("$%s CONSTANT %s" % (resources[symbol], symbol))
                     continue
 
                 reInclude = re.search('^#(include|require) +(.+?)$', line)
@@ -254,7 +254,7 @@ def upload(path):
                     includeMode = reInclude.group(1).strip()
                     includeItem = reInclude.group(2).strip()
 
-                    if includeMode == 'require' and not required(includeItem):
+                    if includeMode == 'require' and inDictionary(includeItem):
                         vprint("#require %s: skipped" % includeItem)
                         continue
 
@@ -263,7 +263,7 @@ def upload(path):
                         error('file not found', line, path, lineNr)
                     try:
                         upload(includeFile)
-                        if includeMode == 'require' and required(includeItem):
+                        if includeMode == 'require' and not inDictionary(includeItem):
                             result = CN.transfer(": %s ;" % includeItem)
                             if result != 'ok':
                                 raise ValueError('error closing #require %s' % result)
