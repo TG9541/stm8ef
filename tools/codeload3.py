@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 # STM8EF code loader
 # targets uCsim (telnet), serial interface, and text file
 # supports e4thcom pseudo words, e.g. #include, #require, and \res .
@@ -49,14 +49,14 @@ class ConnectUcsim(Connection):
     tn = { }
     def __init__(self, comspec):
         try:
-            HOST = comspec.split(':')[0]
-            PORT = comspec.split(':')[1]
+            HOST = str.encode(comspec.split(':')[0])
+            PORT = str.encode(comspec.split(':')[1])
             self.tn = telnetlib.Telnet(HOST,PORT)
         except:
             print("Error: couldn't open telnet port")
             sys.exit(1)
 
-        self.tn.read_until("\n",1)
+        self.tn.read_until(str.encode("\n"),1)
 
     def transfer(self, line):
         vprint('TX: ' + line)
@@ -68,8 +68,8 @@ class ConnectUcsim(Connection):
         try:
             line = removeComment(line)
             if line:
-                self.tn.write(line+ '\r')
-                tnResult = self.tn.expect(['\?\a\r\n', 'k\r\n', 'K\r\n'],5)
+                self.tn.write(str.encode(line+ '\r'))
+                tnResult = self.tn.expect([b'\?\a\r\n', b'k\r\n', b'K\r\n'],5)
             else:
                 return "ok"
         except:
@@ -87,11 +87,11 @@ class ConnectUcsim(Connection):
 # serial line transfer
 class ConnectSerial(Connection):
     port = { }
-    def __init__(self, ttydev, rate):
+    def __init__(self, ttydev):
         try:
             self.port = serial.Serial(
                 port     = ttydev,
-                baudrate = rate,
+                baudrate = 9600,
                 parity   = serial.PARITY_NONE,
                 stopbits = serial.STOPBITS_ONE,
                 bytesize = serial.EIGHTBITS,
@@ -110,8 +110,8 @@ class ConnectSerial(Connection):
         try:
             line = removeComment(line)
             if line:
-                self.port.write(line + '\r')
-                sioResult = self.port.readline()
+                self.port.write(str.encode(line + '\r'))
+                sioResult = self.port.readline().decode('utf-8')
             else:
                 return "ok"
         except:
@@ -125,14 +125,14 @@ class ConnectSerial(Connection):
 
 # simple show-error-and-exit
 def error(message, line, path, lineNr):
-    print 'Error file %s line %d: %s' % (path, lineNr, message)
-    print '>>>  %s' % (line)
+    print('Error file %s line %d: %s' % (path, lineNr, message))
+    print('>>>  %s' % (line))
     sys.exit(1)
 
 # simple stdout log printer
 def vprint(text):
     if args.verbose:
-        print text
+        print(text)
 
 # search an item (a source file) in the extended e4thcom search path
 def searchItem(item, CPATH):
@@ -291,8 +291,6 @@ parser.add_argument("-b", "--target-base", dest="base", default="",
         help="target base folder, default: ./", metavar="base")
 parser.add_argument("-p", "--port", dest="port",
         help="PORT for transfer, default: /dev/ttyUSB0, localhost:10000", metavar="port")
-parser.add_argument("-r", "--rate", dest="rate", default=9600,
-        help="RATE for serial transfer, default: 9600", metavar="rate")
 parser.add_argument("-q", "--quiet", action="store_false", dest="verbose", default=True,
         help="don't print status messages to stdout")
 parser.add_argument("-t", "--trace", dest="tracefile",
@@ -313,7 +311,7 @@ else:
 if args.method == "telnet":
     CN = ConnectUcsim(args.port or 'localhost:10000')
 elif args.method == "serial":
-    CN = ConnectSerial(args.port or '/dev/ttyUSB0', args.rate)
+    CN = ConnectSerial(args.port or '/dev/ttyUSB0')
 else:
     CN = ConnectDryRun()
 

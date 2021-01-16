@@ -45,12 +45,12 @@ sleep 0.5
 
 echo "simload.sh: transfer $boardcode"
 
-tools/codeload.py -b "out/$object" telnet "$boardcode" || exit
+tools/codeload3.py -b "out/$object" telnet "$boardcode" || exit
 
 echo "simload.sh: extract $boardihx binary and exit uCsim"
 
 # dump flash data, convert to Intel Hex, hard exit uCsim
-nc -w 1 localhost 10001 <<EOF | python tools/dch2ihx.py > "$boardihx"
+nc -w 1 localhost 10001 <<EOF | python3 tools/dch2ihx.py > "$boardihx"
 dch 0x8000 0x9FFF 16
 kill
 EOF
