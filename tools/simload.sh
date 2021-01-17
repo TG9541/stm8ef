@@ -45,7 +45,7 @@ sleep 0.5
 
 echo "simload.sh: transfer $boardcode"
 
-tools/codeload3.py -b "out/$object" telnet "$boardcode" || exit
+tools/codeload.py -b "out/$object" telnet "$boardcode" || exit
 
 echo "simload.sh: extract $boardihx binary and exit uCsim"
 
