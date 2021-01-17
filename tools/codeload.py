@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 # STM8EF code loader
 # targets uCsim (telnet), serial interface, and text file
 # supports e4thcom pseudo words, e.g. #include, #require, and \res .
@@ -49,14 +49,14 @@ class ConnectUcsim(Connection):
     tn = { }
     def __init__(self, comspec):
         try:
-            HOST = comspec.split(':')[0]
-            PORT = comspec.split(':')[1]
+            HOST = str.encode(comspec.split(':')[0])
+            PORT = str.encode(comspec.split(':')[1])
             self.tn = telnetlib.Telnet(HOST,PORT)
         except:
             print("Error: couldn't open telnet port")
             sys.exit(1)
 
-        self.tn.read_until("\n",1)
+        self.tn.read_until(str.encode("\n"),1)
 
     def transfer(self, line):
         vprint('TX: ' + line)
@@ -68,8 +68,8 @@ class ConnectUcsim(Connection):
         try:
             line = removeComment(line)
             if line:
-                self.tn.write(line+ '\r')
-                tnResult = self.tn.expect(['\?\a\r\n', 'k\r\n', 'K\r\n'],5)
+                self.tn.write(str.encode(line+ '\r'))
+                tnResult = self.tn.expect([b'\?\a\r\n', b'k\r\n', b'K\r\n'],5)
             else:
                 return "ok"
         except:
@@ -110,8 +110,8 @@ class ConnectSerial(Connection):
         try:
             line = removeComment(line)
             if line:
-                self.port.write(line + '\r')
-                sioResult = self.port.readline()
+                self.port.write(str.encode(line + '\r'))
+                sioResult = self.port.readline().decode('utf-8')
             else:
                 return "ok"
         except:
@@ -125,14 +125,14 @@ class ConnectSerial(Connection):
 
 # simple show-error-and-exit
 def error(message, line, path, lineNr):
-    print 'Error file %s line %d: %s' % (path, lineNr, message)
-    print '>>>  %s' % (line)
+    print('Error file %s line %d: %s' % (path, lineNr, message))
+    print('>>>  %s' % (line))
     sys.exit(1)
 
 # simple stdout log printer
 def vprint(text):
     if args.verbose:
-        print text
+        print(text)
 
 # search an item (a source file) in the extended e4thcom search path
 def searchItem(item, CPATH):
@@ -194,6 +194,7 @@ def readEfr(path):
 # uploader with resolution of #include, #require, and \res
 def upload(path):
     reSkipToEOF = re.compile("^\\\\\\\\")
+    reIfDef     = re.compile("^#(ifdef|ifndef) +(\S+) +(.*)", re.I)
 
     with open(path) as source:
         vprint('Uploading %s' % path)
@@ -206,6 +207,17 @@ def upload(path):
             for line in source.readlines():
                 lineNr += 1
                 line = line.replace('\n', ' ').replace('\r', '').strip()
+
+                # condiftional processing
+                m = reIfDef.match(line)
+                if m and not (commentEOF or commentBlock):
+                    cndWord = m.group(1).lower()
+                    tstWord = m.group(2)
+                    line    = m.group(3)
+                    txCon = inDictionary(tstWord) ^ (cndWord == 'ifndef')
+                    print('CX #' + cndWord, tstWord + ' (', txCon, ') ' + line)
+                    if not txCon:
+                        continue
 
                 # all lines from "\\ Example:" on are comments
                 if reSkipToEOF.match(line):
