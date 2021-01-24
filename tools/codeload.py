@@ -80,7 +80,7 @@ class ConnectUcsim(Connection):
             print('Error: timeout %s' % line)
             sys.exit(1)
         elif tnResult[0]==0:
-            return tnResult[2]
+            return tnResult[2].decode('utf-8')
         else:
             return "ok"
 
@@ -106,22 +106,24 @@ class ConnectSerial(Connection):
 
     def dotrans(self, line):
         self.tracef(line)
-
         try:
             line = removeComment(line)
             if line:
                 self.port.write(str.encode(line + '\r'))
-                sioResult = self.port.readline().decode('utf-8')
+                lineResult = ""
+                while not re.search('(( OK| ok)$|\a)',lineResult):
+                    sioResult = self.port.read_until(b'\n').decode('utf-8')
+                    self.tracef('target: "%s"' % sioResult)
+                    if sioResult != "":
+                        lineResult += sioResult
+                    else:
+                        raise("target timeout")
             else:
                 return "ok"
         except:
             print('Error: TTY transmission failed')
             sys.exit(1)
-
-        if re.search(' (OK|ok)$', sioResult):
-            return "ok"
-        else:
-            return sioResult
+        return lineResult
 
 # simple show-error-and-exit
 def error(message, line, path, lineNr):
@@ -167,9 +169,13 @@ def removeComment(line):
     else:
         return line.partition(' \\ ')[0].strip()
 
+# test if STM8 eForth signals an error "?.*^BEL^NL"
+def isError(result):
+    return re.search('\a', result)
+
 # test if a word already exists in the dictionary
-def inDictionary(word):
-    return CN.testtrans("' %s DROP" % word) == 'ok'
+def notInDictionary(word):
+    return isError(CN.testtrans("' %s DROP" % word))
 
 # reader for e4thcom style .efr files (symbol-address value pairs)
 def readEfr(path):
@@ -214,7 +220,7 @@ def upload(path):
                     cndWord = m.group(1).lower()
                     tstWord = m.group(2)
                     line    = m.group(3)
-                    txCon = inDictionary(tstWord) ^ (cndWord == 'ifndef')
+                    txCon = notInDictionary(tstWord) ^ (cndWord == 'ifdef')
                     print('CX #' + cndWord, tstWord + ' (', txCon, ') ' + line)
                     if not txCon:
                         continue
@@ -255,10 +261,12 @@ def upload(path):
                             symbol = resSplit[i]
                             if not symbol in resources:
                                 error('symbol not found: %s' % symbol, line, path, lineNr)
-                            if inDictionary(symbol):
-                                vprint("\\res export %s: skipped" % symbol)
+                            if notInDictionary(symbol):
+                                result = CN.transfer("$%s CONSTANT %s" % (resources[symbol], symbol))
+                                if isError(result):
+                                    error("target result '%s'" % result, line, path, lineNr)
                             else:
-                                CN.transfer("$%s CONSTANT %s" % (resources[symbol], symbol))
+                                vprint("\\res export %s: skipped" % symbol)
                     continue
 
                 reInclude = re.search('^#(include|require) +(.+?)$', line)
@@ -266,28 +274,29 @@ def upload(path):
                     includeMode = reInclude.group(1).strip()
                     includeItem = reInclude.group(2).strip()
 
-                    if includeMode == 'require' and inDictionary(includeItem):
+                    if includeMode == 'include' or notInDictionary(includeItem):
+                        includeFile = searchItem(includeItem,CPATH)
+                        if includeFile == '':
+                            error('file not found "%s' % includeItem, line, path, lineNr)
+                        try:
+                            upload(includeFile)
+                            if includeMode == 'require' and notInDictionary(includeItem):
+                                # make sure a #require defines the required word
+                                result = CN.transfer(": %s ;" % includeItem)
+                                if isError(result):
+                                    error("target result '%s'" % result, line, path, lineNr)
+                        except:
+                            error("can't upload file '%s'" % includeItem, line, path, lineNr)
+                    else:
                         vprint("#require %s: skipped" % includeItem)
-                        continue
-
-                    includeFile = searchItem(includeItem,CPATH)
-                    if includeFile == '':
-                        error('file not found', line, path, lineNr)
-                    try:
-                        upload(includeFile)
-                        if includeMode == 'require' and not inDictionary(includeItem):
-                            result = CN.transfer(": %s ;" % includeItem)
-                            if result != 'ok':
-                                raise ValueError('error closing #require %s' % result)
-                    except:
-                        error('could not upload file', line, path, lineNr)
                     continue
+
                 if len(line) > 80:
-                    raise ValueError('Line is too long: %s' % (line))
+                    error('line too long', line, path, lineNr)
 
                 result = CN.transfer(line)
-                if result != 'ok':
-                    raise ValueError('error %s' % result)
+                if isError(result):
+                    error('target result: "%s"' % result, line, path, lineNr)
 
         except ValueError as err:
             print(err.args[0])
