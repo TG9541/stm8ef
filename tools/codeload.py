@@ -221,7 +221,7 @@ def upload(path):
                     tstWord = m.group(2)
                     line    = m.group(3)
                     txCon = notInDictionary(tstWord) ^ (cndWord == 'ifdef')
-                    print('CX #' + cndWord, tstWord + ' (', txCon, ') ' + line)
+                    vprint('CX #' + cndWord, tstWord + ' (', txCon, ') ' + line)
                     if not txCon:
                         continue
 
