@@ -13,7 +13,7 @@ zip: build
 	find out/ -name "target" -print | zip -r out/stm8ef-bin -@
 
 tgz: build
-	( find out/ -path "*target/*" -print0 ; find out/ -name "*.ihx" -type f -print0 ; find out/ -name "simbreak.txt" -type f -print0 ) | tar -czvf out/stm8ef-bin.tgz forth.asm forth.mk main.c LICENSE.md docs/words.md mcu lib tools --null -T -
+	( find out/ -path "*target/*" -print0 ; find out/ -name "*.ihx" -type f -print0 ; find out/ -name "simbreak.txt" -type f -print0 ) | tar -czvf out/stm8ef-bin.tgz forth.asm forth.mk main.c LICENSE.md docs/words.md inc mcu lib tools --null -T -
 	( find out/ -name "forth.rst" -type f -print0 ) | tar -czvf out/stm8ef-rst.tgz --null -T -
 
 build: words
