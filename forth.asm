@@ -1504,7 +1504,7 @@ UMMOD:
         LDW     X,(1,SP)        ; X
         LDW     X,(2,X)         ; X=udh
         CPW     X,YTEMP
-        JRULE   MMSM1           ; X is still on the R-stack
+        JRULT   MMSM1           ; X is still on the R-stack
         POPW    X
         INCW    X               ; pop off 1 level
         INCW    X               ; ADDW   X,#2
@@ -1518,14 +1518,19 @@ MMSM1:
 MMSM3:
         CPW     X,YTEMP         ; compare udh to un
         JRULT   MMSM4           ; can't subtract
+MMSMa:
         SUBW    X,YTEMP         ; can subtract
+        RCF
 MMSM4:
         CCF                     ; quotient bit
         RLCW    Y               ; rotate into quotient
         RLCW    X               ; rotate into remainder
         DEC     A               ; repeat
-        JRUGT   MMSM3
-        SRAW    X
+        JREQ    MMSMb           ; if A == 0
+        JRC     MMSMa           ; if carry out of rotate
+        JRA     MMSM3           ; 
+MMSMb:
+        RRCW    X
         LDW     YTEMP,X         ; done, save remainder
         POPW    X
         INCW    X               ; drop
