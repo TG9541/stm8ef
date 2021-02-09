@@ -2,13 +2,15 @@
 
 [![Travis-CI](https://travis-ci.org/TG9541/stm8ef.svg)](https://travis-ci.org/TG9541/stm8ef)
 
-STM8 eForth is an interactive Forth system for the full range of [STM8 8-bit MCUs](https://www.st.com/en/microcontrollers-microprocessors/stm8-8-bit-mcus.html), including low power and low cost variants. The Forth console, an interpreter-compiler that runs on the MCU, and multi-tasking features allow interactive control of peripherals, parameter tuning or even changing running code (which is rather unusual for a $0.20 "computer").
+STM8 eForth is an interactive Forth system for the full range of [STM8 8-bit MCUs](https://www.st.com/en/microcontrollers-microprocessors/stm8-8-bit-mcus.html), including low power and low cost variants. The Forth console, an interpreter-compiler, turns a $0.20 device into a "computer". Multi-tasking features allow interactive control of peripherals, parameter tuning and even compiling code into an application while it's running.
 
-STM8 eForth originated in [Dr. C.H. Ting's eForth](http://www.forth.org/svfig/kk/07-2010.html) for the STM8S Discovery. With the kind permission of the original author the code presented here is under [MIT-like license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md). Much of the original code was re-written and many features were added, e.g. compilation to Flash memory, autostart code, interrupt handling (see [overview](https://github.com/TG9541/stm8ef#stm8-eforth-feature-overview)).
+The original STM8 eForth was written by [Dr. C.H. Ting's eForth](http://www.forth.org/svfig/kk/07-2010.html) for the STM8S Discovery. With the kind permission of Dr. Ting the code presented here is under [MIT license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md). The original code was improved and many features were added, e.g. compilation to Flash memory, autostart code, interrupt handling (see [overview](https://github.com/TG9541/stm8ef#stm8-eforth-feature-overview)).
 
-For a range of targets, the [binary release](https://github.com/TG9541/stm8ef/releases) provides ready-to-run Forth binaries including a library and STM8 register definitions. A build automation and test solution with Travis-CI allows running Forth code in the [uCsim STM8 simulator](https://travis-ci.org/TG9541/stm8ef). Using the [modular board support](https://github.com/TG9541/stm8ef-modular-build) new targets can be added in downstream projects.
+For a range of targets, the [binary release](https://github.com/TG9541/stm8ef/releases) provides ready-to-run Forth binaries including a library and STM8 register definitions. Build test automation with Travis-CI runs Forth code in the [uCsim STM8 simulator](https://travis-ci.org/TG9541/stm8ef). Using the [modular build support](https://github.com/TG9541/stm8ef-modular-build) new targets can be added in downstream projects.
 
 [![STM8EF Wiki](https://user-images.githubusercontent.com/5466977/28994765-3267d78c-79d6-11e7-927f-91751cd402db.jpg)](https://github.com/TG9541/stm8ef/wiki)
+
+## About Forth
 
 The programming language Forth works by defining new words with phrases of existing words using a stack for most of the data flow.
 
@@ -18,9 +20,11 @@ The programming language Forth works by defining new words with phrases of exist
 : hello ."  Hello World!" ;
 ```
 
-Due to its high level of abstraction and its code density Forth is very well suited for embedded control. Since data flows through the stack there is no need for temporary variables which greatly reduces complexity.
+Forth is a "low level" language that supports a high level of abstraction. Due to the code density that can be achieved Forth is well suited for embedded control. Since data flows through the stack there is no need for temporary variables which greatly reduces complexity.
 
 Find out more in the [STM8 eForth Walk-Through](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Programming).
+
+## About STM8 eForth
 
 STM8 eForth is highly configurable: a minimal interactive system fits in 3.5K and a full featured binary requires 4 to 5.5K Flash memory. Due to the extraordinary code density a low-cost 8K device, e.g. [STM8S003F3P6](https://www.st.com/resource/en/datasheet/stm8s003f3.pdf) or [STM8L051F3P6](https://www.st.com/resource/en/datasheet/stm8l051F3.pdf) has sufficent space for applications. If that's not sufficient, low-cost 32K devices with many GPIOs or a richer set of peripherals can be used, e.g. [STM8S005C6](https://www.st.com/resource/en/datasheet/stm8s005c6.pdf) or [STM8L052C6](https://www.st.com/resource/en/datasheet/stm8l052c6.pdf).
 
@@ -146,7 +150,7 @@ Compared to the original "stm8ef" STM8 eForth offers many features:
 
 The code has changed a lot compared to the original code but porting back some bug fixes or features should be possible.
 
-* original code bugs fixed (e.g. `COMPILE`, `DEPTH`, `R!`, `PICK`)
+* original code bugs fixed (e.g. `COMPILE`, `DEPTH`, `R!`, `PICK`, `UM/MOD`)
 * "ASxxxx V2.0" syntax (the free [SDCC tool chain](http://sdcc.sourceforge.net/) allows mixing Forth, assembly, and C)
 * hard STM8S105C6 dependencies were removed (e.g. initialization, clock, RAM layout, UART2)
 * flexible RAM layout, basic RAM memory management, meaningful symbols for RAM locations
