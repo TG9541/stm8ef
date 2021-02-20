@@ -1496,26 +1496,29 @@ WITHI:
 
         HEADER  UMMOD "UM/MOD"
 UMMOD:
-        PUSHW   X               ; save stack pointer
+        LDW     Y,X             ; stack pointer to Y
         LDW     X,(X)           ; un
         LDW     YTEMP,X         ; save un
-        LDW     Y,(1,SP)        ; X stack pointer
-        LDW     Y,(4,Y)         ; Y=udl
-        LDW     X,(1,SP)        ; X
-        LDW     X,(2,X)         ; X=udh
+        LDW     X,Y
+        INCW    X               ; drop un
+        INCW    X
+        PUSHW   X               ; save stack pointer
+        LDW     X,(X)           ; X=udh
+        LDW     Y,(4,Y)         ; Y=udl (offset before drop)
         CPW     X,YTEMP
         JRULT   MMSM1           ; X is still on the R-stack
-        POPW    X
-        INCW    X               ; pop off 1 level
-        INCW    X               ; ADDW   X,#2
-        LDW     Y,#0xFFFF
-        LDW     (X),Y
+        POPW    X               ; restore stack pointer
+        LDW     Y,#0xFFFF       ; overflow result:
+        LDW     (X),Y           ; quotient max. 16 bit value
         CLRW    Y
-        LDW     (2,X),Y
+        LDW     (2,X),Y         ; remainder 0
         RET
 MMSM1:
-        LD      A,#17           ; loop count
+        LD      A,#16           ; loop count
+        SLLW    Y               ; udl shift udl into udh
 MMSM3:
+        RLCW    X               ; rotate udl bit into uhdh (= remainder)
+        JRC     MMSMa           ; if carry out of rotate
         CPW     X,YTEMP         ; compare udh to un
         JRULT   MMSM4           ; can't subtract
 MMSMa:
@@ -1523,20 +1526,14 @@ MMSMa:
         RCF
 MMSM4:
         CCF                     ; quotient bit
-        RLCW    Y               ; rotate into quotient
-        RLCW    X               ; rotate into remainder
+        RLCW    Y               ; rotate into quotient, rotate out udl
         DEC     A               ; repeat
-        JREQ    MMSMb           ; if A == 0
-        JRC     MMSMa           ; if carry out of rotate
-        JRA     MMSM3           ; 
+        JRNE    MMSM3           ; if A == 0
 MMSMb:
-        RRCW    X
         LDW     YTEMP,X         ; done, save remainder
-        POPW    X
-        INCW    X               ; drop
-        INCW    X               ; ADDW   X,#2
-        LDW     (X),Y
-        LDW     Y,YTEMP         ; save quotient
+        POPW    X               ; restore stack pointer
+        LDW     (X),Y           ; save quotient
+        LDW     Y,YTEMP         ; remainder onto stack
         LDW     (2,X),Y
         RET
 
