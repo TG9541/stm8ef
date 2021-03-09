@@ -1508,10 +1508,10 @@ UMMOD:
         CPW     X,YTEMP
         JRULT   MMSM1           ; X is still on the R-stack
         POPW    X               ; restore stack pointer
-        LDW     Y,#0xFFFF       ; overflow result:
-        LDW     (X),Y           ; quotient max. 16 bit value
         CLRW    Y
         LDW     (2,X),Y         ; remainder 0
+        DECW    Y
+        LDW     (X),Y           ; quotient max. 16 bit value
         RET
 MMSM1:
         LD      A,#16           ; loop count
