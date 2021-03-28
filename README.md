@@ -4,33 +4,43 @@
 
 STM8 eForth is an interactive Forth system for the full range of [STM8 8-bit MCUs](https://www.st.com/en/microcontrollers-microprocessors/stm8-8-bit-mcus.html), including low power and low cost variants. The Forth console, an interpreter-compiler, turns a $0.20 device into a "computer". Multi-tasking features allow interactive control of peripherals, parameter tuning and even compiling code into an application while it's running.
 
-The original STM8 eForth was written by [Dr. C.H. Ting's eForth](http://www.forth.org/svfig/kk/07-2010.html) for the STM8S Discovery. With the kind permission of Dr. Ting the code presented here is under [MIT license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md). The original code was improved and many features were added, e.g. compilation to Flash memory, autostart code, interrupt handling (see [overview](https://github.com/TG9541/stm8ef#stm8-eforth-feature-overview)).
+The original STM8 eForth was written by [Dr. C.H. Ting's eForth](http://www.forth.org/svfig/kk/07-2010.html) for the STM8S Discovery. With the kind permission of Dr. Ting the code presented here is under [MIT license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md). Bugs were fixed, code size reduced, standards compatibility improved and many features were added (e.g. compilation to Flash memory, autostart code, interrupt handling - see [overview](https://github.com/TG9541/stm8ef#stm8-eforth-feature-overview)).
 
-For a range of targets, the [binary release](https://github.com/TG9541/stm8ef/releases) provides ready-to-run Forth binaries including a library and STM8 register definitions. Build test automation with Travis-CI runs Forth code in the [uCsim STM8 simulator](https://travis-ci.org/TG9541/stm8ef). Using the [modular build support](https://github.com/TG9541/stm8ef-modular-build) new targets can be added in downstream projects.
+The [binary release](https://github.com/TG9541/stm8ef/releases) provides ready-to-run Forth binaries for a range of targets, including a library and STM8 register definitions. Build and test automation with Travis-CI runs Forth code in the [uCsim STM8 simulator](https://travis-ci.org/TG9541/stm8ef) andthe [modular build support](https://github.com/TG9541/stm8ef-modular-build) allows new hardware target be added in downstream projects.
 
 [![STM8EF Wiki](https://user-images.githubusercontent.com/5466977/28994765-3267d78c-79d6-11e7-927f-91751cd402db.jpg)](https://github.com/TG9541/stm8ef/wiki)
 
 ## About Forth
 
-The programming language Forth works by defining new words with phrases of existing words using a stack for most of the data flow.
-
-"Hello World" in Forth is this:
+Forth works by defining new words with phrases of existing words - "Hello World" in Forth is this:
 
 ```Forth
 : hello ."  Hello World!" ;
 ```
 
-Forth is a "low level" language that supports a high level of abstraction. Due to the code density that can be achieved Forth is well suited for embedded control. Since data flows through the stack there is no need for temporary variables which greatly reduces complexity.
+Forth phrases often look like Yoda-speak (object, subject verb, e.g. `15 deg servo2 turn-by` or `center servo2 turn-to`). Forth is a "low level" language that offers a high level of abstraction: from onw word to the next data flows on the stack and in most cases there is no need for temporary variables. This naturally leads to a very good code density and it makes Forth well suited for embedded control.
+
+The best feature of Forth is that it allows interactive use of words and phrases. This turns the embedded system into an application oriented test environment!
 
 Find out more in the [STM8 eForth Walk-Through](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Programming).
 
 ## About STM8 eForth
 
-STM8 eForth is highly configurable: a minimal interactive system fits in 3.5K and a full featured binary requires 4 to 5.5K Flash memory. Due to the extraordinary code density a low-cost 8K device, e.g. [STM8S003F3P6](https://www.st.com/resource/en/datasheet/stm8s003f3.pdf) or [STM8L051F3P6](https://www.st.com/resource/en/datasheet/stm8l051F3.pdf) has sufficent space for applications. If that's not sufficient, low-cost 32K devices with many GPIOs or a richer set of peripherals can be used, e.g. [STM8S005C6](https://www.st.com/resource/en/datasheet/stm8s005c6.pdf) or [STM8L052C6](https://www.st.com/resource/en/datasheet/stm8l052c6.pdf).
+STM8 eForth is highly configurable: a Forth binary that allows compiling new words to Flash fits in 4 to 5.5K ROM (a minimal interactive system fits in 3.5K). Due to the extraordinary code density a very-low-cost 8K device, e.g. [STM8S003F3P6](https://www.st.com/resource/en/datasheet/stm8s003f3.pdf) or [STM8L051F3P6](https://www.st.com/resource/en/datasheet/stm8l051F3.pdf) has sufficent space for non-trivial applications. If more is needed, low-cost 32K devices with many GPIOs or a richer set of peripherals can be used, e.g. [STM8S005C6](https://www.st.com/resource/en/datasheet/stm8s005c6.pdf) or [STM8L052C6](https://www.st.com/resource/en/datasheet/stm8l052c6.pdf).
 
 The Forth console uses the STM8 U(S)ART or a simulated serial interface for communicating with the console (3-wire full-duplex or 2-wire half-duplex are supported). For console access and programming [e4thcom](https://wiki.forth-ev.de/doku.php/en:projects:e4thcom) is recommended but any serial terminal will work. The console can be configured, even at runtime, to use other types of [character I/O](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Board-Character-IO), e.g. keyboard and display.
 
 The [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) covers various topics, e.g. converting low-cost Chinese thermostats, voltmeters or DC/DC-converters into Forth powered embedded control boards.
+
+## Release and development cycle
+
+The Github Releases section contains binary releases. As STM8 eForth is based on eForth V2 (an embedded STC Forth), and it improves on STM8EF V2.1, releases follow the naming scheme "STM8 eForth 2.2.x".
+
+Using a target requires setting a symlink `target` to the desired board target folder, e.g. `ln -s out/STM8S105K4/target target`.
+
+The git master branch contains the current development version (releases are tagged). After cloning the repository `make` will build all targets.
+
+Running `make BOARD=STM8S105K4` will set a symlink. The Forth console prompt will show the release version (e.g. `STM8eForth 2.2.27`) or the next pre-release (e.g. `STM8EF2.2.28.pre1`).
 
 ## Generic targets
 

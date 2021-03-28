@@ -1,0 +1,4 @@
+\ STM8eForth : ['] (like in forth-standard.org)                    TG9541-210322
+
+\ Place name's execution token xt on the stack
+: ['] ( compilation:"name" --; run-time: -- xt) ' [COMPILE] LITERAL ; IMMEDIATE

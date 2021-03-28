@@ -58,3 +58,16 @@ GND------------>>----------o serial GND
 This feature can free up one more GPIO for other uses, or it can be used for creating a simple bus.
 
 Of course, it's also possible to use a simulated serial interface (also in addition to a USART) which results in even more options for a Forth console.
+
+## Working around the STM8L Medium density serial bootloader bug
+
+In [Issue #409](https://github.com/TG9541/stm8ef/issues/409) @yumkam documented the effect of ["STM8AL3xx6/8 STM8Lx5xx4/6 Errata sheet"](https://www.st.com/resource/en/errata_sheet/cd00237242-stm8al31xx-stm8al3lxx-stm8l052c6-stm8l151xx46-and-stm8l152xx46-device-limitations-stmicroelectronics.pdf), section 1.2.6, "Program memory are write unprotected after reset when embedded bootloader enabled":
+
+> if bootloader is enabled, it
+> 1) leaves flash unprotected upon reset/boot;
+> 2) writes incorrect sequence into `FLASH_PUKR` register;
+> And once you write incorrect sequence into `FLASH_PUKR`, it is not possible to recover till reset (correct sequence will be ignored).
+> As a result, `LOCKF ULOCKF` (or `NVM RAM NVM`) results in freeze (flash is unprotected upon reset --- unlock sequence is ignored, but initially `FLASH_IAPSR.PUL==1`, so first `NVM` succeeds, then `LOCKF` protects flash, then `ULOCKF` cannot unprotect it again, and waits forever for `FLASH_IAPSR.PUL`).
+(I verified this on STM8L151K6, rev.Y)
+
+The issue contains a tentative fix, e.g. triggering a device reset with an "illegal opcode" after detecting that he Flash ROM is unprotected when doing a cold-start. There is no problem, however, if the default SWIM ICP programming method is used.
