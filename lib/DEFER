@@ -1,0 +1,37 @@
+\ DEFER ... IS for STM8 eForth                                     TG9541-210322
+\ ------------------------------------------------------------------------------
+#require WIPE
+#require :NVM
+#require ALIAS
+#require COMPILE?
+
+\ STATE ( -- f ) return 0 when in interpreter state
+:NVM  COMPILE? [ $5A5A , $FF C, ] ;RAM ALIAS STATE
+
+\ NOOP ( -- ) do nothing
+\ DEFER! ( xt1 xt2 -- ) write xt1 at jump address in deferred word xt2
+:NVM  2+ !  [ HERE ] ;RAM ALIAS NOOP  ALIAS DEFER!
+
+NVM
+  #require [']
+
+  : DEFER ( "name" xt -- )
+    \ use NOP for masking the JP opcode (no ALIAS), initialize with NOOP
+    : ( NOP JP ) $9DCC , ['] NOOP , [COMPILE] [ OVERT ;
+
+  : IS ( xt "<space>name" -- ) STATE IF
+      [COMPILE] ['] COMPILE DEFER!
+    ELSE
+      ' DEFER!
+    THEN ; IMMEDIATE
+RAM WIPE
+
+\\ Test from forth-standard.org)
+
+#include utils/tester.fs
+T{ DEFER defer5 -> }T
+T{ : is-defer5 IS defer5 ; -> }T
+T{ ' * IS defer5 -> }T
+T{ 2 3 defer5 -> 6 }T
+T{ ' + is-defer5 -> }T
+T{ 1 2 defer5 -> 3 }T
