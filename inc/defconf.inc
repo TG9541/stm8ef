@@ -319,3 +319,4 @@
         UNLINK_SAVEC     = 0    ; "SAVEC"
         UNLINK_RESTC     = 0    ; "IRET"
         UNLINK_WIPE      = 1    ; "WIPE"
+        UNLINK_POSTP     = 0    ; "POSTPONE"
