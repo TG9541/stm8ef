@@ -178,6 +178,21 @@ T{ 2 1 1 1 D< -> 0 }T
 T{ 1 1 2 1 D< -> -1 }T
 T{ 1 1 1 1 D= -> -1 }T
 
+\ extended: DEFER
+#require DEFER
+T{ DEFER defer5 -> }T
+T{ : is-defer5 IS defer5 ; -> }T
+T{ ' * IS defer5 -> }T
+T{ 2 3 defer5 -> 6 }T
+T{ ' + is-defer5 -> }T
+T{ 1 2 defer5 -> 3 }T
+
+\ extended: [']
+#require [']
+: GT1 123 ;
+: GT2 ['] GT1 ; IMMEDIATE
+T{ GT2 EXECUTE -> 123 }T
+
 \ start over - we'll need some RAM
 COLD
 
@@ -201,7 +216,7 @@ RAM
 T{ 400 CD>TEST cdram -> }T
 T{ cdram -> 800 }T
 
-\ T{e WORDS e-> 973 -1508 }T
+T{e WORDS e-> 995 -11 }T
 
 
 \ compile CURRENT and VOC as a test
