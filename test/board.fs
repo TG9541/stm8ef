@@ -77,6 +77,16 @@ T{ -1000 55 101 */MOD -> 45 -545 }T
 T{ -1 -1 UM* -> 1 -2 }T
 T{ 31 -3010 M* -> -27774 -2 }T
 
+\ core: test POSTPONE
+
+: PIF POSTPONE IF ; IMMEDIATE
+: PSWAP POSTPONE SWAP ; IMMEDIATE
+: tpif PIF 123 ELSE 321 THEN ;
+T{ -1 tpif -> 123 }T
+T{ 0  tpif -> 321 }T
+: tpswap PSWAP ;
+T{ 1 -1  tpswap -> -1 1 }T
+
 \ test background and idle tasks
 #require 'IDLE
 VARIABLE BGTEST  1 BGTEST !   \ flag: bgd not run
