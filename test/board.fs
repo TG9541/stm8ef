@@ -3,7 +3,7 @@ NVM
 RAM
 
 \ expected vocabulary (including tester.fs)
-T{e WORDS e-> 937 -4609 }T
+T{e WORDS e-> 946 -3945 }T
 
 \ core: string with capured EMIT
 : test-."" ." abc123" ;
@@ -76,6 +76,16 @@ T{ 1000 -100 500 */ -> -200 }T
 T{ -1000 55 101 */MOD -> 45 -545 }T
 T{ -1 -1 UM* -> 1 -2 }T
 T{ 31 -3010 M* -> -27774 -2 }T
+
+\ core: test POSTPONE
+
+: PIF POSTPONE IF ; IMMEDIATE
+: PSWAP POSTPONE SWAP ; IMMEDIATE
+: tpif PIF 123 ELSE 321 THEN ;
+T{ -1 tpif -> 123 }T
+T{ 0  tpif -> 321 }T
+: tpswap PSWAP ;
+T{ 1 -1  tpswap -> -1 1 }T
 
 \ test background and idle tasks
 #require 'IDLE
@@ -168,6 +178,21 @@ T{ 2 1 1 1 D< -> 0 }T
 T{ 1 1 2 1 D< -> -1 }T
 T{ 1 1 1 1 D= -> -1 }T
 
+\ extended: DEFER
+#require DEFER
+T{ DEFER defer5 -> }T
+T{ : is-defer5 IS defer5 ; -> }T
+T{ ' * IS defer5 -> }T
+T{ 2 3 defer5 -> 6 }T
+T{ ' + is-defer5 -> }T
+T{ 1 2 defer5 -> 3 }T
+
+\ extended: [']
+#require [']
+: GT1 123 ;
+: GT2 ['] GT1 ; IMMEDIATE
+T{ GT2 EXECUTE -> 123 }T
+
 \ start over - we'll need some RAM
 COLD
 
@@ -191,7 +216,7 @@ RAM
 T{ 400 CD>TEST cdram -> }T
 T{ cdram -> 800 }T
 
-T{e WORDS e-> 973 -1508 }T
+T{e WORDS e-> 995 -11 }T
 
 
 \ compile CURRENT and VOC as a test

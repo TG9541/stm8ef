@@ -3076,10 +3076,11 @@ EVAL2:
         HEADER  TICK "'"
 TICK:
         CALL    TOKEN
-        CALL    NAMEQ           ; ?defined
-        CALL    QBRAN
-        .dw     ABOR1
-        RET                     ; yes, push code address
+        CALL    NAMEQ
+        CALL    YFLAGS          ; pop NA
+        JREQ    1$              ; ?defined
+        RET
+1$:     JP      ABOR1
 
         .ifeq BOOTSTRAP
 ;       [COMPILE]       ( -- ; <string> )
@@ -3091,6 +3092,19 @@ BCOMP:
         CALLR   TICK
         JRA     JSRC
         .endif
+
+;       POSTPONE ( -- )
+;       postpone the compilation behavior of the next word in the parse area
+;       this should be sufficent to replace COMPILE and [COMPILE]
+
+        HEADFLG POSTP "POSTPONE" IMEDD
+POSTP:
+        CALLR   TICK            ; Y contains NA (aborts if NA is undefined)
+        TNZ     (Y)             ; test lexicon bit7 #IMEDD
+        JRMI    1$              ; IMMED flag set -> compile CA/XT as immediate word
+        CALLR   LITER           ; else: create XT literal
+        DoLitW  JSRC            ; XT of CALL,
+1$:     JRA     JSRC            ; compile XT
 
 ;       ,       ( w -- )
 ;       Compile an integer into

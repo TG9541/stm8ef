@@ -6,7 +6,7 @@ STM8 eForth is an interactive Forth system for the full range of [STM8 8-bit MCU
 
 The original STM8 eForth was written by [Dr. C.H. Ting's eForth](http://www.forth.org/svfig/kk/07-2010.html) for the STM8S Discovery. With the kind permission of Dr. Ting the code presented here is under [MIT license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md). Bugs were fixed, code size reduced, standards compatibility improved and many features were added (e.g. compilation to Flash memory, autostart code, interrupt handling - see [overview](https://github.com/TG9541/stm8ef#stm8-eforth-feature-overview)).
 
-The [binary release](https://github.com/TG9541/stm8ef/releases) provides ready-to-run Forth binaries for a range of targets, including a library and STM8 register definitions. Build and test automation with Travis-CI runs Forth code in the [uCsim STM8 simulator](https://travis-ci.org/TG9541/stm8ef) andthe [modular build support](https://github.com/TG9541/stm8ef-modular-build) allows new hardware target be added in downstream projects.
+The [binary release](https://github.com/TG9541/stm8ef/releases) provides ready-to-run Forth binaries for a range of target boards or devicesi, a library and STM8 register definitions. Build and test automation in the [uCsim STM8 simulator](https://travis-ci.org/TG9541/stm8ef) in Travis-CI provides is used for quality control. Binary releases also contain the tested source code of STM8 eForth core and libraries so that downstream projectes can use the [modular build support](https://github.com/TG9541/stm8ef-modular-build) to add new targets with specific hardware support, memory layout or a tailored vocabulary.
 
 [![STM8EF Wiki](https://user-images.githubusercontent.com/5466977/28994765-3267d78c-79d6-11e7-927f-91751cd402db.jpg)](https://github.com/TG9541/stm8ef/wiki)
 
@@ -153,6 +153,7 @@ Compared to the original "stm8ef" STM8 eForth offers many features:
   * `NVR`, `RAM`, `WIPE`, `RESET` and `PERSIST` for compiling to Flash memory
   * `'BOOT` for autostart applications
   * `EVALUATE` interprets Forth code in text strings (even compilation is possible!)
+  * `POSTPONE` combines the functionality of `COMPILE` and `[COMPILE]`
   * `OUTER` and `BYE` a simple debug console for foreground code
   * many words from Forth systems that were popular in the 1980s are provided in the [library](https://github.com/TG9541/stm8ef/tree/master/lib)
 
