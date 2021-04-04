@@ -567,29 +567,15 @@ EMIT:
 ; ==============================================
 ; The kernel
 
-;       PUSHLIT ( - C )
-;       Subroutine for DOLITC and CCOMMALIT
-PUSHLIT:
-        LDW     Y,(3,SP)
-        LD      A,(Y)
-        JP      ASTOR
-
-;       CCOMMALIT ( - )
-;       Compile inline literall byte into code dictionary.
-CCOMMALIT:
-        CALLR   PUSHLIT
-        CALL    CCOMMA
-CSKIPRET:
-        POPW    Y
-        JP      (1,Y)
-
         .ifne   USE_CALLDOLIT
 
 ;       DOLITC  ( - C )
 ;       Push an inline literal character (8 bit).
 DOLITC:
-        CALLR   PUSHLIT
-        JRA     CSKIPRET
+        LDW     Y,(1,SP)
+        LD      A,(Y)
+        CALL    ASTOR
+        JP      CSKIPRET
 
 ;       doLit   ( -- w )
 ;       Push an inline literal.
@@ -3117,31 +3103,42 @@ POSTP:
         DoLitW  JSRC            ; XT of CALL,
 1$:     JRA     JSRC            ; compile XT
 
+;       CCOMMALIT ( - )
+;       Compile inline literall byte into code dictionary.
+CCOMMALIT:
+        LDW     Y,(1,SP)
+        LD      A,(Y)
+        CALLR   ACOMMA
+CSKIPRET:
+        POPW    Y
+        JP      (1,Y)
+
 ;       ,       ( w -- )
 ;       Compile an integer into
 ;       code dictionary.
 
         HEADER  COMMA ^/","/
 COMMA:
-        DoLitC  2
-        CALLR   OMMA
-        JP      STORE
+        LD      A,(X)
+        CALLR   ACOMMA
+        JRA     CCOMMA
 
 ;       C,      ( c -- )
 ;       Compile a byte into code dictionary.
 
         HEADER  CCOMMA ^/"C,"/
 CCOMMA:
-        CALL    ONE
-        CALLR   OMMA
-        JP      CSTOR
+        CALL    AFLAGS
+        ; fall through
 
-;       common part of COMMA and CCOMMA
-OMMA:
-        CALL    HERE
-        CALL    SWAPP
-        CALL    CPP
-        JP      PSTOR
+ACOMMA:
+        EXGW    X,Y
+        LDW     X,USRCP
+        LD      (X),A
+        INCW    X
+        LDW     USRCP,X
+        EXGW    X,Y
+        RET
 
 ;       CALL,   ( ca -- )
 ;       Compile a subroutine call.
@@ -3163,20 +3160,20 @@ JSRC:
         LDW     (2,X),Y
         JRA     2$
 1$:
-        CALL    CCOMMALIT
-        .db     CALL_OPC         ; opcode CALL
+        LD      A,#CALL_OPC     ; opcode CALL
+        CALLR   ACOMMA
 2$:
-        CALL    DROP             ; drop relative address
+        CALL    DROP            ; drop relative address
         .ifne   HAS_CPNVM
-        JRMI    3$               ; DROP leaves CALL, data in Y
+        JRMI    3$              ; DROP leaves CALL, data in Y
         TNZ     USRCP
-        JRPL    3$               ; call to RAM from RAM
-        CALL    ABORQ            ; error: call to RAM from NVM
+        JRPL    3$              ; call to RAM from RAM
+        CALL    ABORQ           ; error: call to RAM from NVM
         .db     7
         .ascii  " target"
 3$:
         .endif
-        JRA     COMMA            ; store absolute address or "CALLR reladdr"
+        JRA     COMMA           ; store absolute address or "CALLR reladdr"
 
 ;       LITERAL ( w -- )
 ;       Compile tos to dictionary
@@ -3188,7 +3185,7 @@ LITER:
         CALLR   COMPI
         CALL    DOLIT
         .else
-        CALL    CCOMMALIT
+        CALLR   CCOMMALIT
         .db     DOLIT_OPC
         .endif
         JRA      COMMA
