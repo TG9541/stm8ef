@@ -3145,34 +3145,36 @@ ACOMMA:
 
         HEADER  JSRC ^/"CALL,"/
 JSRC:
-        CALL    DUPP
-        CALL    HERE
-        CALL    CELLP
-        CALL    SUBB            ; Y now contains the relative call address
-        LD      A,YH
-        INC     A
-        JRNE    1$              ; YH must be 0xFF
-        LD      A,YL
-        TNZ     A
-        JRPL    1$              ; YL must be negative
-        LD      A,#CALLR_OPC
-        LD      YH,A            ; replace YH with opcode CALLR
-        LDW     (2,X),Y
-        JRA     2$
-1$:
-        LD      A,#CALL_OPC     ; opcode CALL
-        CALLR   ACOMMA
-2$:
-        CALL    DROP            ; drop relative address
+        LDW     Y,X
+        LDW     Y,(Y)
         .ifne   HAS_CPNVM
-        JRMI    3$              ; DROP leaves CALL, data in Y
+        JRMI    1$              ; is the CALL target in ROM?
         TNZ     USRCP
-        JRPL    3$              ; call to RAM from RAM
+        JRPL    1$              ; call to RAM from RAM?
         CALL    ABORQ           ; error: call to RAM from NVM
         .db     7
         .ascii  " target"
-3$:
+1$:
         .endif
+        EXGW    X,Y
+        DECW    X
+        DECW    X               ; calc CALLR <rel> 2-
+        SUBW    X,USRCP
+        LD      A,XH
+        EXGW    X,Y
+        INC     A
+        JRNE    2$              ; YH must be 0xFF
+        LD      A,YL
+        TNZ     A
+        JRPL    2$              ; YL must be negative
+        LD      A,#CALLR_OPC
+        LD      YH,A            ; replace YH with opcode CALLR
+        LDW     (X),Y
+        JRA     3$
+2$:
+        LD      A,#CALL_OPC     ; opcode CALL
+        CALLR   ACOMMA           
+3$:
         JRA     COMMA           ; store absolute address or "CALLR reladdr"
 
 ;       LITERAL ( w -- )
