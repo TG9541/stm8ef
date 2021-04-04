@@ -571,13 +571,8 @@ EMIT:
 ;       Subroutine for DOLITC and CCOMMALIT
 PUSHLIT:
         LDW     Y,(3,SP)
-        DECW    X               ; LSB = literal
         LD      A,(Y)
-        LD      (X),A
-        DECW    X               ; MSB = 0
-        CLR     A
-        LD      (X),A
-        RET
+        JP      ASTOR
 
 ;       CCOMMALIT ( - )
 ;       Compile inline literall byte into code dictionary.
@@ -607,7 +602,7 @@ DOLIT:
         LDW     Y,(1,SP)
         LDW     Y,(Y)
         LDW     (X),Y
-        JRA     POPYJPY
+        JRA     WSKIPRET
         .endif
 
         .ifne   HAS_DOLOOP
@@ -674,7 +669,7 @@ QDQBRAN:
 QBRAN:
         CALL    YFLAGS          ; Pull TOS to Y, flags
         JREQ    BRAN
-POPYJPY:
+WSKIPRET:
         POPW    Y
         JP      (2,Y)
 
@@ -807,12 +802,27 @@ AT:
 
         HEADER  STORE "!"
 STORE:
-        CALL    YFLAGS          ; a
+        .ifeq   SPEEDOVERSIZE
+        PUSHW   X               ; (16 bytes)
+        LDW     Y,X
+        LDW     X,(X)           ; a
+        PUSHW   X
+        LDW     X,Y
+        LDW     X,(2,X)         ; w
+        EXGW    X,Y
+        POPW    X
+        LDW     (X),Y
+        POPW    X
+        ADDW    X,#4
+        RET
+        .else
+        CALL    YFLAGS          ; a  (10 bytes)
         PUSHW   X
         LDW     X,(X)           ; w
         LDW     (Y),X
         POPW    X
         JRA     DROP
+        .endif
 
 ;       C@      ( a -- c )      ( TOS STM8: -- A,Z,N )
 ;       Push byte in memory to stack.
@@ -2892,6 +2902,7 @@ ABORT:
 ABORQ:
         CALL    QBRAN
         .dw     ABOR2           ; text flag
+ABORTS:
         CALL    DOSTR
 ABOR1:  CALL    SPACE
         CALL    COUNTTYPES
@@ -2927,15 +2938,15 @@ PRESE:
         HEADER  INTER "$INTERPRET"
 INTER:
         CALL    NAMEQ
-        CALL    QDQBRAN         ; ?defined
-        .dw     INTE1
-        CALL    CAT             ; get byte at name address na
-        AND     A,#COMPO        ; compile only lexicon bits
-        LD      (1,X),A
-        CALLR   ABORQ
+        CALL    YFLAGS          ; NA is 0 if undefined
+        JREQ    INTE1
+        LD      A,(Y)           ; get lexicon bits at NA
+        SLL     A               ; bit6 is #COMPO
+        JRPL    INTE0
+        CALLR   ABORTS          ; unconditional abort w/ text
         .db     13
         .ascii  " compile only"
-        JP      EXECU
+INTE0:  JP      EXECU
 INTE1:  CALL    NUMBQ           ; convert a number
         CALL    QBRAN
         .dw     ABOR1
@@ -3484,20 +3495,18 @@ PNAM1:  CALL    STRQP
         HEADER  SCOMP "$COMPILE"
 SCOMP:
         CALL    NAMEQ
-        CALL    QDQBRAN         ; ?defined
-        .dw     SCOM2
-        CALL    CAT
-        INCW    X
-        INCW    X
-        AND     A,#IMEDD
-        JREQ    SCOM1
-
-        JP      EXECU
-SCOM1:  JP      JSRC
-SCOM2:  CALL    NUMBQ           ; try to convert to number
+        CALL    YFLAGS          ; pop NA
+        JREQ    SCOM2           ; is NA undefined?
+        TNZ     (Y)             ; get lexicon bits (and word string length)
+        JRPL    SCOM1           ; test bit7 #IMEDD
+        JP      EXECU           ; execute CA as immediate word
+SCOM1:
+        JP      JSRC            ; else compile XT
+SCOM2:
+        CALL    NUMBQ           ; NA undefined: try to convert to number
         CALL    QBRAN
         .dw     ABOR1
-        JP      LITER
+        JP      LITER           ; compile literal
 
 ;       OVERT   ( -- )
 ;       Link a new word into vocabulary.
