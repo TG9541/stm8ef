@@ -344,6 +344,18 @@ _TRAP_Handler:
 
         .endif
 
+;       Macros for compiling inline literals using CALL COMPILIT
+        .macro ComLit w
+        call    COMPILIT
+        .dw     w
+        .endm
+
+        .macro ComLitR w
+        callr   COMPILIT
+        .dw     w
+        .endm
+
+
 ; ==============================================
 
 ;       Includes for board support code
@@ -3129,6 +3141,9 @@ CCOMMA:
         CALL    AFLAGS
         ; fall through
 
+;       A,  ( A -- )
+;       Compile a byte in A into code dictionary.
+;       GENALIAS  ACOMMA "A,"
 ACOMMA:
         EXGW    X,Y
         LDW     X,USRCP
@@ -3148,16 +3163,16 @@ JSRC:
         .ifne   HAS_CPNVM
         JRMI    1$              ; is the CALL target in ROM?
         TNZ     USRCP
-        JRPL    1$              ; call to RAM from RAM?
-        CALL    ABORQ           ; error: call to RAM from NVM
-        .db     7
+        JRPL    1$              ; RAM target called from RAM?
+        CALL    ABORQ           ; RAM called from ROM - that's likely an error
+        .db     7               ; hint: use "C, ," if calling RAM from ROM is really intended
         .ascii  " target"
 1$:
         .endif
         EXGW    X,Y
         DECW    X
-        DECW    X               ; calc CALLR <rel> 2-
-        SUBW    X,USRCP
+        DECW    X
+        SUBW    X,USRCP         ; XL = <rel> = <target-2-here>
         LD      A,XH
         EXGW    X,Y
         INC     A
@@ -3171,7 +3186,7 @@ JSRC:
         JRA     3$
 2$:
         LD      A,#CALL_OPC     ; opcode CALL
-        CALLR   ACOMMA           
+        CALLR   ACOMMA
 3$:
         JRA     COMMA           ; store absolute address or "CALLR reladdr"
 
@@ -3182,8 +3197,7 @@ JSRC:
         HEADFLG LITER "LITERAL" IMEDD
 LITER:
         .ifne  USE_CALLDOLIT
-        CALLR   COMPI
-        CALL    DOLIT
+        ComLit  DOLIT
         .else
         CALLR   CCOMMALIT
         .db     DOLIT_OPC
@@ -3249,8 +3263,7 @@ CNTPCPPSTORE:
 
         HEADFLG FOR "FOR" IMEDD
 FOR:
-        CALLR   COMPI
-        CALL    TOR
+        ComLitR TOR
         JP      HERE
 
 ;       NEXT    ( a -- )
@@ -3258,8 +3271,7 @@ FOR:
 
         HEADFLG NEXT "NEXT" IMEDD
 NEXT:
-        CALLR   COMPI
-        CALL    DONXT
+        ComLitR DONXT
         JP      COMMA
         .endif
 
@@ -3273,12 +3285,9 @@ DOO:
         CALL    CCOMMALIT
         .db     DOLIT_OPC       ; LOOP address cell for usage by LEAVE at runtime
         CALL    ZEROCOMMA       ; changes here require an offset adjustment in PLOOP
-        CALLR   COMPI
-        CALL    TOR
-        CALLR   COMPI
-        CALL    SWAPP
-        CALLR   COMPI
-        CALL    TOR
+        ComLitR TOR
+        ComLitR SWAPP
+        ComLitR TOR
         JRA     FOR
 
 ;       LOOP    ( a -- )
@@ -3286,8 +3295,7 @@ DOO:
 
         HEADFLG LOOP "LOOP" IMEDD
 LOOP:
-        CALL    COMPI
-        CALL    ONE
+        ComLitR ONE
         JRA     PLOOP
 
 ;       +LOOP   ( a +n -- )
@@ -3295,8 +3303,7 @@ LOOP:
 
         HEADFLG PLOOP "+LOOP" IMEDD
 PLOOP:
-        CALL    COMPI
-        CALL    DOPLOOP
+        ComLitR DOPLOOP
         CALL    HERE
         CALL    OVER            ; use mark from DO/FOR, apply negative offset
         DoLitC  14
@@ -3320,9 +3327,18 @@ BEGIN:
 
         HEADFLG UNTIL "UNTIL" IMEDD
 UNTIL:
-        CALL    COMPI
-        CALL    QBRAN
+        ComLitR QBRAN
         JP      COMMA
+
+;       COMPILIT  ( -- )
+;       Compile call to inline literall target address into code dictionary.
+;       GENALIAS  COMPILIT "COMPILIT"
+COMPILIT:
+        LDW     Y,(1,SP)        ; address of target literal
+        CALL    YAT
+        CALL    JSRC
+        POPW    Y
+        JP      (2,Y)
 
 ;       AGAIN   ( a -- )
 ;       Terminate a BEGIN-AGAIN
@@ -3339,8 +3355,7 @@ AGAIN:
 
         HEADFLG IFF "IF" IMEDD
 IFF:
-        CALL    COMPI
-        CALL    QBRAN
+        ComLitR QBRAN
         JRA     HERE0COMMA
 
 ;       THEN    ( A -- )
@@ -3410,8 +3425,7 @@ AFT:
 
         HEADFLG ABRTQ 'ABORT"' IMEDD
 ABRTQ:
-        CALL    COMPI
-        CALL    ABORQ
+        ComLit  ABORQ
         JRA     STRCQLOC
         .endif
 
@@ -3422,8 +3436,7 @@ ABRTQ:
         HEADFLG STRQ '$"' IMEDD
         .endif
 STRQ:
-        CALL    COMPI
-        CALL    STRQP
+        ComLit  STRQP
 STRCQLOC:
         JP      STRCQ
 
@@ -3433,8 +3446,7 @@ STRCQLOC:
 
         HEADFLG DOTQ '."' IMEDD
 DOTQ:
-        CALL    COMPI
-        CALL    DOTQP
+        ComLit  DOTQP
         JRA     STRCQLOC
         .endif
 
@@ -3562,8 +3574,7 @@ RBRAC:
 
         HEADFLG DOESS "DOES>" IMEDD
 DOESS:
-        CALL    COMPI
-        CALLR   DODOES          ; 3 CALL dodoes>
+        ComLit  DODOES          ; 3 CALL dodoes>
         CALL    HERE
         .ifne  USE_CALLDOLIT
         DoLitC  9
@@ -3572,8 +3583,7 @@ DOESS:
         .endif
         CALL    PLUS
         CALL    LITER           ; 3 CALL doLit + 2 (HERE+9)
-        CALL    COMPI
-        CALL    COMMA           ; 3 CALL COMMA
+        ComLit  COMMA           ; 3 CALL COMMA
         CALL    CCOMMALIT
         .db     EXIT_OPC        ; 1 RET (EXIT)
         RET
@@ -3594,8 +3604,7 @@ DODOES:
         CALL    ONEP            ; ' HERE ('+1)
         CALL    STORE           ; ' \ CALL DOVAR <- JP HERE
         .ifne  USE_CALLDOLIT
-        CALL    COMPI
-        CALL    DOLIT           ; ' \ HERE <- DOLIT
+        ComLit  DOLIT           ; ' \ HERE <- DOLIT
         .else
         CALL    CCOMMALIT
         .db     DOLIT_OPC       ; \ HERE <- DOLIT <- ('+3) <- branch
@@ -3631,8 +3640,7 @@ YAT:
 CREAT:
         CALL    TOKSNAME        ; copy token to dictionary
         CALL    OVERT
-        CALL    COMPI
-        CALL    DOVAR
+        ComLit  DOVAR
         RET
 
         .ifeq   UNLINK_CONST
@@ -3642,8 +3650,7 @@ CREAT:
         HEADER CONST "CONSTANT"
 CONST:
         CALL    COLON
-        CALL    COMPI
-        CALLR   DOCON           ; compile action code
+        ComLit  DOCON           ; compile action code
         CALL    COMMA           ; compile constant
         CALL    LBRAC
         CALL    OVERT

@@ -890,6 +890,12 @@
 ```
 
 ```
+;       POSTPONE ( -- )
+;       postpone the compilation behavior of the next word in the parse area
+;       this should be sufficent to replace COMPILE and [COMPILE]
+```
+
+```
 ;       ,       ( w -- )
 ;       Compile an integer into
 ;       code dictionary.
