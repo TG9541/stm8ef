@@ -2,11 +2,10 @@
 \ ------------------------------------------------------------------------------
 
 : ]@  \ like "[ a ] LITERAL @"
-  [COMPILE] [
+  POSTPONE [
   $90CE , ,   \  LDW  Y,a
   $5A5A ,     \  DECW X  DECW X
-  $FF C,      \  LDW  (X),Y
-  [COMPILE] ]
+  $FF C, ]    \  LDW  (X),Y
 ; IMMEDIATE
 
 \\ Example:
