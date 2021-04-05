@@ -855,8 +855,7 @@ RFROM:
 ;       doVARPTR ( - a )    ( TOS STM8: - Y,Z,N )
 DOVARPTR:
         POPW    Y               ; get return addr (pfa)
-        LDW     Y,(Y)
-        JRA     YSTOR
+        JP      YAT
         .endif
 
 ;       doVAR   ( -- a )     ( TOS STM8: -- Y,Z,N )
@@ -933,8 +932,7 @@ DDROP:
         HEADER  DUPP "DUP"
 DUPP:
         LDW     Y,X
-        LDW     Y,(Y)
-        JRA     YSTOR
+        JP      YAT
 
 ;       SWAP ( w1 w2 -- w2 w1 ) ( TOS STM8: -- Y,Z,N )
 ;       Exchange top two stack items.
