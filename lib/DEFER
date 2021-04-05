@@ -17,10 +17,10 @@ NVM
 
   : DEFER ( "name" xt -- )
     \ use NOP for masking the JP opcode (no ALIAS), initialize with NOOP
-    : ( NOP JP ) $9DCC , ['] NOOP , [COMPILE] [ OVERT ;
+    : ( NOP JP ) $9DCC , ['] NOOP , POSTPONE [ OVERT ;
 
   : IS ( xt "<space>name" -- ) STATE IF
-      [COMPILE] ['] COMPILE DEFER!
+      POSTPONE ['] POSTPONE DEFER!
     ELSE
       ' DEFER!
     THEN ; IMMEDIATE
