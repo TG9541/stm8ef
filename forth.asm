@@ -344,6 +344,18 @@ _TRAP_Handler:
 
         .endif
 
+;       Macros for compiling inline literals using CALL COMPILIT
+        .macro ComLit w
+        call    COMPILIT
+        .dw     w
+        .endm
+
+        .macro ComLitR w
+        callr   COMPILIT
+        .dw     w
+        .endm
+
+
 ; ==============================================
 
 ;       Includes for board support code
@@ -567,34 +579,15 @@ EMIT:
 ; ==============================================
 ; The kernel
 
-;       PUSHLIT ( - C )
-;       Subroutine for DOLITC and CCOMMALIT
-PUSHLIT:
-        LDW     Y,(3,SP)
-        DECW    X               ; LSB = literal
-        LD      A,(Y)
-        LD      (X),A
-        DECW    X               ; MSB = 0
-        CLR     A
-        LD      (X),A
-        RET
-
-;       CCOMMALIT ( - )
-;       Compile inline literall byte into code dictionary.
-CCOMMALIT:
-        CALLR   PUSHLIT
-        CALL    CCOMMA
-CSKIPRET:
-        POPW    Y
-        JP      (1,Y)
-
         .ifne   USE_CALLDOLIT
 
 ;       DOLITC  ( - C )
 ;       Push an inline literal character (8 bit).
 DOLITC:
-        CALLR   PUSHLIT
-        JRA     CSKIPRET
+        LDW     Y,(1,SP)
+        LD      A,(Y)
+        CALL    ASTOR
+        JP      CSKIPRET
 
 ;       doLit   ( -- w )
 ;       Push an inline literal.
@@ -607,7 +600,7 @@ DOLIT:
         LDW     Y,(1,SP)
         LDW     Y,(Y)
         LDW     (X),Y
-        JRA     POPYJPY
+        JRA     WSKIPRET
         .endif
 
         .ifne   HAS_DOLOOP
@@ -674,7 +667,7 @@ QDQBRAN:
 QBRAN:
         CALL    YFLAGS          ; Pull TOS to Y, flags
         JREQ    BRAN
-POPYJPY:
+WSKIPRET:
         POPW    Y
         JP      (2,Y)
 
@@ -807,12 +800,27 @@ AT:
 
         HEADER  STORE "!"
 STORE:
-        CALL    YFLAGS          ; a
+        .ifeq   SPEEDOVERSIZE
+        PUSHW   X               ; (16 bytes)
+        LDW     Y,X
+        LDW     X,(X)           ; a
+        PUSHW   X
+        LDW     X,Y
+        LDW     X,(2,X)         ; w
+        EXGW    X,Y
+        POPW    X
+        LDW     (X),Y
+        POPW    X
+        ADDW    X,#4
+        RET
+        .else
+        CALL    YFLAGS          ; a  (10 bytes)
         PUSHW   X
         LDW     X,(X)           ; w
         LDW     (Y),X
         POPW    X
         JRA     DROP
+        .endif
 
 ;       C@      ( a -- c )      ( TOS STM8: -- A,Z,N )
 ;       Push byte in memory to stack.
@@ -859,8 +867,7 @@ RFROM:
 ;       doVARPTR ( - a )    ( TOS STM8: - Y,Z,N )
 DOVARPTR:
         POPW    Y               ; get return addr (pfa)
-        LDW     Y,(Y)
-        JRA     YSTOR
+        JP      YAT
         .endif
 
 ;       doVAR   ( -- a )     ( TOS STM8: -- Y,Z,N )
@@ -937,8 +944,7 @@ DDROP:
         HEADER  DUPP "DUP"
 DUPP:
         LDW     Y,X
-        LDW     Y,(Y)
-        JRA     YSTOR
+        JP      YAT
 
 ;       SWAP ( w1 w2 -- w2 w1 ) ( TOS STM8: -- Y,Z,N )
 ;       Exchange top two stack items.
@@ -2892,6 +2898,7 @@ ABORT:
 ABORQ:
         CALL    QBRAN
         .dw     ABOR2           ; text flag
+ABORTS:
         CALL    DOSTR
 ABOR1:  CALL    SPACE
         CALL    COUNTTYPES
@@ -2927,15 +2934,15 @@ PRESE:
         HEADER  INTER "$INTERPRET"
 INTER:
         CALL    NAMEQ
-        CALL    QDQBRAN         ; ?defined
-        .dw     INTE1
-        CALL    CAT             ; get byte at name address na
-        AND     A,#COMPO        ; compile only lexicon bits
-        LD      (1,X),A
-        CALLR   ABORQ
+        CALL    YFLAGS          ; NA is 0 if undefined
+        JREQ    INTE1
+        LD      A,(Y)           ; get lexicon bits at NA
+        SLL     A               ; bit6 is #COMPO
+        JRPL    INTE0
+        CALLR   ABORTS          ; unconditional abort w/ text
         .db     13
         .ascii  " compile only"
-        JP      EXECU
+INTE0:  JP      EXECU
 INTE1:  CALL    NUMBQ           ; convert a number
         CALL    QBRAN
         .dw     ABOR1
@@ -3106,66 +3113,82 @@ POSTP:
         DoLitW  JSRC            ; XT of CALL,
 1$:     JRA     JSRC            ; compile XT
 
+;       CCOMMALIT ( - )
+;       Compile inline literall byte into code dictionary.
+CCOMMALIT:
+        LDW     Y,(1,SP)
+        LD      A,(Y)
+        CALLR   ACOMMA
+CSKIPRET:
+        POPW    Y
+        JP      (1,Y)
+
 ;       ,       ( w -- )
 ;       Compile an integer into
 ;       code dictionary.
 
         HEADER  COMMA ^/","/
 COMMA:
-        DoLitC  2
-        CALLR   OMMA
-        JP      STORE
+        LD      A,(X)
+        CALLR   ACOMMA
+        JRA     CCOMMA
 
 ;       C,      ( c -- )
 ;       Compile a byte into code dictionary.
 
         HEADER  CCOMMA ^/"C,"/
 CCOMMA:
-        CALL    ONE
-        CALLR   OMMA
-        JP      CSTOR
+        CALL    AFLAGS
+        ; fall through
 
-;       common part of COMMA and CCOMMA
-OMMA:
-        CALL    HERE
-        CALL    SWAPP
-        CALL    CPP
-        JP      PSTOR
+;       A,  ( A -- )
+;       Compile a byte in A into code dictionary.
+;       GENALIAS  ACOMMA "A,"
+ACOMMA:
+        EXGW    X,Y
+        LDW     X,USRCP
+        LD      (X),A
+        INCW    X
+        LDW     USRCP,X
+        EXGW    X,Y
+        RET
 
 ;       CALL,   ( ca -- )
 ;       Compile a subroutine call.
 
         HEADER  JSRC ^/"CALL,"/
 JSRC:
-        CALL    DUPP
-        CALL    HERE
-        CALL    CELLP
-        CALL    SUBB            ; Y now contains the relative call address
-        LD      A,YH
+        LDW     Y,X
+        LDW     Y,(Y)
+        .ifne   HAS_CPNVM
+        JRMI    1$              ; is the CALL target in ROM?
+        TNZ     USRCP
+        JRPL    1$              ; RAM target called from RAM?
+        CALL    ABORQ           ; RAM called from ROM - that's likely an error
+        .db     7               ; hint: use "C, ," if calling RAM from ROM is really intended
+        .ascii  " target"
+1$:
+        .endif
+        EXGW    X,Y
+        DECW    X
+        DECW    X
+        SUBW    X,USRCP         ; XL = <rel> = <target-2-here>
+        LD      A,XH
+        EXGW    X,Y
         INC     A
-        JRNE    1$              ; YH must be 0xFF
+        JRNE    2$              ; YH must be 0xFF
         LD      A,YL
         TNZ     A
-        JRPL    1$              ; YL must be negative
+        JRPL    2$              ; YL must be negative
         LD      A,#CALLR_OPC
         LD      YH,A            ; replace YH with opcode CALLR
-        LDW     (2,X),Y
-        JRA     2$
-1$:
-        CALL    CCOMMALIT
-        .db     CALL_OPC         ; opcode CALL
+        LDW     (X),Y
+        JRA     3$
 2$:
-        CALL    DROP             ; drop relative address
-        .ifne   HAS_CPNVM
-        JRMI    3$               ; DROP leaves CALL, data in Y
-        TNZ     USRCP
-        JRPL    3$               ; call to RAM from RAM
-        CALL    ABORQ            ; error: call to RAM from NVM
-        .db     7
-        .ascii  " target"
+        LD      A,#CALL_OPC     ; opcode CALL
+        CALLR   ACOMMA
 3$:
-        .endif
-        JRA     COMMA            ; store absolute address or "CALLR reladdr"
+        JRA     COMMA           ; store absolute address or "CALLR reladdr"
 
 ;       LITERAL ( w -- )
 ;       Compile tos to dictionary
@@ -3174,10 +3197,9 @@ JSRC:
         HEADFLG LITER "LITERAL" IMEDD
 LITER:
         .ifne  USE_CALLDOLIT
-        CALLR   COMPI
-        CALL    DOLIT
+        ComLit  DOLIT
         .else
-        CALL    CCOMMALIT
+        CALLR   CCOMMALIT
         .db     DOLIT_OPC
         .endif
         JRA      COMMA
@@ -3241,8 +3263,7 @@ CNTPCPPSTORE:
 
         HEADFLG FOR "FOR" IMEDD
 FOR:
-        CALLR   COMPI
-        CALL    TOR
+        ComLitR TOR
         JP      HERE
 
 ;       NEXT    ( a -- )
@@ -3250,8 +3271,7 @@ FOR:
 
         HEADFLG NEXT "NEXT" IMEDD
 NEXT:
-        CALLR   COMPI
-        CALL    DONXT
+        ComLitR DONXT
         JP      COMMA
         .endif
 
@@ -3265,12 +3285,9 @@ DOO:
         CALL    CCOMMALIT
         .db     DOLIT_OPC       ; LOOP address cell for usage by LEAVE at runtime
         CALL    ZEROCOMMA       ; changes here require an offset adjustment in PLOOP
-        CALLR   COMPI
-        CALL    TOR
-        CALLR   COMPI
-        CALL    SWAPP
-        CALLR   COMPI
-        CALL    TOR
+        ComLitR TOR
+        ComLitR SWAPP
+        ComLitR TOR
         JRA     FOR
 
 ;       LOOP    ( a -- )
@@ -3278,8 +3295,7 @@ DOO:
 
         HEADFLG LOOP "LOOP" IMEDD
 LOOP:
-        CALL    COMPI
-        CALL    ONE
+        ComLitR ONE
         JRA     PLOOP
 
 ;       +LOOP   ( a +n -- )
@@ -3287,8 +3303,7 @@ LOOP:
 
         HEADFLG PLOOP "+LOOP" IMEDD
 PLOOP:
-        CALL    COMPI
-        CALL    DOPLOOP
+        ComLitR DOPLOOP
         CALL    HERE
         CALL    OVER            ; use mark from DO/FOR, apply negative offset
         DoLitC  14
@@ -3312,9 +3327,18 @@ BEGIN:
 
         HEADFLG UNTIL "UNTIL" IMEDD
 UNTIL:
-        CALL    COMPI
-        CALL    QBRAN
+        ComLitR QBRAN
         JP      COMMA
+
+;       COMPILIT  ( -- )
+;       Compile call to inline literall target address into code dictionary.
+;       GENALIAS  COMPILIT "COMPILIT"
+COMPILIT:
+        LDW     Y,(1,SP)        ; address of target literal
+        CALL    YAT
+        CALL    JSRC
+        POPW    Y
+        JP      (2,Y)
 
 ;       AGAIN   ( a -- )
 ;       Terminate a BEGIN-AGAIN
@@ -3331,8 +3355,7 @@ AGAIN:
 
         HEADFLG IFF "IF" IMEDD
 IFF:
-        CALL    COMPI
-        CALL    QBRAN
+        ComLitR QBRAN
         JRA     HERE0COMMA
 
 ;       THEN    ( A -- )
@@ -3402,8 +3425,7 @@ AFT:
 
         HEADFLG ABRTQ 'ABORT"' IMEDD
 ABRTQ:
-        CALL    COMPI
-        CALL    ABORQ
+        ComLit  ABORQ
         JRA     STRCQLOC
         .endif
 
@@ -3414,8 +3436,7 @@ ABRTQ:
         HEADFLG STRQ '$"' IMEDD
         .endif
 STRQ:
-        CALL    COMPI
-        CALL    STRQP
+        ComLit  STRQP
 STRCQLOC:
         JP      STRCQ
 
@@ -3425,8 +3446,7 @@ STRCQLOC:
 
         HEADFLG DOTQ '."' IMEDD
 DOTQ:
-        CALL    COMPI
-        CALL    DOTQP
+        ComLit  DOTQP
         JRA     STRCQLOC
         .endif
 
@@ -3484,20 +3504,18 @@ PNAM1:  CALL    STRQP
         HEADER  SCOMP "$COMPILE"
 SCOMP:
         CALL    NAMEQ
-        CALL    QDQBRAN         ; ?defined
-        .dw     SCOM2
-        CALL    CAT
-        INCW    X
-        INCW    X
-        AND     A,#IMEDD
-        JREQ    SCOM1
-
-        JP      EXECU
-SCOM1:  JP      JSRC
-SCOM2:  CALL    NUMBQ           ; try to convert to number
+        CALL    YFLAGS          ; pop NA
+        JREQ    SCOM2           ; is NA undefined?
+        TNZ     (Y)             ; get lexicon bits (and word string length)
+        JRPL    SCOM1           ; test bit7 #IMEDD
+        JP      EXECU           ; execute CA as immediate word
+SCOM1:
+        JP      JSRC            ; else compile XT
+SCOM2:
+        CALL    NUMBQ           ; NA undefined: try to convert to number
         CALL    QBRAN
         .dw     ABOR1
-        JP      LITER
+        JP      LITER           ; compile literal
 
 ;       OVERT   ( -- )
 ;       Link a new word into vocabulary.
@@ -3556,8 +3574,7 @@ RBRAC:
 
         HEADFLG DOESS "DOES>" IMEDD
 DOESS:
-        CALL    COMPI
-        CALLR   DODOES          ; 3 CALL dodoes>
+        ComLit  DODOES          ; 3 CALL dodoes>
         CALL    HERE
         .ifne  USE_CALLDOLIT
         DoLitC  9
@@ -3566,8 +3583,7 @@ DOESS:
         .endif
         CALL    PLUS
         CALL    LITER           ; 3 CALL doLit + 2 (HERE+9)
-        CALL    COMPI
-        CALL    COMMA           ; 3 CALL COMMA
+        ComLit  COMMA           ; 3 CALL COMMA
         CALL    CCOMMALIT
         .db     EXIT_OPC        ; 1 RET (EXIT)
         RET
@@ -3588,8 +3604,7 @@ DODOES:
         CALL    ONEP            ; ' HERE ('+1)
         CALL    STORE           ; ' \ CALL DOVAR <- JP HERE
         .ifne  USE_CALLDOLIT
-        CALL    COMPI
-        CALL    DOLIT           ; ' \ HERE <- DOLIT
+        ComLit  DOLIT           ; ' \ HERE <- DOLIT
         .else
         CALL    CCOMMALIT
         .db     DOLIT_OPC       ; \ HERE <- DOLIT <- ('+3) <- branch
@@ -3625,8 +3640,7 @@ YAT:
 CREAT:
         CALL    TOKSNAME        ; copy token to dictionary
         CALL    OVERT
-        CALL    COMPI
-        CALL    DOVAR
+        ComLit  DOVAR
         RET
 
         .ifeq   UNLINK_CONST
@@ -3636,8 +3650,7 @@ CREAT:
         HEADER CONST "CONSTANT"
 CONST:
         CALL    COLON
-        CALL    COMPI
-        CALLR   DOCON           ; compile action code
+        ComLit  DOCON           ; compile action code
         CALL    COMMA           ; compile constant
         CALL    LBRAC
         CALL    OVERT
