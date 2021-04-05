@@ -3089,7 +3089,7 @@ TICK:
         RET
 1$:     JP      ABOR1
 
-        .ifeq BOOTSTRAP
+        .ifeq   REMOVE_BCOMP
 ;       [COMPILE]       ( -- ; <string> )
 ;       Compile next immediate
 ;       word into code dictionary.
@@ -3106,6 +3106,21 @@ BCOMP:
 
         HEADFLG POSTP "POSTPONE" IMEDD
 POSTP:
+        .ifne   REMOVE_COMPI
+;       COMPILE ( -- )
+;       Ersatz using POSTPONE
+
+;       GENALIAS  COMPI "COMPILE" IMEDD
+COMPI:
+        .endif
+        .ifne   REMOVE_BCOMP
+;       [COMPILE] ( -- )
+;       Ersatz using POSTPONE
+
+;       GENALIAS  BCOMP "[COMPILE]" IMEDD
+BCOMP:
+        .endif
+
         CALLR   TICK            ; Y contains NA (aborts if NA is undefined)
         TNZ     (Y)             ; test lexicon bit7 #IMEDD
         JRMI    1$              ; IMMED flag set -> compile CA/XT as immediate word
@@ -3204,6 +3219,7 @@ LITER:
         .endif
         JRA      COMMA
 
+        .ifeq   REMOVE_COMPI
 ;       COMPILE ( -- )
 ;       Compile next jsr in
 ;       colon list to code dictionary.
@@ -3236,7 +3252,7 @@ COMPIO2:
         EXGW    X,Y
         CALL    YSTOR
         JRA     JSRC            ; compile subroutine
-
+        .endif
 
 ;       $,"     ( -- )
 ;       Compile a literal string

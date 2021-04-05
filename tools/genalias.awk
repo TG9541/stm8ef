@@ -91,8 +91,8 @@ p == 1 && (($2~/:$/) || ($3~/:$/))  {
 
 p == 2 && index($3,label ":") {
   p = 3
-  info("label found: " label)
-  next
+  info("label found: " label " cOneIsAddress: " cOneIsAddress)
+  # next
 }
 
 p > 0 && index($2,label ":") {
