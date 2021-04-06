@@ -2,7 +2,7 @@
 
 [![Travis-CI](https://travis-ci.org/TG9541/stm8ef.svg)](https://travis-ci.org/TG9541/stm8ef)
 
-STM8 eForth is an interactive Forth system for the full range of [STM8 8-bit MCUs](https://www.st.com/en/microcontrollers-microprocessors/stm8-8-bit-mcus.html), including low power and low cost variants. The Forth console, an interpreter-compiler, turns a $0.20 device into a "computer". Multi-tasking features allow interactive control of peripherals, parameter tuning and even compiling code into an application while it's running.
+STM8 eForth is an interactive Forth system for the full range of [STM8 8-bit MCUs](https://www.st.com/en/microcontrollers-microprocessors/stm8-8-bit-mcus.html) including low power and low cost variants. The Forth console, an interpreter-compiler, turns a $0.20 device into a "computer". Multi-tasking features allow interactive control of peripherals, parameter tuning and even compiling code into an application while it's running. A range of code examples for controlling the STM8 peripherals (e.g. I2C, ADC, PWM, RTC, etc) can be used as a starting point fo applications.
 
 The original STM8 eForth was written by [Dr. C.H. Ting's eForth](http://www.forth.org/svfig/kk/07-2010.html) for the STM8S Discovery. With the kind permission of Dr. Ting the code presented here is under [MIT license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md). Bugs were fixed, code size reduced, standards compatibility improved and many features were added (e.g. compilation to Flash memory, autostart code, interrupt handling - see [overview](https://github.com/TG9541/stm8ef#stm8-eforth-feature-overview)).
 
@@ -18,13 +18,19 @@ Forth works by defining new words with phrases of existing words - "Hello World"
 : hello ."  Hello World!" ;
 ```
 
-Forth phrases often look like Yoda-speak (object, subject verb, e.g. `15 deg servo2 turn-by` or `center servo2 turn-to`). Forth is a "low level" language that offers a high level of abstraction: from onw word to the next data flows on the stack and in most cases there is no need for temporary variables. This naturally leads to a very good code density and it makes Forth well suited for embedded control.
+Forth is a "low level" language that offers a high level of abstraction:
+
+Forth has no real syntax but good phrases look like Yoda speaking ("object subject verb", e.g. `15 deg left servo turn-by` or `center right servo turn-to`). Even control structures are just Forth words.
+
+Data flows on the stack from one word to the next - in most cases temporary variables aren't needed. This not only leads to very good code density but it also simplifies testing.
 
 The best feature of Forth is that it allows interactive use of words and phrases. This turns the embedded system into an application oriented test environment!
 
-Find out more in the [STM8 eForth Walk-Through](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Programming).
+Forth is so simple that you can learn the basics in a snap, e.g. in the [STM8 eForth Walk-Through](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Programming).
 
 ## About STM8 eForth
+
+STM8 eForth itself is coded in STM8 assembler but it uses the SDCC tool chain. Combining Forth with C is possible.
 
 STM8 eForth is highly configurable: a Forth binary that allows compiling new words to Flash fits in 4 to 5.5K ROM (a minimal interactive system fits in 3.5K). Due to the extraordinary code density a very-low-cost 8K device, e.g. [STM8S003F3P6](https://www.st.com/resource/en/datasheet/stm8s003f3.pdf) or [STM8L051F3P6](https://www.st.com/resource/en/datasheet/stm8l051F3.pdf) has sufficent space for non-trivial applications. If more is needed, low-cost 32K devices with many GPIOs or a richer set of peripherals can be used, e.g. [STM8S005C6](https://www.st.com/resource/en/datasheet/stm8s005c6.pdf) or [STM8L052C6](https://www.st.com/resource/en/datasheet/stm8l052c6.pdf).
 
