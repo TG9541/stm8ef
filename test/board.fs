@@ -77,32 +77,24 @@ T{ -1000 55 101 */MOD -> 45 -545 }T
 T{ -1 -1 UM* -> 1 -2 }T
 T{ 31 -3010 M* -> -27774 -2 }T
 
-\ core: test POSTPONE
-
-: PIF POSTPONE IF ; IMMEDIATE
-: PSWAP POSTPONE SWAP ; IMMEDIATE
-: tpif PIF 123 ELSE 321 THEN ;
-T{ -1 tpif -> 123 }T
-T{ 0  tpif -> 321 }T
-: tpswap PSWAP ;
-T{ 1 -1  tpswap -> -1 1 }T
-
-\ test background and idle tasks
+\ core: test background and idle tasks
 #require 'IDLE
 VARIABLE BGTEST  1 BGTEST !   \ flag: bgd not run
 VARIABLE IDTEST  0 IDTEST !   \ flag: idl not run
 : idl BGTEST @ IDTEST ! ;
 ' idl 'IDLE !  \ activate IDLE task
 T{ 'IDLE @ -> ' idl }T
+
 \ assumption: idl has been called at least once
 T{ IDTEST @ -> 1 }T
 : bgd -1 BGTEST ! ;
 ' bgd BG !     \ activate background task
 T{ BG @ -> ' bgd }T
+
 \ assumption bgd and idl have been called at least once
 T{ IDTEST @ -> -1 }T
 
-\ NVM features, 'BOOT vector, and COLD
+\ core: NVM features, 'BOOT vector, and COLD
 NVM
 VARIABLE varNVM
 : startNVM   ( -- )   \ make cold respond with OK
@@ -149,6 +141,51 @@ T{    2 -1   1 gd7 -> -1 0 1              3  }T
 T{  -20 30 -10 gd7 -> 30 20 10  0 -10 -20 6  }T
 T{  -20 31 -10 gd7 -> 31 21 11  1  -9 -19 6  }T
 T{  -20 29 -10 gd7 -> 29 19  9 -1 -11     5  }T
+
+\ start over - we'll need some RAM
+COLD
+
+\ core: POSTPONE
+
+: pif POSTPONE IF ; IMMEDIATE
+: pswap POSTPONE SWAP ; IMMEDIATE
+: tpif pif 123 ELSE 321 THEN ;
+T{ -1 tpif -> 123 }T
+T{ 0  tpif -> 321 }T
+
+: tpswap pswap ;
+T{ 1 -1  tpswap -> -1 1 }T
+
+\ core: EVALUATE
+
+#require EVALUATE
+#require S"
+
+: gt1 S" 7 3 DUP * +" ;
+: gt2 S" 7 3 DUP + *" ;
+T{ gt1 EVALUATE -> 16 }T
+T{ gt2 EVALUATE -> 42 }T
+
+\ extended: structures with relative addressing
+
+#require >REL
+
+: ]B@IF ( -- ) 2* $7201 + , , ] >REL ;  \ BTJF  a,#bit,rel
+: ]@IF  ( -- ) $90CE , , ( LDW Y,a ) ] POSTPONE JREQ ;
+: ]C@IF ( -- ) $C6 C, ,  ( LD  A,a ) ] POSTPONE JREQ ;
+
+VARIABLE vt
+: testB  vt ! [ vt 1 ]B@IF 123 ELSE 321 THEN ;
+: testNZ vt !    [ vt ]@IF 123 ELSE 321 THEN ;
+: testIF                IF 123 ELSE 321 THEN ;
+
+T{ 512 testB  -> 123 }T
+T{   0 testB  -> 321 }T
+T{ 1 testNZ -> 123 }T
+T{ 0 testNZ -> 321 }T
+T{ 1 testIF -> 123 }T
+T{ 0 testIF -> 321 }T
+
 
 \ start over - we'll need some RAM
 COLD
