@@ -2,7 +2,7 @@
 \ ------------------------------------------------------------------------------
 
 #require >REL
-: ]C@IF ( -- ) $C6 C, , ] [COMPILE] JREQ ; \ LD A,aaaa
+: ]C@IF ( -- ) $C6 C, , ] POSTPONE JREQ ; \ LD A,aaaa
 
 \\ Example:
 

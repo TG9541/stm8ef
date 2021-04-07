@@ -3,16 +3,15 @@
 
 #require >Y
 
-: THEN ( -- ) [COMPILE] [ HERE OVER - 1- SWAP C! [COMPILE] ] ; IMMEDIATE
+: THEN ( -- ) POSTPONE [ HERE OVER - 1- SWAP C! ] ; IMMEDIATE
 
 : >REL ( -- ) HERE 0 C, ;  \ like >MARK for rel. branch
 
-: ELSE ( -- )  [COMPILE] [ $20 C, [COMPILE] ] >REL   \ JRA rel
-    SWAP [COMPILE] THEN ; IMMEDIATE
+: ELSE ( -- )  POSTPONE [ ( JRA ) $20 C, ] >REL SWAP POSTPONE THEN ; IMMEDIATE
 
-: JREQ ( F:Z -- ) [COMPILE] [ $27 C, [COMPILE] ] >REL ; IMMEDIATE
+: JREQ ( F:Z -- ) POSTPONE [ $27 C, ] >REL ; IMMEDIATE
 
-: IF ( n -- ) COMPILE >Y [COMPILE] JREQ ; IMMEDIATE
+: IF ( n -- ) POSTPONE >Y POSTPONE JREQ ; IMMEDIATE
 
 \\ Example
 
@@ -20,9 +19,9 @@
 
 : ]B@IF ( -- ) 2* $7201 + , , ] >REL ;  \ BTJF  a,#bit,rel
 
-: ]@IF  ( -- ) $90CE , , ( LDW Y,a ) ] [COMPILE] JREQ ;
+: ]@IF  ( -- ) $90CE , , ( LDW Y,a ) ] POSTPONE JREQ ;
 
-: ]C@IF ( -- ) $C6 C, ,  ( LD  A,a ) ] [COMPILE] JREQ ;
+: ]C@IF ( -- ) $C6 C, ,  ( LD  A,a ) ] POSTPONE JREQ ;
 
 NVM
 VARIABLE vt
@@ -34,5 +33,5 @@ RAM
 
 \ : >RES ( -- ) HERE OVER - 1- SWAP C! ; \ like >RESOLVE
 \ : THEN ( -- ) >RES ; IMMEDIATE
-\ : AHEAD ( -- ) [COMPILE] [ $20 C, ( JRA xx ) [COMPILE] ] >REL ; IMMEDIATE
-\ : ELSE ( -- )  [COMPILE] AHEAD SWAP [COMPILE] THEN ; IMMEDIATE
+\ : AHEAD ( -- ) POSTPONE [ $20 C, ( JRA xx ) ] >REL ; IMMEDIATE
+\ : ELSE ( -- ) POSTPONE AHEAD SWAP POSTPONE THEN ; IMMEDIATE

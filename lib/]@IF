@@ -2,7 +2,7 @@
 \ ------------------------------------------------------------------------------
 
 #require >REL
-: ]@IF  ( -- ) $90CE , , ( LDW Y,a ) ] [COMPILE] JREQ ;
+: ]@IF  ( -- ) $90CE , , ( LDW Y,a ) ] POSTPONE JREQ ;
 
 \\ Example:
 
@@ -11,7 +11,7 @@
 VARIABLE vt
 
 : test ( -- )
-  [ vt ]C@IF
+  [ vt ]@IF
     ."  vt not 0"
   THEN
 ;

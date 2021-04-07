@@ -218,15 +218,15 @@
         ISPPSIZE  =     0       ; no interrupt tasks without NVM
         .endif
 
-        UPP   = UPPLOC          ; "C_UPP"  offset user area
+        UPP   = UPPLOC          ; "C_UPP" constant offset user area
         PADBG = UPPLOC-1        ; PAD in background task growing down from here
         CTOP  = CTOPLOC         ; dictionary start, growing up
                                 ; note: PAD is inbetween CTOP and SPP
-        SPP   = ISPP-ISPPSIZE   ; "C_SPP"  data stack, growing down (with SPP-1 first)
-        ISPP  = SPPLOC-BSPPSIZE ; "C_ISPP" Interrupt data stack, growing down
-        BSPP  = SPPLOC          ; "C_BSPP" Background data stack, growing down
-        TIBB  = SPPLOC          ; "C_TIB"  Term. Input Buf. TIBLENGTH between SPPLOC and RPP
-        RPP   = RPPLOC          ; "C_RPP"  return stack, growing down
+        SPP   = ISPP-ISPPSIZE   ; "SPP"  data stack, growing down (with SPP-1 first)
+        ISPP  = SPPLOC-BSPPSIZE ; "ISPP" Interrupt data stack, growing down
+        BSPP  = SPPLOC          ; "BSPP" Background data stack, growing down
+        TIBB  = SPPLOC          ; "TIB"  Term. Input Buf. TIBLENGTH between SPPLOC and RPP
+        RPP   = RPPLOC          ; "RPP"  constant addr. return stack, growing down
 
         ; Core variables (same order as 'BOOT initializer block)
 
@@ -1857,10 +1857,10 @@ TCHAR:
 DEPTH:
         LDW     Y,X
         NEGW    X
-        ADDW    X,#SPP
+        ADDW    X,PRSPP+1        ; use SPP constant from PC_SPP in PRESET
         SRAW    X
         ;DECW    X               ; fixed: off-by-one to compensate error in "rp!"
-        EXGW    X,Y
+XSTOR:  EXGW    X,Y
         JP      YSTOR
 
 ; Memory access
@@ -2920,9 +2920,9 @@ ABOR2:  CALL    DOSTR
 PRESE:
         CLRW    X
         LDW     USRNTIB,X
-        LDW     X,#TIBB         ; "TIB" addr. const. Terminal Input Buffer
+        LDW     X,#TIBB         ; "PC_TIB" addr. const. Terminal Input Buffer
         LDW     USRBUFFER,X
-        LDW     X,#SPP          ; "SPP" addr. const. top of data stack
+PRSPP:  LDW     X,#SPP          ; "PC_SPP" addr. const. top of data stack
         RET
 
 ; The text interpreter
@@ -3089,7 +3089,7 @@ TICK:
         RET
 1$:     JP      ABOR1
 
-        .ifeq BOOTSTRAP
+        .ifeq   REMOVE_BCOMP
 ;       [COMPILE]       ( -- ; <string> )
 ;       Compile next immediate
 ;       word into code dictionary.
@@ -3106,6 +3106,21 @@ BCOMP:
 
         HEADFLG POSTP "POSTPONE" IMEDD
 POSTP:
+        .ifne   REMOVE_COMPI
+;       COMPILE ( -- )
+;       Ersatz using POSTPONE
+
+;       GENALIAS  COMPI "COMPILE" IMEDD
+COMPI:
+        .endif
+        .ifne   REMOVE_BCOMP
+;       [COMPILE] ( -- )
+;       Ersatz using POSTPONE
+
+;       GENALIAS  BCOMP "[COMPILE]" IMEDD
+BCOMP:
+        .endif
+
         CALLR   TICK            ; Y contains NA (aborts if NA is undefined)
         TNZ     (Y)             ; test lexicon bit7 #IMEDD
         JRMI    1$              ; IMMED flag set -> compile CA/XT as immediate word
@@ -3204,6 +3219,7 @@ LITER:
         .endif
         JRA      COMMA
 
+        .ifeq   REMOVE_COMPI
 ;       COMPILE ( -- )
 ;       Compile next jsr in
 ;       colon list to code dictionary.
@@ -3233,10 +3249,9 @@ COMPIO1:
 1$:     LD      XL,A
         ADDW    X,(1,SP)        ; add offset in X to address of next instruction
 COMPIO2:
-        EXGW    X,Y
-        CALL    YSTOR
+        CALL    XSTOR           ; EXGW X,Y and YSTOR
         JRA     JSRC            ; compile subroutine
-
+        .endif
 
 ;       $,"     ( -- )
 ;       Compile a literal string
@@ -4031,7 +4046,7 @@ SAVEC:
         POPW    Y
         LDW     X,YTEMP
         PUSHW   X
-        LDW     X,#ISPP         ; "ISPP" const. top of int. data stack
+        LDW     X,#ISPP         ; "PC_ISPP" const. top of int. data stack
         JP      (Y)
 
 ;       IRET ( -- )

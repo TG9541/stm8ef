@@ -2,20 +2,18 @@
 \ ------------------------------------------------------------------------------
   RAM
 
-#require [COMPILE]
-
   \ Begin a nameless definition in the NVM and return its xt on the stack.
   : :NVM ( -- xt ) NVM HERE ] ;
 
   \ End a nameless definition in the NVM
-  : ;NVM ( xt -- xt ) [COMPILE] [ $81 C, ;  IMMEDIATE
+  : ;NVM ( xt -- xt ) POSTPONE [ $81 C, ;  IMMEDIATE
 
   \ End a nameless definition in the NVM and switch back to RAM.
-  : ;RAM ( xt -- xt ) [COMPILE] ;NVM RAM ;  IMMEDIATE
+  : ;RAM ( xt -- xt ) POSTPONE ;NVM RAM ;  IMMEDIATE
 
 \ ------------------------------------------------------------------------------
 \\ Example:
 
 #require ALIAS
 
-  :NVM ." hallo" ;RAM  ALIAS .hallo
+NVM ." hallo" ;RAM  ALIAS .hallo

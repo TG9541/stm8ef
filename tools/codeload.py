@@ -291,7 +291,7 @@ def upload(path):
                         vprint("#require %s: skipped" % includeItem)
                     continue
 
-                if len(line) > 80:
+                if len(removeComment(line)) > 80:
                     error('line too long', line, path, lineNr)
 
                 result = CN.transfer(line)

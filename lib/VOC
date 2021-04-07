@@ -55,7 +55,6 @@ RAM
 #require WORD
 #require ABORT"
 #require LAST
-#require COMPILE
 #require BL
 
 NVM
@@ -85,7 +84,7 @@ NVM
 
 \ Create a vocabulary prefix.
 : VOC ( "name" -- )
-  : COMPILE dovpx LAST @ , [COMPILE] [ OVERT IMMEDIATE
+  : POSTPONE dovpx LAST @ , POSTPONE [ OVERT IMMEDIATE
 ;
 
 VP0 CURRENT !  \ voc-root definitions

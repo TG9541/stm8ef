@@ -1,11 +1,13 @@
-\ S"    STM8 eForth string utility word 
+\ S"   Create a counted string
 \ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
 
-#require COMPILE
-#require [COMPILE]
 #require COUNT
 #require $"
 
-: S" ( string -- a u )
-  [COMPILE] $" COMPILE COUNT 
-; IMMEDIATE
+: S" ( string -- a u ) POSTPONE $" POSTPONE COUNT ; IMMEDIATE
+
+\\ Example
+
+#require S"
+
+: test S"  Hello World!" 2DUP TYPE TYPE  ;

@@ -2,7 +2,6 @@
 \ ------------------------------------------------------------------------------
 
 #require LAST
-#require [COMPILE]
 #require CALL,
 
   HERE \ ( -- xt )
@@ -12,7 +11,7 @@
   : MARKER ( "name" -- )
   \ The marker "name" removes itself and all later defined words from RAM.
     RAM HERE LAST 2- @ ,  \ store CP, then define a mark
-    : [COMPILE] LITERAL ( xt ) LITERAL CALL, [COMPILE] ;
+    : POSTPONE LITERAL ( xt ) LITERAL CALL, POSTPONE ;
   ;
 
 \ ------------------------------------------------------------------------------
