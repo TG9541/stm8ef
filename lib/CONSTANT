@@ -21,7 +21,7 @@
 
   NVM
   : CONSTANT ( "name" x -- )
-    : COMPILE docon , POSTPONE [ OVERT IMMEDIATE ;
+    : POSTPONE docon , POSTPONE [ OVERT IMMEDIATE ;
   RAM
 
   RAM\
