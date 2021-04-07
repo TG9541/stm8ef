@@ -1,4 +1,4 @@
-\ EVALUATE                   STM8 eForth string evaluation 
+\ EVALUATE                   STM8 eForth string evaluation
 \ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
 
 #require BUFFER
@@ -7,22 +7,16 @@
 #require #TIB
 #require 'EVAL
 #require TOKEN
-#require [COMPILE]
 
 : EVALUATE ( a u -- results )
-  >IN @ >R   #TIB @ >R
-  #TIB !      0 >IN !
-  BUFFER !
-  'EVAL @ >R [COMPILE] [
+  >IN   @ >R    0    >IN !
+  #TIB  @ >R  ( u ) #TIB !
+  'EVAL @ >R    POSTPONE [   ( a ) BUFFER !
   BEGIN
-    TOKEN 
-    DUP C@ WHILE 
-    [ $92CD , 'EVAL C, ] 
-  REPEAT
-  DROP
-  R> 'EVAL !
-  TIB BUFFER !
-  R> #TIB ! R> >IN !
+    TOKEN DUP C@ WHILE
+    [ $92CD , 'EVAL C, ]  \ CALL ['EVAL]
+  REPEAT  DROP
+  R> 'EVAL !  R> #TIB !  R> >IN !  TIB BUFFER !
 ;
 
 \\ Example
@@ -32,5 +26,4 @@
 #require S"
 #require EVALUATE
 
-: test S" 2 7 +" ;
-test count EVALUATE . 9 ok
+: test S" 2 7 +" EVALUATE . ;
