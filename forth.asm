@@ -222,10 +222,10 @@
         PADBG = UPPLOC-1        ; PAD in background task growing down from here
         CTOP  = CTOPLOC         ; dictionary start, growing up
                                 ; note: PAD is inbetween CTOP and SPP
-        SPP   = ISPP-ISPPSIZE   ; "SPP"  constant addr. data stack, growing down (with SPP-1 first)
-        ISPP  = SPPLOC-BSPPSIZE ; "ISPP" constant addr. Interrupt data stack, growing down
-        BSPP  = SPPLOC          ; "BSPP" constant addr. Background data stack, growing down
-        TIBB  = SPPLOC          ; "TIB"  constant addr. Term. Input Buf. TIBLENGTH between SPPLOC and RPP
+        SPP   = ISPP-ISPPSIZE   ; "SPP"  data stack, growing down (with SPP-1 first)
+        ISPP  = SPPLOC-BSPPSIZE ; "ISPP" Interrupt data stack, growing down
+        BSPP  = SPPLOC          ; "BSPP" Background data stack, growing down
+        TIBB  = SPPLOC          ; "TIB"  Term. Input Buf. TIBLENGTH between SPPLOC and RPP
         RPP   = RPPLOC          ; "RPP"  constant addr. return stack, growing down
 
         ; Core variables (same order as 'BOOT initializer block)
