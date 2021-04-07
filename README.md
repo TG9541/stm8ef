@@ -159,7 +159,7 @@ Compared to the original "stm8ef" STM8 eForth offers many features:
   * `NVR`, `RAM`, `WIPE`, `RESET` and `PERSIST` for compiling to Flash memory
   * `'BOOT` for autostart applications
   * `EVALUATE` interprets Forth code in text strings (even compilation is possible!)
-  * `POSTPONE` combines the functionality of `COMPILE` and `[COMPILE]`
+  * `POSTPONE` replaces `COMPILE` and `[COMPILE]` (the legacy words are availble as build options)
   * `OUTER` and `BYE` a simple debug console for foreground code
   * many words from Forth systems that were popular in the 1980s are provided in the [library](https://github.com/TG9541/stm8ef/tree/master/lib)
 
