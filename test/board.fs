@@ -3,7 +3,7 @@ NVM
 RAM
 
 \ expected vocabulary (including tester.fs)
-T{e WORDS e-> 946 -3945 }T
+T{e WORDS e-> 928 -5235 }T
 
 \ core: string with capured EMIT
 : test-."" ." abc123" ;
@@ -253,7 +253,7 @@ RAM
 T{ 400 CD>TEST cdram -> }T
 T{ cdram -> 800 }T
 
-T{e WORDS e-> 995 -11 }T
+T{e WORDS e-> 977 -1301 }T
 
 
 \ compile CURRENT and VOC as a test
