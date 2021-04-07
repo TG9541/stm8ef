@@ -16,12 +16,12 @@
     R> @ [ 'EVAL DUP @ ]
     LITERAL    \ 'EVAL in interpret mode
     LITERAL @  \ current 'EVAL
-    - IF ( in compile mode ) [COMPILE] LITERAL THEN
+    - IF ( in compile mode ) POSTPONE LITERAL THEN
   [ $81 C, RAM ALIAS docon
 
   NVM
   : CONSTANT ( "name" x -- )
-    : COMPILE docon , [COMPILE] [ OVERT IMMEDIATE ;
+    : COMPILE docon , POSTPONE [ OVERT IMMEDIATE ;
   RAM
 
   RAM\
