@@ -4,7 +4,7 @@
 ;--------------------------------------------------------
         RELVER1          = 2    ; Revision digit 1
         RELVER0          = 8    ; Revision digit 0
-        PRE_REL          = 1    ; Pre Release digit 0 (0: release)
+        PRE_REL          = 0    ; Pre Release digit 0 (0: release)
 
         TERM_LINUX       = 1    ; LF terminates line
 
@@ -41,8 +41,7 @@
         BG_USE_TIM3      = 0    ; Use TIM3 for the Background Task (instead of TIM2)
         BG_TIM_REL  = 0x26DE    ; Reload value for Background Task timer (default for 5ms @ HSI 16MHz/8)
         BG_RUNMASK       = 0    ; BG task runs if "(BG_RUNMASK AND TICKCNT) equals 0"
-        BG_STACKSIZE     = 32   ; Default size in bytes of data stack for background tasks
-        BSPPSIZE         = 0    ; BG task data stack size (bytes) for memory calculation
+        BSPPSIZE         = 32   ; Default size in bytes of data stack for background tasks
 
         HAS_CPNVM        = 0    ; Can compile to Flash, always interpret to RAM
         HAS_DOES         = 0    ; DOES> extension

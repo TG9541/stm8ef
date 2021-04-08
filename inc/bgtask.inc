@@ -11,8 +11,6 @@
         .ifne   HAS_BACKGROUND
         RamWord BGADDR          ; address of background routine (0: off)
         RamWord TICKCNT         ; "TICKCNT" 16 bit ticker (counts up)
-
-        BSPPSIZE = BG_STACKSIZE ; Size of data stack for background tasks
        .endif
 
        ;******  timer macro  ******
