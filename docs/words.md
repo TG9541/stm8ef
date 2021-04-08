@@ -896,6 +896,16 @@
 ```
 
 ```
+;       COMPILE ( -- )
+;       Ersatz using POSTPONE
+```
+
+```
+;       [COMPILE] ( -- )
+;       Ersatz using POSTPONE
+```
+
+```
 ;       ,       ( w -- )
 ;       Compile an integer into
 ;       code dictionary.
@@ -904,6 +914,12 @@
 ```
 ;       C,      ( c -- )
 ;       Compile a byte into code dictionary.
+```
+
+```
+;       A,  ( A -- )
+;       Compile a byte in A into code dictionary.
+;       GENALIAS  ACOMMA "A,"
 ```
 
 ```
@@ -966,6 +982,12 @@
 ;       UNTIL   ( a -- )
 ;       Terminate a BEGIN-UNTIL
 ;       indefinite loop structure.
+```
+
+```
+;       COMPILIT  ( -- )
+;       Compile call to inline literall target address into code dictionary.
+;       GENALIAS  COMPILIT "COMPILIT"
 ```
 
 ```

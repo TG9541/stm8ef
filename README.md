@@ -6,16 +6,16 @@ STM8 eForth is an interactive Forth system for the full range of [STM8 8-bit MCU
 
 The original STM8 eForth was written by [Dr. C.H. Ting's eForth](http://www.forth.org/svfig/kk/07-2010.html) for the STM8S Discovery. With the kind permission of Dr. Ting the code presented here is under [MIT license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md). Bugs were fixed, code size reduced, standards compatibility improved and many features were added (e.g. compilation to Flash memory, autostart code, interrupt handling - see [overview](https://github.com/TG9541/stm8ef#stm8-eforth-feature-overview)).
 
-The [binary release](https://github.com/TG9541/stm8ef/releases) provides ready-to-run Forth binaries for a range of target boards or devicesi, a library and STM8 register definitions. Build and test automation in the [uCsim STM8 simulator](https://travis-ci.org/TG9541/stm8ef) in Travis-CI provides is used for quality control. Binary releases also contain the tested source code of STM8 eForth core and libraries so that downstream projectes can use the [modular build support](https://github.com/TG9541/stm8ef-modular-build) to add new targets with specific hardware support, memory layout or a tailored vocabulary.
+The [binary release](https://github.com/TG9541/stm8ef/releases) provides ready-to-run Forth binaries for a range of target boards or devices, a library and STM8 register definitions. Build and test automation in the [uCsim STM8 simulator](https://travis-ci.org/TG9541/stm8ef) in Travis-CI provides is used for quality control. Binary releases also contain the tested source code of STM8 eForth core and libraries so that downstream projectes can use the [modular build support](https://github.com/TG9541/stm8ef-modular-build) to add new targets with specific hardware support, memory layout or a tailored vocabulary.
 
 [![STM8EF Wiki](https://user-images.githubusercontent.com/5466977/28994765-3267d78c-79d6-11e7-927f-91751cd402db.jpg)](https://github.com/TG9541/stm8ef/wiki)
 
 ## About Forth
 
-Forth works by defining new words with phrases of existing words - "Hello World" in Forth is this:
+Forth works by defining new words with "phrases" consisting of existing words - "Hello World" in Forth is this:
 
 ```Forth
-: hello ."  Hello World!" ;
+: hello ." Hello World!" ;
 ```
 
 Forth is a "low level" language that offers a high level of abstraction:
@@ -32,7 +32,7 @@ Forth is so simple that you can learn the basics in a snap, e.g. in the [STM8 eF
 
 STM8 eForth itself is coded in STM8 assembler but it uses the SDCC tool chain. Combining Forth with C is possible.
 
-STM8 eForth is highly configurable: a Forth binary that allows compiling new words to Flash fits in 4 to 5.5K ROM (a minimal interactive system fits in 3.5K). Due to the extraordinary code density a very-low-cost 8K device, e.g. [STM8S003F3P6](https://www.st.com/resource/en/datasheet/stm8s003f3.pdf) or [STM8L051F3P6](https://www.st.com/resource/en/datasheet/stm8l051F3.pdf) has sufficent space for non-trivial applications. If more is needed, low-cost 32K devices with many GPIOs or a richer set of peripherals can be used, e.g. [STM8S005C6](https://www.st.com/resource/en/datasheet/stm8s005c6.pdf) or [STM8L052C6](https://www.st.com/resource/en/datasheet/stm8l052c6.pdf).
+STM8 eForth is highly configurable: a Forth binary that allows compiling new words to Flash ROM or RAM requires less than 4K. A binary with an extended vocabulary needs no more than about 5.5K. Due to the extraordinary code density a very-low-cost 8K device, e.g. [STM8S003F3P6](https://www.st.com/resource/en/datasheet/stm8s003f3.pdf) or [STM8L051F3P6](https://www.st.com/resource/en/datasheet/stm8l051F3.pdf) has sufficent space for non-trivial applications. If more is needed a low-cost 32K device with a rich set of peripherals can be used, e.g. [STM8S005C6](https://www.st.com/resource/en/datasheet/stm8s005c6.pdf) or [STM8L052C6](https://www.st.com/resource/en/datasheet/stm8l052c6.pdf).
 
 The Forth console uses the STM8 U(S)ART or a simulated serial interface for communicating with the console (3-wire full-duplex or 2-wire half-duplex are supported). For console access and programming [e4thcom](https://wiki.forth-ev.de/doku.php/en:projects:e4thcom) is recommended but any serial terminal will work. The console can be configured, even at runtime, to use other types of [character I/O](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Board-Character-IO), e.g. keyboard and display.
 
