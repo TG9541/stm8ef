@@ -1,6 +1,8 @@
 # Docs for STM8 eForth
 
-Please refer to the [Wiki](https://github.com/TG9541/stm8ef/wiki), to the [dictionary](https://github.com/TG9541/stm8ef/blob/master/docs/words.md) and to the documentation in the following board folders:
+STM8 eForth maintains most of the docs in the [Wiki](https://github.com/TG9541/stm8ef/wiki) while this folder contains the current [core vocabulary](https://github.com/TG9541/stm8ef/blob/master/docs/words.md). Many [library words](https://github.com/TG9541/stm8ef/tree/master/lib) contain example code, and there is a directory of [example code](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Example-Code) that also contains GitHub Gists that explain things or demonstrate features. Also the [release notes](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Releases-Overview) contain docs, code examples and references to [GitHub Issues](https://github.com/TG9541/stm8ef/issues) where features are often introduced or discussed. Note that there is also a [GitHub Discussions](https://github.com/TG9541/stm8ef/discussions) forum - questions are always welcome.
+
+Additional documentation is located in the following target folders:
 
 * [C0135](https://github.com/TG9541/stm8ef/tree/master/C0135)
 * [CORE](https://github.com/TG9541/stm8ef/tree/master/CORE)
