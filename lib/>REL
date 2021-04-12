@@ -3,13 +3,13 @@
 
 #require >Y
 
-: THEN ( -- ) POSTPONE [ HERE OVER - 1- SWAP C! ] ; IMMEDIATE
+: THEN ( -- ) HERE OVER - 1- SWAP C! ; IMMEDIATE
 
 : >REL ( -- ) HERE 0 C, ;  \ like >MARK for rel. branch
 
-: ELSE ( -- )  POSTPONE [ ( JRA ) $20 C, ] >REL SWAP POSTPONE THEN ; IMMEDIATE
+: ELSE ( -- )  ( JRA ) $20 C, >REL SWAP POSTPONE THEN ; IMMEDIATE
 
-: JREQ ( F:Z -- ) POSTPONE [ $27 C, ] >REL ; IMMEDIATE
+: JREQ ( F:Z -- ) $27 C, >REL ; IMMEDIATE
 
 : IF ( n -- ) POSTPONE >Y POSTPONE JREQ ; IMMEDIATE
 
