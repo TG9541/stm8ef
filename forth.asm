@@ -3144,9 +3144,9 @@ CSKIPRET:
 
         HEADER  COMMA ^/","/
 COMMA:
-        LD      A,(X)
+        LD      A,(X)           ; MSB
         CALLR   ACOMMA
-        JRA     CCOMMA
+        JRA     CCOMMA          ; LSB
 
 ;       C,      ( c -- )
 ;       Compile a byte into code dictionary.
@@ -3589,47 +3589,37 @@ RBRAC:
 
         HEADFLG DOESS "DOES>" IMEDD
 DOESS:
-        ComLit  DODOES          ; 3 CALL dodoes>
-        CALL    HERE
-        .ifne  USE_CALLDOLIT
-        DoLitC  9
-        .else
-        DoLitC  7
-        .endif
-        CALL    PLUS
-        CALL    LITER           ; 3 CALL doLit + 2 (HERE+9)
-        ComLit  COMMA           ; 3 CALL COMMA
-        CALL    CCOMMALIT
-        .db     EXIT_OPC        ; 1 RET (EXIT)
+        ComLit  DODOES                 ; executed by defining word - terminates definition.
+        ComLit  THISVAR                ; first instruction "this" in "DOES>Body
         RET
 
-;       dodoes  ( -- )
+;       dodoes   ( -- )
 ;       link action to words created by defining words
+;       CREATE which must be the first word in a defining word
 
-        HEADER  DODOES "dodoes" ; NOALIAS
+;       GENALIAS  DODOES "dodoes"
 DODOES:
-        LD      A,#(USRLAST)    ; ( link field of current word )
-        CALLR   AAT
-        CALL    NAMET           ; ' ( 'last  )
-        DoLitC  BRAN_OPC        ; ' JP
-        CALL    OVER            ; ' JP '
-        CALL    CSTOR           ; ' \ CALL <- JP
-        CALL    HERE            ; ' HERE
-        CALL    OVER            ; ' HERE '
-        CALL    ONEP            ; ' HERE ('+1)
-        CALL    STORE           ; ' \ CALL DOVAR <- JP HERE
-        .ifne  USE_CALLDOLIT
-        ComLit  DOLIT           ; ' \ HERE <- DOLIT
-        .else
-        CALL    CCOMMALIT
-        .db     DOLIT_OPC       ; \ HERE <- DOLIT <- ('+3) <- branch
-        .endif
-        DoLitC  3               ; ' 3
-        CALL    PLUS            ; ('+3)
-        CALL    COMMA           ; \ HERE <- DOLIT <-('+3)
-        CALL    CCOMMALIT
-        .db     BRAN_OPC        ; \ HERE <- DOLIT <- ('+3) <- branch
-        RET
+        ; patch dovar compiled by CREATE
+        CALL    RFROM           ; RET addr is the target in DOES>Body
+        LD      A,#(USRLAST)    ; link field of defined word
+        CALLR   AAT             ; last @ "push n from a at (A) in zero page"
+        CALL    NAMET           ; get xt of defined
+        CALL    ONEP            ; skip CALL instruction
+        JP      STORE           ; make it CALL DOES>Body
+
+;       thisvar  ( -- a )
+;       get the next address of caller, return to the caller's caller
+
+;       GENALIAS  THISVAR "thisvar"
+THISVAR:
+        LDW     Y,(3,SP)
+        DECW    X               ; YSTOR
+        DECW    X
+        LDW     (X),Y
+        POPW    Y
+        POP     A               ; RDROP
+        POP     A
+        JP      (Y)
         .endif
 
 ;       A@   ( A:shortAddr -- n )
@@ -4088,6 +4078,7 @@ WIPE:
         POPW    X
         JP      OVERT           ; initialize CONTEXT from USRLAST
         .endif
+
 
 ;===============================================================
 
