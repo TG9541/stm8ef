@@ -3144,9 +3144,9 @@ CSKIPRET:
 
         HEADER  COMMA ^/","/
 COMMA:
-        LD      A,(X)
+        LD      A,(X)           ; MSB
         CALLR   ACOMMA
-        JRA     CCOMMA
+        JRA     CCOMMA          ; LSB
 
 ;       C,      ( c -- )
 ;       Compile a byte into code dictionary.
