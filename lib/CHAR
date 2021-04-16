@@ -1,0 +1,8 @@
+\ https://forth-standard.org/standard/core/CHAR
+\ Skip leading space delimiters.
+\ Parse name delimited by a space.
+\ Put the value of its first character onto the stack.
+#require BL
+#require WORD
+#require CHAR+
+: CHAR ( "char" -- c ) BL WORD CHAR+ C@ ;

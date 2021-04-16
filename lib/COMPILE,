@@ -1,0 +1,4 @@
+\ https://forth-standard.org/standard/core/COMPILEComma
+#require ALIAS
+
+' CALL, ALIAS COMPILE,

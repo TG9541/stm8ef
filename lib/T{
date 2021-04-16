@@ -1,0 +1,7 @@
+\ a "#require wrapper" for utils/tester.fs to make pre-loading easier
+#include utils/tester.fs
+
+\\ Example
+#require T{
+
+T{ 1 2 DROP -> 1 }T

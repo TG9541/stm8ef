@@ -1,0 +1,6 @@
+\ https://forth-standard.org/standard/core/BracketCHAR
+\ Skip leading space delimiters.
+\ Parse name delimited by a space.
+\ Append the run-time semantics given below to the current definition.
+#require CHAR
+: [CHAR] ( "name"<spaces -- ) CHAR POSTPONE LITERAL ; IMMEDIATE
