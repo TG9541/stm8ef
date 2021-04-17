@@ -1,0 +1,4 @@
+\ https://forth-standard.org/standard/core/CELLPlus
+\ Add the size in address units of a cell to a-addr1, giving a-addr2
+#require ALIAS
+' 2+ ALIAS CELL+ ( a-addr1 -- a-addr2 )

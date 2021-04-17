@@ -1,0 +1,4 @@
+\ https://forth-standard.org/standard/core/FALSE
+\ Return a false flag.
+#require ALIAS
+' 0 ALIAS FALSE ( -- false )

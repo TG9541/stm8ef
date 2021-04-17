@@ -1,0 +1,4 @@
+\ https://forth-standard.org/standard/core/TRUE
+\ Return a true flag, a single-cell value with all bits set.
+#require ALIAS
+' -1 ALIAS TRUE ( -- true )
