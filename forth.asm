@@ -1929,8 +1929,9 @@ PAD:
 1$:
         .endif
         CALLR   RAMHERE         ; regular PAD with offset to HERE
-        DoLitC  PADOFFS
-        JP      PLUS
+        ADDW    Y,#PADOFFS      ; PADOFFS PLUS
+        LDW     (X),Y
+        RET
 
         .ifeq   UNLINK_ATEXE
 ;       @EXECUTE        ( a -- )  ( TOS STM8: undefined )
