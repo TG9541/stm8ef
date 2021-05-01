@@ -2006,6 +2006,8 @@ PACKS:
         CALL    RFROM
         RET
 
+
+        .ifeq   REMOVE_DIGIT
 ; Numeric output, single precision
 
 ;       DIGIT   ( u -- c )      ( TOS STM8: -- Y,Z,N )
@@ -2020,6 +2022,9 @@ DIGIT:
 1$:     ADD     A,#48
         LD      (1,X),A
         RET
+        .endif
+
+        .ifeq   REMOVE_EXTRC
 
 ;       EXTRACT ( n base -- n c )   ( TOS STM8: -- Y,Z,N )
 ;       Extract least significant digit from n.
@@ -2031,6 +2036,7 @@ EXTRC:
         CALL    UMMOD
         CALL    SWAPP
         JRA     DIGIT
+        .endif
 
 ;       #>      ( w -- b u )
 ;       Prepare output string.
