@@ -45,6 +45,10 @@
 _TIM1_IRQHandler:
 _TIM2_IRQHandler:
 _TIM3_IRQHandler:
+        ; STM8 DIV/DIVW erratum "Workaround 2: keep bit6 cleared"
+        PUSH    #0x08           ; BG task fixed priority (I0=1, I1=0)
+        POP     CC
+
         .ifne   (HAS_LED7SEG + HAS_BACKGROUND)
         BRES    BG_TIM_SR1,#0   ; clear TIMx UIF
 
