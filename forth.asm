@@ -2055,9 +2055,23 @@ EDIGS:
 
         HEADER  DIG "#"
 DIG:
-        CALLR   BASEAT
-        CALLR   EXTRC
-        JRA     HOLD
+        LD      A,USRBASE+1
+        LDW     Y,X
+        LDW     X,(X)
+        DIV     X,A
+        LDW     (Y),X
+        CP      A,#10
+        JRMI    1$
+        ADD     A,#7
+1$:
+        ADD     A,#48
+HOLDA:
+        LDW     X,USRHLD        ; HLD @
+        DECW    X               ; 1 -
+        LDW     USRHLD,X        ; DUP HLD !
+        LD      (X),A           ; C!
+        EXGW    X,Y
+        RET
 
 ;       #S      ( u -- 0 )
 ;       Convert u until all digits
@@ -2065,8 +2079,10 @@ DIG:
 
         HEADER  DIGS "#S"
 DIGS:
-DIGS1:  CALLR   DIG
-        JRNE    DIGS1
+        CALLR   DIG
+        LD      A,(X)
+        OR      A,(1,X)
+        JRNE    DIGS
         RET
 
 ;       HOLD    ( c -- )    ( TOS STM8: -- Y,Z,N )
@@ -2074,15 +2090,9 @@ DIGS1:  CALLR   DIG
 
         HEADER  HOLD "HOLD"
 HOLD:
-        LD      A,(1,X)         ; A < c
+        CALL    AFLAGS
         EXGW    X,Y
-        LDW     X,USRHLD        ; HLD @
-        DECW    X               ; 1 -
-        LDW     USRHLD,X        ; DUP HLD !
-        LD      (X),A           ; C!
-        EXGW    X,Y
-H_DROP:
-        JP      DROP
+        JP      HOLDA
 
 ;       SIGN    ( n -- )
 ;       Add a minus sign to
@@ -2091,10 +2101,14 @@ H_DROP:
         HEADER  SIGN "SIGN"
 SIGN:
         TNZ     (X)
-        JRPL    H_DROP
+        JRPL    SDROP
         LD      A,#('-')
         LD      (1,X),A
         JRA     HOLD
+SDROP:
+        INCW    X
+        INCW    X
+        RET
 
 ;       <#      ( -- )   ( TOS STM8: -- Y,Z,N )
 ;       Initiate numeric output process.
@@ -2241,7 +2255,9 @@ NUMQ6:
         POP     A               ; restore BASE
         LD      USRBASE+1,A
 NUMDROP:
-        JP      DROP
+        INCW    X
+        INCW    X
+        RET
 
 ;       DIGIT?  ( c base -- u t )
 ;       Convert a character to its numeric
