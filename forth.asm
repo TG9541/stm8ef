@@ -219,7 +219,7 @@
         .endif
 
         UPP   = UPPLOC          ; "C_UPP" constant offset user area
-        PADBG = UPPLOC-1        ; PAD in background task growing down from here
+        PADBG = UPPLOC          ; PAD in background task growing down from here
         CTOP  = CTOPLOC         ; dictionary start, growing up
                                 ; note: PAD is inbetween CTOP and SPP
         SPP   = ISPP-ISPPSIZE   ; "SPP"  data stack, growing down (with SPP-1 first)
@@ -1924,8 +1924,8 @@ PAD:
         POP     A
         AND     A,#0x20
         JRNE    1$
-        DoLitC  (PADBG+1)       ; dedicated memory for PAD in background task
-        RET
+        LD      A,#(PADBG)      ; dedicated memory for PAD in background task
+        JP      ASTOR
 1$:
         .endif
         CALLR   RAMHERE         ; regular PAD with offset to HERE
@@ -2170,8 +2170,8 @@ BASEAT:
 
         HEADER  NUMBQ "NUMBER?"
 NUMBQ:
-        LDW      Y,USRBASE
-        PUSHW    Y              ; note: (1,SP) used as sign flag
+        LDW     Y,USRBASE
+        PUSHW   Y               ; note: (1,SP) used as sign flag
 
         CALL    ZERO
         CALL    OVER
@@ -3873,10 +3873,8 @@ DOTI1:  CALL    DOTQP
         HEADER  TNAME ">NAME"
 TNAME:
         CALL    CNTXT           ; vocabulary link
-TNAM2:  CALL    AT
-        CALL    DUPP            ; ?last word in a vocabulary
-        CALL    QBRAN
-        .dw     TNAM4
+TNAM2:  CALL    AT              ; ?last word in a vocabulary
+        JREQ    TNAM4           ; DUPP   QBRAN TNAM4
         CALL    DDUP
         CALL    NAMET
         CALL    XORR            ; compare
@@ -3885,8 +3883,11 @@ TNAM2:  CALL    AT
         CALL    CELLM           ; continue with next word
         JRA     TNAM2
 TNAM3:  JP      NIP
-TNAM4:  CALL    DDROP
-        JP      ZERO
+TNAM4:  INCW    X               ; DDROP
+        INCW    X
+        CLR     (X)             ; ZERO
+        CLR     (1,X)
+        RET
         .endif
 
         .ifeq   UNLINKCORE
