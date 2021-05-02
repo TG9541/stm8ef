@@ -92,6 +92,7 @@
         PACE    =     11        ; pace character for host handshake (ASCII VT)
         CRR     =     13        ; carriage return
         ERR     =     27        ; error escape
+        BLNK    =     32        ; blank char
         TIC     =     39        ; tick
 
         EXIT_OPC =    0x81      ; RET opcode
@@ -219,7 +220,7 @@
         .endif
 
         UPP   = UPPLOC          ; "C_UPP" constant offset user area
-        PADBG = UPPLOC-1        ; PAD in background task growing down from here
+        PADBG = UPPLOC          ; PAD in background task growing down from here
         CTOP  = CTOPLOC         ; dictionary start, growing up
                                 ; note: PAD is inbetween CTOP and SPP
         SPP   = ISPP-ISPPSIZE   ; "SPP"  data stack, growing down (with SPP-1 first)
@@ -1226,11 +1227,11 @@ TIB:
 ; Constants
 
 ;       BL      ( -- 32 )     ( TOS STM8: -- Y,Z,N )
-;       Return 32, blank character.
+;       Return blank character.
 
         HEADER  BLANK "BL"
 BLANK:
-        LD      A,#32
+        LD      A,#(BLNK)
         JRA     ASTOR
 
 ;       0       ( -- 0)     ( TOS STM8: -- Y,Z,N )
@@ -1924,8 +1925,8 @@ PAD:
         POP     A
         AND     A,#0x20
         JRNE    1$
-        DoLitC  (PADBG+1)       ; dedicated memory for PAD in background task
-        RET
+        LD      A,#(PADBG)      ; dedicated memory for PAD in background task
+        JP      ASTOR
 1$:
         .endif
         CALLR   RAMHERE         ; regular PAD with offset to HERE
@@ -2170,8 +2171,8 @@ BASEAT:
 
         HEADER  NUMBQ "NUMBER?"
 NUMBQ:
-        LDW      Y,USRBASE
-        PUSHW    Y              ; note: (1,SP) used as sign flag
+        LDW     Y,USRBASE
+        PUSHW   Y               ; note: (1,SP) used as sign flag
 
         CALL    ZERO
         CALL    OVER
@@ -2846,19 +2847,16 @@ TAP:
 
         HEADER  KTAP "kTAP"
 KTAP:
-        LD      A,(1,X)
-        CP      A,#CRR
+        INCW    X                      ; c -> A
+        LD      A,(X)
+        INCW    X
+        CP      A,#(CRR)
         JREQ    KTAP2
-
-        DoLitC  BKSPP
-        CALL    XORR
-        CALL    QBRAN
-        .dw     KTAP1
-
+        CP      A,#(BKSPP)
+        JREQ    BKSP
         CALL    BLANK
         JRA     TAP
-KTAP1:  JRA     BKSP
-KTAP2:  CALL    DROP
+KTAP2:
         CALL    NIP
         JP      DUPP
 
@@ -2871,19 +2869,20 @@ ACCEP:
         CALL    OVER
         CALL    PLUS
         CALL    OVER
-ACCP1:  CALL    DDUP
-        CALL    XORR
-        CALL    QBRAN
-        .dw     ACCP4
+ACCP1:
+        LDW     Y,X             ; cur -> Y
+        LDW     Y,(Y)
+        CPW     Y,(2,X)         ; eot =
+        JREQ    ACCP4           ; ?branch ACCP4
         CALL    KEY
         LD      A,(1,X)         ; DUPP
         JRMI    ACCP2           ; BL 127 WITHIN
-        CP      A,#32
+        CP      A,#(BLNK)
         JRMI    ACCP2           ; ?branch ACC2
         CALLR   TAP
-        JRA     ACCP3
+        JRA     ACCP1
 ACCP2:  CALLR   KTAP
-ACCP3:  JRA     ACCP1
+        JRA     ACCP1
 ACCP4:  CALL    DROP
         CALL    OVER
         JP      SUBB
@@ -2895,14 +2894,12 @@ ACCP4:  CALL    DROP
         HEADER  QUERY "QUERY"
 QUERY:
         LD      A,#(USRBUFFER)
-        CALL    AAT
+        CALL    AAT             ; TIB
         DoLitC  TIBLENGTH
         CALLR   ACCEP
-        CALL    AFLAGS          ; NTIB !
-        LD      USRNTIB+1,A
-        CLR     USR_IN
-        CLR     USR_IN+1
-        JP      DROP
+        LDW     USRNTIB,Y       ; NTIB !
+        CLR     USR_IN+1        ; ZERO >IN !
+        JP      DDROP
 
 ;       ABORT   ( -- )
 ;       Reset data stack and
@@ -3873,10 +3870,8 @@ DOTI1:  CALL    DOTQP
         HEADER  TNAME ">NAME"
 TNAME:
         CALL    CNTXT           ; vocabulary link
-TNAM2:  CALL    AT
-        CALL    DUPP            ; ?last word in a vocabulary
-        CALL    QBRAN
-        .dw     TNAM4
+TNAM2:  CALL    AT              ; ?last word in a vocabulary
+        JREQ    TNAM4           ; DUPP   QBRAN TNAM4
         CALL    DDUP
         CALL    NAMET
         CALL    XORR            ; compare
@@ -3885,8 +3880,11 @@ TNAM2:  CALL    AT
         CALL    CELLM           ; continue with next word
         JRA     TNAM2
 TNAM3:  JP      NIP
-TNAM4:  CALL    DDROP
-        JP      ZERO
+TNAM4:  INCW    X               ; DDROP
+        INCW    X
+        CLR     (X)             ; ZERO
+        CLR     (1,X)
+        RET
         .endif
 
         .ifeq   UNLINKCORE
