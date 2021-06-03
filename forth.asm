@@ -2970,6 +2970,23 @@ INTE1:  CALL    NUMBQ           ; convert a number
         .dw     ABOR1
         RET
 
+;       COMPILE?   ( -- )  ( TOS STM8: - Y,Z,N )
+;       0 if 'EVAL points to $INTERPRETER
+
+;       GENALIAS  COMPIQ "COMPILE?"
+COMPIQ:
+        LDW     Y,USREVAL
+        SUBW    Y,#INTER
+        RET
+
+;       STATE?   ( -- f )
+;       0 if 'EVAL points to $INTERPRETER
+
+;       GENALIAS  STATEQ "STATE?"
+STATEQ:
+        CALLR   COMPIQ
+        JP      YSTOR
+
 ;       [       ( -- )
 ;       Start   text interpreter.
         HEADFLG LBRAC "[" IMEDD
@@ -2990,23 +3007,6 @@ CR:
         .endif
         DoLitC  LF
         JP      [USREMIT]
-
-;       COMPILE?   ( -- )  ( TOS STM8: - Y,Z,N )
-;       0 if 'EVAL points to $INTERPRETER
-
-;       GENALIAS  COMPIQ "COMPILE?"
-COMPIQ:
-        LDW     Y,USREVAL
-        SUBW    Y,#INTER
-        RET
-
-;       STATE?   ( -- f )
-;       0 if 'EVAL points to $INTERPRETER
-
-;       GENALIAS  STATEQ "STATE?"
-STATEQ:
-        CALLR   COMPIQ
-        JP      YSTOR
 
 ;       .OK     ( -- )
 ;       Display 'ok' while interpreting.
