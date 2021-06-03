@@ -865,7 +865,9 @@ RFROM:
 
 
         .ifne  HAS_CPNVM
-;       doVARPTR ( - a )    ( TOS STM8: - Y,Z,N )
+;       doVarPtr ( -- a )    ( TOS STM8: -- Y,Z,N )
+
+        HEADFLG DOVARPTR "doVarPtr" COMPO
 DOVARPTR:
         POPW    Y               ; get return addr (pfa)
         JP      YAT
@@ -2989,13 +2991,22 @@ CR:
         DoLitC  LF
         JP      [USREMIT]
 
-;       COMPILE?   ( -- n )
+;       COMPILE?   ( -- )  ( TOS STM8: - Y,Z,N )
 ;       0 if 'EVAL points to $INTERPRETER
+
 ;       GENALIAS  COMPIQ "COMPILE?"
 COMPIQ:
         LDW     Y,USREVAL
         SUBW    Y,#INTER
         RET
+
+;       STATE?   ( -- f )
+;       0 if 'EVAL points to $INTERPRETER
+
+;       GENALIAS  STATEQ "STATE?"
+STATEQ:
+        CALLR   COMPIQ
+        JP      YSTOR
 
 ;       .OK     ( -- )
 ;       Display 'ok' while interpreting.
@@ -3657,14 +3668,21 @@ YAT:
         LDW     Y,(Y)
         JP      YSTOR
 
+;       ENTRY  ( -- ; <string> )
+;       Compile a new dictionary entry with empty code field
+
+;       GENALIAS ENTRY "ENTRY"
+ENTRY:
+        CALL    TOKSNAME        ; copy token to dictionary
+        JP      OVERT
+
 ;       CREATE  ( -- ; <string> )
 ;       Compile a new array
 ;       without allocating space.
 
         HEADER  CREAT "CREATE"
 CREAT:
-        CALL    TOKSNAME        ; copy token to dictionary
-        CALL    OVERT
+        CALLR   ENTRY
         ComLit  DOVAR
         RET
 
@@ -3674,17 +3692,17 @@ CREAT:
 
         HEADER CONST "CONSTANT"
 CONST:
-        CALL    COLON
+        CALLR   ENTRY
         ComLit  DOCON           ; compile action code
         CALL    COMMA           ; compile constant
-        CALL    LBRAC
-        CALL    OVERT
+        ; CALL    LBRAC
+        ; CALL    OVERT
         JRA     IMMED           ; make immediate
 
 ;       docon ( -- )
 ;       state dependent action code of constant
 
-        HEADER  DOCON "docon"   ; NOALIAS
+        HEADER  DOCON "docon"
 DOCON:
         POPW    Y
         CALLR   YAT             ; R> AT push constant in interpreter mode
@@ -3701,23 +3719,21 @@ DOCON:
 
         HEADER  VARIA "VARIABLE"
 VARIA:
-        CALLR   CREAT
         CALL    ZERO
         .ifne   HAS_CPNVM
         TNZ     USRCP
         JRPL    1$              ; NVM: allocate space in RAM
-        DoLitW  DOVARPTR        ; overwrite call address "DOVAR" with "DOVARPTR"
-        CALL    HERE
-        CALL    CELLM
-        CALL    STORE
+        CALLR   ENTRY
+        ComLit  DOVARPTR
         LDW     Y,USRVAR
         LDW     (X),Y           ; overwrite ZERO with RAM address for COMMA
         DoLitC  2               ; Allocate space for variable in RAM
         CALLR   ALLOT
+        JRA     2$
         .endif
-1$:     JP      COMMA
+1$:     CALLR   CREAT
+2$:     JP      COMMA
         .endif
-
 
         .ifne   HAS_VARIABLE
 ;       ALLOT   ( n -- )

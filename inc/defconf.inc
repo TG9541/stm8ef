@@ -114,6 +114,7 @@
         UNLINK_CSTOR     = 0    ; "C!"
         UNLINK_IGET      = 0    ; "I"
         UNLINK_RFROM     = 0    ; "R>"
+        UNLINK_DOVARPTR  = 1    ; "doVarPtr"
         UNLINK_DOVAR     = 1    ; "doVar"
         UNLINK_RAT       = 0    ; "R@"
         UNLINK_TOR       = 0    ; ">R"
