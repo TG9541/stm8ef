@@ -122,6 +122,10 @@
 ```
 
 ```
+;       doVarPtr ( -- a )    ( TOS STM8: -- Y,Z,N )
+```
+
+```
 ;       doVAR   ( -- a )     ( TOS STM8: -- Y,Z,N )
 ;       Code for VARIABLE and CREATE.
 ```
@@ -274,7 +278,7 @@
 
 ```
 ;       BL      ( -- 32 )     ( TOS STM8: -- Y,Z,N )
-;       Return 32, blank character.
+;       Return blank character.
 ```
 
 ```
@@ -841,9 +845,13 @@
 ```
 
 ```
-;       COMPILE?   ( -- n )
+;       COMPILE?   ( -- )  ( TOS STM8: - Y,Z,N )
 ;       0 if 'EVAL points to $INTERPRETER
-;       GENALIAS  COMPIQ "COMPILE?"
+```
+
+```
+;       STATE?   ( -- f )
+;       0 if 'EVAL points to $INTERPRETER
 ```
 
 ```
@@ -1092,8 +1100,14 @@
 ```
 
 ```
-;       dodoes  ( -- )
+;       dodoes   ( -- )
 ;       link action to words created by defining words
+;       CREATE which must be the first word in a defining word
+```
+
+```
+;       thisvar  ( -- a )
+;       get the next address of caller, return to the caller's caller
 ```
 
 ```
@@ -1106,6 +1120,11 @@
 ;       Y@   ( Y:Addr -- n )
 ;       push contents of Y:Addr on stack
 ;       GENALIAS  YAT "Y@"
+```
+
+```
+;       ENTRY  ( -- ; <string> )
+;       Compile a new dictionary entry with empty code field
 ```
 
 ```

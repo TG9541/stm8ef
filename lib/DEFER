@@ -3,10 +3,7 @@
 #require WIPE
 #require :NVM
 #require ALIAS
-#require COMPILE?
-
-\ STATE ( -- f ) return 0 when in interpreter state
-:NVM  COMPILE? [ $5A5A , $FF C, ] ;RAM ALIAS STATE
+#require STATE?
 
 \ NOOP ( -- ) do nothing
 \ DEFER! ( xt1 xt2 -- ) write xt1 at jump address in deferred word xt2
@@ -19,10 +16,10 @@ NVM
     \ use NOP for masking the JP opcode (no ALIAS), initialize with NOOP
     : ( NOP JP ) $9DCC , ['] NOOP , POSTPONE [ OVERT ;
 
-  : IS ( xt "<space>name" -- ) STATE IF
-      POSTPONE ['] POSTPONE DEFER!
+  : IS ( xt "<space>name" -- ) STATE? IF
+      POSTPONE ['] POSTPONE DEFER!  \ Compiler state
     ELSE
-      ' DEFER!
+      ' DEFER!  \ Interpreter state
     THEN ; IMMEDIATE
 RAM WIPE
 

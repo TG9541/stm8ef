@@ -1,0 +1,4 @@
+\ https://forth-standard.org/standard/core/CHARPlus
+\ Add the size in address units of a character to c-addr1, giving c-addr2.
+#require ALIAS
+' 1+ ALIAS CHAR+
