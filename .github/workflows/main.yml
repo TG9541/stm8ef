@@ -1,7 +1,7 @@
 name: main 
 on: [push]
 jobs:
-  Build-and-Test:
+  Build-Test-Release:
     runs-on: ubuntu-latest
     container: tg9541/docker-sdcc:V3.9.0
     steps:
@@ -14,9 +14,8 @@ jobs:
         uses: actions/checkout@v2
       - name: Build and test
         run: |
-          pwd
-          # make BOARD=test forth
-          # make clean
+          make BOARD=test forth
+          make clean
           make all
           echo "This job's status is ${{ job.status }}."
       - name: GH Release
