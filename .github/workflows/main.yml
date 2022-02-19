@@ -15,7 +15,14 @@ jobs:
       - name: Build and test
         run: |
           pwd
-          make BOARD=test forth
-          make clean
+          # make BOARD=test forth
+          # make clean
           make all
-      - run: echo "This job's status is ${{ job.status }}."
+          echo "This job's status is ${{ job.status }}."
+      - name: GH Release
+        uses: softprops/action-gh-release@v0.1.14
+        with:
+          files: |
+            out/stm8ef-bin.zip
+            out/stm8ef-bin.tgz
+            out/stm8ef-rst.tgz
