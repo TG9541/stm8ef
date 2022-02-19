@@ -1,6 +1,6 @@
 # STM8 eForth (stm8ef)
 
-![Build](https://github.com/github/docs/actions/workflows/main.yml/badge.svg)
+![Build](https://github.com/TG9541/stm8ef/actions/workflows/main.yml/badge.svg)
 
 STM8 eForth is an interactive Forth system for the full range of [STM8 8-bit MCUs](https://www.st.com/en/microcontrollers-microprocessors/stm8-8-bit-mcus.html) including the low-power families. The Forth console, with its interpreter and native-code compiler, turns a $0.20 device into a "computer" that even provides a simple multi-tasking feature. The Forth system allows interactive exploration of peripherals, parameter tuning or programming (including compiling code into running applications). [Code examples](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Example-Code) can be used as a starting point (e.g. for using STM8 peripherals like I2C, ADC, PWM, RTC, etc).
 
