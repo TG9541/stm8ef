@@ -1,12 +1,12 @@
 # STM8 eForth (stm8ef)
 
-[![Travis-CI](https://travis-ci.org/TG9541/stm8ef.svg)](https://travis-ci.org/TG9541/stm8ef)
+![Build](https://github.com/github/docs/actions/workflows/main.yml/badge.svg)
 
 STM8 eForth is an interactive Forth system for the full range of [STM8 8-bit MCUs](https://www.st.com/en/microcontrollers-microprocessors/stm8-8-bit-mcus.html) including the low-power families. The Forth console, with its interpreter and native-code compiler, turns a $0.20 device into a "computer" that even provides a simple multi-tasking feature. The Forth system allows interactive exploration of peripherals, parameter tuning or programming (including compiling code into running applications). [Code examples](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Example-Code) can be used as a starting point (e.g. for using STM8 peripherals like I2C, ADC, PWM, RTC, etc).
 
 The original STM8 eForth was written by [Dr. C.H. Ting's eForth](http://www.forth.org/svfig/kk/07-2010.html) for the STM8S Discovery. With the kind permission of Dr. Ting the code presented here is under [MIT license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md). Bugs were fixed, the code size reduced, standards compatibility improved and many features were added (e.g. compilation to Flash memory, autostart code, interrupt handling - see [overview](https://github.com/TG9541/stm8ef#stm8-eforth-feature-overview)).
 
-The [binary release](https://github.com/TG9541/stm8ef/releases) provides ready-to-run Forth binaries for a range of devices and target boards, STM8 register definitions and a library. Build- and test-automation uses the [uCsim STM8 simulator](https://travis-ci.org/TG9541/stm8ef) in Travis-CI. The release also contains source code and libraries so that downstream projects can configure the STM8 eForth core, e.g. using the [modular build support](https://github.com/TG9541/stm8ef-modular-build), to add new targets with specific hardware support, memory layout or a tailored vocabulary.
+The [binary release](https://github.com/TG9541/stm8ef/releases) provides ready-to-run Forth binaries for a range of devices and target boards, STM8 register definitions and a library. Build- and test-automation uses the [uCsim STM8 simulator](https://travis-ci.org/TG9541/stm8ef) in --Travis-CI-- (we're transitioning to GitHub Actions). The release also contains source code and libraries so that downstream projects can configure the STM8 eForth core, e.g. using the [modular build support](https://github.com/TG9541/stm8ef-modular-build), to add new targets with specific hardware support, memory layout or a tailored vocabulary.
 
 [![STM8EF Wiki](https://user-images.githubusercontent.com/5466977/28994765-3267d78c-79d6-11e7-927f-91751cd402db.jpg)](https://github.com/TG9541/stm8ef/wiki)
 
@@ -30,7 +30,7 @@ Forth is so simple that you can learn the basics in a snap, e.g. in the [STM8 eF
 
 ## About STM8 eForth
 
-The STM8 eForth core is written in STM8 assembler but it uses the SDCC tool chain. Combining Forth with C is possible.
+The STM8 eForth core is written in STM8 assembly using the `sdasstm8` assembler in the SDCC tool chain. Combining Forth with C is possible.
 
 STM8 eForth is highly configurable: a Forth binary that allows compiling new words to Flash ROM or RAM requires less than 4K. A binary with an extended vocabulary needs no more than about 5.5K. Due to the extraordinary code density very-low-cost 8K devices, e.g. [STM8S003F3P6](https://www.st.com/resource/en/datasheet/stm8s003f3.pdf) or [STM8L051F3P6](https://www.st.com/resource/en/datasheet/stm8l051F3.pdf), are sufficient for non-trivial applications. If more space is needed a low-cost 32K device can be used, e.g. [STM8S005C6](https://www.st.com/resource/en/datasheet/stm8s005c6.pdf) or [STM8L052C6](https://www.st.com/resource/en/datasheet/stm8l052c6.pdf).
 
