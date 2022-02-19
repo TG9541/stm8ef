@@ -4,7 +4,7 @@
 ;--------------------------------------------------------
         RELVER1          = 2    ; Revision digit 1
         RELVER0          = 9    ; Revision digit 0
-        PRE_REL          = 1    ; Pre Release digit 0 (0: release)
+        PRE_REL          = 2    ; Pre Release digit 0 (0: release)
 
         TERM_LINUX       = 1    ; LF terminates line
 

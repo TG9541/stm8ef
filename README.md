@@ -1,12 +1,12 @@
 # STM8 eForth (stm8ef)
 
-![Build](https://github.com/TG9541/stm8ef/actions/workflows/main.yml/badge.svg)
+![Build](https://github.com/TG9541/stm8ef/actions/workflows/build-test.yml/badge.svg)
 
 STM8 eForth is an interactive Forth system for the full range of [STM8 8-bit MCUs](https://www.st.com/en/microcontrollers-microprocessors/stm8-8-bit-mcus.html) including the low-power families. The Forth console, with its interpreter and native-code compiler, turns a $0.20 device into a "computer" that even provides a simple multi-tasking feature. The Forth system allows interactive exploration of peripherals, parameter tuning or programming (including compiling code into running applications). [Code examples](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Example-Code) can be used as a starting point (e.g. for using STM8 peripherals like I2C, ADC, PWM, RTC, etc).
 
 The original STM8 eForth was written by [Dr. C.H. Ting's eForth](http://www.forth.org/svfig/kk/07-2010.html) for the STM8S Discovery. With the kind permission of Dr. Ting the code presented here is under [MIT license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md). Bugs were fixed, the code size reduced, standards compatibility improved and many features were added (e.g. compilation to Flash memory, autostart code, interrupt handling - see [overview](https://github.com/TG9541/stm8ef#stm8-eforth-feature-overview)).
 
-The [binary release](https://github.com/TG9541/stm8ef/releases) provides ready-to-run Forth binaries for a range of devices and target boards, STM8 register definitions and a library. Build- and test-automation uses the [uCsim STM8 simulator](https://travis-ci.org/TG9541/stm8ef) in --Travis-CI-- (we're transitioning to GitHub Actions). The release also contains source code and libraries so that downstream projects can configure the STM8 eForth core, e.g. using the [modular build support](https://github.com/TG9541/stm8ef-modular-build), to add new targets with specific hardware support, memory layout or a tailored vocabulary.
+The [binary release](https://github.com/TG9541/stm8ef/releases) provides ready-to-run Forth binaries for a range of devices and target boards, STM8 register definitions and a library. Build- and test-automation uses the uCsim STM8 simulator in a [GitHub Action](https://github.com/TG9541/stm8ef/actions). Additionally the binary release contains all necessary sources, tools and libraries for downstream projects to build a custom STM8 eForth core (e.g., using the [modular build support](https://github.com/TG9541/stm8ef-modular-build). Typical use cases are adding new targets with specific hardware support, custom memory layout or a tailored vocabulary.
 
 [![STM8EF Wiki](https://user-images.githubusercontent.com/5466977/28994765-3267d78c-79d6-11e7-927f-91751cd402db.jpg)](https://github.com/TG9541/stm8ef/wiki)
 
