@@ -18,15 +18,6 @@ jobs:
           make clean
           make all
           echo "Job status: ${{ job.status }}."
-      - name: Keep non-release binaries
-        uses: softprops/action-gh-release@v0.1.14
-        if: !(startsWith(github.ref, 'refs/tags/'))
-        with:
-          tag_name: volatile
-          files: |
-            out/stm8ef-bin.zip
-            out/stm8ef-bin.tgz
-            out/stm8ef-rst.tgz
       - name: GH Release
         uses: softprops/action-gh-release@v0.1.14
         if: startsWith(github.ref, 'refs/tags/')
