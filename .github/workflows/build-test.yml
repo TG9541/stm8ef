@@ -6,14 +6,19 @@ jobs:
     container: tg9541/docker-sdcc:V3.9.0
     steps:
       - run: |
-          echo "Triggered by: ${{ github.event_name }}"
-          echo "Branch name:  ${{ github.ref }}"
+          echo "triggered by: ${{ github.event_name }}"
           echo "repository:   ${{ github.repository }}"
-          echo "workspace:    ${{ github.workspace }}"
+          echo "branch name:  ${{ github.ref }}"
       - name: Check out repository code
         uses: actions/checkout@v2
       - name: Build and test
         run: |
+          echo "; ##########################################" >> forth.asm
+          echo "; # Release info added by GitHub action:"     >> forth.asm
+          echo "; #   repository:   ${{ github.repository }}" >> forth.asm
+          echo "; #   branch name:  ${{ github.ref }}"        >> forth.asm
+          echo "; #   sha:   ${{ github.sha }}"               >> forth.asm
+          echo "; ##########################################" >> forth.asm
           make BOARD=test forth
           make clean
           make all
