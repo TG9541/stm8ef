@@ -15,7 +15,7 @@ jobs:
       - name: Build and test
         run: |
           make BOARD=test forth && make clean && make all
-          echo Job status: ${{ job.status }}."
+          echo "Job status: ${{ job.status }}."
       - name: Keep non-release binaries
         uses: softprops/action-gh-release@v0.1.14
         if: !(startsWith(github.ref, 'refs/tags/'))
