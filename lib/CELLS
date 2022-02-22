@@ -1,0 +1,4 @@
+\ https://forth-standard.org/standard/core/CELLS
+\ n2 is the size in address units of n1 cells.
+#require ALIAS
+' 2* ALIAS CELLS ( n1 -- n2 )

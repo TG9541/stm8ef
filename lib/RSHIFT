@@ -1,0 +1,15 @@
+\ STM8eForth : RSHIFT                                              TG9541-210417
+\ refer to github.com/TG9541/stm8ef/blob/master/LICENSE.md
+
+: RSHIFT ( n c - n )  \ shift n right c times
+  [ $5C  C,  \     INCW    X
+    $F6  C,  \     LD      A,(X)
+    $5C  C,  \     INCW    X
+    $4D  C,  \     TNZ     A
+    $2705 ,  \     JREQ    1$
+    $77  C,  \ 2$: SRA     (X)
+    $6601 ,  \     RRC     (1,X)
+    $4A  C,  \     DEC     A
+    $26F8 ,  \     JRNE    2$
+  ]          \ 1$:
+;
