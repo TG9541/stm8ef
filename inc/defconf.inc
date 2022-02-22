@@ -4,7 +4,7 @@
 ;--------------------------------------------------------
         RELVER1          = 2    ; Revision digit 1
         RELVER0          = 9    ; Revision digit 0
-        PRE_REL          = 1    ; Pre Release digit 0 (0: release)
+        PRE_REL          = 2    ; Pre Release digit 0 (0: release)
 
         TERM_LINUX       = 1    ; LF terminates line
 
@@ -114,6 +114,7 @@
         UNLINK_CSTOR     = 0    ; "C!"
         UNLINK_IGET      = 0    ; "I"
         UNLINK_RFROM     = 0    ; "R>"
+        UNLINK_DOVARPTR  = 1    ; "doVarPtr"
         UNLINK_DOVAR     = 1    ; "doVar"
         UNLINK_RAT       = 0    ; "R@"
         UNLINK_TOR       = 0    ; ">R"
@@ -195,7 +196,9 @@
         UNLINK_ERASE     = 0    ; "ERASE"
         UNLINK_PACKS     = 1    ; "PACK$"
         UNLINK_DIGIT     = 1    ; "DIGIT"
+        REMOVE_DIGIT     = 1    ; remove "DIGIT"
         UNLINK_EXTRC     = 1    ; "EXTRACT"
+        REMOVE_EXTRC     = 1    ; remove "EXTRACT"
         UNLINK_BDIGS     = 2    ; "<#"
         UNLINK_HOLD      = 2    ; "HOLD"
         UNLINK_DIG       = 2    ; "#"

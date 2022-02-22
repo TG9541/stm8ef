@@ -58,6 +58,26 @@
 ;--------------------------------------------------------
         .area DABS (ABS)
 ;--------------------------------------------------------
+; set RESET vector to COLD
+;--------------------------------------------------------
+         .org 0x8000
+         .dw 0x8200
+         .dw _forth
+;--------------------------------------------------------
+; restore broken interrupt vector table of STM8L
+;--------------------------------------------------------
+         .ifne STM8L
+          .org 0x8070
+          .dw 0x8200
+          .dw _forth
+          .dw 0x8200
+          .dw _forth
+          .dw 0x8200
+          .dw _forth
+          .dw 0x8200
+          .dw _forth
+         .endif
+;--------------------------------------------------------
 ; global & static initialisations
 ;--------------------------------------------------------
         .area HOME
@@ -92,6 +112,7 @@
         PACE    =     11        ; pace character for host handshake (ASCII VT)
         CRR     =     13        ; carriage return
         ERR     =     27        ; error escape
+        BLNK    =     32        ; blank char
         TIC     =     39        ; tick
 
         EXIT_OPC =    0x81      ; RET opcode
@@ -219,7 +240,7 @@
         .endif
 
         UPP   = UPPLOC          ; "C_UPP" constant offset user area
-        PADBG = UPPLOC-1        ; PAD in background task growing down from here
+        PADBG = UPPLOC          ; PAD in background task growing down from here
         CTOP  = CTOPLOC         ; dictionary start, growing up
                                 ; note: PAD is inbetween CTOP and SPP
         SPP   = ISPP-ISPPSIZE   ; "SPP"  data stack, growing down (with SPP-1 first)
@@ -864,7 +885,9 @@ RFROM:
 
 
         .ifne  HAS_CPNVM
-;       doVARPTR ( - a )    ( TOS STM8: - Y,Z,N )
+;       doVarPtr ( -- a )    ( TOS STM8: -- Y,Z,N )
+
+        HEADFLG DOVARPTR "doVarPtr" COMPO
 DOVARPTR:
         POPW    Y               ; get return addr (pfa)
         JP      YAT
@@ -1226,11 +1249,11 @@ TIB:
 ; Constants
 
 ;       BL      ( -- 32 )     ( TOS STM8: -- Y,Z,N )
-;       Return 32, blank character.
+;       Return blank character.
 
         HEADER  BLANK "BL"
 BLANK:
-        LD      A,#32
+        LD      A,#(BLNK)
         JRA     ASTOR
 
 ;       0       ( -- 0)     ( TOS STM8: -- Y,Z,N )
@@ -1924,13 +1947,14 @@ PAD:
         POP     A
         AND     A,#0x20
         JRNE    1$
-        DoLitC  (PADBG+1)       ; dedicated memory for PAD in background task
-        RET
+        LD      A,#(PADBG)      ; dedicated memory for PAD in background task
+        JP      ASTOR
 1$:
         .endif
         CALLR   RAMHERE         ; regular PAD with offset to HERE
-        DoLitC  PADOFFS
-        JP      PLUS
+        ADDW    Y,#PADOFFS      ; PADOFFS PLUS
+        LDW     (X),Y
+        RET
 
         .ifeq   UNLINK_ATEXE
 ;       @EXECUTE        ( a -- )  ( TOS STM8: undefined )
@@ -2006,6 +2030,8 @@ PACKS:
         CALL    RFROM
         RET
 
+
+        .ifeq   REMOVE_DIGIT
 ; Numeric output, single precision
 
 ;       DIGIT   ( u -- c )      ( TOS STM8: -- Y,Z,N )
@@ -2020,6 +2046,9 @@ DIGIT:
 1$:     ADD     A,#48
         LD      (1,X),A
         RET
+        .endif
+
+        .ifeq   REMOVE_EXTRC
 
 ;       EXTRACT ( n base -- n c )   ( TOS STM8: -- Y,Z,N )
 ;       Extract least significant digit from n.
@@ -2031,6 +2060,7 @@ EXTRC:
         CALL    UMMOD
         CALL    SWAPP
         JRA     DIGIT
+        .endif
 
 ;       #>      ( w -- b u )
 ;       Prepare output string.
@@ -2049,9 +2079,23 @@ EDIGS:
 
         HEADER  DIG "#"
 DIG:
-        CALLR   BASEAT
-        CALLR   EXTRC
-        JRA     HOLD
+        LD      A,USRBASE+1
+        LDW     Y,X
+        LDW     X,(X)
+        DIV     X,A
+        LDW     (Y),X
+        CP      A,#10
+        JRMI    1$
+        ADD     A,#7
+1$:
+        ADD     A,#48
+HOLDA:
+        LDW     X,USRHLD        ; HLD @
+        DECW    X               ; 1 -
+        LDW     USRHLD,X        ; DUP HLD !
+        LD      (X),A           ; C!
+        EXGW    X,Y
+        RET
 
 ;       #S      ( u -- 0 )
 ;       Convert u until all digits
@@ -2059,8 +2103,10 @@ DIG:
 
         HEADER  DIGS "#S"
 DIGS:
-DIGS1:  CALLR   DIG
-        JRNE    DIGS1
+        CALLR   DIG
+        LD      A,(X)
+        OR      A,(1,X)
+        JRNE    DIGS
         RET
 
 ;       HOLD    ( c -- )    ( TOS STM8: -- Y,Z,N )
@@ -2068,15 +2114,9 @@ DIGS1:  CALLR   DIG
 
         HEADER  HOLD "HOLD"
 HOLD:
-        LD      A,(1,X)         ; A < c
+        CALL    AFLAGS
         EXGW    X,Y
-        LDW     X,USRHLD        ; HLD @
-        DECW    X               ; 1 -
-        LDW     USRHLD,X        ; DUP HLD !
-        LD      (X),A           ; C!
-        EXGW    X,Y
-H_DROP:
-        JP      DROP
+        JP      HOLDA
 
 ;       SIGN    ( n -- )
 ;       Add a minus sign to
@@ -2085,10 +2125,14 @@ H_DROP:
         HEADER  SIGN "SIGN"
 SIGN:
         TNZ     (X)
-        JRPL    H_DROP
+        JRPL    SDROP
         LD      A,#('-')
         LD      (1,X),A
         JRA     HOLD
+SDROP:
+        INCW    X
+        INCW    X
+        RET
 
 ;       <#      ( -- )   ( TOS STM8: -- Y,Z,N )
 ;       Initiate numeric output process.
@@ -2149,8 +2193,8 @@ BASEAT:
 
         HEADER  NUMBQ "NUMBER?"
 NUMBQ:
-        LDW      Y,USRBASE
-        PUSHW    Y              ; note: (1,SP) used as sign flag
+        LDW     Y,USRBASE
+        PUSHW   Y               ; note: (1,SP) used as sign flag
 
         CALL    ZERO
         CALL    OVER
@@ -2235,7 +2279,9 @@ NUMQ6:
         POP     A               ; restore BASE
         LD      USRBASE+1,A
 NUMDROP:
-        JP      DROP
+        INCW    X
+        INCW    X
+        RET
 
 ;       DIGIT?  ( c base -- u t )
 ;       Convert a character to its numeric
@@ -2823,19 +2869,16 @@ TAP:
 
         HEADER  KTAP "kTAP"
 KTAP:
-        LD      A,(1,X)
-        CP      A,#CRR
+        INCW    X                      ; c -> A
+        LD      A,(X)
+        INCW    X
+        CP      A,#(CRR)
         JREQ    KTAP2
-
-        DoLitC  BKSPP
-        CALL    XORR
-        CALL    QBRAN
-        .dw     KTAP1
-
+        CP      A,#(BKSPP)
+        JREQ    BKSP
         CALL    BLANK
         JRA     TAP
-KTAP1:  JRA     BKSP
-KTAP2:  CALL    DROP
+KTAP2:
         CALL    NIP
         JP      DUPP
 
@@ -2848,19 +2891,20 @@ ACCEP:
         CALL    OVER
         CALL    PLUS
         CALL    OVER
-ACCP1:  CALL    DDUP
-        CALL    XORR
-        CALL    QBRAN
-        .dw     ACCP4
+ACCP1:
+        LDW     Y,X             ; cur -> Y
+        LDW     Y,(Y)
+        CPW     Y,(2,X)         ; eot =
+        JREQ    ACCP4           ; ?branch ACCP4
         CALL    KEY
         LD      A,(1,X)         ; DUPP
         JRMI    ACCP2           ; BL 127 WITHIN
-        CP      A,#32
+        CP      A,#(BLNK)
         JRMI    ACCP2           ; ?branch ACC2
         CALLR   TAP
-        JRA     ACCP3
+        JRA     ACCP1
 ACCP2:  CALLR   KTAP
-ACCP3:  JRA     ACCP1
+        JRA     ACCP1
 ACCP4:  CALL    DROP
         CALL    OVER
         JP      SUBB
@@ -2872,14 +2916,12 @@ ACCP4:  CALL    DROP
         HEADER  QUERY "QUERY"
 QUERY:
         LD      A,#(USRBUFFER)
-        CALL    AAT
+        CALL    AAT             ; TIB
         DoLitC  TIBLENGTH
         CALLR   ACCEP
-        CALL    AFLAGS          ; NTIB !
-        LD      USRNTIB+1,A
-        CLR     USR_IN
-        CLR     USR_IN+1
-        JP      DROP
+        LDW     USRNTIB,Y       ; NTIB !
+        CLR     USR_IN+1        ; ZERO >IN !
+        JP      DDROP
 
 ;       ABORT   ( -- )
 ;       Reset data stack and
@@ -2948,6 +2990,23 @@ INTE1:  CALL    NUMBQ           ; convert a number
         .dw     ABOR1
         RET
 
+;       COMPILE?   ( -- )  ( TOS STM8: - Y,Z,N )
+;       0 if 'EVAL points to $INTERPRETER
+
+;       GENALIAS  COMPIQ "COMPILE?"
+COMPIQ:
+        LDW     Y,USREVAL
+        SUBW    Y,#INTER
+        RET
+
+;       STATE?   ( -- f )
+;       0 if 'EVAL points to $INTERPRETER
+
+;       GENALIAS  STATEQ "STATE?"
+STATEQ:
+        CALLR   COMPIQ
+        JP      YSTOR
+
 ;       [       ( -- )
 ;       Start   text interpreter.
         HEADFLG LBRAC "[" IMEDD
@@ -2968,14 +3027,6 @@ CR:
         .endif
         DoLitC  LF
         JP      [USREMIT]
-
-;       COMPILE?   ( -- n )
-;       0 if 'EVAL points to $INTERPRETER
-;       GENALIAS  COMPIQ "COMPILE?"
-COMPIQ:
-        LDW     Y,USREVAL
-        SUBW    Y,#INTER
-        RET
 
 ;       .OK     ( -- )
 ;       Display 'ok' while interpreting.
@@ -3637,14 +3688,21 @@ YAT:
         LDW     Y,(Y)
         JP      YSTOR
 
+;       ENTRY  ( -- ; <string> )
+;       Compile a new dictionary entry with empty code field
+
+;       GENALIAS ENTRY "ENTRY"
+ENTRY:
+        CALL    TOKSNAME        ; copy token to dictionary
+        JP      OVERT
+
 ;       CREATE  ( -- ; <string> )
 ;       Compile a new array
 ;       without allocating space.
 
         HEADER  CREAT "CREATE"
 CREAT:
-        CALL    TOKSNAME        ; copy token to dictionary
-        CALL    OVERT
+        CALLR   ENTRY
         ComLit  DOVAR
         RET
 
@@ -3654,17 +3712,17 @@ CREAT:
 
         HEADER CONST "CONSTANT"
 CONST:
-        CALL    COLON
+        CALLR   ENTRY
         ComLit  DOCON           ; compile action code
         CALL    COMMA           ; compile constant
-        CALL    LBRAC
-        CALL    OVERT
+        ; CALL    LBRAC
+        ; CALL    OVERT
         JRA     IMMED           ; make immediate
 
 ;       docon ( -- )
 ;       state dependent action code of constant
 
-        HEADER  DOCON "docon"   ; NOALIAS
+        HEADER  DOCON "docon"
 DOCON:
         POPW    Y
         CALLR   YAT             ; R> AT push constant in interpreter mode
@@ -3681,23 +3739,21 @@ DOCON:
 
         HEADER  VARIA "VARIABLE"
 VARIA:
-        CALLR   CREAT
         CALL    ZERO
         .ifne   HAS_CPNVM
         TNZ     USRCP
         JRPL    1$              ; NVM: allocate space in RAM
-        DoLitW  DOVARPTR        ; overwrite call address "DOVAR" with "DOVARPTR"
-        CALL    HERE
-        CALL    CELLM
-        CALL    STORE
+        CALLR   ENTRY
+        ComLit  DOVARPTR
         LDW     Y,USRVAR
         LDW     (X),Y           ; overwrite ZERO with RAM address for COMMA
         DoLitC  2               ; Allocate space for variable in RAM
         CALLR   ALLOT
+        JRA     2$
         .endif
-1$:     JP      COMMA
+1$:     CALLR   CREAT
+2$:     JP      COMMA
         .endif
-
 
         .ifne   HAS_VARIABLE
 ;       ALLOT   ( n -- )
@@ -3850,10 +3906,8 @@ DOTI1:  CALL    DOTQP
         HEADER  TNAME ">NAME"
 TNAME:
         CALL    CNTXT           ; vocabulary link
-TNAM2:  CALL    AT
-        CALL    DUPP            ; ?last word in a vocabulary
-        CALL    QBRAN
-        .dw     TNAM4
+TNAM2:  CALL    AT              ; ?last word in a vocabulary
+        JREQ    TNAM4           ; DUPP   QBRAN TNAM4
         CALL    DDUP
         CALL    NAMET
         CALL    XORR            ; compare
@@ -3862,8 +3916,11 @@ TNAM2:  CALL    AT
         CALL    CELLM           ; continue with next word
         JRA     TNAM2
 TNAM3:  JP      NIP
-TNAM4:  CALL    DDROP
-        JP      ZERO
+TNAM4:  INCW    X               ; DDROP
+        INCW    X
+        CLR     (X)             ; ZERO
+        CLR     (1,X)
+        RET
         .endif
 
         .ifeq   UNLINKCORE

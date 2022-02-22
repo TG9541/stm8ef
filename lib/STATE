@@ -1,0 +1,10 @@
+\ The Forth-Standard requires a STATE "variable" that is 
+\ "true when in compilation state and false otherwise" 
+\ (but "A program shall not directly alter the contents of STATE").
+
+#require STATE?
+
+VARIABLE stateflag    \ this implementation is a kludge
+
+: STATE ( -- a-addr )
+  stateflag STATE? IF -1 ELSE 0 THEN OVER ! ;

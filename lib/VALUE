@@ -1,0 +1,46 @@
+\ VALUE ... TO for STM8 eForth                                     TG9541-210603
+\ Note: this implementation works according to Forth-Standard: it assumes that
+\   the dictionary is writable, which, in NVM, may or may not be the case
+\ ------------------------------------------------------------------------------
+#require WIPE
+#require :NVM
+#require ALIAS
+#require ENTRY
+#require doVarPtr
+#require STATE?
+
+\ value! ( xt1 xt2 -- ) write xt1 at body of word at xt2
+:NVM  3 + !  ;RAM ALIAS value!
+
+NVM
+  #require [']
+
+  : VALUE ( x "<spaces>name" -- )
+    ENTRY POSTPONE doVarPtr ,  ;
+
+  : TO ( i * x "<spaces>name" -- ) ( "<spaces>name" -- )
+    STATE? IF
+      POSTPONE ['] POSTPONE value!  \ Compiler state
+    ELSE
+      ' value!   \ Interpreter state
+    THEN ; IMMEDIATE
+RAM WIPE
+
+\\ Test from forth-standard.org)
+
+#include utils/tester.fs
+T{  111 VALUE v1 -> }T
+T{ -999 VALUE v2 -> }T
+T{ v1 ->  111 }T
+T{ v2 -> -999 }T
+T{ 222 TO v1 -> }T
+T{ v1 -> 222 }T
+
+T{ : vd1 v1 ; -> }T
+T{ vd1 -> 222 }T
+
+T{ : vd2 TO v2 ; -> }T
+T{ v2 -> -999 }T
+T{ -333 vd2 -> }T
+T{ v2 -> -333 }T
+T{ v1 ->  222 }T
