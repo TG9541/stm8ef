@@ -14,8 +14,8 @@ The DCDC-MH board is powered by a pin-to-pin replacement Nuvoton chip, and conve
 
 ![DCDC-MH STM8S103F3P6 Mod](https://cdn.hackaday.io/images/7220691577209814290.png)
 
-Some reverse-engineering of the DCDC-MH board was performed:
+The schematics of the DCDC-MH board was "reverse-engineered" :
 
-[DCDC-MH Circuit Diagram](https://cdn.hackaday.io/images/4607931577535865964.c7bee2247edabff2e773cde3ee5bba23)
+![DCDC-MH Circuit Diagram](https://cdn.hackaday.io/images/4607931577535865964.c7bee2247edabff2e773cde3ee5bba23)
 
 An analysis of the [linear power supply](https://hackaday.io/project/19647-low-cost-programmable-power-supply/log/172270-this-linear-regulator-circuit-doesnt-look-quite-right) for the µC circuit shows that the board has a wider supply range than earlier DCDC-with-voltmeter modules.
