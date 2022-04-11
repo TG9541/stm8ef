@@ -1,18 +1,18 @@
 ## STM8 eForth "CORE" configuration
 
-`CORE` is a configuration for a minimal Forth system for STM8S Low Density devices (e.g. STM8S003F3P6 or STM8S103K3T6C). It's close to the original eForth feature set but it still contains the most important STM8 eForth additions like `NVM`, `CONSTANT`, `'IDLE`.  and `SAVEC .. IRET` for interrupt handlers, and `WIPE` for removing temporary words.
+`CORE` is a minimal STM8 eForth configuration for [STM8S "Low Density" devices](https://github.com/TG9541/stm8ef/wiki/STM8-Low-Density-Devices#stm8s-low-density-devices) (e.g., STM8S003F3P6, STM8S103K3T6C or STM8S903K3T6C). It's close to the original eForth feature set but many words were unlinked from the dictionary (using the `BAREBONES` configuration). It still contains the most important STM8 eForth additions like `CONSTANT` (true literals), `NVM` (compile to Flash memory), `'IDLE` (console idle tasks), `SAVEC .. IRET` (for interrupt handlers)and `WIPE` (for removing temporary words).
 
-Compared to a full STM8 eForth configuration `CORE` applies the following feature/memory trade-off:
+Compared to a full STM8 eForth configuration `CORE` it contains the following feature/memory trade-off:
 
-* case sensitive command line (the original eForth behavior)  
+* case sensitive (the original eForth behavior)
 * no Background Task (`BG` and `TIM`)
 * no I/O words (`ADC!`, `ADC@`, `OUT` and `OUT!`)
 * no `DO .. LEAVE .. LOOP/+LOOP` (only eForth [`FOR ... NEXT`](https://github.com/TG9541/stm8ef/wiki/eForth-FOR-..-NEXT) counted loops)
 * no `CREATE .. DOES>`
 
-`CORE` requires short of 3900 bytes Flash, about 730 bytes less than [MINDEV](https://github.com/TG9541/stm8ef/tree/master/MINDEV).
+`CORE` requires less than 3900 bytes Flash memory, that's about 730 bytes less than [MINDEV](https://github.com/TG9541/stm8ef/tree/master/MINDEV).
 
-`CORE` has the following vocabulary:
+The following is the visible vocabulary:
 
 ```Forth
 WORDS
@@ -22,6 +22,8 @@ DECIMAL HEX FILL CMOVE HERE +! PICK 0= ABS NEGATE NOT 1+ 1- 2+ 2- 2* 2/ */ */MOD
 UM/MOD WITHIN MIN MAX < U< = 2DUP ROT ?DUP BASE - 0< OR AND XOR + UM+ I OVER SWAP DUP 2DROP DROP NIP >R R@
 R> C! C@ ! @ 2@ 2! EXIT EXECUTE EMIT ?KEY COLD 'BOOT ok
 ```
+
+Hidden Forth words, which can be made visible with [`ALIAS`](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Alias-Words), are listed in the `CORE/target` folder.
 
 ## Adding STM8 eForth Features to `CORE`
 
