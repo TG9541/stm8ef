@@ -1,0 +1,184 @@
+\ Font 5x8 ASCII 33..126 (add a 0 column for 6x8 matrix)
+
+CREATE FONT5X8
+    $00 C, $06 C, $5F C, $06 C, $00 C,   \ !
+    $07 C, $03 C, $00 C, $07 C, $03 C,   \ "
+    $24 C, $7E C, $24 C, $7E C, $24 C,   \ #
+    $24 C, $2B C, $6A C, $12 C, $00 C,   \ $
+    $63 C, $13 C, $08 C, $64 C, $63 C,   \ %
+    $36 C, $49 C, $56 C, $20 C, $50 C,   \ &
+    $00 C, $07 C, $03 C, $00 C, $00 C,   \ '
+    $00 C, $3E C, $41 C, $00 C, $00 C,   \ (
+    $00 C, $41 C, $3E C, $00 C, $00 C,   \ )
+    $08 C, $3E C, $1C C, $3E C, $08 C,   \ *
+    $08 C, $08 C, $3E C, $08 C, $08 C,   \ +
+    $00 C, $E0 C, $60 C, $00 C, $00 C,   \ ,
+    $08 C, $08 C, $08 C, $08 C, $08 C,   \ -
+    $00 C, $60 C, $60 C, $00 C, $00 C,   \ .
+    $20 C, $10 C, $08 C, $04 C, $02 C,   \ /
+    $3E C, $51 C, $49 C, $45 C, $3E C,   \ 0
+    $00 C, $42 C, $7F C, $40 C, $00 C,   \ 1
+    $62 C, $51 C, $49 C, $49 C, $46 C,   \ 2
+    $22 C, $49 C, $49 C, $49 C, $36 C,   \ 3
+    $18 C, $14 C, $12 C, $7F C, $10 C,   \ 4
+    $2F C, $49 C, $49 C, $49 C, $31 C,   \ 5
+    $3C C, $4A C, $49 C, $49 C, $30 C,   \ 6
+    $01 C, $71 C, $09 C, $05 C, $03 C,   \ 7
+    $36 C, $49 C, $49 C, $49 C, $36 C,   \ 8
+    $06 C, $49 C, $49 C, $29 C, $1E C,   \ 9
+    $00 C, $6C C, $6C C, $00 C, $00 C,   \ :
+    $00 C, $EC C, $6C C, $00 C, $00 C,   \ ;
+    $08 C, $14 C, $22 C, $41 C, $00 C,   \ <
+    $24 C, $24 C, $24 C, $24 C, $24 C,   \ =
+    $00 C, $41 C, $22 C, $14 C, $08 C,   \ >
+    $02 C, $01 C, $59 C, $09 C, $06 C,   \ ?
+    $3E C, $41 C, $5D C, $55 C, $1E C,   \ @
+    $7E C, $11 C, $11 C, $11 C, $7E C,   \ A
+    $7F C, $49 C, $49 C, $49 C, $36 C,   \ B
+    $3E C, $41 C, $41 C, $41 C, $22 C,   \ C
+    $7F C, $41 C, $41 C, $41 C, $3E C,   \ D
+    $7F C, $49 C, $49 C, $49 C, $41 C,   \ E
+    $7F C, $09 C, $09 C, $09 C, $01 C,   \ F
+    $3E C, $41 C, $49 C, $49 C, $7A C,   \ G
+    $7F C, $08 C, $08 C, $08 C, $7F C,   \ H
+    $00 C, $41 C, $7F C, $41 C, $00 C,   \ I
+    $30 C, $40 C, $40 C, $40 C, $3F C,   \ J
+    $7F C, $08 C, $14 C, $22 C, $41 C,   \ K
+    $7F C, $40 C, $40 C, $40 C, $40 C,   \ L
+    $7F C, $02 C, $04 C, $02 C, $7F C,   \ M
+    $7F C, $02 C, $04 C, $08 C, $7F C,   \ N
+    $3E C, $41 C, $41 C, $41 C, $3E C,   \ O
+    $7F C, $09 C, $09 C, $09 C, $06 C,   \ P
+    $3E C, $41 C, $51 C, $21 C, $5E C,   \ Q
+    $7F C, $09 C, $09 C, $19 C, $66 C,   \ R
+    $26 C, $49 C, $49 C, $49 C, $32 C,   \ S
+    $01 C, $01 C, $7F C, $01 C, $01 C,   \ T
+    $3F C, $40 C, $40 C, $40 C, $3F C,   \ U
+    $1F C, $20 C, $40 C, $20 C, $1F C,   \ V
+    $3F C, $40 C, $3C C, $40 C, $3F C,   \ W
+    $63 C, $14 C, $08 C, $14 C, $63 C,   \ X
+    $07 C, $08 C, $70 C, $08 C, $07 C,   \ Y
+    $71 C, $49 C, $45 C, $43 C, $00 C,   \ Z
+    $00 C, $7F C, $41 C, $41 C, $00 C,   \ [
+    $02 C, $04 C, $08 C, $10 C, $20 C,   \ \
+    $00 C, $41 C, $41 C, $7F C, $00 C,   \ ]
+    $04 C, $02 C, $01 C, $02 C, $04 C,   \ ^
+    $80 C, $80 C, $80 C, $80 C, $80 C,   \ _
+    $00 C, $03 C, $07 C, $00 C, $00 C,   \ `
+    $20 C, $54 C, $54 C, $54 C, $78 C,   \ a
+    $7F C, $44 C, $44 C, $44 C, $38 C,   \ b
+    $38 C, $44 C, $44 C, $44 C, $28 C,   \ c
+    $38 C, $44 C, $44 C, $44 C, $7F C,   \ d
+    $38 C, $54 C, $54 C, $54 C, $08 C,   \ e
+    $08 C, $7E C, $09 C, $09 C, $00 C,   \ f
+    $18 C, $A4 C, $A4 C, $A4 C, $7C C,   \ g
+    $7F C, $04 C, $04 C, $78 C, $00 C,   \ h
+    $00 C, $00 C, $7D C, $40 C, $00 C,   \ i
+    $40 C, $80 C, $84 C, $7D C, $00 C,   \ j
+    $7F C, $10 C, $28 C, $44 C, $00 C,   \ k
+    $00 C, $00 C, $7F C, $40 C, $00 C,   \ l
+    $7C C, $04 C, $18 C, $04 C, $78 C,   \ m
+    $7C C, $04 C, $04 C, $78 C, $00 C,   \ n
+    $38 C, $44 C, $44 C, $44 C, $38 C,   \ o
+    $FC C, $44 C, $44 C, $44 C, $38 C,   \ p
+    $38 C, $44 C, $44 C, $44 C, $FC C,   \ q
+    $44 C, $78 C, $44 C, $04 C, $08 C,   \ r
+    $08 C, $54 C, $54 C, $54 C, $20 C,   \ s
+    $04 C, $3E C, $44 C, $24 C, $00 C,   \ t
+    $3C C, $40 C, $20 C, $7C C, $00 C,   \ u
+    $1C C, $20 C, $40 C, $20 C, $1C C,   \ v
+    $3C C, $60 C, $30 C, $60 C, $3C C,   \ w
+    $6C C, $10 C, $10 C, $6C C, $00 C,   \ x
+    $9C C, $A0 C, $60 C, $3C C, $00 C,   \ y
+    $64 C, $54 C, $54 C, $4C C, $00 C,   \ z
+    $08 C, $3E C, $41 C, $41 C, $00 C,   \ {
+    $00 C, $00 C, $77 C, $00 C, $00 C,   \ |
+    $00 C, $41 C, $41 C, $3E C, $08 C,   \ }
+    $02 C, $01 C, $02 C, $01 C, $00 C,   \ ~
+
+\\ Example
+
+NVM
+#require FONT5X8
+
+VARIABLE pEMIT  \  pointer to TX!
+
+\ put a pixel as "#" or " "
+: pixel ( c -- )
+   IF 35 ELSE 32 THEN
+   pEMIT @ EXECUTE ;
+
+\ next column for pixels
+: column ( -- )
+   10 pEMIT @ EXECUTE ; 
+
+\ simulate 8 pixel output to a matrix dispay
+: put8 ( c -- )
+   7 FOR
+      DUP 128 AND ( f ) pixel
+      2*
+   NEXT 
+   DROP column ;
+
+ \ render a character as a series of 8bit columns
+: render ( c -- )
+   DUP 33 128 WITHIN IF
+      ( c ) 33 - 5 * FONT5X8 + ( a )
+      0 put8
+      4 FOR 
+         DUP C@ put8
+         1+
+      NEXT DROP
+   ELSE
+      DROP 5 FOR 
+         0 put8
+      NEXT
+   THEN ;
+
+\ redirect console output and print a string
+: test5x8 ( -- )
+    \ use old console EMIT vector for pixels 
+   'EMIT @ pEMIT !
+   [ ' render ] LITERAL 'EMIT !
+   ." ABCdef"
+   pEMIT @ 'EMIT ! ;
+RAM
+
+\\ the example produces the following
+test5x8<enter>
+ ###### 
+   #   #
+   #   #
+   #   #
+ ###### 
+        
+ #######
+ #  #  #
+ #  #  #
+ #  #  #
+  ## ## 
+        
+  ##### 
+ #     #
+ #     #
+ #     #
+  #   # 
+        
+  ###   
+ #   #  
+ #   #  
+ #   #  
+ #######
+        
+  ###   
+ # # #  
+ # # #  
+ # # #  
+    #   
+        
+    #   
+ ###### 
+    #  #
+    #  #
+        
+ ok
