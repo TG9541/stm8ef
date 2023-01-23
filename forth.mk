@@ -1,9 +1,9 @@
 
-MDEPS   = forth.rel
+MDEPS   ?= forth.rel
 MKDIR_P = mkdir -p out
 BTARGET = $(BOARD)/target.inc
 OUT     = out/$(BOARD)
-SDCCOPT = --out-fmt-elf --all-callee-saves --debug --verbose --stack-auto --fverbose-asm --float-reent --no-peep
+SDCCOPT ?= --out-fmt-elf --all-callee-saves --debug --verbose --stack-auto --fverbose-asm --float-reent --no-peep
 
 TARGET := $(shell echo `[ -f $(BTARGET) ] && awk '/TARGET/ {print tolower($$3)}' $(BTARGET) || echo "stm8s103f3"`)
 OPTFILE := $(shell echo $(TARGET) | awk '{print "tools/" substr($$0,1,8) "FactoryDefaults.bin"}')
@@ -35,7 +35,7 @@ forth.rel: forth.asm
 	sdasstm8 -I. -I./$(BOARD) -I./inc -plosgffw $(OUT)/forth.rel forth.asm
 
 flash: main.ihx
-	stm8flash -c stlinkv2 -p $(TARGET) -w $(OUT)/$(BOARD).ihx
+	~/stm8flash -c stlinkv2 -p $(TARGET) -w $(OUT)/$(BOARD).ihx
 
 forth: main.ihx
 	tools/simload.sh $(BOARD)
