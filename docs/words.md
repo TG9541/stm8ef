@@ -834,6 +834,16 @@
 ```
 
 ```
+;       COMPILE?   ( -- )  ( TOS STM8: - Y,Z,N )
+;       0 if 'EVAL points to $INTERPRETER
+```
+
+```
+;       STATE?   ( -- f )
+;       0 if 'EVAL points to $INTERPRETER
+```
+
+```
 ;       [       ( -- )
 ;       Start   text interpreter.
 ```
@@ -842,16 +852,6 @@
 ;       CR      ( -- )
 ;       Output a carriage return
 ;       and a line feed.
-```
-
-```
-;       COMPILE?   ( -- )  ( TOS STM8: - Y,Z,N )
-;       0 if 'EVAL points to $INTERPRETER
-```
-
-```
-;       STATE?   ( -- f )
-;       0 if 'EVAL points to $INTERPRETER
 ```
 
 ```
