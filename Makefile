@@ -44,7 +44,7 @@ build: words
 
 clean:
 	rm -rf out/*
-	rm target
+	rm -f target
 
 words:
 	tools/genwords.awk `ls inc/*.inc` forth.asm	> docs/words.md
