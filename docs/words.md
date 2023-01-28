@@ -1,4 +1,83 @@
 # STM8EF Words
+This is an auto-generated summary from STM8 eForth core code - do not edit!
+
+## Words in inc/bgtask.inc
+
+```
+;       TIM     ( -- T)     ( TOS STM8: -- Y,Z,N )
+;       Return TICKCNT as timer
+```
+
+```
+;       BG      ( -- a)     ( TOS STM8: -- Y,Z,N )
+;       Return address of BGADDR vector
+```
+
+## Words in inc/board_io.inc
+
+```
+;       ?KEYB   ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
+;       Return keyboard char and true, or false if no key pressed.
+```
+
+```
+;       E7S  ( c -- )
+;       Convert char to 7-seg LED pattern, and insert it in display buffer
+```
+
+```
+;       P7S  ( c -- )
+;       Right aligned 7S-LED pattern output, rotates LED group buffer
+```
+
+## Words in inc/sser_fdx.inc
+
+```
+;       ?RXP     ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
+;       Return char from a simulated serial interface and true, or false.
+```
+
+```
+;       TXP!     ( c -- )
+;       Send character c to a simulated serial interface.
+```
+
+## Words in inc/sser_hdx.inc
+
+```
+;       ?RXP     ( -- c T | F )  ( TOS STM8: -- Y,Z,N )
+;       Return char from a simulated serial interface and true, or false.
+```
+
+```
+;       TXP!     ( c -- )
+;       Send character c to a simulated serial interface.
+```
+
+## Words in inc/stm8_adc.inc
+
+```
+;       ADC!  ( c -- )
+;       Init ADC, select channel for conversion
+```
+
+```
+;       ADC@  ( -- w )
+;       start ADC conversion, read result
+```
+
+```
+;       ADC!  ( c -- )
+;       Init ADC, select channel for conversion
+```
+
+```
+;       ADC@  ( -- w )
+;       start ADC conversion, read result
+```
+
+## Words in forth.asm
+
 ```
 ;       'BOOT   ( -- a )
 ;       The application startup vector and NVM USR setting array
@@ -834,6 +913,16 @@
 ```
 
 ```
+;       COMPILE?   ( -- )  ( TOS STM8: - Y,Z,N )
+;       0 if 'EVAL points to $INTERPRETER
+```
+
+```
+;       STATE?   ( -- f )
+;       0 if 'EVAL points to $INTERPRETER
+```
+
+```
 ;       [       ( -- )
 ;       Start   text interpreter.
 ```
@@ -842,16 +931,6 @@
 ;       CR      ( -- )
 ;       Output a carriage return
 ;       and a line feed.
-```
-
-```
-;       COMPILE?   ( -- )  ( TOS STM8: - Y,Z,N )
-;       0 if 'EVAL points to $INTERPRETER
-```
-
-```
-;       STATE?   ( -- f )
-;       0 if 'EVAL points to $INTERPRETER
 ```
 
 ```
