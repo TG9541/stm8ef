@@ -3,18 +3,17 @@
 ;--------------------------------------------------------
 
         .ifne   HAS_ADC
+
 ;       ADC!  ( c -- )
 ;       Init ADC, select channel for conversion
 
+        HEADER  ADCSTOR "ADC!"
+ADCSTOR:
         .ifeq   (FAMILY - STM8L)
-
 ;       ADC for the STM8L family
-
 ;       RI settings for analog signal routing should be done
 ;       on the board configuration level
 
-        HEADER  ADCSTOR "ADC!"
-ADCSTOR:
         BSET    CLK_PCKENR2,#0  ; enable clock for ADC
         BSET    ADC1_CR1,#0     ; enable ADC
         LD      A,#4
@@ -42,30 +41,9 @@ ADCSTOR:
         LD      (ADC1_SQR1,Y),A ; set channel bit
         BSET    ADC1_SQR1,#7    ; DMA disabled for single conversion
         BRES    ADC1_CR1,#0     ; disable ADC
-        RET
-
-;       ADC@  ( -- w )
-;       start ADC conversion, read result
-
-        HEADER  ADCAT "ADC@"
-ADCAT:
-        BRES    ADC1_SR,#0      ; reset EOC
-        BSET    ADC1_CR1,#0     ; enable ADC
-        BSET    ADC1_CR1,#1     ; start ADC
-1$:     BTJF    ADC1_SR,#0,1$   ; wait until EOC
-        LDW     Y,ADC1_DRH      ; read ADC
-        JP      YSTOR
-        BRES    ADC1_CR1,#0     ; disable ADC
 
         .else
-
 ;       ADC for the STM8S family
-
-;       ADC!  ( c -- )
-;       Init ADC, select channel for conversion
-
-        HEADER  ADCSTOR "ADC!"
-ADCSTOR:
         INCW    X
         LD      A,(X)
         INCW    X
@@ -73,6 +51,7 @@ ADCSTOR:
         LD      ADC_CSR,A       ; select channel
         BSET    ADC_CR2,#3      ; align ADC to LSB
         BSET    ADC_CR1,#0      ; enable ADC
+        .endif
         RET
 
 ;       ADC@  ( -- w )
@@ -80,6 +59,18 @@ ADCSTOR:
 
         HEADER  ADCAT "ADC@"
 ADCAT:
+        .ifeq   (FAMILY - STM8L)
+;       ADC for the STM8L family
+        BRES    ADC1_SR,#0      ; reset EOC
+        BSET    ADC1_CR1,#0     ; enable ADC
+        BSET    ADC1_CR1,#1     ; start ADC
+1$:     BTJF    ADC1_SR,#0,1$   ; wait until EOC
+        LDW     Y,ADC1_DRH      ; read ADC
+        JP      YSTOR
+        ; BRES    ADC1_CR1,#0     ; disable ADC ; see issue #456 unreachable code
+
+        .else
+;       ADC for the STM8S family
         BRES    ADC_CSR,#7      ; reset EOC
         BSET    ADC_CR1,#0      ; start ADC
 1$:     BTJF    ADC_CSR,#7,1$   ; wait until EOC

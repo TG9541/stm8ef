@@ -66,16 +66,6 @@ This is an auto-generated summary from STM8 eForth core code - do not edit!
 ;       start ADC conversion, read result
 ```
 
-```
-;       ADC!  ( c -- )
-;       Init ADC, select channel for conversion
-```
-
-```
-;       ADC@  ( -- w )
-;       start ADC conversion, read result
-```
-
 ## Words in forth.asm
 
 ```
