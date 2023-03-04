@@ -1,7 +1,7 @@
-E4THCOM=e4thcom
-TERM_PORT=ttyUSB0
-TERM_BAUD=9600
-TERM_FLAGS="-p mcu:target:lib"
+E4THCOM ?= e4thcom
+TERM_PORT ?= ttyUSB0
+TERM_BAUD ?= 9600
+TERM_FLAGS ?= "-p mcu:target:lib"
 
 ifeq ($(BOARD),)
 
