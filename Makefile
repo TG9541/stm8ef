@@ -44,10 +44,10 @@ build: words
 
 clean:
 	rm -rf out/*
-	rm target
+	rm -f target
 
 words:
-	awk 'BEGIN { print "# STM8EF Words"} /^; +[^ ]+ +.+--/&&!p {p=1;print "```"} !/^;/&&p {p=0; print "```\n"} p' forth.asm > docs/words.md
+	tools/genwords.awk `ls inc/*.inc` forth.asm	> docs/words.md
 
 defaults:
 	stm8flash -c stlinkv2 -p stm8s103f3 -s opt -w tools/stm8s103FactoryDefaults.bin

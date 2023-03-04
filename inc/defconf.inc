@@ -2,8 +2,8 @@
 ;       STM8 eForth for STM8S and STM8L devices
 ;       Default settings for all options
 ;--------------------------------------------------------
-        RELVER1          = 2    ; Revision digit 1
-        RELVER0          = 9   ; Revision digit 0
+        RELVER1          = 3    ; Revision digit 1
+        RELVER0          = 0    ; Revision digit 0
         PRE_REL          = 1    ; Pre Release digit 0 (0: release)
 
         TERM_LINUX       = 1    ; LF terminates line
