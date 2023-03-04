@@ -6,9 +6,9 @@ STM8 eForth is an interactive Forth system for the [STM8 family of highly reliab
 
 [![STM8EF Wiki](https://user-images.githubusercontent.com/5466977/28994765-3267d78c-79d6-11e7-927f-91751cd402db.jpg)](https://github.com/TG9541/stm8ef/wiki)
 
-The [binary release](https://github.com/TG9541/stm8ef/releases) provides ready-to-run Forth binaries for a range of STM8 chips and target boards with STM8 register definitions and a library. Build- and test-automation uses the uCsim STM8 simulator in a [GitHub Action](https://github.com/TG9541/stm8ef/actions). In the order of "stability" releases are organized as "release", "pre-release" and (unstable) "[volatile](https://github.com/TG9541/stm8ef/releases/tag/volatile)".
+The [binary release](https://github.com/TG9541/stm8ef/releases) provides ready-to-run Forth binaries for a range of STM8 chips and target boards with STM8 register definitions and a library. Build- and test-automation uses the uCsim STM8 simulator in a [GitHub Action](https://github.com/TG9541/stm8ef/actions). Releases are presented as "release" (stable), "pre-release" (unstable) "[volatile](https://github.com/TG9541/stm8ef/releases/tag/volatile)" (latest).
 
-For downstream projects the binary release contains all necessary sources, tools and libraries to build a custom STM8 eForth core (e.g., using the [modular build support](https://github.com/TG9541/stm8ef-modular-build)). Typical modular build use cases are "adding a new target with specific hardware support", "custom memory layout", "a tailored vocabulary" or "a mixed C/Forth project".
+The binary release contains all necessary sources, tools and libraries needed by downstream projects to build a custom STM8 eForth core (e.g., using the [modular build support](https://github.com/TG9541/stm8ef-modular-build)). Typical modular build use cases are "adding specific board support", "custom memory layout", "tailored vocabulary" or "a mixed C/Forth project".
 
 ## About Forth
 
@@ -18,11 +18,12 @@ Forth works by defining new words with "phrases" consisting of existing words - 
 : hello ." Hello World!" ;
 ```
 
+
+Data flows on a stack from one word to the next and in most cases there is no need for temporary variables. Not only this leads to very good code density but it also simplifies testing.
+
 Forth is a "low level" language that offers a high level of abstraction:
 
-Forth has no real syntax but good phrases look like Yoda-speak (e.g. `15 deg left servo turn-by` or `center right servo turn-to`).
-
-Data flows on the stack from one word to the next and in most cases there is no need for temporary variables. This leads to very good code density and it also simplifies testing. Even control structures in the compiler are just Forth words.
+Forth has no real syntax but good design results in readable phrases (e.g. `15 deg left servo turn-by` or `center right servo turn-to`). Even control structures used by the compiler are just Forth words that are immediately interpreted.
 
 The best feature of Forth is that it allows interactive testing of words and phrases. This turns the embedded system into an application oriented test environment!
 
@@ -30,7 +31,7 @@ Forth is so simple that you can learn the basics in a snap, e.g. in the [STM8 eF
 
 ## About STM8 eForth
 
-The STM8 eForth core is written in STM8 assembly using the SDCC tool chain's sdasstm8 assembler. Combining Forth with C is supported.
+The STM8 eForth core is written in STM8 assembly using the SDCC tool chain. Combining Forth with C is supported.
 
 The original STM8 eForth was written by [Dr. C.H. Ting's eForth](http://www.forth.org/svfig/kk/07-2010.html) for the STM8S Discovery. With the kind permission of Dr. Ting the code presented here is under [MIT license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md). Bugs were fixed, the code size reduced, standards compatibility improved and many features added (e.g. compilation to Flash memory, autostart code, interrupt handling - see [overview](https://github.com/TG9541/stm8ef/tree/master/docs) and [words list](https://github.com/TG9541/stm8ef/blob/master/docs/words.md) in the docs folder.
 
