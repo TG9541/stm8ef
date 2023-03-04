@@ -2,7 +2,9 @@
 
 ![Build](https://github.com/TG9541/stm8ef/actions/workflows/build-test.yml/badge.svg)
 
-STM8 eForth is an interactive Forth system for the [STM8 family of highly reliable 8-bit MCUs](https://www.st.com/en/microcontrollers-microprocessors/stm8-8-bit-mcus.html) with 16bit extensions and modern peripherals that are easier to master than those in 32bit µCs. The Forth console, an interpreter and native-code compiler, turns a simple device into a "computer" with a serial console and operating-system-like features such as "background execution". This enables interactive "exploration of peripherals", "control parameter tuning" or "changing code in the Flash ROM" while the application is running. [Code examples](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Example-Code) for STM8 peripherals, e.g., timers, RTC, ADC, I2C, can be used as a starting point for creating reliable embedded control applications.
+STM8 eForth is an interactive Forth system for the [STM8 family of highly reliable 8-bit MCUs](https://www.st.com/en/microcontrollers-microprocessors/stm8-8-bit-mcus.html) with 16bit extensions and modern peripherals that are easier to master than those in 32bit µCs.
+
+The Forth console, an interpreter and native-code compiler, turns a simple device into a "computer" with a serial console and operating-system-like features such as "background execution". This enables interactive "exploration of peripherals", "control parameter tuning" or "changing code in the Flash ROM" while the application is running. [Code examples](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Example-Code) for STM8 peripherals, e.g., timers, RTC, ADC, I2C, can be used as a starting point for creating reliable embedded control applications.
 
 [![STM8EF Wiki](https://user-images.githubusercontent.com/5466977/28994765-3267d78c-79d6-11e7-927f-91751cd402db.jpg)](https://github.com/TG9541/stm8ef/wiki)
 
@@ -18,7 +20,7 @@ Forth works by defining new words with "phrases" consisting of existing words, s
 : hello ." Hello World!" ;
 ```
 
-Forth is so simple that you can learn the basics in a snap, e.g. in the [STM8 eForth Walk-Through](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Programming).
+The Forth language is so simple that you can learn the basics in a snap, e.g., with the [STM8 eForth Walk-Through](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Programming).
 
 Data flows on a stack from one word to the next and in most cases there is no need for temporary variables. Not only this leads to very good code density but it also simplifies testing. Forth is a "low level" language that offers a high level of abstraction: even words for control structures like `IF ... THEN` are just immediately interpreted Forth words.
 
