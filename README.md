@@ -4,13 +4,11 @@
 
 STM8 eForth is an interactive Forth system for the [STM8 family of highly reliable 8-bit MCUs](https://www.st.com/en/microcontrollers-microprocessors/stm8-8-bit-mcus.html). The STM8 core is a 8bit µC with 16bit extensions. Peripherals are modern but easier to master than those in the STM32 family of 32bit µCs. The Forth console, an interpreter and native-code compiler, turns this simple device into a "computer" that provides operating-system-like features such as background code execution. It enables interactive exploration of peripherals or tuning of control parameters, and it's even possible to change code in the Flash ROM while an application is running. [Code examples](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Example-Code) for STM8 peripherals (like I2C, ADC, PWM, RTC, etc.) can be used as a starting point for creating reliable embedded control applications.
 
-The original STM8 eForth was written by [Dr. C.H. Ting's eForth](http://www.forth.org/svfig/kk/07-2010.html) for the STM8S Discovery. With the kind permission of Dr. Ting the code presented here is under [MIT license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md). Bugs were fixed, the code size reduced, standards compatibility improved and many features added (e.g. compilation to Flash memory, autostart code, interrupt handling - see [overview](https://github.com/TG9541/stm8ef/tree/master/docs) and [words list](https://github.com/TG9541/stm8ef/blob/master/docs/words.md) in the docs folder.
+[![STM8EF Wiki](https://user-images.githubusercontent.com/5466977/28994765-3267d78c-79d6-11e7-927f-91751cd402db.jpg)](https://github.com/TG9541/stm8ef/wiki)
 
 The [binary release](https://github.com/TG9541/stm8ef/releases) provides a ready-to-run Forth for a range of devices and target boards (including STM8 register definitions and library). Build- and test-automation uses the uCsim STM8 simulator in a [GitHub Action](https://github.com/TG9541/stm8ef/actions). In the order of "stability" releases are organized as "release", "pre-release" and (unstable) "[volatile](https://github.com/TG9541/stm8ef/releases/tag/volatile)".
 
 For downstream projects the binary release contains all necessary sources, tools and libraries to build a custom STM8 eForth core (e.g., using the [modular build support](https://github.com/TG9541/stm8ef-modular-build). Typical modular build use cases are, e.g., adding a new target with specific hardware support, custom memory layout, a tailored vocabulary or making a mixed C/Forth project.
-
-[![STM8EF Wiki](https://user-images.githubusercontent.com/5466977/28994765-3267d78c-79d6-11e7-927f-91751cd402db.jpg)](https://github.com/TG9541/stm8ef/wiki)
 
 ## About Forth
 
@@ -32,7 +30,9 @@ Forth is so simple that you can learn the basics in a snap, e.g. in the [STM8 eF
 
 ## About STM8 eForth
 
-The STM8 eForth core is written in STM8 assembly using the `sdasstm8` assembler in the SDCC tool chain. Combining Forth with C is possible.
+The STM8 eForth core is written in STM8 assembly using the SDCC tool chain's sdasstm8 assembler. Combining Forth with C is supported.
+
+The original STM8 eForth was written by [Dr. C.H. Ting's eForth](http://www.forth.org/svfig/kk/07-2010.html) for the STM8S Discovery. With the kind permission of Dr. Ting the code presented here is under [MIT license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md). Bugs were fixed, the code size reduced, standards compatibility improved and many features added (e.g. compilation to Flash memory, autostart code, interrupt handling - see [overview](https://github.com/TG9541/stm8ef/tree/master/docs) and [words list](https://github.com/TG9541/stm8ef/blob/master/docs/words.md) in the docs folder.
 
 STM8 eForth is highly configurable: a Forth binary that allows compiling new words to Flash ROM or RAM requires less than 4K. A binary with an extended vocabulary needs no more than about 5.5K. Due to the extraordinary code density very-low-cost 8K devices, e.g. [STM8S003F3P6](https://www.st.com/resource/en/datasheet/stm8s003f3.pdf) or [STM8L051F3P6](https://www.st.com/resource/en/datasheet/stm8l051F3.pdf), are sufficient for non-trivial applications. If more space is needed a low-cost 32K device can be used, e.g. [STM8S005C6](https://www.st.com/resource/en/datasheet/stm8s005c6.pdf) or [STM8L052C6](https://www.st.com/resource/en/datasheet/stm8l052c6.pdf).
 
