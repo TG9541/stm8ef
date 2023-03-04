@@ -8,7 +8,7 @@ STM8 eForth is an interactive Forth system for the [STM8 family of highly reliab
 
 The [binary release](https://github.com/TG9541/stm8ef/releases) provides a ready-to-run Forth for a range of devices and target boards (including STM8 register definitions and library). Build- and test-automation uses the uCsim STM8 simulator in a [GitHub Action](https://github.com/TG9541/stm8ef/actions). In the order of "stability" releases are organized as "release", "pre-release" and (unstable) "[volatile](https://github.com/TG9541/stm8ef/releases/tag/volatile)".
 
-For downstream projects the binary release contains all necessary sources, tools and libraries to build a custom STM8 eForth core (e.g., using the [modular build support](https://github.com/TG9541/stm8ef-modular-build). Typical modular build use cases are, e.g., adding a new target with specific hardware support, custom memory layout, a tailored vocabulary or making a mixed C/Forth project.
+For downstream projects the binary release contains all necessary sources, tools and libraries to build a custom STM8 eForth core (e.g., using the [modular build support](https://github.com/TG9541/stm8ef-modular-build)). Typical modular build use cases are "adding a new target with specific hardware support", "custom memory layout", "a tailored vocabulary" or "a mixed C/Forth project".
 
 ## About Forth
 
