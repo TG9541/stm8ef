@@ -75,7 +75,9 @@ For more details please refer to the `README.md` in the board folders below.
 
 STM8 eForth provides board support for selected mass-produced Chinese low-cost control boards, e.g. words for relay outputs, or I/O with keys and LED displays. Since the appearance of MCUs with the same pin-out as the popular STM8S003F3P6 common "Chinese gadgets" like thermostats, voltmeters or relay boards can no longer be expected to use an STM8 chip, and soldering skills are required to replace it. There is more [information in the Wiki](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets).
 
-Note that the common break-out boards and the [C0135](https://github.com/TG9541/stm8ef/wiki/Board-C0135) control board can be expected to work without any change.
+Note that break-out boards and the [C0135](https://github.com/TG9541/stm8ef/wiki/Board-C0135) control board can be expected to work without any change.
+
+![C0135](https://user-images.githubusercontent.com/5466977/64919487-9f176200-d7ab-11e9-9a4f-00d0d6d24ceb.png)
 
 *  [CORE](https://github.com/TG9541/stm8ef/tree/master/CORE) "svelte" 4K configuration for STM8S "Low density" devices, some features are disabled (no background task, `DO .. LOOP` or `CREATE .. DOES>`). Also, the dictionary search is case-sensitive.
 * [SWIMCOM](https://github.com/TG9541/stm8ef/tree/master/SWIMCOM) 2-wire communication through PD1/SWIM (i.e. the ICP pin) and a full feature set (the similar [DOUBLECOM](https://github.com/TG9541/stm8ef/tree/master/DOUBLECOM) also provides UART I/O words for applications)
