@@ -2,7 +2,7 @@
 
 ![Build](https://github.com/TG9541/stm8ef/actions/workflows/build-test.yml/badge.svg)
 
-STM8 eForth is a ready to use interactive Forth system for [STM8 MCUs](https://www.st.com/en/microcontrollers-microprocessors/stm8-8-bit-mcus.html). The STM8 family of highly reliable 8bit microcontrollers has 16bit extensions and modern peripherals. STM8 devices are widely available and easy to master. The [embedded Forth](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Programming) turns STM8 devices into a "computer" with a serial console.
+STM8 eForth is a ready to use interactive Forth system for [STM8 MCUs](https://www.st.com/en/microcontrollers-microprocessors/stm8-8-bit-mcus.html). The STM8 family of highly reliable 8bit microcontrollers has 16bit extensions and modern peripherals. STM8 devices are widely available and easy to master. The [embedded Forth](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Programming) turns STM8 devices into a "computer" with a serial console. STM8 eForth has been used for learning, creating one-off appliances, and for small-scale commercial projects.
 
 The Forth console provides a command interpreter, a native code compiler, and features like background execution of application code. This enables use cases like interactive testing of peripherals, control parameter tuning, and adding or changing code in the Flash ROM while application code is running. [Code examples](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Example-Code) for STM8 peripherals, e.g., timers, RTC, ADC, I2C, can be used as a starting point for creating reliable embedded systems.
 
