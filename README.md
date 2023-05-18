@@ -14,17 +14,17 @@ The binary release contains all necessary sources, tools and libraries needed by
 
 ## About Forth
 
-Forth works by defining new words with "phrases" consisting of existing words, strings or numbers. A simple "Hello World" in Forth looks like this:
+Forth works by defining new words with "phrases" consisting of existing words, numbers or strings. A simple "Hello World" in Forth looks like this:
 
 ```Forth
 : hello ." Hello World!" ;
 ```
 
-The Forth language is so simple that you can learn the basics in a snap, e.g., with the [STM8 eForth Walk-Through](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Programming).
+The Forth language is so simple that you can learn the basics in a snap, e.g., with the [STM8 eForth Walk-Through](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Programming). Forth has no real syntax but good design results in readable phrases (e.g. `15 deg left servo turn-by` or `center right servo turn-to`).
 
-Data flows on a stack from one word to the next and in most cases there is no need for temporary variables. Not only this leads to very good code density but it also simplifies testing. Forth is a "low level" language that offers a high level of abstraction: even words for control structures like `IF ... THEN` are just immediately interpreted Forth words.
+Forth is a stack based language: data flows on the data stack from one word to the next and in most cases there is no need for temporary variables.
 
-Forth has no real syntax but good design results in readable phrases (e.g. `15 deg left servo turn-by` or `center right servo turn-to`).
+The Forth programming style encourages "factoring" functionality. This leads to very good code density but it also simplifies testing. Forth is a "low level" language that offers a high level of abstraction: even words for control structures like `IF ... THEN` are just Forth words that compile code.
 
 The best feature of Forth is that it allows interactive testing of words and phrases. An embedded system can be used as its own application oriented test environment!
 
