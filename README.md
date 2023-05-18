@@ -40,21 +40,11 @@ The Forth console uses the STM8 U(S)ART or a simulated serial interface for comm
 
 The [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) covers various topics, e.g. converting low-cost Chinese thermostats, voltmeters or DC/DC-converters into Forth powered embedded control boards.
 
-## Release and development cycle
-
-The Github Releases section contains binary releases. As STM8 eForth is based on eForth V2 (embedded STC Forth) and, since it improves on STM8EF V2.1, releases follow the naming scheme "STM8 eForth 2.2.x".
-
-Using a target binary requires setting a symlink `target` to the desired board target folder, e.g. `ln -s out/STM8S105K4/target target` (use `make BOARD=<target>` or `BOARD=<target> make`).
-
-The git master branch contains the current development version (releases are tagged). After cloning the repository `make` will build all targets.
-
-Running `make BOARD=STM8S105K4` will set a symlink. The Forth console prompt will show the release version (e.g. `STM8eForth 2.2.27`) or the next pre-release (e.g. `STM8EF2.2.28.pre1`).
-
 ## Generic targets
 
-STM8 eForth provides configurations and binaries for typical STM8S and STM8L devices. The binaries for selected "Low", "Medium" or "High density" can be expected to work for all of the listed packaging and memory "specs variants". For details please refer to the `README.md` in the configuration folders referenced below. The automotive grade and the special purpose families should also work. Please open an [Issue](https://github.com/TG9541/stm8ef/issues) or use [Discussions](https://github.com/TG9541/stm8ef/discussions) if you have questions about support for a device!
+STM8 eForth provides configurations and binaries for typical STM8S and STM8L devices. The binaries for selected "Low", "Medium" or "High density" can be expected to work for all of the listed packaging and memory "specs variants" (i.e., a device with 32K Flash specified as 16K). For details please refer to the `README.md` in the configuration folders referenced below. The automotive grade and the special purpose families should also work. Please open an [Issue](https://github.com/TG9541/stm8ef/issues) or use [Discussions](https://github.com/TG9541/stm8ef/discussions) if you have questions about support for a device!
 
-### Generic STMS targets
+### STM8S targets
 
 Support for STM8S devices in the [RM0016](https://www.st.com/resource/en/reference_manual/cd00190271-stm8s-series-and-stm8af-series-8-bit-microcontrollers-stmicroelectronics.pdf) family is stable. Peripherals aren't as advanced as those of e.g. STM8L devices but that makes them easy to master. Automotive grade STM8AF devices in the same family can be expected to work. Various STM8 Discovery boards and breakout boards for "Low", "Medium", and "High density" devices can be used.
 
@@ -66,9 +56,9 @@ Support for STM8S devices in the [RM0016](https://www.st.com/resource/en/referen
 * STM8S "High density" devices (up to 6K RAM, 32K + 96K Flash and 2K EEPROM)
   * [STM8S207RB](https://github.com/TG9541/stm8ef/tree/master/STM8S207RB) for STM8S007C8, STM8S207C6/K6/R6/S6, STM8S207C8/K8/M8/R8/S8, STM8S207CB/MB/RB/SB, STM8S208C6/R6/S6, STM8S208C8/R8/S8 and STM8S208CB/MB/RB/SB
 
-### Generic STML targets
+### STM8L targets
 
-Compared to STM8S most STM8L devices provide a much richer feature set and studying the reference manual may take more time. Although support for STM8L peripherals is relatively recent the STM8 eForth core is mostly the same as for STM8S devices and thus well tested. The latest addition is support for STM8L101F3 and STM8L001J3, the only members of the [RM0013](https://www.st.com/resource/en/reference_manual/CD00184503-.pdf) family.
+STM8L support in STM8 eForth is stable. Compared to STM8S most STM8L devices provide a much richer feature set and studying the reference manual may take more time. The STM8 eForth core is mostly the same as for STM8S devices. The latest addition was support for STM8L101F3 and STM8L001J3, the only members of the [RM0013](https://www.st.com/resource/en/reference_manual/CD00184503-.pdf) family.
 
 For more details please refer to the `README.md` in the board folders below.
 
@@ -83,7 +73,9 @@ For more details please refer to the `README.md` in the board folders below.
 
 ## Board support:
 
-STM8 eForth provides board support, e.g. words for relay outputs or I/O with keys and LED displays, for several common development boards and "Chinese gadgets" like thermostats, voltmeters or relay boards. There is more [information in the Wiki](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets).
+STM8 eForth provides board support for selected mass-produced Chinese low-cost control boards, e.g. words for relay outputs, or I/O with keys and LED displays. Since the appearance of MCUs with the same pin-out as the popular STM8S003F3P6 common "Chinese gadgets" like thermostats, voltmeters or relay boards can no longer be expected to use an STM8 chip, and soldering skills are required to replace it. There is more [information in the Wiki](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets).
+
+Note that the common break-out boards and the [C0135](https://github.com/TG9541/stm8ef/wiki/Board-C0135) control board can be expected to work without any change.
 
 *  [CORE](https://github.com/TG9541/stm8ef/tree/master/CORE) "svelte" 4K configuration for STM8S "Low density" devices, some features are disabled (no background task, `DO .. LOOP` or `CREATE .. DOES>`). Also, the dictionary search is case-sensitive.
 * [SWIMCOM](https://github.com/TG9541/stm8ef/tree/master/SWIMCOM) 2-wire communication through PD1/SWIM (i.e. the ICP pin) and a full feature set (the similar [DOUBLECOM](https://github.com/TG9541/stm8ef/tree/master/DOUBLECOM) also provides UART I/O words for applications)
@@ -103,6 +95,16 @@ The Wiki lists other supported "[Value Line Gadgets][WG1]", e.g. [voltmeters & p
 ## Targeting other boards
 
 The binary release contains all files required for building a configured STM8 eForth, e.g. for a custom target board. The [modular build](https://github.com/TG9541/stm8ef-modular-build) repository provides instructions, a `Makefile` and an example "board folder". Other examples are in the GitHub repositories [W1209](https://github.com/TG9541/W1209), [STM8 eForth MODBUS](https://github.com/TG9541/stm8ef-modbus), [STM8L051LED](https://github.com/TG9541/stm8l051led) or [XY-LPWM](https://github.com/TG9541/XY-LPWM).
+
+# Release and development cycle
+
+The Github Releases section contains binary releases. As STM8 eForth is based on eForth V2 (embedded STC Forth) and, since it improves on STM8EF V2.1, releases follow the naming scheme "STM8 eForth 2.2.x".
+
+Using a target binary requires setting a symlink `target` to the desired board target folder, e.g. `ln -s out/STM8S105K4/target target` (use `make BOARD=<target>` or `BOARD=<target> make`).
+
+The git master branch contains the current development version (releases are tagged). After cloning the repository `make` will build all targets.
+
+Running `make BOARD=STM8S105K4` will set a symlink. The Forth console prompt will show the release version (e.g. `STM8eForth 2.2.27`) or the next pre-release (e.g. `STM8EF2.2.28.pre1`).
 
 # Disclaimer, copyright
 
