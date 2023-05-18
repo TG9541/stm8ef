@@ -2,9 +2,9 @@
 
 ![Build](https://github.com/TG9541/stm8ef/actions/workflows/build-test.yml/badge.svg)
 
-STM8 eForth is an interactive Forth system for the [STM8 family of highly reliable 8-bit MCUs](https://www.st.com/en/microcontrollers-microprocessors/stm8-8-bit-mcus.html) with 16bit extensions and modern peripherals that are easier to master than those in 32bit µCs.
+STM8 eForth is a ready to use interactive Forth system for [STM8 MCUs](https://www.st.com/en/microcontrollers-microprocessors/stm8-8-bit-mcus.html). The STM8 family of highly reliable 8bit microcontrollers has 16bit extensions and modern peripherals. STM8 devices are widely available and easy to master. The [embedded Forth](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Programming) turns STM8 devices into a "computer" with a serial console.
 
-The Forth console, an interpreter and native-code compiler, turns a simple device into a "computer" with a serial console and operating-system-like features such as "background execution". This enables interactive "exploration of peripherals", "control parameter tuning" or "changing code in the Flash ROM" while the application is running. [Code examples](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Example-Code) for STM8 peripherals, e.g., timers, RTC, ADC, I2C, can be used as a starting point for creating reliable embedded control applications.
+The Forth console provides a command interpreter, a native code compiler, and features like background execution of application code. This enables use cases like interactive testing of peripherals, control parameter tuning, and adding or changing code in the Flash ROM while application code is running. [Code examples](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Example-Code) for STM8 peripherals, e.g., timers, RTC, ADC, I2C, can be used as a starting point for creating reliable embedded systems.
 
 [![STM8EF Wiki](https://user-images.githubusercontent.com/5466977/28994765-3267d78c-79d6-11e7-927f-91751cd402db.jpg)](https://github.com/TG9541/stm8ef/wiki)
 
