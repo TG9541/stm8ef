@@ -8,7 +8,7 @@ The following datasheets apply:
 * [STM8S103F2 STM8S103F3/K3](https://www.st.com/resource/en/datasheet/stm8s103f3.pdf)
 * [STM8S903F3/K3](https://www.st.com/resource/en/datasheet/stm8s903f3.pdf)
 
-Note that using this configuration for the [STM8S001J3](https://www.st.com/resource/en/datasheet/stm8s001j3.pdf) is possible but not recommended: `PD1/SWIM` and `PD5/UART_TX` share pin8 and recovering from software problem may not be possible. Please use the [STM8S001J3 configuration](https://github.com/TG9541/stm8ef/tree/master/STM8S001J3) instead.
+Note that using this configuration for the [STM8S001J3](https://www.st.com/resource/en/datasheet/stm8s001j3.pdf) is possible but not recommended: `PD1/SWIM` and `PD5/UART_TX` share pin8 and recovering from a software problem may not be possible. Please use the [STM8S001J3 configuration](https://github.com/TG9541/stm8ef/tree/master/STM8S001J3) instead.
 
 ## STM8 eForth Programming
 

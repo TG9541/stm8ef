@@ -2,29 +2,29 @@
 
 ![Build](https://github.com/TG9541/stm8ef/actions/workflows/build-test.yml/badge.svg)
 
-STM8 eForth is an interactive Forth system for the [STM8 family of highly reliable 8-bit MCUs](https://www.st.com/en/microcontrollers-microprocessors/stm8-8-bit-mcus.html) with 16bit extensions and modern peripherals that are easier to master than those in 32bit µCs.
+STM8 eForth is a ready to use interactive Forth system for [STM8 MCUs](https://www.st.com/en/microcontrollers-microprocessors/stm8-8-bit-mcus.html). The STM8 family of highly reliable 8bit microcontrollers has 16bit extensions and modern peripherals. STM8 devices are widely available and easy to master. The [embedded Forth](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Programming) turns STM8 devices into a "computer" with a serial console.
 
-The Forth console, an interpreter and native-code compiler, turns a simple device into a "computer" with a serial console and operating-system-like features such as "background execution". This enables interactive "exploration of peripherals", "control parameter tuning" or "changing code in the Flash ROM" while the application is running. [Code examples](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Example-Code) for STM8 peripherals, e.g., timers, RTC, ADC, I2C, can be used as a starting point for creating reliable embedded control applications.
+The Forth console provides a command interpreter, a native code compiler, and features like background execution of application code. This enables use cases like interactive testing of peripherals, control parameter tuning, and adding or changing code in the Flash ROM while application code is running. [Code examples](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Example-Code) for STM8 peripherals, e.g., timers, RTC, ADC, I2C, can be used as a starting point for creating reliable embedded systems.
 
 [![STM8EF Wiki](https://user-images.githubusercontent.com/5466977/28994765-3267d78c-79d6-11e7-927f-91751cd402db.jpg)](https://github.com/TG9541/stm8ef/wiki)
 
 The [binary release](https://github.com/TG9541/stm8ef/releases) provides ready-to-run Forth binaries with STM8 register definitions and a library for a range of STM8 chips and target boards. Build- and test-automation uses the uCsim STM8 simulator in a [GitHub Action](https://github.com/TG9541/stm8ef/actions). Releases are presented as "release" (stable), "pre-release" (unstable) and "[volatile](https://github.com/TG9541/stm8ef/releases/tag/volatile)" (latest).
 
-The binary release contains all necessary sources, tools and libraries needed by downstream projects for building a custom STM8 eForth core. The [modular build](https://github.com/TG9541/stm8ef-modular-build)) concept simplifies use cases like "adding board support", "custom memory layout", "tailored vocabulary" or a "mixed C/Forth project".
+The binary release contains all necessary sources, tools and libraries needed by downstream projects for building a custom STM8 eForth core. The SDCC tool chain is used, and the [modular build](https://github.com/TG9541/stm8ef-modular-build) concept simplifies use cases like "adding board support", "custom memory layout", "tailored vocabulary" or a "mixed C/Forth project".
 
 ## About Forth
 
-Forth works by defining new words with "phrases" consisting of existing words, strings or numbers. A simple "Hello World" in Forth looks like this:
+Forth works by defining new words with "phrases" consisting of existing words, numbers or strings. A simple "Hello World" in Forth looks like this:
 
 ```Forth
 : hello ." Hello World!" ;
 ```
 
-The Forth language is so simple that you can learn the basics in a snap, e.g., with the [STM8 eForth Walk-Through](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Programming).
+The Forth language is so simple that you can learn the basics in a snap, e.g., with the [STM8 eForth Walk-Through](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Programming). Forth has no real syntax but good design results in readable phrases (e.g. `15 deg left servo turn-by` or `center right servo turn-to`).
 
-Data flows on a stack from one word to the next and in most cases there is no need for temporary variables. Not only this leads to very good code density but it also simplifies testing. Forth is a "low level" language that offers a high level of abstraction: even words for control structures like `IF ... THEN` are just immediately interpreted Forth words.
+Forth is a stack based language: data flows on the data stack from one word to the next and in most cases there is no need for temporary variables.
 
-Forth has no real syntax but good design results in readable phrases (e.g. `15 deg left servo turn-by` or `center right servo turn-to`).
+The Forth programming style encourages "factoring" functionality. This leads to very good code density but it also simplifies testing. Forth is a "low level" language that offers a high level of abstraction: even words for control structures like `IF ... THEN` are just Forth words that compile code.
 
 The best feature of Forth is that it allows interactive testing of words and phrases. An embedded system can be used as its own application oriented test environment!
 
