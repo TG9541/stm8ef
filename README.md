@@ -10,7 +10,7 @@ The Forth console provides a command interpreter, a native code compiler, and fe
 
 The [binary release](https://github.com/TG9541/stm8ef/releases) provides ready-to-run Forth binaries with STM8 register definitions and a library for a range of STM8 chips and target boards. Build- and test-automation uses the uCsim STM8 simulator in a [GitHub Action](https://github.com/TG9541/stm8ef/actions). Releases are presented as "release" (stable), "pre-release" (unstable) and "[volatile](https://github.com/TG9541/stm8ef/releases/tag/volatile)" (latest).
 
-The binary release contains all necessary sources, tools and libraries needed by downstream projects for building a custom STM8 eForth core. The [modular build](https://github.com/TG9541/stm8ef-modular-build)) concept simplifies use cases like "adding board support", "custom memory layout", "tailored vocabulary" or a "mixed C/Forth project".
+The binary release contains all necessary sources, tools and libraries needed by downstream projects for building a custom STM8 eForth core. The SDCC tool chain is used, and the [modular build](https://github.com/TG9541/stm8ef-modular-build) concept simplifies use cases like "adding board support", "custom memory layout", "tailored vocabulary" or a "mixed C/Forth project".
 
 ## About Forth
 
