@@ -87,20 +87,20 @@ STM8L support for [RM0031](https://www.st.com/resource/en/reference_manual/cd002
 
 For more details please refer to the `README.md` in the board folders below.
 
-* STM8L RM0013 family "Low density" devices (1.5K RAM, 8K Flash, basic peripherals)
+* RM0013 family STM8L "Low density" devices (1.5K RAM, 8K Flash, basic peripherals)
   * [STM8L101F3](https://github.com/TG9541/stm8ef/tree/master/STM8L101F3) for STM8L101F1, STM8L101F2/G2, STM8L101F3/G3/K3 and STM8L001J3M3
 * RM0031 family STM8L "Low density" devices (1K RAM, 8K Flash, 256 bytes EEPROM, advanced peripherals)
   * [STM8L051F3](https://github.com/TG9541/stm8ef/tree/master/STM8L051F3) for STM8L151C3/K3/G3/F3, STM8L151C2/K2/G2/F2, STM8L051F3 and STM8L050J3M3
-* STM8L RM0031 family "Medium density" devices (2K RAM, 32K Flash, 1K EEPROM)
+* RM0031 family STM8L "Medium density" devices (2K RAM, 32K Flash, 1K EEPROM)
   * [STM8L151K4](https://github.com/TG9541/stm8ef/tree/master/STM8L151K4) for STM8L151C4/K4/G4, STM8L151C6/K6/G6, STM8L152C4/K4/G4, STM8L152C6/K6/G6 and STM8L052C6
-* STM8L RM0031 family "High" and "Medium+ density" devices (4K RAM, 32K + 32K Flash, 2K EEPROM)
+* RM0031 family STM8L "High" and "Medium+ density" devices (4K RAM, 32K + 32K Flash, 2K EEPROM)
   * [STM8L152R8](https://github.com/TG9541/stm8ef/tree/master/STM8L152R8) for STM8L151C8/M8/R8, STM8L152C8/K8/M8/R8 and STM8L052R8
 
 ## Other configuration examples
 
 The STM8 eForth core is highly configurable. The following configuration examples showcase minimal configurations or communication settings.
 
-*  [CORE](https://github.com/TG9541/stm8ef/tree/master/CORE) "svelte" 4K configuration for STM8S "Low density" devices, some features are disabled (no background task, `DO .. LOOP` or `CREATE .. DOES>`). Also, the dictionary search is case-sensitive like in the original STM8EF.
+*  [CORE](https://github.com/TG9541/stm8ef/tree/master/CORE) "svelte" 4K configuration for STM8S "Low density" devices, some features were disabled (no background task, `DO .. LOOP` or `CREATE .. DOES>`) and dictionary search is case-sensitive like in the original STM8EF (to conserve a few more bytes)
 * [SWIMCOM](https://github.com/TG9541/stm8ef/tree/master/SWIMCOM) 2-wire console interface through PD1/SWIM (i.e. the ICP pin) with full feature set
 * [DOUBLECOM](https://github.com/TG9541/stm8ef/tree/master/DOUBLECOM) 3-wire console interface with extra UART I/O words for the application
 
