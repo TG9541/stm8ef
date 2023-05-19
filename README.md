@@ -2,9 +2,9 @@
 
 ![Build](https://github.com/TG9541/stm8ef/actions/workflows/build-test.yml/badge.svg)
 
-STM8 eForth is a ready to use interactive Forth system for [STM8 MCUs](https://www.st.com/en/microcontrollers-microprocessors/stm8-8-bit-mcus.html). The STM8 family of highly reliable 8bit microcontrollers has 16bit extensions and modern peripherals. STM8 devices are widely available and easy to master. The [embedded Forth](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Programming) turns STM8 devices into a "computer" with a serial console. STM8 eForth has been used for learning, creating one-off appliances, and for small-scale commercial projects.
+STM8 eForth is a ready to use interactive Forth system for [STM8 MCUs](https://www.st.com/en/microcontrollers-microprocessors/stm8-8-bit-mcus.html). The STM8 family of highly reliable 8bit microcontrollers (up to "Automotive Grade 0") has 16bit extensions and modern peripherals. STM8 devices are widely available and easy to master. The [embedded Forth](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Programming) turns STM8 devices into a "computer" with a serial console. STM8 eForth has been used for learning, prototyping, set-and-forget appliations, and for small-scale commercial projects. STM8 eForth has a small but active community, is free and comes with a permissive OSS license. Leave a ⭐if you like it!
 
-The Forth console provides a command interpreter, a native code compiler, and features like background execution of application code. This enables use cases like interactive testing of peripherals, control parameter tuning, and adding or changing code in the Flash ROM while application code is running. [Code examples](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Example-Code) for STM8 peripherals, e.g., timers, RTC, ADC, I2C, can be used as a starting point for creating reliable embedded systems.
+The Forth console provides a command interpreter, a native code compiler, and features like background execution of application code. This enables use cases like interactive testing of peripherals, control parameter tuning, and adding or changing code in the Flash ROM while application code is running. [Code examples](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Example-Code) for STM8 peripherals (e.g., timers, RTC, ADC or I2C) can be used as a starting point for creating reliable embedded systems. You can [try it in uCsim](https://github.com/TG9541/stm8ef/wiki/STM8-eForth-Hands-On-with-uCsim).
 
 [![STM8EF Wiki](https://user-images.githubusercontent.com/5466977/28994765-3267d78c-79d6-11e7-927f-91751cd402db.jpg)](https://github.com/TG9541/stm8ef/wiki)
 
@@ -42,9 +42,9 @@ The [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) covers various topic
 
 ## Board support:
 
-STM8 eForth provides board support for selected mass-produced Chinese low-cost control boards, e.g. words for relay outputs, or I/O with keys and LED displays. Since the appearance of MCUs with the same pin-out as the popular STM8S003F3P6 common "Chinese gadgets" like thermostats, voltmeters or relay boards can no longer be expected to use an STM8 chip, and soldering skills are required to replace it. There is more [information in the Wiki](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets).
+STM8 eForth provides board support for selected mass-produced Chinese low-cost control boards, e.g. Forth words for I/O with relay outputs, keys or LED displays. Common break-out boards and the [C0135](https://github.com/TG9541/stm8ef/wiki/Board-C0135) control board works out of the box after flashing STM8 eForth. Even after the chip-crunch an investment as low as $5 will get you started.
 
-Note that break-out boards and the [C0135](https://github.com/TG9541/stm8ef/wiki/Board-C0135) control board can be expected to work without any change.
+The appearance of MCUs with the same pin-out as the popular STM8S003F3P6 has led to a situation where common "Chinese gadgets" like thermostats, voltmeters or relay boards can no longer be expected to use an STM8 chip. Many boards are still compatible, and some soldering skills may be all you need to get a cheap control board with, e.g., an LED display and keys. There is more [information in the Wiki](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets).
 
 ![C0135](https://user-images.githubusercontent.com/5466977/64919487-9f176200-d7ab-11e9-9a4f-00d0d6d24ceb.png)
 
