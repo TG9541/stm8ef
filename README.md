@@ -42,7 +42,7 @@ The [Wiki on GitHub](https://github.com/TG9541/stm8ef/wiki) covers various topic
 
 ## Board support:
 
-STM8 eForth provides board support for selected mass-produced Chinese low-cost control boards, e.g. Forth words for I/O with relay outputs, keys or LED displays. Common break-out boards and the [C0135](https://github.com/TG9541/stm8ef/wiki/Board-C0135) control board works out of the box after flashing STM8 eForth. Even after the chip-crunch an investment as low as $5 will get you started.
+STM8 eForth provides board support for selected mass-produced Chinese low-cost control boards, e.g. Forth words for I/O with relay outputs, keys or LED displays. After flashing STM8 eForth, common break-out boards and the [C0135](https://github.com/TG9541/stm8ef/wiki/Board-C0135) control board work out of the box, and even after the chip-crunch an investment of $5 will get you started!
 
 The appearance of MCUs with the same pin-out as the popular STM8S003F3P6 has led to a situation where common "Chinese gadgets" like thermostats, voltmeters or relay boards can no longer be expected to use an STM8 chip. Many boards are still compatible, and some soldering skills may be all you need to get a cheap control board with, e.g., an LED display and keys. There is more [information in the Wiki](https://github.com/TG9541/stm8ef/wiki/STM8S-Value-Line-Gadgets).
 
