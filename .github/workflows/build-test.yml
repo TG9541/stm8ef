@@ -3,7 +3,7 @@ on: [push]
 jobs:
   Build-Test-Release:
     runs-on: ubuntu-latest
-    container: tg9541/docker-sdcc:V3.9.0
+    container: ghcr.io/tg9541/docker-sdcc:3.9.0
     steps:
       - run: |
           echo "triggered by: ${{ github.event_name }}"
