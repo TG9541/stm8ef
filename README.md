@@ -30,7 +30,7 @@ The best feature of Forth is that it allows interactive testing of words and phr
 
 ## About STM8 eForth
 
-The STM8 eForth core is written in STM8 assembly using the SDCC tool chain. Combining Forth with C is supported.
+The STM8 eForth core is written in STM8 assembly using the SDCC tool chain. Mixing Forth with C is possible since the STM8 eForth kernel is linked with C `main()` and ISRs can be written in C, too.
 
 The original STM8 eForth was written by [Dr. C.H. Ting's eForth](http://www.forth.org/svfig/kk/07-2010.html) for the STM8S Discovery. With the kind permission of Dr. Ting the code presented here is under [MIT license](https://github.com/TG9541/stm8ef/blob/master/LICENSE.md). Bugs were fixed, the code size reduced, standards compatibility improved and many features were added (e.g. compilation to Flash memory, autostart code, interrupt handling - see [overview](https://github.com/TG9541/stm8ef/tree/master/docs) and [words list](https://github.com/TG9541/stm8ef/blob/master/docs/words.md) in the docs folder.
 
